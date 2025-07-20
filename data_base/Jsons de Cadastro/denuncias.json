@@ -1,0 +1,5 @@
+{
+  "usuario_id": "string",
+  "descricao": "string",
+  "status": "enum"
+}

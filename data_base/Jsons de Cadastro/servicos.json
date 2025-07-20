@@ -1,0 +1,8 @@
+{
+  "prestador_id": "string",
+  "tipo_prestador": "enum",
+  "nome": "string",
+  "descricao": "string",
+  "valor": "decimal",
+  "tipo_cobranca": "enum"
+}

@@ -1,0 +1,8 @@
+{
+  "usuario_id": "string",
+  "bio": "string",
+  "experiencia": "string",
+  "avaliacao_media": "decimal",
+  "documento_profissional": "string",
+  "conta_bancaria": "string"
+}

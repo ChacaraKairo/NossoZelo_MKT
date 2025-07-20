@@ -1,0 +1,16 @@
+{
+  "id": "string",
+  "nome": "string",
+  "email": "string",
+  "senha": "string",
+  "telefone": "string",
+  "cpf": "string",
+  "data_nascimento": "date",
+  "endereco": "string",
+  "cidade": "string",
+  "estado": "string",
+  "pais": "string",
+  "url_foto_perfil": "string",
+  "tipo": "enum",
+  "criado_em": "timestamp"
+}

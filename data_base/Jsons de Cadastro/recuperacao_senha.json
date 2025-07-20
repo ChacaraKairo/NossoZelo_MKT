@@ -1,0 +1,6 @@
+{
+  "token": "string",
+  "expiracao": "timestamp",
+  "usado": "boolean",
+  "criado_em": "timestamp"
+}

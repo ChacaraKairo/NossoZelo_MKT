@@ -1,0 +1,7 @@
+{
+  "servico_id": "integer",
+  "metodo_pagamento_id": "integer",
+  "valor": "decimal",
+  "status": "enum",
+  "data_pagamento": "timestamp"
+}

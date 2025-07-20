@@ -1,0 +1,8 @@
+{
+  "prestador_id": "string",
+  "tipo_prestador": "enum",
+  "data": "date",
+  "hora_inicio": "time",
+  "hora_fim": "time",
+  "status": "enum"
+}

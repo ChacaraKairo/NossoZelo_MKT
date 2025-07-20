@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS logs_acesso (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id VARCHAR(20) NOT NULL,
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip VARCHAR(45),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);

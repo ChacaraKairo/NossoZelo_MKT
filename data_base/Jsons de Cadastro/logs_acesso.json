@@ -1,0 +1,5 @@
+{
+  "usuario_id": "string",
+  "data_hora": "timestamp",
+  "ip": "string"
+}

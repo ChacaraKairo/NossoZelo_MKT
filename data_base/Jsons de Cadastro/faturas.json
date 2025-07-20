@@ -1,0 +1,8 @@
+{
+  "usuario_id": "string",
+  "descricao": "string",
+  "valor": "decimal",
+  "vencimento": "date",
+  "pago": "boolean",
+  "data_pagamento": "timestamp"
+}

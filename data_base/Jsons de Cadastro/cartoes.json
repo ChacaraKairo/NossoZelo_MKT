@@ -1,0 +1,11 @@
+{
+  "usuario_id": "string",
+  "nome_titular": "string",
+  "numero_mascarado": "string",
+  "validade_mes": "integer",
+  "validade_ano": "integer",
+  "bandeira": "string",
+  "tipo": "enum",
+  "token_gateway": "string",
+  "ativo": "boolean"
+}

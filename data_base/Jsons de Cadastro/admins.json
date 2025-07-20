@@ -1,0 +1,5 @@
+{
+  "usuario_id": "string",
+  "cargo": "string",
+  "permissao_total": "boolean"
+}

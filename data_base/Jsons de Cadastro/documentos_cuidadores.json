@@ -1,0 +1,5 @@
+{
+  "cuidador_id": "string",
+  "tipo": "string",
+  "url_arquivo": "string"
+}

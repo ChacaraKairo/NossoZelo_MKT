@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS recuperacao_senhas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id VARCHAR(20) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expiracao TIMESTAMP NOT NULL,
+    usado BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);

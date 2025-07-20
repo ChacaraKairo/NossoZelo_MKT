@@ -1,0 +1,102 @@
+[
+  {
+    "nome": "Enfermagem Geriátrica",
+    "descricao": "Cuidado clínico especializado em idosos, incluindo gestão de doenças crônicas e suporte ao envelhecimento saudável."
+  },
+  {
+    "nome": "Cuidados com Sondas (Nasoenteral, Vesical, etc.)",
+    "descricao": "Manuseio, higienização e monitoramento de sondas alimentares e urinárias."
+  },
+  {
+    "nome": "Administração de Nutrição Enteral",
+    "descricao": "Preparação e administração segura de dietas via sonda para pacientes com dificuldades de deglutição."
+  },
+  {
+    "nome": "Curativos Avançados",
+    "descricao": "Tratamento de feridas complexas como úlceras por pressão, feridas cirúrgicas e infecções de pele."
+  },
+  {
+    "nome": "Controle de Glicemia",
+    "descricao": "Medição e monitoramento da taxa de açúcar no sangue, com suporte na administração de insulina."
+  },
+  {
+    "nome": "Paliativismo Avançado",
+    "descricao": "Assistência humanizada para idosos em fase terminal, com controle de dor, conforto e apoio à família."
+  },
+  {
+    "nome": "Estimulação Cognitiva",
+    "descricao": "Atividades direcionadas para manter ou recuperar funções cognitivas como memória, atenção e linguagem."
+  },
+  {
+    "nome": "Acompanhamento Psicológico",
+    "descricao": "Suporte emocional com foco em ansiedade, depressão, luto e solidão em idosos."
+  },
+  {
+    "nome": "Musicoterapia para Idosos",
+    "descricao": "Uso terapêutico da música para promover relaxamento, memória afetiva e bem-estar emocional."
+  },
+  {
+    "nome": "Arteterapia com Idosos",
+    "descricao": "Intervenção terapêutica por meio da arte para expressão emocional, autoestima e socialização."
+  },
+  {
+    "nome": "Auriculoterapia",
+    "descricao": "Técnica da medicina chinesa aplicada à orelha para alívio de dores e controle de ansiedade."
+  },
+  {
+    "nome": "Acupuntura para Idosos",
+    "descricao": "Tratamento de dores crônicas, insônia e desequilíbrios emocionais com agulhamento terapêutico."
+  },
+  {
+    "nome": "Alongamento Terapêutico",
+    "descricao": "Técnicas suaves de alongamento para prevenção de rigidez muscular e melhora da mobilidade."
+  },
+  {
+    "nome": "Reeducação Postural",
+    "descricao": "Técnicas para corrigir postura e prevenir dores musculoesqueléticas em idosos com má postura."
+  },
+  {
+    "nome": "Atividades Físicas Adaptadas",
+    "descricao": "Exercícios de baixa intensidade e supervisionados, voltados para o fortalecimento, equilíbrio e coordenação."
+  },
+  {
+    "nome": "Massoterapia para Idosos",
+    "descricao": "Técnica terapêutica de massagens voltada ao alívio de dores musculares, tensões e melhora da circulação em idosos."
+  },
+  {
+    "nome": "Primeiros Socorros",
+    "descricao": "Capacitação para atuação imediata em situações de emergência como quedas, engasgos, desmaios e paradas cardiorrespiratórias."
+  },
+  {
+    "nome": "Suporte Básico de Vida (SBV)",
+    "descricao": "Habilidade técnica para manter funções vitais do idoso até a chegada do resgate, incluindo RCP e uso de DEA."
+  },
+  {
+    "nome": "Mobilização e Transferência Segura",
+    "descricao": "Técnicas corretas para mover, levantar ou transferir o idoso entre cama, cadeira de rodas, etc., evitando lesões."
+  },
+  {
+    "nome": "Cuidados com Ostomias",
+    "descricao": "Capacitação para cuidar de estomas (colostomia, ileostomia) e realizar a troca correta de bolsas coletoras."
+  },
+  {
+    "nome": "Aplicação de Injeções",
+    "descricao": "Habilidade técnica para administrar medicamentos por via intramuscular, subcutânea ou endovenosa conforme prescrição."
+  },
+  {
+    "nome": "Controle de Sinais Vitais",
+    "descricao": "Monitoramento frequente de pressão arterial, temperatura, frequência cardíaca e respiratória."
+  },
+  {
+    "nome": "Fisioterapia Domiciliar",
+    "descricao": "Exercícios terapêuticos supervisionados para melhorar a mobilidade, equilíbrio e força muscular do idoso."
+  },
+  {
+    "nome": "Prevenção de Quedas",
+    "descricao": "Avaliação de riscos no ambiente e adoção de medidas preventivas para evitar acidentes domésticos."
+  },
+  {
+    "nome": "Terapia de Reabilitação Pós-Cirúrgica",
+    "descricao": "Suporte físico e emocional no processo de recuperação após cirurgias, com foco em autonomia e segurança."
+  }
+]

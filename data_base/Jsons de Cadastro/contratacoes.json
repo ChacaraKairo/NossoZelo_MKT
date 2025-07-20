@@ -1,0 +1,11 @@
+{
+  "cliente_id": "string",
+  "prestador_id": "string",
+  "tipo_prestador": "enum",
+  "data": "date",
+  "hora_inicio": "time",
+  "hora_fim": "time",
+  "preco": "decimal",
+  "status": "enum",
+  "observacoes": "string"
+}

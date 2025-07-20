@@ -1,0 +1,7 @@
+{
+  "cuidador_id": "string",
+  "dia_semana": "enum",
+  "hora_inicio": "time",
+  "hora_fim": "time",
+  "ativo": "boolean"
+}

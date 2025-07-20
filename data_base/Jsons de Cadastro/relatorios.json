@@ -1,0 +1,7 @@
+{
+  "admin_id": "string",
+  "tipo": "enum",
+  "periodo_inicio": "date",
+  "periodo_fim": "date",
+  "gerado_em": "timestamp"
+}

@@ -1,0 +1,6 @@
+{
+  "cuidador_id": "string",
+  "plano_id": "integer",
+  "data_inicio": "timestamp",
+  "data_fim": "timestamp"
+}
