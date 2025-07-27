@@ -1,0 +1,55 @@
+/* Estilo geral do formulário */
+.formContainer {
+  background-color: #dbf4f1;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Título do formulário */
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Aviso superior (Tooltip) */
+.avisoContainer {
+  background-color: #fff6e5;
+  border: 1px solid #f2c94c;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #8d6e00;
+}
+
+/* Linha com dois inputs lado a lado */
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* Texto pequeno de termos */
+.termosTexto {
+  font-size: 0.75rem;
+  color: #4b5563;
+  margin-top: 1rem;
+  line-height: 1.3;
+}
+
+/* Link sublinhado nos termos */
+.termosTexto a {
+  text-decoration: underline;
+}
+
+/* Texto final (já possui conta) */
+.textoFinal {
+  text-align: center;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
