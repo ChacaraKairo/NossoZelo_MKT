@@ -1,0 +1,45 @@
+/* Salve este arquivo como: ./styles/InputEmail.module.css */
+
+/* Container principal que permite o posicionamento absoluto do ícone */
+.inputContainer {
+  position: relative;
+  width: 100%;
+}
+
+/* Estilo principal do campo de input */
+.inputField {
+  width: 100%;
+  padding: 12px 40px 12px 12px; /* Padding maior à esquerda para o ícone */
+  border: 1px solid #b0e0e6;
+  border-radius: 8px;
+  background-color: #f0ffff;
+  font-size: 1rem;
+  color: #008080;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Estilo do placeholder */
+.inputField::placeholder {
+  color: #a9a9a9;
+}
+
+/* Efeito de foco usando a pseudo-classe :focus, o que simplifica o componente React */
+.inputField:focus {
+  border-color: #00ced1;
+  box-shadow: 0 0 0 2px rgba(0, 206, 209, 0.2);
+}
+
+/* Estilo e posicionamento do ícone */
+.icon {
+  position: absolute;
+  top: 50%;
+  right: 15px; /* Posicionado à esquerda */
+  transform: translateY(-50%);
+  color: #a9a9a9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* Impede que o ícone interfira com o clique no input */
+}

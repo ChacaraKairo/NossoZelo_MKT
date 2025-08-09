@@ -1,0 +1,12 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(250px, 1fr)
+  ); /* Ajusta a quantidade de colunas automaticamente */
+  gap: 20px; /* Espaçamento entre os cards */
+  padding: 20px; /* Espaço interno */
+  max-width: 1500px; /* Limita a largura máxima */
+  margin: 0 auto; /* Centraliza na tela */
+  align-items: stretch; /* Faz todos os cards terem a mesma altura */
+}

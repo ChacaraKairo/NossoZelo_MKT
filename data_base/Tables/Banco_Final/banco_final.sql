@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS recuperacao_senhas (
 CREATE TABLE IF NOT EXISTS servicos (
     id INT PRIMARY KEY AUTO_INCREMENT,
     prestador_id VARCHAR(20) NOT NULL,
-    tipo_prestador ENUM('cuidador', 'enfermeiro') NOT NULL,
+    tipo_prestador ENUM('cuidador', 'enfermeiro', 'acompanhante') NOT NULL,
     nome VARCHAR(100) NOT NULL,
     descricao TEXT NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
@@ -125,10 +125,12 @@ CREATE TABLE IF NOT EXISTS servicos (
 CREATE TABLE IF NOT EXISTS agenda (
     id INT PRIMARY KEY AUTO_INCREMENT,
     prestador_id VARCHAR(20) NOT NULL,
-    tipo_prestador ENUM('cuidador', 'enfermeiro') NOT NULL,
+    tipo_prestador ENUM('cuidador', 'enfermeiro', 'acompanhante') NOT NULL,
     data DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
+    observacoes TEXT,
+    servico_realizado BOOLEAN DEFAULT FALSE,
     status ENUM('disponivel', 'ocupado', 'indisponivel') DEFAULT 'disponivel',
     FOREIGN KEY (prestador_id) REFERENCES usuarios(id)
 );
@@ -179,12 +181,12 @@ CREATE TABLE IF NOT EXISTS contratacoes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     cliente_id VARCHAR(20) NOT NULL,
     prestador_id VARCHAR(20) NOT NULL,
-    tipo_prestador ENUM('cuidador', 'enfermeiro') NOT NULL,
+    tipo_prestador ENUM('cuidador', 'enfermeiro', "acompanhante") NOT NULL,
     data DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     preco DECIMAL(10,2) NOT NULL,
-    status ENUM('pendente', 'confirmado', 'concluido', 'cancelado') DEFAULT 'pendente',
+    status ENUM('pendente', 'confirmado', 'concluido', "paga",'cancelado') DEFAULT 'pendente',
     observacoes TEXT,
     FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
     FOREIGN KEY (prestador_id) REFERENCES usuarios(id)
@@ -265,4 +267,15 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     data_pagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (servico_id) REFERENCES contratacoes(id),
     FOREIGN KEY (metodo_pagamento_id) REFERENCES metodos_pagamento(id)
+);
+CREATE TABLE IF NOT EXISTS localizacoes (
+  usuario_id   VARCHAR(20),
+  latitude     DECIMAL(9,6),
+  longitude    DECIMAL(9,6),
+  PRIMARY KEY (usuario_id),
+  CONSTRAINT fk_localizacoes_usuario
+    FOREIGN KEY (usuario_id)
+    REFERENCES usuarios(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );

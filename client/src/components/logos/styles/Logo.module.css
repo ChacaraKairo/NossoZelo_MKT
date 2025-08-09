@@ -1,0 +1,11 @@
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding-top: 5px;
+  margin-left: 5px;
+  height: 200px;
+  width: auto;
+  background-color: #f9f9f9;
+}

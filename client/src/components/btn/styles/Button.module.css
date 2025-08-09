@@ -1,0 +1,43 @@
+/* Salve como: ./styles/Button.module.css */
+
+/* Estilos base, comuns a todos os botões */
+.btn {
+  --color-primary: #00ced1;
+  --color-primary-hover: #20b2aa;
+  --color-white: #ffffff;
+
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+/* Estilo para o botão primário (preenchido) */
+.primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: 1px solid var(--color-primary);
+}
+
+.primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+}
+
+/* Estilo para o botão secundário (contorno) */
+.secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.secondary:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}

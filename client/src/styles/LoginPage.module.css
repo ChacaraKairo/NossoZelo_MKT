@@ -1,0 +1,183 @@
+/* As variáveis de cor agora são puxadas do seu arquivo CSS global. */
+
+.loginPage {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
+    sans-serif;
+}
+
+.main {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
+    sans-serif;
+}
+
+/* --- Seção da Esquerda --- */
+.infoSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-info-section);
+  padding: 40px;
+}
+
+.nav {
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.text {
+  font-size: 1.1rem;
+  max-width: 350px;
+  margin-top: 20px;
+  line-height: 1.5;
+}
+
+/* --- Seção da Direita --- */
+.formSection {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-form-section);
+  padding: 20px;
+}
+
+.form {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form h2 {
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+.loginSocial {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.socialButton {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--text-on-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.socialButton:hover {
+  border-color: var(--text-secondary);
+  background-color: #f7fdfd;
+}
+
+.socialButton.google {
+  color: var(--color-google);
+}
+.socialButton.facebook {
+  flex-grow: 0;
+  width: 45px;
+  color: var(--color-facebook);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-light);
+  margin: 25px 0;
+  font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+.divider:not(:empty)::before {
+  margin-right: 0.5em;
+}
+.divider:not(:empty)::after {
+  margin-left: 0.5em;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.forgotPasswordLink,
+.terms a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.forgotPasswordLink:hover,
+.terms a:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  margin-top: 30px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+.terms {
+  margin-top: 5px;
+}
+
+@media (max-width: 900px) {
+  .main {
+    flex-direction: column;
+  }
+  .infoSection {
+    display: none;
+  }
+}

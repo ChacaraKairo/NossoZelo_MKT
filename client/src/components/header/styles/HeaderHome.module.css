@@ -1,0 +1,19 @@
+.headerContainer {
+  display: flex;
+  justify-content: right; /* Logo à esquerda, botões à direita */
+  align-items: center;
+  padding: 16px 32px;
+  background-color: #f9f9f95b; /* Cor clara neutra */
+  box-shadow: 0 2px 6px rgba(201, 201, 201, 0.1);
+}
+
+.logoWrapper {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+}
+
+.buttonsWrapper {
+  display: flex;
+  gap: 16px; /* Espaço entre os botões */
+}

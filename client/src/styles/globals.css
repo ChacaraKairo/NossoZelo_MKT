@@ -1,83 +1,45 @@
+/* Importações do Tailwind (se você estiver usando) */
+@import 'tailwindcss/preflight';
+@tailwind utilities;
+
 :root {
-  --background: #f2f2f2;
-  --foreground: #111827;
-  --primary: #4f46e5;
-  --accent: #6366f1;
-  --border: #e5e7eb;
-  --font-sans: 'Inter', sans-serif;
+  /* Cores Principais da Marca */
+  --color-primary: #75e7d9; /* DarkTurquoise - Cor principal para botões e links ativos */
+  --color-primary-hover: #20b2aa; /* LightSeaGreen - Cor para hover do botão principal */
+
+  /* Cores de Texto */
+  --text-primary: #008080; /* Teal - Para títulos e textos principais */
+  --text-secondary: #5f9ea0; /* CadetBlue - Para textos de apoio e parágrafos */
+  --text-link: #008b8b; /* DarkCyan - Para links */
+  --text-light: #a9a9a9; /* DarkGray - Para divisores e textos de rodapé */
+  --text-on-primary: #75e7d9; /* Branco - Texto sobre fundos coloridos */
+
+  /* Cores de Fundo */
+  --bg-page: #f9f9f9; /* AliceBlue - Fundo geral da página */
+  --bg-info-section: #f9f9f9; /* Azure - Fundo da seção de informações */
+  --bg-form-section: #f9f9f9; /* Branco - Fundo da seção do formulário */
+  --bg-form-container: #f9f9f9; /* LightCyan - Fundo do container do formulário */
+
+  /* Cores de Borda e UI */
+  --border-color: #b0e0e6; /* PowderBlue - Cor para bordas de inputs e divisores */
+
+  /* Cores de Marcas (Social Login) */
+  --color-google: #db4437;
+  --color-facebook: #4267b2;
 }
 
+/* Opcional: Tema Escuro (mantendo a lógica que você iniciou) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #f2f2f2;
-    --foreground: #f8fafc;
-    --border: #1e293b;
+    /* Aqui você pode redefinir as variáveis para o modo escuro no futuro */
+    --bg-page: #f9f9f9;
+    --text-primary: #75e7d9;
+    /* etc... */
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  margin: 0;
-  padding: 0;
-  transition: background 0.2s ease-in-out,
-    color 0.2s ease-in-out;
-}
-
-.home-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem 2rem;
-  min-height: 100vh;
-  background: var(--background);
-  text-align: center;
-}
-
-.hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.hero p {
-  font-size: 1.125rem;
-  margin-bottom: 2rem;
-  color: #475569;
-}
-
-.cta-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.primary-btn,
-.secondary-btn {
-  font-size: 1rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: background 0.3s, color 0.3s;
-}
-
-.primary-btn {
-  background-color: var(--primary);
-  color: white;
-}
-
-.primary-btn:hover {
-  background-color: var(--accent);
-}
-
-.secondary-btn {
-  background-color: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
-}
-
-.secondary-btn:hover {
-  background-color: var(--primary);
-  color: white;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: Arial, Helvetica, sans-serif;
 }

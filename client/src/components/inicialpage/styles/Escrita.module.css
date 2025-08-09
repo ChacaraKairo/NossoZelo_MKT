@@ -1,0 +1,12 @@
+.escrita {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #75e7d9;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 4rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px #5dccbf;
+  padding: 10px 0px;
+  margin-top: 100px;
+}

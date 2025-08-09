@@ -1,0 +1,25 @@
+.cadastrarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #5dccba; /* Tom mais escuro */
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease,
+    transform 0.2s ease;
+  user-select: none;
+}
+
+.cadastrarButton:hover {
+  background-color: #3e8478; /* Tom mais escuro no hover */
+  transform: scale(1.05);
+}
+
+.cadastrarButton:active {
+  transform: scale(0.98);
+}

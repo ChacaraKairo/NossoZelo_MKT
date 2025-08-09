@@ -1,0 +1,31 @@
+.loginButton {
+  display: inline-flex;
+  align-items: center;
+  background-color: #75e7d9; /* Azul */
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease,
+    transform 0.2s ease;
+  user-select: none;
+}
+
+.loginButton:hover {
+  background-color: #6accc1; /* Azul mais claro */
+  transform: scale(1.05);
+}
+
+.loginButton:active {
+  transform: scale(0.98);
+}
+
+.icon {
+  width: 25px;
+  height: auto;
+  margin-right: 10px; /* Espaço entre ícone e texto */
+  stroke: currentColor;
+}
