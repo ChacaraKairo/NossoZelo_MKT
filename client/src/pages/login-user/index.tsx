@@ -1,32 +1,50 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import Style from '@/styles/LoginPage.module.css';
-import Link from 'next/link';
 
 // --- Importações Corrigidas ---
 // Assumindo que seus componentes customizados estão nos caminhos corretos
 import InputEmail from '@/components/inputs/InputEmail';
 import InputPassword from '@/components/inputs/InputPassword';
-import Logo from '@/components/logos/OnlyLogo';
+import Logo from '@/components/logos/OnlyLogo'; // Assumindo que o caminho está correto
 // Importando o novo botão reutilizável
 import Button from '@/components/btn/Button';
+import { loginService } from '@/service/Login';
 
 const LoginPage = () => {
-  // Estado para controlar os valores dos inputs
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const router = useRouter();
+  // Estado para controlar os valores dos inputs, loading e erros
+  const [identificador, setIdentificador] = useState('');
+  const [senha, setSenha] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Função para lidar com o envio do formulário
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // Aqui você adicionaria a lógica de login
-    console.log({ email, password });
-  };
+    setLoading(true);
+    setError(null);
 
-  // Funções para os cliques dos botões (exemplo)
-  const handleCadastroClick = () => {
-    console.log('Navegar para a página de cadastro...');
-    // Ex: window.location.href = '/cadastro';
+    try {
+      const response = await loginService.login({
+        identificador,
+        senha,
+      });
+
+      // O token já foi salvo nos cookies pelo serviço.
+      // Apenas redirecionamos o usuário para a página principal.
+      console.log('Login bem-sucedido:', response);
+      router.push('/prestadores'); // Ajuste a rota de destino se necessário
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Ocorreu um erro inesperado.';
+      setError(errorMessage);
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,21 +88,30 @@ const LoginPage = () => {
 
             <div className={Style.divider}>ou</div>
 
+            {error && (
+              <p className={Style.error}>{error}</p>
+            )}
+
             <div className={Style.loginForm}>
               <InputEmail
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identificador}
+                onChange={(e) =>
+                  setIdentificador(e.target.value)
+                }
+                disabled={loading}
               />
               <InputPassword
-                value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                disabled={loading}
               />
 
               <div className={Style.options}>
                 <label className={Style.checkboxContainer}>
-                  <input type="checkbox" />
+                  <input
+                    type="checkbox"
+                    disabled={loading}
+                  />
                   Lembrar-me
                 </label>
                 <a
@@ -96,18 +123,22 @@ const LoginPage = () => {
               </div>
 
               {/* --- Uso do Botão Reutilizável --- */}
-              <Button type="submit" variant="primary">
-                Entrar
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+              >
+                {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </div>
 
             <div className={Style.createAccount}>
               <p>Não tem uma conta?</p>
               {/* --- Uso do Botão Reutilizável com a variação secundária --- */}
-              <Link href="/cadastro/nossozelo">
+              <Link href="/cadastro/nossozelo" passHref>
                 <Button
                   variant="secondary"
-                  onClick={handleCadastroClick}
+                  disabled={loading}
                 >
                   Cadastre-se
                 </Button>

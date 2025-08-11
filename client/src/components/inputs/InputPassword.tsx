@@ -11,6 +11,7 @@ interface InputPasswordProps {
   placeholder?: string; // O '?' torna a prop opcional
   id?: string;
   name?: string;
+  disabled?: boolean;
 }
 
 // 2. Aplicando a interface ao componente
@@ -20,6 +21,7 @@ const InputPassword: React.FC<InputPasswordProps> = ({
   placeholder = 'Senha',
   id,
   name,
+  disabled = false,
 }) => {
   // Estado para controlar a visibilidade da senha
   const [isPasswordVisible, setIsPasswordVisible] =
@@ -39,19 +41,22 @@ const InputPassword: React.FC<InputPasswordProps> = ({
         placeholder={placeholder}
         id={id}
         name={name}
+        disabled={disabled}
         className={Style.inputField}
       />
 
-      <span
+      <button
+        type="button"
         className={Style.icon}
         onClick={toggleVisibility}
+        disabled={disabled}
       >
         {isPasswordVisible ? (
           <VscEyeClosed size={20} />
         ) : (
           <VscEye size={20} />
         )}
-      </span>
+      </button>
     </div>
   );
 };

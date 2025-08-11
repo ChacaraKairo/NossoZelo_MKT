@@ -11,6 +11,7 @@ interface InputEmailProps {
   placeholder?: string;
   id?: string;
   name?: string;
+  disabled?: boolean;
 }
 
 // --- Componente Funcional ---
@@ -21,6 +22,7 @@ const InputEmail: React.FC<InputEmailProps> = ({
   placeholder = 'E-mail',
   id,
   name,
+  disabled = false,
 }) => {
   return (
     <div className={Style.inputContainer}>
@@ -35,6 +37,7 @@ const InputEmail: React.FC<InputEmailProps> = ({
         id={id}
         name={name}
         className={Style.inputField}
+        disabled={disabled}
       />
     </div>
   );

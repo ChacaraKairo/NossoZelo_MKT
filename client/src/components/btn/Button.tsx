@@ -7,6 +7,7 @@ interface ButtonProps {
   children: React.ReactNode; // O texto ou ícone dentro do botão
   type?: 'button' | 'submit' | 'reset'; // O tipo do botão
   variant?: 'primary' | 'secondary'; // A variação de estilo
+  disabled?: boolean; // Se o botão está desabilitado
 }
 
 /**
