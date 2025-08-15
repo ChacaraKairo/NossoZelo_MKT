@@ -1,0 +1,208 @@
+/* client/src/styles/CadastroPage.module.css */
+
+/* --- 1. Estrutura Principal da Página --- */
+.loginPage {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
+    sans-serif;
+  background-color: var(
+    --bg-form-section,
+    #fff
+  ); /* Cor de fundo geral */
+}
+.header {
+  display: flex;
+  justify-content: right; /* Logo à esquerda, botões à direita */
+  align-items: center;
+  padding: 16px 32px;
+  background-color: #f9f9f95b; /* Cor clara neutra */
+  box-shadow: 0 2px 6px rgba(201, 201, 201, 0.1);
+}
+.logoWrapper {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+}
+.main {
+  display: flex;
+  width: 100%;
+}
+
+/* --- 2. Painel Informativo da Esquerda --- */
+.infoSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(
+    --bg-info-section,
+    #e0f7fa
+  ); /* Tom azulado claro */
+  padding: 40px;
+  text-align: center;
+}
+
+.nav {
+  color: var(--text-primary, #005f6b);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.text {
+  font-size: 1.1rem;
+  max-width: 350px;
+  margin-top: 15px;
+  line-height: 1.5;
+}
+
+/* --- 3. Secção do Formulário da Direita --- */
+.formSection {
+  flex: 1.5; /* Um pouco maior que o painel da esquerda */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  overflow-y: auto; /* Adiciona scroll se o formulário for muito grande */
+}
+
+.form {
+  width: 100%;
+  max-width: 600px; /* Aumentado para acomodar mais campos */
+  display: flex;
+  flex-direction: column;
+}
+
+.form h2 {
+  color: var(--text-primary, #005f6b);
+  font-size: 2rem;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.subtitle {
+  color: var(--text-secondary, #555);
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* Espaçamento entre os campos */
+}
+
+/* --- 4. Elementos Específicos do Formulário --- */
+
+/* Para colocar inputs lado a lado */
+.inputRow {
+  display: flex;
+  gap: 18px;
+}
+
+.inputRow > * {
+  flex: 1;
+}
+
+/* Estilização para o <select> se parecer com os outros inputs */
+.inputContainer {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.inputField {
+  /* Este estilo será aplicado através do componente Input, mas é bom ter aqui como referência */
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #b0e0e6;
+  background-color: #f0ffff;
+}
+
+.withIconLeft {
+  padding-left: 45px !important;
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a9a9a9;
+  z-index: 2;
+}
+
+.left {
+  left: 15px;
+}
+
+/* Estilo para o <select> do sexo */
+select.inputField {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a9a9a9%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 15px top 50%;
+  background-size: 0.65em auto;
+  padding-right: 40px; /* Espaço para a seta */
+}
+
+/* --- 5. Links e Rodapé do Formulário --- */
+.createAccount {
+  text-align: center;
+  margin-top: 25px;
+  color: var(--text-secondary, #555);
+}
+
+.link {
+  color: var(--text-link, #008080);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* --- 6. Responsividade para Telas Menores --- */
+@media (max-width: 900px) {
+  .main {
+    flex-direction: column;
+  }
+
+  /* Oculta a secção da esquerda em telemóveis para focar no formulário */
+  .infoSection {
+    display: none;
+  }
+
+  .formSection {
+    flex: 1;
+    padding: 20px;
+  }
+
+  .form {
+    max-width: 100%;
+  }
+
+  .inputRow {
+    flex-direction: column;
+  }
+}
+/* Adicione no final de CadastroPage.module.css */
+
+.error {
+  background-color: #ffebee; /* Fundo avermelhado claro */
+  color: #c62828; /* Texto vermelho escuro */
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  padding: 12px 15px;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 15px;
+}

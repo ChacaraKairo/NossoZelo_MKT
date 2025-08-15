@@ -135,7 +135,7 @@ const LoginPage = () => {
             <div className={Style.createAccount}>
               <p>Não tem uma conta?</p>
               {/* --- Uso do Botão Reutilizável com a variação secundária --- */}
-              <Link href="/cadastro/nossozelo" passHref>
+              <Link href="/cadastro-user" passHref>
                 <Button
                   variant="secondary"
                   disabled={loading}

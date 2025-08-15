@@ -5,7 +5,9 @@ const BtnCadastrar = () => {
   return (
     <button
       className={styles.cadastrarButton}
-      onClick={() => (window.location.href = '/cadastro')}
+      onClick={() =>
+        (window.location.href = '/cadastro-user')
+      }
     >
       Cadastrar
     </button>

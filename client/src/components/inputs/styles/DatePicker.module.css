@@ -1,0 +1,65 @@
+/* client/src/components/inputs/styles/DatePicker.module.css */
+
+/* Garante que o container do calendário ocupe 100% da largura */
+.datePickerWrapper {
+  width: 100%;
+}
+
+/* CORREÇÃO: Agora, todos os seletores :global estão "ancorados"
+  à nossa classe local .datePickerWrapper.
+*/
+.datePickerWrapper :global(.react-datepicker) {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
+    sans-serif !important;
+  border: 1px solid #00ced1 !important;
+  background-color: #f0ffff !important;
+  border-radius: 8px !important;
+}
+
+.datePickerWrapper :global(.react-datepicker__header) {
+  background-color: #00ced1 !important;
+  border-bottom: none !important;
+}
+
+.datePickerWrapper
+  :global(.react-datepicker__current-month),
+.datePickerWrapper :global(.react-datepicker-time__header),
+.datePickerWrapper :global(.react-datepicker-year-header) {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.datePickerWrapper :global(.react-datepicker__day-name),
+.datePickerWrapper :global(.react-datepicker__day),
+.datePickerWrapper :global(.react-datepicker__time-name) {
+  color: #008080 !important;
+}
+
+.datePickerWrapper
+  :global(.react-datepicker__navigation-icon::before) {
+  border-color: white !important;
+}
+
+.datePickerWrapper
+  :global(.react-datepicker__day--selected),
+.datePickerWrapper
+  :global(.react-datepicker__day--keyboard-selected) {
+  background-color: #008080 !important;
+  color: white !important;
+}
+
+.datePickerWrapper :global(.react-datepicker__day:hover) {
+  background-color: #b0e0e6 !important;
+  border-radius: 50%;
+}
+
+.datePickerWrapper
+  :global(.react-datepicker__year-read-view--down-arrow),
+.datePickerWrapper
+  :global(.react-datepicker__month-read-view--down-arrow),
+.datePickerWrapper
+  :global(
+    .react-datepicker__month-year-read-view--down-arrow
+  ) {
+  border-color: white !important;
+}
