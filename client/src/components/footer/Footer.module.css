@@ -1,0 +1,155 @@
+.footer {
+  background-color: #98f5e1; /* Cor turquesa da imagem */
+  padding: 50px 20px 30px;
+  font-family: 'Inter', sans-serif;
+  color: #444;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.mainGrid {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+/* Estilo da Logo e Texto Esquerdo */
+.logoText {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.slogan {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #fff;
+  margin: 10px 0;
+  max-width: 250px;
+}
+
+.subText {
+  font-size: 0.9rem;
+  color: #555;
+  max-width: 280px;
+}
+
+/* Colunas de Navegação e Contato */
+.navColumn h3,
+.contactColumn h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.navColumn ul {
+  list-style: none;
+  padding: 0;
+}
+
+.navColumn li {
+  margin-bottom: 8px;
+}
+
+.navColumn a {
+  text-decoration: none;
+  color: #444;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.navColumn a:hover {
+  opacity: 0.7;
+}
+
+/* Itens de Contato com Ícone */
+.contactItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.contactItem svg {
+  margin-top: 4px;
+  color: #333;
+}
+
+.contactItem strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.contactItem span {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+/* Divisor e Copyright */
+.dividerContainer {
+  display: flex;
+  height: 4px;
+  width: 100%;
+  margin: 20px 0;
+}
+
+.dividerDark {
+  flex: 1;
+  background-color: #444;
+}
+.dividerLight {
+  flex: 2;
+  background-color: #b2fceb;
+}
+
+.copyright {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* Redes Sociais Inferiores */
+.socialWrapper {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.socialBox {
+  width: 45px;
+  height: 45px;
+  background-color: transparent;
+  border: 2px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  transition: all 0.3s ease;
+}
+
+.socialBox:hover {
+  background-color: #333;
+  color: #98f5e1;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .mainGrid {
+    flex-direction: column;
+    text-align: center;
+  }
+  .contactItem {
+    justify-content: center;
+  }
+}

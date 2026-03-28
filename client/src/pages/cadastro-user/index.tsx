@@ -1,19 +1,15 @@
-// client/src/pages/cadastro/index.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router'; // Importado para redirecionar após o sucesso
+import { useRouter } from 'next/router';
 import Style from '@/styles/CadastroPage.module.css';
 
-// --- Nossos componentes reutilizáveis ---
 import Input from '@/components/inputs/Input';
 import InputDate from '@/components/inputs/InputDate';
 import Button from '@/components/btn/Button';
 import Logo from '@/components/logos/OnlyLogo';
 
-// --- IMPORTAÇÃO DO SCRIPT DA API ---
 import { cadastrarUsuario } from '@/service/cadastroService';
 
-// --- Ícones para a UI ---
 import {
   FaUser,
   FaIdCard,
@@ -26,12 +22,13 @@ import {
   FaCity,
   FaRoad,
   FaVenusMars,
+  FaHashtag,
 } from 'react-icons/fa';
 
 const CadastroPage = () => {
-  const router = useRouter(); // Hook do Next.js para navegação
+  const router = useRouter();
 
-  // --- Estados do formulário (sem alterações) ---
+  // --- Estados do formulário ---
   const [tipo, setTipo] = useState('cliente');
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
@@ -40,8 +37,13 @@ const CadastroPage = () => {
   const [dataNascimento, setDataNascimento] =
     useState<Date | null>(null);
   const [sexo, setSexo] = useState('outro');
+
+  // Endereço Separado
   const [cep, setCep] = useState('');
-  const [endereco, setEndereco] = useState('');
+  const [rua, setRua] = useState('');
+  const [numero, setNumero] = useState('');
+  const [bairro, setBairro] = useState('');
+
   const [cidade, setCidade] = useState('');
   const [estado, setEstado] = useState('');
   const [email, setEmail] = useState('');
@@ -49,21 +51,47 @@ const CadastroPage = () => {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  // --- NOVOS ESTADOS PARA GESTÃO DA CHAMADA À API ---
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // --- FUNÇÃO HANDLESUBMIT AGORA É ASYNC E CHAMA A API ---
+  // --- LÓGICA DE AUTOCOMPLETE DE CEP ---
+  useEffect(() => {
+    const buscarCep = async () => {
+      const cepLimpo = cep.replace(/\D/g, '');
+      if (cepLimpo.length === 8) {
+        try {
+          const response = await fetch(
+            `https://viacep.com.br/ws/${cepLimpo}/json/`,
+          );
+          const dados = await response.json();
+
+          if (!dados.erro) {
+            setRua(dados.logradouro || '');
+            setBairro(dados.bairro || '');
+            setCidade(dados.localidade || '');
+            setEstado(dados.uf || '');
+            setError(null);
+          } else {
+            setError('CEP não encontrado.');
+          }
+        } catch (err) {
+          console.error('Erro ao buscar CEP:', err);
+        }
+      }
+    };
+    buscarCep();
+  }, [cep]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError(null); // Limpa erros de tentativas anteriores
+    setError(null);
 
     if (senha !== confirmarSenha) {
       setError('As senhas não coincidem!');
       return;
     }
 
-    setLoading(true); // Ativa o estado de loading
+    setLoading(true);
 
     const dadosCadastro = {
       usuario: {
@@ -77,7 +105,8 @@ const CadastroPage = () => {
           ? dataNascimento.toISOString().split('T')[0]
           : null,
         cep: cep,
-        endereco: endereco,
+        // Concatenamos para manter compatibilidade com o seu Backend atual
+        endereco: `${rua}, ${numero} - ${bairro}`,
         cidade: cidade,
         estado: estado,
         pais: 'Brasil',
@@ -88,30 +117,17 @@ const CadastroPage = () => {
     };
 
     try {
-      // A chamada à API acontece aqui!
       const respostaDaApi = await cadastrarUsuario(
         dadosCadastro,
       );
-      console.log(
-        'Cadastro realizado com sucesso:',
-        respostaDaApi,
-      );
-      alert(
-        'Cadastro realizado com sucesso! Você será redirecionado para o login.',
-      );
-
-      // Redireciona para a página de login após o sucesso
+      alert('Cadastro realizado com sucesso!');
       router.push('/login-user');
     } catch (err: any) {
-      // Se o script da API lançar um erro, ele será capturado aqui
-      console.error('Erro ao tentar cadastrar:', err);
       setError(
-        err.message ||
-          'Não foi possível completar o cadastro. Por favor, tente novamente.',
+        err.message || 'Erro ao completar o cadastro.',
       );
     } finally {
-      // Este bloco executa sempre, seja em caso de sucesso ou erro
-      setLoading(false); // Desativa o estado de loading
+      setLoading(false);
     }
   };
 
@@ -119,23 +135,19 @@ const CadastroPage = () => {
     <div className={Style.loginPage}>
       <header className={Style.header}>
         <div className={Style.headerbar}>
-          {' '}
           <div className={Style.logoWrapper}>
             <Logo />
           </div>
         </div>
       </header>
       <main className={Style.main}>
-        {/* --- Formulário com todos os campos do JSON --- */}
         <section className={Style.formSection}>
           <form
             className={Style.form}
             onSubmit={handleSubmit}
           >
             <h2>Criar nova conta</h2>
-
             <div className={Style.loginForm}>
-              {/* ÁREA PARA EXIBIR A MENSAGEM DE ERRO, APARECE SE 'error' NÃO FOR NULO */}
               {error && (
                 <p className={Style.error}>{error}</p>
               )}
@@ -146,7 +158,7 @@ const CadastroPage = () => {
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Nome"
                   icon={<FaUser />}
-                  disabled={loading} // <-- ALTERAÇÃO
+                  disabled={loading}
                 />
                 <Input
                   value={sobrenome}
@@ -154,7 +166,7 @@ const CadastroPage = () => {
                     setSobrenome(e.target.value)
                   }
                   placeholder="Sobrenome"
-                  disabled={loading} // <-- ALTERAÇÃO
+                  disabled={loading}
                 />
               </div>
 
@@ -164,7 +176,7 @@ const CadastroPage = () => {
                   onChange={(e) => setCpf(e.target.value)}
                   placeholder="CPF"
                   icon={<FaIdCard />}
-                  disabled={loading} // <-- ALTERAÇÃO
+                  disabled={loading}
                 />
                 <Input
                   value={telefone}
@@ -174,7 +186,7 @@ const CadastroPage = () => {
                   placeholder="Telefone"
                   icon={<FaPhone />}
                   type="tel"
-                  disabled={loading} // <-- ALTERAÇÃO
+                  disabled={loading}
                 />
               </div>
 
@@ -184,10 +196,9 @@ const CadastroPage = () => {
                   onChange={(date) =>
                     setDataNascimento(date)
                   }
-                  placeholderText="Data de Nascimento"
-                  disabled={loading} // <-- ALTERAÇÃO
+                  placeholderText="Nascimento"
+                  disabled={loading}
                 />
-                {/* Campo de Sexo como Dropdown */}
                 <div className={Style.inputContainer}>
                   <span
                     className={`${Style.icon} ${Style.left}`}
@@ -200,10 +211,10 @@ const CadastroPage = () => {
                       setSexo(e.target.value)
                     }
                     className={`${Style.inputField} ${Style.withIconLeft}`}
-                    disabled={loading} // <-- ALTERAÇÃO
+                    disabled={loading}
                   >
                     <option value="outro">
-                      Prefiro não dizer
+                      Gênero: Outro
                     </option>
                     <option value="feminino">
                       Feminino
@@ -218,18 +229,41 @@ const CadastroPage = () => {
               <Input
                 value={cep}
                 onChange={(e) => setCep(e.target.value)}
-                placeholder="CEP"
+                placeholder="CEP (00000-000)"
                 icon={<FaMapMarkerAlt />}
-                disabled={loading} // <-- ALTERAÇÃO
+                disabled={loading}
               />
+
+              {/* RUA E NÚMERO NA MESMA LINHA */}
+              <div className={Style.inputRow}>
+                <div style={{ flex: 3 }}>
+                  <Input
+                    value={rua}
+                    onChange={(e) => setRua(e.target.value)}
+                    placeholder="Rua / Logradouro"
+                    icon={<FaRoad />}
+                    disabled={loading}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Input
+                    value={numero}
+                    onChange={(e) =>
+                      setNumero(e.target.value)
+                    }
+                    placeholder="Nº"
+                    icon={<FaHashtag />}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
               <Input
-                value={endereco}
-                onChange={(e) =>
-                  setEndereco(e.target.value)
-                }
-                placeholder="Endereço (Rua, Nº, Complemento)"
-                icon={<FaRoad />}
-                disabled={loading} // <-- ALTERAÇÃO
+                value={bairro}
+                onChange={(e) => setBairro(e.target.value)}
+                placeholder="Bairro"
+                icon={<FaMapMarkerAlt />}
+                disabled={loading}
               />
 
               <div className={Style.inputRow}>
@@ -240,15 +274,15 @@ const CadastroPage = () => {
                   }
                   placeholder="Cidade"
                   icon={<FaCity />}
-                  disabled={loading} // <-- ALTERAÇÃO
+                  disabled={loading}
                 />
                 <Input
                   value={estado}
                   onChange={(e) =>
                     setEstado(e.target.value)
                   }
-                  placeholder="Estado (UF)"
-                  disabled={loading} // <-- ALTERAÇÃO
+                  placeholder="UF"
+                  disabled={loading}
                 />
               </div>
 
@@ -258,7 +292,7 @@ const CadastroPage = () => {
                 placeholder="E-mail"
                 type="email"
                 icon={<FaEnvelope />}
-                disabled={loading} // <-- ALTERAÇÃO
+                disabled={loading}
               />
 
               <Input
@@ -273,8 +307,9 @@ const CadastroPage = () => {
                 onIconClick={() =>
                   setMostrarSenha(!mostrarSenha)
                 }
-                disabled={loading} // <-- ALTERAÇÃO
+                disabled={loading}
               />
+
               <Input
                 value={confirmarSenha}
                 onChange={(e) =>
@@ -284,10 +319,9 @@ const CadastroPage = () => {
                 type="password"
                 icon={<FaLock />}
                 iconPosition="right"
-                disabled={loading} // <-- ALTERAÇÃO
+                disabled={loading}
               />
 
-              {/* BOTÃO AGORA REAGE AO ESTADO DE 'loading' */}
               <Button
                 type="submit"
                 variant="primary"
@@ -295,18 +329,6 @@ const CadastroPage = () => {
               >
                 {loading ? 'Cadastrando...' : 'Cadastrar'}
               </Button>
-            </div>
-
-            <div className={Style.createAccount}>
-              <p>
-                Já tem uma conta?{' '}
-                <Link
-                  href="/login-user"
-                  className={Style.link}
-                >
-                  Faça login
-                </Link>
-              </p>
             </div>
           </form>
         </section>

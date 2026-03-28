@@ -1,0 +1,56 @@
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  gap: 20px;
+}
+
+.logoWrapper a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary, #005f6b);
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 50px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  flex-grow: 1;
+  max-width: 700px;
+}
+
+.inputWrapper {
+  flex: 1;
+}
+
+.inputWrapper > div > input {
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.separator {
+  width: 1px;
+  height: 30px;
+  background-color: #e0e0e0;
+  margin: 0 10px;
+}
+
+.buttonsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}

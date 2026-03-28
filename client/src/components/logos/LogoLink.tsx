@@ -6,7 +6,7 @@ const Logo = () => {
       src="/logos/Logo-com-nome.png"
       alt="Logo NossoZelo"
       onClick={() =>
-        (window.location.href = '/home/nossozelo')
+        (window.location.href = '/prestadores')
       }
     />
   );
