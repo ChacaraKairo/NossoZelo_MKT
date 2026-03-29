@@ -5,12 +5,12 @@ export interface Coordenadas {
   longitude: number;
 }
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(); // ✅ Instância fora da classe
 
 export class GeolocalizacaoService {
   private static readonly userAgent =
     'SeuApp/1.0 (seuemail@exemplo.com)';
-  private static readonly EARTH_RADIUS_KM = 6371;
+  private static readonly EARTH_RADIUS_KM = 6371; // ✅ Constante de raio da terra
 
   /**
    * ✅ MÉTODO CENTRALIZADO DE CÁLCULO (SQL)
@@ -134,7 +134,124 @@ export class GeolocalizacaoService {
     return null;
   }
 
-  // --- MÉTODOS DE BUSCA NO BANCO (REFATORADOS COM SQL HELPER) ---
+  // --- MÉTODOS DE BUSCA NO BANCO ---
+
+  /**
+   * ✅ BUSCA MASTER DINÂMICA DE PRESTADORES
+   * Suporta filtros simultâneos de texto, raio de distância e preço máximo.
+   */
+  public static async buscarPrestadores(params: {
+    idUsuario?: string;
+    nome?: string;
+    localizacao?: string;
+    tipo?: string;
+    raioKm?: number;
+    precoMax?: number;
+    limit?: number;
+  }): Promise<any[]> {
+    const {
+      idUsuario,
+      nome,
+      localizacao,
+      tipo,
+      raioKm,
+      precoMax,
+      limit = 20,
+    } = params;
+
+    const tiposPermitidos = [
+      'cuidador',
+      'enfermeiro',
+      'acompanhante',
+    ];
+    const tipoFiltro =
+      tipo && tiposPermitidos.includes(tipo) ? tipo : null;
+
+    // Array para guardar as condições dinâmicas do WHERE
+    const conditions: Prisma.Sql[] = [];
+
+    // 1. Filtro de Tipo
+    if (tipoFiltro) {
+      conditions.push(Prisma.sql`u.tipo = ${tipoFiltro}`);
+    } else {
+      conditions.push(
+        Prisma.sql`u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')`,
+      );
+    }
+
+    // 2. Filtro de Nome
+    if (nome) {
+      conditions.push(
+        Prisma.sql`u.nome LIKE ${'%' + nome + '%'}`,
+      );
+    }
+
+    // 3. Filtro de Localização Textual (Cidade/Estado estão na tabela usuários)
+    if (localizacao) {
+      conditions.push(
+        Prisma.sql`(u.cidade LIKE ${
+          '%' + localizacao + '%'
+        } OR u.estado LIKE ${'%' + localizacao + '%'})`,
+      );
+    }
+
+    // 4. Filtro de Preço Máximo (Subquery na tabela servicos)
+    if (precoMax) {
+      conditions.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM servicos s WHERE s.prestador_id = u.id AND s.valor <= ${precoMax})`,
+      );
+    }
+
+    // 5. Configurações Dinâmicas de Raio/Distância
+    let selectDistancia = Prisma.sql`, NULL AS distancia`;
+    let havingClause = Prisma.empty;
+    let orderClause = Prisma.sql`ORDER BY u.criado_em DESC`; // Fallback: Ordena por mais recente
+
+    // Só calcula distância se enviaram o ID do usuário e o Raio máximo desejado
+    if (idUsuario && raioKm) {
+      try {
+        const loc = await this.obterLocalizacaoUsuario(
+          idUsuario,
+        );
+        selectDistancia = Prisma.sql`, ${this.getSqlDistancia(
+          loc.latitude,
+          loc.longitude,
+        )} AS distancia`;
+        havingClause = Prisma.sql`HAVING distancia <= ${raioKm}`;
+        orderClause = Prisma.sql`ORDER BY distancia ASC`; // Altera ordenação para os mais próximos
+      } catch (error) {
+        console.warn(
+          'Usuário não possui localização cadastrada. Ignorando filtro de raioKm.',
+        );
+      }
+    }
+
+    // Construção do WHERE integrando todas as conditions
+    const whereClause =
+      conditions.length > 0
+        ? Prisma.sql`WHERE ${Prisma.join(
+            conditions,
+            ' AND ',
+          )}`
+        : Prisma.empty;
+
+    // Query Final
+    const query = Prisma.sql`
+      SELECT 
+        u.id, u.nome, u.tipo, u.url_foto_perfil, u.cidade, u.estado, u.avaliacao_media
+        ${selectDistancia}
+      FROM usuarios u
+      LEFT JOIN localizacoes l ON u.id = l.usuario_id
+      ${whereClause}
+      ${havingClause}
+      ${orderClause}
+      LIMIT ${limit};
+    `;
+
+    return await prisma.$queryRaw(query);
+  }
+
+  // Métodos adicionais legados (mantidos para compatibilidade com outras partes do seu sistema)
 
   public static async buscarUsuariosPorRaioPorUsuarioId(
     usuarioId: string,
@@ -143,7 +260,6 @@ export class GeolocalizacaoService {
     const loc = await this.obterLocalizacaoUsuario(
       usuarioId,
     );
-
     const usuarios = await prisma.$queryRaw<any[]>`
       SELECT u.id
       FROM usuarios u
@@ -154,7 +270,6 @@ export class GeolocalizacaoService {
         loc.longitude,
       )} <= ${raioKm};
     `;
-
     return usuarios.map((u) => u.id);
   }
 
@@ -164,7 +279,6 @@ export class GeolocalizacaoService {
     const loc = await this.obterLocalizacaoUsuario(
       usuarioId,
     );
-
     const usuariosProximos = await prisma.$queryRaw<any[]>`
       SELECT u.id, ${this.getSqlDistancia(
         loc.latitude,
@@ -176,7 +290,6 @@ export class GeolocalizacaoService {
       ORDER BY distancia ASC
       LIMIT 20;
     `;
-
     return usuariosProximos.map((u) => u.id);
   }
 
@@ -191,11 +304,9 @@ export class GeolocalizacaoService {
     ];
     if (!tiposPermitidos.includes(tipo))
       throw new Error('Tipo inválido.');
-
     const loc = await this.obterLocalizacaoUsuario(
       usuarioId,
     );
-
     const usuariosProximos = await prisma.$queryRaw<any[]>`
       SELECT u.id, ${this.getSqlDistancia(
         loc.latitude,
@@ -207,43 +318,7 @@ export class GeolocalizacaoService {
       ORDER BY distancia ASC
       LIMIT 20;
     `;
-
     return usuariosProximos.map((u) => u.id);
-  }
-
-  public static async buscarPrestadores(params: {
-    nome?: string;
-    localizacao?: string;
-    tipo?: string;
-    limit?: number;
-  }): Promise<any[]> {
-    const { nome, localizacao, tipo, limit = 20 } = params;
-    const tiposPermitidos = [
-      'cuidador',
-      'enfermeiro',
-      'acompanhante',
-    ];
-    const tipoFiltro =
-      tipo && tiposPermitidos.includes(tipo)
-        ? tipo
-        : { in: tiposPermitidos };
-
-    return await prisma.usuarios.findMany({
-      where: {
-        tipo: tipoFiltro as any,
-        nome: nome ? { contains: nome } : undefined,
-        ...(localizacao
-          ? {
-              OR: [
-                { cidade: { contains: localizacao } },
-                { estado: { contains: localizacao } },
-              ],
-            }
-          : {}),
-      },
-      include: { localizacoes: true },
-      take: limit,
-    });
   }
 
   public static async buscarPorNomeERaio(
@@ -255,7 +330,6 @@ export class GeolocalizacaoService {
       usuarioId,
     );
     const nomeBusca = `%${nome}%`;
-
     return await prisma.$queryRaw`
       SELECT u.id, u.nome, u.tipo, ${this.getSqlDistancia(
         loc.latitude,

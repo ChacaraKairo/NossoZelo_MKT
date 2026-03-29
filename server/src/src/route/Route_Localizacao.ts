@@ -1,26 +1,59 @@
 import { Router } from 'express';
-import { GeolocalizacaoController } from '../controller/Controller_Localizacao'; // corrigido o path
+import { GeolocalizacaoController } from '../controller/Controller_Localizacao';
 
 const LocalizacaoRouter = Router();
 
-// Rota para buscar coordenadas por CEP
+/**
+ * @route GET /api/localizacao/coordenadas/:cep
+ * @desc Busca latitude e longitude a partir de um CEP (via Nominatim/ViaCEP)
+ */
 LocalizacaoRouter.get(
   '/coordenadas/:cep',
   GeolocalizacaoController.buscarCoordenadas,
 );
 
-// Rota para buscar usuários por raio
+/**
+ * @route GET /api/localizacao/prestadores
+ * @desc Busca geral por nome, cidade ou tipo (Usa Prisma findMany)
+ * @query ?nome=...&localizacao=...&tipo=...&limit=...
+ */
+LocalizacaoRouter.get(
+  '/prestadores',
+  GeolocalizacaoController.buscarPrestadores,
+);
+
+/**
+ * @route GET /api/localizacao/prestadores/raio/:idUsuario
+ * @desc Busca prestadores por nome dentro de um raio de distância do usuário
+ * @query ?nome=...&raioKm=...
+ */
+LocalizacaoRouter.get(
+  '/prestadores/raio/:idUsuario',
+  GeolocalizacaoController.buscarPorNomeERaio,
+);
+
+/**
+ * @route GET /api/localizacao/usuarios-proximos
+ * @desc Busca usuários dentro de um raio específico (Baseado em coordenadas no body ou query)
+ */
 LocalizacaoRouter.get(
   '/usuarios-proximos',
   GeolocalizacaoController.buscarUsuariosProximos,
 );
 
-// ✅ Nova rota: buscar os 20 usuários mais próximos (por ID)
+/**
+ * @route GET /api/localizacao/mais-proximos/:idUsuario
+ * @desc Lista os 20 prestadores mais próximos de um usuário específico
+ */
 LocalizacaoRouter.get(
   '/mais-proximos/:idUsuario',
   GeolocalizacaoController.buscar20UsuariosMaisProximos,
 );
-// ✅ Nova rota: buscar 20 usuários mais próximos filtrando por tipo
+
+/**
+ * @route GET /api/localizacao/mais-proximos/:idUsuario/:tipo
+ * @desc Lista os 20 prestadores mais próximos filtrando por tipo (cuidador, enfermeiro, etc)
+ */
 LocalizacaoRouter.get(
   '/mais-proximos/:idUsuario/:tipo',
   GeolocalizacaoController.buscar20UsuariosMaisProximosPorTipo,
