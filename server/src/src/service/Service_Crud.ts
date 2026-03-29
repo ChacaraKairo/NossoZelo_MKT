@@ -1,5 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { getPostTables } from '@prisma/client/sql';
+import { PrismaClient } from '@prisma/client';
 
 class ServiceCrud {
   private prisma: PrismaClient;
@@ -18,7 +17,7 @@ class ServiceCrud {
 
   static async listar_entidades(): Promise<any[]> {
     const prisma = new PrismaClient();
-    return await prisma.$queryRawTyped(getPostTables());
+    return await prisma.$queryRaw`SELECT table_name AS TABLE_NAME FROM information_schema.tables WHERE table_schema = DATABASE()`;
   }
 
   static async checkIfEntityExists(
@@ -217,7 +216,7 @@ class ServiceCrud {
   }
   static async findMany(
     entity: string,
-    options: Prisma.Enumerable<any>, // pode conter `where`, `orderBy`, `take`, `skip`, etc.
+    options: any, // pode conter `where`, `orderBy`, `take`, `skip`, etc.
   ): Promise<any[]> {
     try {
       if (!(await this.checkIfEntityExists(entity))) {

@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import { sqltag as sql, empty, join, Sql } from '@prisma/client/runtime/library';
 
 export interface Coordenadas {
   latitude: number;
@@ -19,8 +20,8 @@ export class GeolocalizacaoService {
   private static getSqlDistancia(
     lat: number,
     lon: number,
-  ): Prisma.Sql {
-    return Prisma.sql`
+  ): Sql {
+    return sql`
       (${this.EARTH_RADIUS_KM} * ACOS(
         COS(RADIANS(${lat})) *
         COS(RADIANS(l.latitude)) *
@@ -168,28 +169,28 @@ export class GeolocalizacaoService {
       tipo && tiposPermitidos.includes(tipo) ? tipo : null;
 
     // Array para guardar as condições dinâmicas do WHERE
-    const conditions: Prisma.Sql[] = [];
+    const conditions: Sql[] = [];
 
     // 1. Filtro de Tipo
     if (tipoFiltro) {
-      conditions.push(Prisma.sql`u.tipo = ${tipoFiltro}`);
+      conditions.push(sql`u.tipo = ${tipoFiltro}`);
     } else {
       conditions.push(
-        Prisma.sql`u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')`,
+        sql`u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')`,
       );
     }
 
     // 2. Filtro de Nome
     if (nome) {
       conditions.push(
-        Prisma.sql`u.nome LIKE ${'%' + nome + '%'}`,
+        sql`u.nome LIKE ${'%' + nome + '%'}`,
       );
     }
 
     // 3. Filtro de Localização Textual (Cidade/Estado estão na tabela usuários)
     if (localizacao) {
       conditions.push(
-        Prisma.sql`(u.cidade LIKE ${
+        sql`(u.cidade LIKE ${
           '%' + localizacao + '%'
         } OR u.estado LIKE ${'%' + localizacao + '%'})`,
       );
@@ -198,14 +199,14 @@ export class GeolocalizacaoService {
     // 4. Filtro de Preço Máximo (Subquery na tabela servicos)
     if (precoMax) {
       conditions.push(
-        Prisma.sql`EXISTS (SELECT 1 FROM servicos s WHERE s.prestador_id = u.id AND s.valor <= ${precoMax})`,
+        sql`EXISTS (SELECT 1 FROM servicos s WHERE s.prestador_id = u.id AND s.valor <= ${precoMax})`,
       );
     }
 
     // 5. Configurações Dinâmicas de Raio/Distância
-    let selectDistancia = Prisma.sql`, NULL AS distancia`;
-    let havingClause = Prisma.empty;
-    let orderClause = Prisma.sql`ORDER BY u.criado_em DESC`; // Fallback: Ordena por mais recente
+    let selectDistancia = sql`, NULL AS distancia`;
+    let havingClause = empty;
+    let orderClause = sql`ORDER BY u.criado_em DESC`; // Fallback: Ordena por mais recente
 
     // Só calcula distância se enviaram o ID do usuário e o Raio máximo desejado
     if (idUsuario && raioKm) {
@@ -213,12 +214,12 @@ export class GeolocalizacaoService {
         const loc = await this.obterLocalizacaoUsuario(
           idUsuario,
         );
-        selectDistancia = Prisma.sql`, ${this.getSqlDistancia(
+        selectDistancia = sql`, ${this.getSqlDistancia(
           loc.latitude,
           loc.longitude,
         )} AS distancia`;
-        havingClause = Prisma.sql`HAVING distancia <= ${raioKm}`;
-        orderClause = Prisma.sql`ORDER BY distancia ASC`; // Altera ordenação para os mais próximos
+        havingClause = sql`HAVING distancia <= ${raioKm}`;
+        orderClause = sql`ORDER BY distancia ASC`; // Altera ordenação para os mais próximos
       } catch (error) {
         console.warn(
           'Usuário não possui localização cadastrada. Ignorando filtro de raioKm.',
@@ -229,14 +230,14 @@ export class GeolocalizacaoService {
     // Construção do WHERE integrando todas as conditions
     const whereClause =
       conditions.length > 0
-        ? Prisma.sql`WHERE ${Prisma.join(
+        ? sql`WHERE ${join(
             conditions,
             ' AND ',
           )}`
-        : Prisma.empty;
+        : empty;
 
     // Query Final
-    const query = Prisma.sql`
+    const query = sql`
       SELECT 
         u.id, u.nome, u.tipo, u.url_foto_perfil, u.cidade, u.estado, u.avaliacao_media
         ${selectDistancia}
@@ -270,7 +271,7 @@ export class GeolocalizacaoService {
         loc.longitude,
       )} <= ${raioKm};
     `;
-    return usuarios.map((u) => u.id);
+    return usuarios.map((u: any) => u.id);
   }
 
   public static async buscar20UsuariosMaisProximos(
@@ -290,7 +291,7 @@ export class GeolocalizacaoService {
       ORDER BY distancia ASC
       LIMIT 20;
     `;
-    return usuariosProximos.map((u) => u.id);
+    return usuariosProximos.map((u: any) => u.id);
   }
 
   public static async buscar20UsuariosMaisProximosPorTipo(
@@ -318,7 +319,7 @@ export class GeolocalizacaoService {
       ORDER BY distancia ASC
       LIMIT 20;
     `;
-    return usuariosProximos.map((u) => u.id);
+    return usuariosProximos.map((u: any) => u.id);
   }
 
   public static async buscarPorNomeERaio(

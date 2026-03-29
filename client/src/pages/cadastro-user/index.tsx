@@ -9,6 +9,8 @@ import Button from '@/components/btn/Button';
 import Logo from '@/components/logos/OnlyLogo';
 
 import { cadastrarUsuario } from '@/service/cadastroService';
+import { mascaraCpf, mascaraTelefone, mascaraCep, mascaraNumero, mascaraUf } from '@/utils/masks';
+import { cpfValido, telefoneValido, cepValido } from '@/utils/validators';
 
 import {
   FaUser,
@@ -86,6 +88,18 @@ const CadastroPage = () => {
     event.preventDefault();
     setError(null);
 
+    if (!cpfValido(cpf)) {
+      setError('CPF inválido. Digite os 11 dígitos.');
+      return;
+    }
+    if (!telefoneValido(telefone)) {
+      setError('Telefone inválido. Digite DDD + número.');
+      return;
+    }
+    if (!cepValido(cep)) {
+      setError('CEP inválido. Digite os 8 dígitos.');
+      return;
+    }
     if (senha !== confirmarSenha) {
       setError('As senhas não coincidem!');
       return;
@@ -98,13 +112,13 @@ const CadastroPage = () => {
         nome: `${nome} ${sobrenome}`.trim(),
         email: email,
         senha: senha,
-        telefone: telefone,
-        cpf: cpf,
+        telefone: telefone.replace(/\D/g, ''),
+        cpf: cpf.replace(/\D/g, ''),
         sexo: sexo,
         data_nascimento: dataNascimento
           ? dataNascimento.toISOString().split('T')[0]
           : null,
-        cep: cep,
+        cep: cep.replace(/\D/g, ''),
         // Concatenamos para manter compatibilidade com o seu Backend atual
         endereco: `${rua}, ${numero} - ${bairro}`,
         cidade: cidade,
@@ -147,6 +161,8 @@ const CadastroPage = () => {
             onSubmit={handleSubmit}
           >
             <h2>Criar nova conta</h2>
+            <Button variant="secondary" onClick={() => router.push('/cadastro-prestador')}>Desejo ser prestador de cuidados</Button>
+            <br/>
             <div className={Style.loginForm}>
               {error && (
                 <p className={Style.error}>{error}</p>
@@ -173,17 +189,15 @@ const CadastroPage = () => {
               <div className={Style.inputRow}>
                 <Input
                   value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
-                  placeholder="CPF"
+                  onChange={(e) => setCpf(mascaraCpf(e.target.value))}
+                  placeholder="CPF (000.000.000-00)"
                   icon={<FaIdCard />}
                   disabled={loading}
                 />
                 <Input
                   value={telefone}
-                  onChange={(e) =>
-                    setTelefone(e.target.value)
-                  }
-                  placeholder="Telefone"
+                  onChange={(e) => setTelefone(mascaraTelefone(e.target.value))}
+                  placeholder="Telefone ((00) 00000-0000)"
                   icon={<FaPhone />}
                   type="tel"
                   disabled={loading}
@@ -228,7 +242,7 @@ const CadastroPage = () => {
 
               <Input
                 value={cep}
-                onChange={(e) => setCep(e.target.value)}
+                onChange={(e) => setCep(mascaraCep(e.target.value))}
                 placeholder="CEP (00000-000)"
                 icon={<FaMapMarkerAlt />}
                 disabled={loading}
@@ -248,9 +262,7 @@ const CadastroPage = () => {
                 <div style={{ flex: 1 }}>
                   <Input
                     value={numero}
-                    onChange={(e) =>
-                      setNumero(e.target.value)
-                    }
+                    onChange={(e) => setNumero(mascaraNumero(e.target.value))}
                     placeholder="Nº"
                     icon={<FaHashtag />}
                     disabled={loading}
@@ -278,9 +290,7 @@ const CadastroPage = () => {
                 />
                 <Input
                   value={estado}
-                  onChange={(e) =>
-                    setEstado(e.target.value)
-                  }
+                  onChange={(e) => setEstado(mascaraUf(e.target.value))}
                   placeholder="UF"
                   disabled={loading}
                 />
