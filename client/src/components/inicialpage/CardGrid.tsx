@@ -12,6 +12,7 @@ const CardGrid = () => {
           imageUrl={item.imageUrl}
           alt={item.alt}
           tipo={item.tipo}
+          /*ao clicar redireciona para a página home, ja passando para o filtro de prestadores qual tipo de prestador foi passado*/
         />
       ))}
     </div>

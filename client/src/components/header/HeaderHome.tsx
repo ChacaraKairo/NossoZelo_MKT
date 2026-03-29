@@ -2,70 +2,46 @@ import React, { useState, useEffect } from 'react';
 import Logo from '../logos/LogoLink';
 import AuthButtons from './AuthButtons';
 import styles from './styles/HeaderHome.module.css';
+import { getUsuarioDoCookie } from '@/utils/auth';
 
 interface HeaderHomeProps {
-  // Define se o header deve agir como público (sempre botões) ou privado (tenta mostrar usuário)
   variant?: 'public' | 'private';
 }
 
 const HeaderHome: React.FC<HeaderHomeProps> = ({
   variant = 'private',
 }) => {
+  // --- ESTADOS DE AUTENTICAÇÃO E HIDRATAÇÃO ---
   const [usuario, setUsuario] = useState<{
     nome: string;
   } | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Se a página for estritamente pública, nem perdemos tempo processando o cookie
+    setIsClient(true); // Confirma que estamos no navegador
+
     if (variant === 'public') return;
 
-    const tokenCookie = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('token='))
-      ?.split('=')[1];
+    const decoded = getUsuarioDoCookie();
 
-    if (tokenCookie) {
-      try {
-        const payloadBase64 = tokenCookie.split('.')[1];
-        const base64 = payloadBase64
-          .replace(/-/g, '+')
-          .replace(/_/g, '/');
-        const decodedJson = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map(
-              (c) =>
-                '%' +
-                ('00' + c.charCodeAt(0).toString(16)).slice(
-                  -2,
-                ),
-            )
-            .join(''),
-        );
-        const decoded = JSON.parse(decodedJson);
-
-        const nomeCompleto =
-          decoded.nome || decoded.name || 'Usuário';
-        const primeiroNome = nomeCompleto.split(' ')[0];
-
-        setUsuario({ nome: primeiroNome });
-      } catch (error) {
-        console.error(
-          'Erro ao decodificar o token:',
-          error,
-        );
-      }
+    if (decoded) {
+      const nomeCompleto = decoded.nome || 'Usuário';
+      const primeiroNome = nomeCompleto.split(' ')[0];
+      setUsuario({ nome: primeiroNome });
     }
-  }, [variant]); // O useEffect reage caso a prop mude
+  }, [variant]);
 
   return (
     <header className={styles.headerContainer}>
       <div className={styles.logoWrapper}>
         <Logo />
       </div>
+
       <div className={styles.buttonsWrapper}>
-        {/* Lógica de exibição baseada na variante e no estado */}
-        {variant === 'public' ? (
+        {/* Evita o "piscar" dos botões durante o carregamento do SSR no Next.js */}
+        {!isClient ? (
+          <div className="w-24 h-8 bg-gray-200 animate-pulse rounded"></div> // Skeleton de loading elegante
+        ) : variant === 'public' ? (
           <AuthButtons />
         ) : usuario ? (
           <span className={styles.saudacao}>

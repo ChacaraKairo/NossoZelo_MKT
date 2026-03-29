@@ -1,5 +1,6 @@
 import React from 'react';
 import Style from './styles/Card.module.css';
+import { useRouter } from 'next/router';
 
 interface CardProps {
   imageUrl: string;
@@ -12,15 +13,21 @@ const Card: React.FC<CardProps> = ({
   alt,
   tipo,
 }) => {
+  const router = useRouter();
+
   return (
-    <div className={Style.card}>
+    <div
+      className={Style.card}
+      onClick={() =>
+        router.push(
+          `/prestadores?tipo=${tipo.toLowerCase()}`,
+        )
+      }
+    >
       <img
         src={imageUrl}
         alt={alt}
         className={Style.image}
-        onClick={() =>
-          (window.location.href = '/home/nossozelo/' + tipo)
-        }
       />
       <div className={Style.text}>{alt}</div>
     </div>

@@ -1,11 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import HeaderMain from '@/components/header/HeaderMain';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import HeaderMain from '@/components/header/HeaderMain'; // ⚠️ Certifique-se de que este é o header conectado ao Zustand
 import Style from '@/styles/PrestadoresPage.module.css';
 import Filtro from '@/components/main-page/filter/Filtro';
-import Footer from '@/components/footer/Footer';
 import PrestadoresGrid from '@/components/main-page/prestadores-grid/PrestadoresGrid';
+import Footer from '@/components/footer/Footer';
+import { useBuscaStore } from '@/utils/useBuscaStore'; // ✅ Lógica de busca
 
-const PrestadoresPage = () => {
+const NossoZeloHome = () => {
+  const router = useRouter();
+  const setCategoria = useBuscaStore(
+    (state) => state.setCategoria,
+  );
+
+  // ✅ 1. LÓGICA DO ZUSTAND: Lê a URL na montagem (Ex: /home?tipo=enfermeiro) e joga na Store
+  useEffect(() => {
+    if (router.isReady) {
+      const { tipo } = router.query;
+      if (tipo) {
+        const categoriaFormatada =
+          (tipo as string).charAt(0).toUpperCase() +
+          (tipo as string).slice(1).toLowerCase();
+        setCategoria(categoriaFormatada);
+      }
+    }
+  }, [router.isReady, router.query, setCategoria]);
+
+  // ✅ 2. LÓGICA DE GEOLOCALIZAÇÃO: Salva latitude/longitude em cookies (Trazido da sua pág de prestadores)
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -40,17 +61,14 @@ const PrestadoresPage = () => {
     }
   }, []);
 
-  const handleSearch = (searchData: {
-    location: string;
-    query: string;
-  }) => {
-    console.log('Busca:', searchData);
-  };
-
   return (
     <div>
-      <HeaderMain onSearch={handleSearch} />
+      {/* Header: Retiramos o onSearch={} pois o HeaderMain agora 
+        deve se comunicar direto com o Zustand (useBuscaStore) 
+      */}
+      <HeaderMain />
 
+      {/* 🎨 ESTRUTURA VISUAL CORRETA (Copiada da página Prestadores) */}
       <main
         className={Style.mainContainer}
         style={{
@@ -60,6 +78,7 @@ const PrestadoresPage = () => {
           marginTop: '100px',
         }}
       >
+        {/* Sidebar com o Filtro */}
         <aside
           className={Style.sidebar}
           style={{ width: '250px' }}
@@ -70,11 +89,12 @@ const PrestadoresPage = () => {
         {/* Grid de Prestadores Componentizado */}
         <PrestadoresGrid />
       </main>
+
       <footer>
-        <Footer></Footer>
+        <Footer />
       </footer>
     </div>
   );
 };
 
-export default PrestadoresPage;
+export default NossoZeloHome;

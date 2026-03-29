@@ -1,103 +1,101 @@
+// src/components/ProviderGrid.tsx
 import React, { useState, useEffect } from 'react';
 import UserCard from '@/components/main-page/prestadores-grid/card/UserCard';
 import Style from '@/styles/PrestadoresPage.module.css';
+import { useBuscaStore } from '@/utils/useBuscaStore';
+import { getUsuarioDoCookie } from '@/utils/auth'; // Aquele utilitário que criamos na resposta anterior!
 
-const PrestadoresGrid = () => {
+const ProvidersGrid = () => {
   const [providers, setProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pega todos os estados da Store
+  const {
+    searchLocation,
+    searchService,
+    categoria,
+    distancia,
+    precoMax,
+  } = useBuscaStore();
+
   useEffect(() => {
-    const fetchProviders = async () => {
+    // 🔥 DEBOUNCE: Aguarda 800ms antes de fazer a busca
+    const timeoutId = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        // 1. Puxando o token dos cookies para extrair o ID do usuário
-        const tokenCookie = document.cookie
-          .split('; ')
-          .find((row) => row.startsWith('token='))
-          ?.split('=')[1];
+        const usuarioLogado = getUsuarioDoCookie();
+        const idUsuario = usuarioLogado?.id || '';
 
-        if (!tokenCookie) {
-          throw new Error('Usuário não está logado.');
-        }
-
-        // 2. Decodificando o payload do JWT para acessar o ID
-        const payloadBase64 = tokenCookie.split('.')[1];
-        const base64 = payloadBase64
-          .replace(/-/g, '+')
-          .replace(/_/g, '/');
-        const decodedJson = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map(
-              (c) =>
-                '%' +
-                ('00' + c.charCodeAt(0).toString(16)).slice(
-                  -2,
-                ),
-            )
-            .join(''),
-        );
-        const decoded = JSON.parse(decodedJson);
-
-        const idUsuario = decoded.id;
-        if (!idUsuario) {
-          throw new Error('ID de usuário inválido.');
-        }
-
-        // 3. Consultar no banco de dados (Ajuste a porta 3333 para a porta correta do seu backend)
-        // Estamos usando 'cuidador' por padrão no momento.
-        const tipo = 'cuidador';
-        const response = await fetch(
-          `http://localhost:3333/localizacao/mais-proximos/${idUsuario}/${tipo}`,
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            'Erro ao buscar os prestadores mais próximos.',
+        const queryParams = new URLSearchParams();
+        if (idUsuario)
+          queryParams.append('idUsuario', idUsuario);
+        if (searchService)
+          queryParams.append('nome', searchService);
+        if (searchLocation)
+          queryParams.append('localizacao', searchLocation);
+        if (categoria)
+          queryParams.append(
+            'tipo',
+            categoria.toLowerCase(),
           );
-        }
+        if (precoMax)
+          queryParams.append('precoMax', precoMax);
+        if (distancia)
+          queryParams.append(
+            'raioKm',
+            distancia.toString(),
+          );
+
+        // Altere a porta se necessário (3333 ou 4000)
+        const response = await fetch(
+          `http://localhost:3333/api/localizacao/prestadores?${queryParams.toString()}`,
+        );
+
+        if (!response.ok)
+          throw new Error('Falha ao carregar prestadores.');
 
         const data = await response.json();
-        setProviders(data); // Define os dados no state
+        setProviders(data);
       } catch (err: any) {
-        console.error(err);
-        setError(err.message);
+        setError(
+          err.message || 'Erro inesperado ao buscar dados.',
+        );
       } finally {
         setLoading(false);
       }
-    };
+    }, 800); // Fim do delay de 800ms
 
-    fetchProviders();
-  }, []);
+    // Limpa o timeout se o usuário digitar algo novo antes dos 800ms
+    return () => clearTimeout(timeoutId);
+  }, [
+    searchLocation,
+    searchService,
+    categoria,
+    distancia,
+    precoMax,
+  ]);
 
-  // Renderiza um contêiner para manter a estrutura do layout intacta
-  const renderFallback = (content: React.ReactNode) => (
-    <section
-      style={{
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: '1.2rem',
-      }}
-    >
-      {content}
-    </section>
-  );
-
+  // Renderizações de status
   if (loading)
-    return renderFallback(
-      'Buscando prestadores próximos a você...',
+    return (
+      <div className="flex-1 flex justify-center mt-10 text-gray-500">
+        Buscando...
+      </div>
     );
   if (error)
-    return renderFallback(
-      <span style={{ color: 'red', fontWeight: 500 }}>
+    return (
+      <div className="flex-1 flex justify-center mt-10 text-red-500">
         {error}
-      </span>,
+      </div>
     );
   if (providers.length === 0)
-    return renderFallback(
-      'Nenhum prestador encontrado próximo a sua região.',
+    return (
+      <div className="flex-1 flex justify-center mt-10 text-gray-500">
+        Nenhum prestador encontrado.
+      </div>
     );
 
   return (
@@ -118,4 +116,4 @@ const PrestadoresGrid = () => {
   );
 };
 
-export default PrestadoresGrid;
+export default ProvidersGrid;

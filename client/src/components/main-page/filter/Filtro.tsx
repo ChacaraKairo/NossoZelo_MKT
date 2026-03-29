@@ -1,53 +1,64 @@
-import React, { useState } from 'react';
-import styles from './styles/Filtro.module.css'; // Crie este arquivo para estilos
+// src/components/main-page/filter/Filtro.tsx
+import React from 'react';
+import styles from './styles/Filtro.module.css';
+import { useBuscaStore } from '@/utils/useBuscaStore';
 
 const Filtro = () => {
-  const [distancia, setDistancia] = useState(50);
+  // Conecta na Store
+  const {
+    categoria,
+    setCategoria,
+    distancia,
+    setDistancia,
+    precoMax,
+    setPrecoMax,
+    limparFiltros,
+  } = useBuscaStore();
+
+  const categoriasDisponiveis = [
+    'Cuidador',
+    'Enfermeiro',
+    'Acompanhante',
+  ];
 
   return (
     <aside className={styles.filterContainer}>
       <div className={styles.header}>
         <h2 className={styles.title}>Filtros</h2>
-        <button className={styles.clearBtn}>Limpar</button>
+        <button
+          onClick={limparFiltros}
+          className={styles.clearBtn}
+        >
+          Limpar
+        </button>
       </div>
 
-      {/* Grupo: Especialidade */}
       <div className={styles.filterSection}>
         <h3 className={styles.sectionTitle}>
           Especialidade
         </h3>
         <div className={styles.checkboxGroup}>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              className={styles.checkbox}
-            />
-            <span className={styles.checkboxText}>
-              Cuidador
-            </span>
-          </label>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              className={styles.checkbox}
-            />
-            <span className={styles.checkboxText}>
-              Enfermeiro
-            </span>
-          </label>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              className={styles.checkbox}
-            />
-            <span className={styles.checkboxText}>
-              Acompanhante
-            </span>
-          </label>
+          {categoriasDisponiveis.map((cat) => (
+            <label
+              key={cat}
+              className={styles.checkboxLabel}
+            >
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={categoria === cat}
+                onChange={() =>
+                  setCategoria(categoria === cat ? '' : cat)
+                }
+              />
+              <span className={styles.checkboxText}>
+                {cat}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
 
-      {/* Grupo: Distância */}
       <div className={styles.filterSection}>
         <h3 className={styles.sectionTitle}>
           Distância <span>Até {distancia} km</span>
@@ -62,13 +73,8 @@ const Filtro = () => {
           }
           className={styles.rangeInput}
         />
-        <div className={styles.rangeLabels}>
-          <span>1 km</span>
-          <span>100 km</span>
-        </div>
       </div>
 
-      {/* Grupo: Preço */}
       <div className={styles.filterSection}>
         <h3 className={styles.sectionTitle}>
           Preço máximo/hora
@@ -78,15 +84,13 @@ const Filtro = () => {
           <input
             type="number"
             min="0"
+            value={precoMax}
+            onChange={(e) => setPrecoMax(e.target.value)}
             placeholder="0,00"
             className={styles.numberInput}
           />
         </div>
       </div>
-
-      <button className={styles.applyBtn}>
-        Aplicar Filtros
-      </button>
     </aside>
   );
 };
