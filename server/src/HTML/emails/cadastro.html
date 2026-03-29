@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bem-vindo ao Nosso Zelo</title>
+    <style>
+      body {
+        background-color: #f5f6fa;
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #111827;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        padding: 32px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .header img {
+        max-width: 100px;
+        margin-bottom: 12px;
+      }
+
+      h1 {
+        font-size: 24px;
+        color: #4f46e5;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 1.6;
+      }
+
+      .cta {
+        margin-top: 32px;
+        text-align: center;
+      }
+
+      .cta a {
+        background-color: #4f46e5;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        transition: background 0.3s;
+      }
+
+      .cta a:hover {
+        background-color: #6366f1;
+      }
+
+      .footer {
+        margin-top: 40px;
+        font-size: 12px;
+        text-align: center;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="../1-removebg-preview.png" alt="Logo Nosso Zelo" />
+        <h1>Bem-vindo, {{nome}}!</h1>
+      </div>
+
+      <p>
+        Obrigado por se cadastrar em nossa plataforma ❤️<br />
+        É um prazer ter você conosco nessa jornada que conecta cuidadores e clientes de forma segura, eficiente e humana.
+      </p>
+
+      <p>
+        A partir de agora, você poderá:
+        <ul>
+          <li>👩‍⚕️ Encontrar cuidadores qualificados</li>
+          <li>💬 Conversar com profissionais antes de contratar</li>
+          <li>🛒 Realizar pagamentos com segurança</li>
+        </ul>
+      </p>
+
+      <p>
+        Estamos trabalhando constantemente para oferecer a melhor experiência para você. Se precisar de qualquer coisa, nossa equipe está à disposição.
+      </p>
+
+      <div class="cta">
+        <a href="{{link}}">Acessar minha conta</a>
+      </div>
+
+      <div class="footer">
+        Nosso Zelo &copy; 2025<br />
+        Este é um e-mail automático. Não responda esta mensagem.
+      </div>
+    </div>
+  </body>
+</html>
