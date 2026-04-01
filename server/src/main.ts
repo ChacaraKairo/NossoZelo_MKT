@@ -47,8 +47,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Servir arquivos estáticos
+// ==========================================
+// ARQUIVOS ESTÁTICOS (HTML E UPLOADS)
+// ==========================================
+// Serve a pasta HTML
 app.use(express.static(path.join(__dirname, 'HTML')));
+
+// 🔥 NOVO: Serve a pasta uploads para o frontend conseguir ver as fotos!
+// O path resolve para sair da pasta 'src' e achar a pasta 'uploads' na raiz
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '../uploads')),
+);
+
 app.get('/', (req, res) => {
   const filePath = path.join(
     __dirname,

@@ -1,7 +1,7 @@
 // src/components/main-page/filter/Filtro.tsx
 import React from 'react';
 import styles from './styles/Filtro.module.css';
-import { useBuscaStore } from '@/utils/useBuscaStore';
+import { useBuscaStore } from '@/store/useBuscaStore';
 
 const Filtro = () => {
   // Conecta na Store

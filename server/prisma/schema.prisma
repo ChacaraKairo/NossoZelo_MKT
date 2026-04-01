@@ -30,42 +30,43 @@ model agenda {
   @@index([prestador_id], map: "prestador_id")
 }
 
+// ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que Enfermeiros e Acompanhantes também possam ter agenda fixa
 model agenda_recorrente {
-  id          Int                           @id @default(autoincrement())
-  cuidador_id String                        @db.VarChar(20)
-  dia_semana  agenda_recorrente_dia_semana?
-  hora_inicio DateTime                      @db.Time(0)
-  hora_fim    DateTime                      @db.Time(0)
-  ativo       Boolean?                      @default(true)
-  cuidadores  cuidadores                    @relation(fields: [cuidador_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "agenda_recorrente_ibfk_1")
+  id           Int                           @id @default(autoincrement())
+  prestador_id String                        @db.VarChar(20) 
+  dia_semana   agenda_recorrente_dia_semana?
+  hora_inicio  DateTime                      @db.Time(0)
+  hora_fim     DateTime                      @db.Time(0)
+  ativo        Boolean?                      @default(true)
+  usuarios     usuarios                      @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([cuidador_id], map: "cuidador_id")
+  @@index([prestador_id], map: "prestador_id")
 }
 
+// ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que qualquer prestador possa assinar um plano
 model assinaturas {
-  id          Int        @id @default(autoincrement())
-  cuidador_id String     @db.VarChar(20)
-  plano_id    Int
-  data_inicio DateTime?  @default(now()) @db.Timestamp(0)
-  data_fim    DateTime?  @db.Timestamp(0)
-  cuidadores  cuidadores @relation(fields: [cuidador_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_1")
-  planos      planos     @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
+  id           Int        @id @default(autoincrement())
+  prestador_id String     @db.VarChar(20)
+  plano_id     Int
+  data_inicio  DateTime?  @default(now()) @db.Timestamp(0)
+  data_fim     DateTime?  @db.Timestamp(0)
+  usuarios     usuarios   @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planos       planos     @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
 
-  @@index([cuidador_id], map: "cuidador_id")
+  @@index([prestador_id], map: "prestador_id")
   @@index([plano_id], map: "plano_id")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model avaliacoes {
-  id                                         Int                       @id @default(autoincrement())
-  cliente_id                                 String                    @db.VarChar(20)
-  prestador_id                               String                    @db.VarChar(20)
-  tipo_prestador                             avaliacoes_tipo_prestador
-  nota                                       Int?
-  comentario                                 String?                   @db.Text
-  data_avaliacao                             DateTime?                 @default(now()) @db.Timestamp(0)
-  usuarios_avaliacoes_cliente_idTousuarios   usuarios                  @relation("avaliacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_1")
-  usuarios_avaliacoes_prestador_idTousuarios usuarios                  @relation("avaliacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_2")
+  id                                           Int                       @id @default(autoincrement())
+  cliente_id                                   String                    @db.VarChar(20)
+  prestador_id                                 String                    @db.VarChar(20)
+  tipo_prestador                               avaliacoes_tipo_prestador
+  nota                                         Int?
+  comentario                                   String?                   @db.Text
+  data_avaliacao                               DateTime?                 @default(now()) @db.Timestamp(0)
+  usuarios_avaliacoes_cliente_idTousuarios     usuarios                  @relation("avaliacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_1")
+  usuarios_avaliacoes_prestador_idTousuarios   usuarios                  @relation("avaliacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_2")
 
   @@index([cliente_id], map: "cliente_id")
   @@index([prestador_id], map: "prestador_id")
@@ -94,7 +95,7 @@ model cuidador_especialidade {
   id               Int            @id @default(autoincrement())
   cuidador_id      String         @db.VarChar(20)
   especialidade_id Int
-  cuidadores       cuidadores     @relation(fields: [cuidador_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "cuidador_especialidade_ibfk_1")
+  cuidadores       cuidadores     @relation(fields: [cuidador_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "cuidador_especialidade_ibfk_1")
   especialidades   especialidades @relation(fields: [especialidade_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cuidador_especialidade_ibfk_2")
 
   @@index([cuidador_id], map: "cuidador_id")
@@ -106,10 +107,9 @@ model cuidadores {
   bio                    String?                  @db.Text
   anos_experiencia       Int?
   avaliacao_media        Decimal?                 @default(0.00) @db.Decimal(3, 2)
+  documentos             String?                  @db.VarChar(255) // ✅ ATUALIZAÇÃO: Adicionado para Link S3
   documento_profissional String?                  @db.VarChar(50)
   conta_bancaria         String?                  @db.VarChar(50)
-  agenda_recorrente      agenda_recorrente[]
-  assinaturas            assinaturas[]
   cuidador_especialidade cuidador_especialidade[]
   usuarios               usuarios                 @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cuidadores_ibfk_1")
   documentos_cuidadores  documentos_cuidadores[]
@@ -130,7 +130,7 @@ model documentos_cuidadores {
   cuidador_id String     @db.VarChar(20)
   tipo        String     @db.VarChar(100)
   url_arquivo String     @db.VarChar(255)
-  cuidadores  cuidadores @relation(fields: [cuidador_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "documentos_cuidadores_ibfk_1")
+  cuidadores  cuidadores @relation(fields: [cuidador_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "documentos_cuidadores_ibfk_1")
 
   @@index([cuidador_id], map: "cuidador_id")
 }
@@ -138,9 +138,21 @@ model documentos_cuidadores {
 model enfermeiros {
   usuario_id       String   @id @db.VarChar(20)
   coren            String   @unique(map: "coren") @db.VarChar(20)
+  bio              String?  @db.Text                                  // ✅ ATUALIZAÇÃO: Adicionado
   especialidade    String?  @db.VarChar(100)
   anos_experiencia Int?
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)          // ✅ ATUALIZAÇÃO: Adicionado
+  documentos       String?  @db.VarChar(255)                          // ✅ ATUALIZAÇÃO: Adicionado
   usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "enfermeiros_ibfk_1")
+}
+
+model acompanhantes {
+  usuario_id       String   @id @db.VarChar(20)
+  bio              String?  @db.Text
+  anos_experiencia Int?
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)          // ✅ ATUALIZAÇÃO: Adicionado
+  documentos       String?  @db.VarChar(255)                          // ✅ ATUALIZAÇÃO: Adicionado
+  usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "acompanhantes_ibfk_1")
 }
 
 model especialidades {
@@ -267,17 +279,22 @@ model usuarios {
   tipo                                             usuarios_tipo
   email_confirmado                                 Boolean              @default(false)
   criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
+  
+  // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
   admins                                           admins?
   agenda                                           agenda[]
+  agenda_recorrente                                agenda_recorrente[]  // Trazido para usuários
+  assinaturas                                      assinaturas[]        // Trazido para usuários
   avaliacoes_avaliacoes_cliente_idTousuarios       avaliacoes[]         @relation("avaliacoes_cliente_idTousuarios")
   avaliacoes_avaliacoes_prestador_idTousuarios     avaliacoes[]         @relation("avaliacoes_prestador_idTousuarios")
   cartoes                                          cartoes[]
   contratacoes_contratacoes_cliente_idTousuarios   contratacoes[]       @relation("contratacoes_cliente_idTousuarios")
   contratacoes_contratacoes_prestador_idTousuarios contratacoes[]       @relation("contratacoes_prestador_idTousuarios")
   cuidadores                                       cuidadores?
+  enfermeiros                                      enfermeiros?
+  acompanhantes                                    acompanhantes?       
   dados_bancarios                                  dados_bancarios?
   denuncias                                        denuncias[]
-  enfermeiros                                      enfermeiros?
   faturas                                          faturas[]
   localizacoes                                     localizacoes?
   logs_acao                                        logs_acao[]
@@ -287,7 +304,6 @@ model usuarios {
   servicos                                         servicos[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model cartoes {
   id               Int          @id @default(autoincrement())
   usuario_id       String       @db.VarChar(20)
@@ -299,7 +315,7 @@ model cartoes {
   tipo             cartoes_tipo @default(credito)
   token_gateway    String?      @db.VarChar(255)
   ativo            Boolean?     @default(true)
-  usuarios         usuarios     @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cartoes_ibfk_1")
+  usuarios         usuarios     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cartoes_ibfk_1")
 
   @@index([usuario_id], map: "usuario_id")
 }
@@ -324,6 +340,10 @@ model localizacoes {
   usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_localizacoes_usuario")
 }
 
+// ==========================================
+// ✅ ENUMS
+// ==========================================
+
 enum agenda_recorrente_dia_semana {
   domingo
   segunda
@@ -344,6 +364,7 @@ enum relatorios_tipo {
 enum avaliacoes_tipo_prestador {
   cuidador
   enfermeiro
+  acompanhante // ✅ ATUALIZAÇÃO: Adicionado
 }
 
 enum denuncias_status {

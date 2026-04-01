@@ -1,8 +1,6 @@
 // client/src/service/cadastroService.ts
 
-// Esta interface define a estrutura do objeto que vamos enviar para a API.
-// É uma boa prática tipar os dados que traficam entre o front e o back.
-interface CadastroPayload {
+export interface CadastroPayload {
   usuario: {
     nome: string;
     email: string;
@@ -16,50 +14,65 @@ interface CadastroPayload {
     cidade: string;
     estado: string;
     pais: string;
-    url_foto_perfil: string;
+    url_foto_perfil?: string;
     tipo: string;
-    email_confirmado: boolean;
+  };
+  // Opcionais: Dependendo do "tipo" selecionado, um destes será enviado
+  cuidador?: {
+    bio: string;
+    experiencia: number;
+    valorHora?: number;
+    documentos?: string; // URL do S3
+  };
+  enfermeiro?: {
+    coren: string;
+    bio: string;
+    experiencia: number;
+    valorHora?: number;
+    documentos?: string; // URL do S3
+  };
+  acompanhante?: {
+    bio: string;
+    experiencia: number;
+    valorHora?: number;
+    documentos?: string; // URL do S3
   };
 }
 
-/**
- * Envia os dados de cadastro de um novo utilizador para a API.
- * @param dados O objeto contendo todos os dados do utilizador.
- * @returns A resposta da API.
- */
 export const cadastrarUsuario = async (
   dados: CadastroPayload,
 ) => {
-  const URL_API =
-    'http://localhost:4000/nossozelo/create-users/usuario';
-
   try {
-    const resposta = await fetch(URL_API, {
+    // 1. Juntamos a variável de ambiente com a rota real do backend
+    const URL_COMPLETA = `${process.env.NEXT_PUBLIC_API_URL}/nossozelo/create-users/usuario`;
+
+    const resposta = await fetch(URL_COMPLETA, {
       method: 'POST',
       headers: {
-        // Informa à API que estamos a enviar dados no formato JSON
         'Content-Type': 'application/json',
       },
-      // Converte o nosso objeto JavaScript para uma string JSON
       body: JSON.stringify(dados),
     });
 
-    // Se a resposta da API não for de sucesso (ex: erro 400, 500),
-    // vamos ler a mensagem de erro que a API enviou e lançá-la.
     if (!resposta.ok) {
-      const erroData = await resposta.json();
+      // 2. Proteção para caso o backend retorne HTML (Ex: erro 404 ou 500)
+      let erroData;
+      try {
+        erroData = await resposta.json();
+      } catch (err) {
+        throw new Error(
+          `Erro no servidor (Status: ${resposta.status}). O backend não retornou um JSON válido.`,
+        );
+      }
+
       throw new Error(
         erroData.message ||
           'Ocorreu um erro ao tentar cadastrar.',
       );
     }
 
-    // Se a resposta for de sucesso, retornamos os dados que a API enviou de volta.
-    console.log(dados);
     return await resposta.json();
   } catch (error) {
-    // Se o erro for de rede (ex: API offline) ou o erro que lançámos acima,
-    // ele será capturado aqui. Re-lançamos para que o componente possa tratar.
     console.error('Erro no serviço de cadastro:', error);
     throw error;
   }

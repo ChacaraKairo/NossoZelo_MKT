@@ -1,232 +1,302 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/cadastro-prestador/index.tsx
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import Style from '@/styles/CadastroPage.module.css';
+import { useCadastroPrestadorStore } from '@/store/useCadastroPrestadorStore';
+import { FaCheckCircle, FaSave } from 'react-icons/fa';
+import Style from '@/styles/Wizard.module.css';
 
-import Input from '@/components/inputs/Input';
-import InputDate from '@/components/inputs/InputDate';
-import Button from '@/components/btn/Button';
-import Logo from '@/components/logos/OnlyLogo';
-
-import { cadastrarUsuario } from '@/service/cadastroService';
-import { mascaraCpf, mascaraTelefone, mascaraCep, mascaraNumero, mascaraUf } from '@/utils/masks';
-import { cpfValido, telefoneValido, cepValido } from '@/utils/validators';
-
+// Importação do nosso serviço de API
 import {
-    FaUser,
-    FaIdCard,
-    FaPhone,
-    FaEnvelope,
-    FaLock,
-    FaEye,
-    FaEyeSlash,
-    FaMapMarkerAlt,
-    FaCity,
-    FaRoad,
-    FaVenusMars,
-    FaHashtag,
-    FaFileAlt,
-    FaBriefcase,
-} from 'react-icons/fa';
+  cadastrarUsuario,
+  CadastroPayload,
+} from '@/service/cadastroService';
 
-const CadastroPrestadorPage = () => {
-    const router = useRouter();
+// Importação das Etapas
+import StepPessoais from '@/components/cadastro/StepPessoais';
+import StepEndereco from '@/components/cadastro/StepEndereco';
+import StepProfissional from '@/components/cadastro/StepProfissional';
+import StepDocumentos from '@/components/cadastro/StepDocumentos';
 
-    const [nome, setNome] = useState('');
-    const [sobrenome, setSobrenome] = useState('');
-    const [cpf, setCpf] = useState('');
-    const [telefone, setTelefone] = useState('');
-    const [dataNascimento, setDataNascimento] = useState<Date | null>(null);
-    const [sexo, setSexo] = useState('outro');
+const WizardCadastroPrestador = () => {
+  const router = useRouter();
 
-    const [cep, setCep] = useState('');
-    const [rua, setRua] = useState('');
-    const [numero, setNumero] = useState('');
-    const [bairro, setBairro] = useState('');
-    const [cidade, setCidade] = useState('');
-    const [estado, setEstado] = useState('');
+  const {
+    step,
+    setStep,
+    dadosPessoais,
+    endereco,
+    profissional,
+    documentos,
+    limparRascunho,
+    validarEtapa,
+  } = useCadastroPrestadorStore();
 
-    const [email, setEmail] = useState('');
-    const [senha, setSenha] = useState('');
-    const [confirmarSenha, setConfirmarSenha] = useState('');
-    const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    // Campos exclusivos do cuidador
-    const [bio, setBio] = useState('');
-    const [anosExperiencia, setAnosExperiencia] = useState('');
-    const [documentoProfissional, setDocumentoProfissional] = useState('');
+  const totalSteps = 4;
+  const progresso = (step / totalSteps) * 100;
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const nextStep = () => {
+    const etapaValida = validarEtapa(step);
+    if (etapaValida && step < totalSteps) {
+      setStep(step + 1);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-    useEffect(() => {
-        const buscarCep = async () => {
-            const cepLimpo = cep.replace(/\D/g, '');
-            if (cepLimpo.length === 8) {
-                try {
-                    const response = await fetch(
-                        `https://viacep.com.br/ws/${cepLimpo}/json/`,
-                    );
-                    const dados = await response.json();
-                    if (!dados.erro) {
-                        setRua(dados.logradouro || '');
-                        setBairro(dados.bairro || '');
-                        setCidade(dados.localidade || '');
-                        setEstado(dados.uf || '');
-                        setError(null);
-                    } else {
-                        setError('CEP não encontrado.');
-                    }
-                } catch (err) {
-                    console.error('Erro ao buscar CEP:', err);
-                }
-            }
-        };
-        buscarCep();
-    }, [cep]);
+  const prevStep = () => {
+    if (step > 1) setStep(step - 1);
+  };
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setError(null);
-
-        if (!cpfValido(cpf)) {
-            setError('CPF inválido. Digite os 11 dígitos.');
-            return;
-        }
-        if (!telefoneValido(telefone)) {
-            setError('Telefone inválido. Digite DDD + número.');
-            return;
-        }
-        if (!cepValido(cep)) {
-            setError('CEP inválido. Digite os 8 dígitos.');
-            return;
-        }
-        if (senha !== confirmarSenha) {
-            setError('As senhas não coincidem!');
-            return;
-        }
-
-        setLoading(true);
-
-        const dadosCadastro = {
-            usuario: {
-                nome: `${nome} ${sobrenome}`.trim(),
-                email,
-                senha,
-                telefone: telefone.replace(/\D/g, ''),
-                cpf: cpf.replace(/\D/g, ''),
-                sexo,
-                data_nascimento: dataNascimento
-                    ? dataNascimento.toISOString().split('T')[0]
-                    : null,
-                cep: cep.replace(/\D/g, ''),
-                endereco: `${rua}, ${numero} - ${bairro}`,
-                cidade,
-                estado,
-                pais: 'Brasil',
-                url_foto_perfil: '',
-                tipo: 'cuidador' as const,
-                email_confirmado: false,
-            },
-            cuidador: {
-                bio: bio || undefined,
-                anos_experiencia: anosExperiencia ? parseInt(anosExperiencia) : undefined,
-                documento_profissional: documentoProfissional || undefined,
-            },
-        };
-
-        try {
-            await cadastrarUsuario(dadosCadastro);
-            alert('Cadastro realizado com sucesso!');
-            router.push('/login-user');
-        } catch (err: any) {
-            setError(err.message || 'Erro ao completar o cadastro.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className={Style.loginPage}>
-            <header className={Style.header}>
-                <div className={Style.headerbar}>
-                    <div className={Style.logoWrapper}>
-                        <Logo />
-                    </div>
-                </div>
-            </header>
-            <main className={Style.main}>
-                <section className={Style.formSection}>
-                    <form className={Style.form} onSubmit={handleSubmit}>
-                        <h2>Cadastro de Cuidador</h2>
-                        <Button variant="secondary" onClick={() => router.push('/cadastro-user')}>
-                            Desejo me cadastrar como cliente
-                        </Button>
-                        <br/>
-                        <div className={Style.loginForm}>
-                            {error && <p className={Style.error}>{error}</p>}
-
-                            <div className={Style.inputRow}>
-                                <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome" icon={<FaUser />} disabled={loading} />
-                                <Input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Sobrenome" disabled={loading} />
-                            </div>
-
-                            <div className={Style.inputRow}>
-                            <Input value={cpf} onChange={(e) => setCpf(mascaraCpf(e.target.value))} placeholder="CPF (000.000.000-00)" icon={<FaIdCard />} disabled={loading} />
-                            <Input value={telefone} onChange={(e) => setTelefone(mascaraTelefone(e.target.value))} placeholder="Telefone ((00) 00000-0000)" icon={<FaPhone />} type="tel" disabled={loading} />
-                            </div>
-
-                            <div className={Style.inputRow}>
-                                <InputDate selectedDate={dataNascimento} onChange={(date) => setDataNascimento(date)} placeholderText="Nascimento" disabled={loading} />
-                                <div className={Style.inputContainer}>
-                                    <span className={`${Style.icon} ${Style.left}`}><FaVenusMars /></span>
-                                    <select value={sexo} onChange={(e) => setSexo(e.target.value)} className={`${Style.inputField} ${Style.withIconLeft}`} disabled={loading}>
-                                        <option value="outro">Gênero: Outro</option>
-                                        <option value="feminino">Feminino</option>
-                                        <option value="masculino">Masculino</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <Input value={cep} onChange={(e) => setCep(mascaraCep(e.target.value))} placeholder="CEP (00000-000)" icon={<FaMapMarkerAlt />} disabled={loading} />
-
-                            <div className={Style.inputRow}>
-                                <div style={{ flex: 3 }}>
-                                    <Input value={rua} onChange={(e) => setRua(e.target.value)} placeholder="Rua / Logradouro" icon={<FaRoad />} disabled={loading} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Input value={numero} onChange={(e) => setNumero(mascaraNumero(e.target.value))} placeholder="Nº" icon={<FaHashtag />} disabled={loading} />
-                                </div>
-                            </div>
-
-                            <Input value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Bairro" icon={<FaMapMarkerAlt />} disabled={loading} />
-
-                            <div className={Style.inputRow}>
-                                <Input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Cidade" icon={<FaCity />} disabled={loading} />
-                                <Input value={estado} onChange={(e) => setEstado(mascaraUf(e.target.value))} placeholder="UF" disabled={loading} />
-                            </div>
-
-                            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" type="email" icon={<FaEnvelope />} disabled={loading} />
-
-                            <Input value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha" type={mostrarSenha ? 'text' : 'password'} icon={mostrarSenha ? <FaEyeSlash /> : <FaEye />} iconPosition="right" onIconClick={() => setMostrarSenha(!mostrarSenha)} disabled={loading} />
-
-                            <Input value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} placeholder="Confirme a senha" type="password" icon={<FaLock />} iconPosition="right" disabled={loading} />
-
-                            {/* Campos exclusivos do cuidador */}
-                            <Input value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Bio (apresentação)" icon={<FaUser />} disabled={loading} />
-
-                            <Input value={anosExperiencia} onChange={(e) => setAnosExperiencia(e.target.value)} placeholder="Anos de experiência" type="number" icon={<FaBriefcase />} disabled={loading} />
-
-                            <Input value={documentoProfissional} onChange={(e) => setDocumentoProfissional(e.target.value)} placeholder="Documento profissional" icon={<FaFileAlt />} disabled={loading} />
-
-                            <Button type="submit" variant="primary" disabled={loading}>
-                                {loading ? 'Cadastrando...' : 'Cadastrar como Cuidador'}
-                            </Button>
-                        </div>
-                    </form>
-                </section>
-            </main>
-        </div>
+  const handleSalvarRascunho = () => {
+    alert(
+      'Progresso salvo com sucesso! Você pode voltar mais tarde.',
     );
+    router.push('/home');
+  };
+
+  // 🔥 FUNÇÃO AUXILIAR DE UPLOAD DE ARQUIVOS (ATUALIZADA COM NOME CUSTOMIZADO)
+  const fazerUploadDeArquivo = async (
+    arquivo: File,
+    pasta: string,
+    sessionId: string,
+    codigoTipo: number,
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', arquivo);
+    formData.append('pasta', pasta);
+
+    // Dizemos ao backend o nome exato que queremos (ex: asdf123_1)
+    formData.append(
+      'nomeCustomizado',
+      `${sessionId}_${codigoTipo}`,
+    );
+
+    const URL_API =
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:4000';
+
+    const resposta = await fetch(
+      `${URL_API}/nossozelo/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+
+    if (!resposta.ok) {
+      throw new Error(
+        `Falha ao fazer upload do arquivo na pasta ${pasta}`,
+      );
+    }
+
+    const dados = await resposta.json();
+    return dados.url;
+  };
+
+  // LÓGICA FINAL DO CADASTRO
+  const finalizarCadastro = async () => {
+    const etapaFinalValida = validarEtapa(step);
+    if (!etapaFinalValida) {
+      alert(
+        'Por favor, corrija os erros apontados antes de enviar.',
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 🔥 GERA O ID ÚNICO DA SESSÃO (15 caracteres)
+      const sessionId = crypto
+        .randomUUID()
+        .replace(/-/g, '')
+        .substring(0, 15);
+
+      // 1. UPLOAD REAL DE ARQUIVOS COM NOMENCLATURA PADRONIZADA!
+      let urlFotoPerfil = '';
+      let urlIdentidade = '';
+
+      // Código 1 = Foto
+      if (documentos.foto) {
+        urlFotoPerfil = await fazerUploadDeArquivo(
+          documentos.foto,
+          'fotos',
+          sessionId,
+          1,
+        );
+      }
+
+      // Código 2 = Documento de Identidade
+      if (documentos.identidade) {
+        urlIdentidade = await fazerUploadDeArquivo(
+          documentos.identidade,
+          'documentos',
+          sessionId,
+          2,
+        );
+      }
+
+      // 2. Mapeamento Zustand -> Backend (Agora com as URLs reais injetadas)
+      const payload: CadastroPayload = {
+        usuario: {
+          nome: `${dadosPessoais.nome} ${dadosPessoais.sobrenome}`.trim(),
+          email: dadosPessoais.email,
+          senha: dadosPessoais.senha,
+          telefone: dadosPessoais.telefone.replace(
+            /\D/g,
+            '',
+          ),
+          cpf: dadosPessoais.cpf.replace(/\D/g, ''),
+          sexo: dadosPessoais.sexo,
+          data_nascimento: dadosPessoais.dataNascimento,
+          cep: endereco.cep.replace(/\D/g, ''),
+          endereco: `${endereco.rua}, ${endereco.numero} - ${endereco.bairro}`,
+          cidade: endereco.cidade,
+          estado: endereco.uf,
+          pais: 'Brasil',
+          url_foto_perfil: urlFotoPerfil, // 🔥 URL da foto
+          tipo: profissional.categoria.toLowerCase(),
+        },
+      };
+
+      // 3. Objeto com os Dados Profissionais base
+      const dadosProfissionais = {
+        bio: profissional.bio,
+        experiencia: Number(profissional.experiencia),
+        valorHora: Number(profissional.valorHora),
+        documentos: urlIdentidade, // 🔥 URL do PDF/Identidade
+      };
+
+      // 4. Anexa a tabela correta dependendo da categoria escolhida
+      const categoria =
+        profissional.categoria.toLowerCase();
+
+      if (categoria === 'enfermeiro') {
+        payload.enfermeiro = {
+          ...dadosProfissionais,
+          coren: profissional.registro,
+        };
+      } else if (categoria === 'cuidador') {
+        payload.cuidador = dadosProfissionais;
+      } else if (categoria === 'acompanhante') {
+        payload.acompanhante = dadosProfissionais;
+      }
+
+      // 5. Chamada real à API para salvar no MySQL (Prisma)
+      await cadastrarUsuario(payload);
+
+      // 6. Sucesso!
+      alert(
+        'Recebemos seus dados e arquivos! Nossa equipe analisará em até 48h.',
+      );
+      limparRascunho();
+      router.push('/login-parceiro');
+    } catch (error: any) {
+      console.error(error);
+      alert(
+        error.message ||
+          'Erro ao finalizar o cadastro ou fazer upload. Verifique os dados informados.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={Style.wizardPage}>
+      <main className={Style.wizardContainer}>
+        {/* CABEÇALHO DO WIZARD */}
+        <header className={Style.wizardHeader}>
+          <h2>Credenciamento de Prestador</h2>
+          <button
+            onClick={handleSalvarRascunho}
+            className={Style.btnDraft}
+          >
+            <FaSave /> Salvar Rascunho
+          </button>
+        </header>
+
+        {/* BARRA DE PROGRESSO */}
+        <div className={Style.progressWrapper}>
+          <div className={Style.progressBar}>
+            <div
+              className={Style.progressFill}
+              style={{
+                width: `${progresso}%`,
+                backgroundColor: '#0cc0df',
+              }}
+            />
+          </div>
+          <div className={Style.stepIndicators}>
+            <span
+              className={step >= 1 ? Style.activeStep : ''}
+            >
+              Pessoais
+            </span>
+            <span
+              className={step >= 2 ? Style.activeStep : ''}
+            >
+              Endereço
+            </span>
+            <span
+              className={step >= 3 ? Style.activeStep : ''}
+            >
+              Profissional
+            </span>
+            <span
+              className={step >= 4 ? Style.activeStep : ''}
+            >
+              Documentos
+            </span>
+          </div>
+        </div>
+
+        {/* RENDERIZAÇÃO CONDICIONAL DAS ETAPAS */}
+        <section className={Style.stepContent}>
+          {step === 1 && <StepPessoais />}
+          {step === 2 && <StepEndereco />}
+          {step === 3 && <StepProfissional />}
+          {step === 4 && <StepDocumentos />}
+        </section>
+
+        {/* CONTROLES DE NAVEGAÇÃO */}
+        <footer className={Style.wizardFooter}>
+          <button
+            onClick={prevStep}
+            disabled={step === 1}
+            className={Style.btnBack}
+          >
+            Voltar
+          </button>
+
+          {step < totalSteps ? (
+            <button
+              onClick={nextStep}
+              className={Style.btnNext}
+            >
+              Próximo Passo
+            </button>
+          ) : (
+            <button
+              onClick={finalizarCadastro}
+              disabled={loading}
+              className={Style.btnSubmit}
+            >
+              {loading ? (
+                'Enviando e Salvando Fotos...' // 🔥 Mensagem mais clara pro usuário
+              ) : (
+                <>
+                  <FaCheckCircle /> Enviar para Análise
+                </>
+              )}
+            </button>
+          )}
+        </footer>
+      </main>
+    </div>
+  );
 };
 
-export default CadastroPrestadorPage;
+export default WizardCadastroPrestador;

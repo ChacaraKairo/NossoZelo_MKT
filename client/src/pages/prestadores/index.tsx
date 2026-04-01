@@ -5,7 +5,7 @@ import Style from '@/styles/PrestadoresPage.module.css';
 import Filtro from '@/components/main-page/filter/Filtro';
 import PrestadoresGrid from '@/components/main-page/prestadores-grid/PrestadoresGrid';
 import Footer from '@/components/footer/Footer';
-import { useBuscaStore } from '@/utils/useBuscaStore'; // ✅ Lógica de busca
+import { useBuscaStore } from '@/store/useBuscaStore'; // ✅ Lógica de busca
 
 const NossoZeloHome = () => {
   const router = useRouter();

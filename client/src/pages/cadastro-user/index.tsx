@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Style from '@/styles/CadastroPage.module.css';
 
@@ -9,8 +8,18 @@ import Button from '@/components/btn/Button';
 import Logo from '@/components/logos/OnlyLogo';
 
 import { cadastrarUsuario } from '@/service/cadastroService';
-import { mascaraCpf, mascaraTelefone, mascaraCep, mascaraNumero, mascaraUf } from '@/utils/masks';
-import { cpfValido, telefoneValido, cepValido } from '@/utils/validators';
+import {
+  mascaraCpf,
+  mascaraTelefone,
+  mascaraCep,
+  mascaraNumero,
+  mascaraUf,
+} from '@/utils/masks';
+import {
+  cpfValido,
+  telefoneValido,
+  cepValido,
+} from '@/utils/validators';
 
 import {
   FaUser,
@@ -31,7 +40,7 @@ const CadastroPage = () => {
   const router = useRouter();
 
   // --- Estados do formulário ---
-  const [tipo, setTipo] = useState('cliente');
+  const [tipo] = useState('cliente');
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
   const [cpf, setCpf] = useState('');
@@ -40,12 +49,10 @@ const CadastroPage = () => {
     useState<Date | null>(null);
   const [sexo, setSexo] = useState('outro');
 
-  // Endereço Separado
   const [cep, setCep] = useState('');
   const [rua, setRua] = useState('');
   const [numero, setNumero] = useState('');
   const [bairro, setBairro] = useState('');
-
   const [cidade, setCidade] = useState('');
   const [estado, setEstado] = useState('');
   const [email, setEmail] = useState('');
@@ -66,7 +73,6 @@ const CadastroPage = () => {
             `https://viacep.com.br/ws/${cepLimpo}/json/`,
           );
           const dados = await response.json();
-
           if (!dados.erro) {
             setRua(dados.logradouro || '');
             setBairro(dados.bairro || '');
@@ -88,52 +94,45 @@ const CadastroPage = () => {
     event.preventDefault();
     setError(null);
 
-    if (!cpfValido(cpf)) {
-      setError('CPF inválido. Digite os 11 dígitos.');
-      return;
-    }
-    if (!telefoneValido(telefone)) {
-      setError('Telefone inválido. Digite DDD + número.');
-      return;
-    }
-    if (!cepValido(cep)) {
-      setError('CEP inválido. Digite os 8 dígitos.');
-      return;
-    }
-    if (senha !== confirmarSenha) {
-      setError('As senhas não coincidem!');
-      return;
-    }
+    if (!cpfValido(cpf))
+      return setError(
+        'CPF inválido. Digite os 11 dígitos.',
+      );
+    if (!telefoneValido(telefone))
+      return setError(
+        'Telefone inválido. Digite DDD + número.',
+      );
+    if (!cepValido(cep))
+      return setError('CEP inválido. Digite os 8 dígitos.');
+    if (senha !== confirmarSenha)
+      return setError('As senhas não coincidem!');
 
     setLoading(true);
 
     const dadosCadastro = {
       usuario: {
         nome: `${nome} ${sobrenome}`.trim(),
-        email: email,
-        senha: senha,
+        email,
+        senha,
         telefone: telefone.replace(/\D/g, ''),
         cpf: cpf.replace(/\D/g, ''),
-        sexo: sexo,
+        sexo,
         data_nascimento: dataNascimento
           ? dataNascimento.toISOString().split('T')[0]
           : null,
         cep: cep.replace(/\D/g, ''),
-        // Concatenamos para manter compatibilidade com o seu Backend atual
         endereco: `${rua}, ${numero} - ${bairro}`,
-        cidade: cidade,
-        estado: estado,
+        cidade,
+        estado,
         pais: 'Brasil',
         url_foto_perfil: '',
-        tipo: tipo,
+        tipo,
         email_confirmado: false,
       },
     };
 
     try {
-      const respostaDaApi = await cadastrarUsuario(
-        dadosCadastro,
-      );
+      await cadastrarUsuario(dadosCadastro);
       alert('Cadastro realizado com sucesso!');
       router.push('/login-user');
     } catch (err: any) {
@@ -147,22 +146,35 @@ const CadastroPage = () => {
 
   return (
     <div className={Style.loginPage}>
-      <header className={Style.header}>
-        <div className={Style.headerbar}>
-          <div className={Style.logoWrapper}>
-            <Logo />
-          </div>
+      <aside className={Style.infoSection}>
+        <div className={Style.brandWrapper}>
+          <Logo />
+          <h1 className={Style.brandName}>NossoZelo</h1>
         </div>
-      </header>
-      <main className={Style.main}>
-        <section className={Style.formSection}>
+        <blockquote className={Style.welcomeText}>
+          "Receber você em nossa comunidade é um privilégio.
+          Nosso compromisso é cuidar bem de você e de todos
+          aqueles que você ama."
+        </blockquote>
+      </aside>
+
+      <main className={Style.formSection}>
+        <section className={Style.formCard}>
           <form
             className={Style.form}
             onSubmit={handleSubmit}
           >
             <h2>Criar nova conta</h2>
-            <Button variant="secondary" onClick={() => router.push('/cadastro-prestador')}>Desejo ser prestador de cuidados</Button>
-            <br/>
+
+            <Button
+              variant="secondary"
+              onClick={() =>
+                router.push('/cadastro-prestador')
+              }
+            >
+              Desejo ser prestador de cuidados
+            </Button>
+
             <div className={Style.loginForm}>
               {error && (
                 <p className={Style.error}>{error}</p>
@@ -189,21 +201,28 @@ const CadastroPage = () => {
               <div className={Style.inputRow}>
                 <Input
                   value={cpf}
-                  onChange={(e) => setCpf(mascaraCpf(e.target.value))}
-                  placeholder="CPF (000.000.000-00)"
+                  onChange={(e) =>
+                    setCpf(mascaraCpf(e.target.value))
+                  }
+                  placeholder="CPF"
                   icon={<FaIdCard />}
                   disabled={loading}
                 />
                 <Input
                   value={telefone}
-                  onChange={(e) => setTelefone(mascaraTelefone(e.target.value))}
-                  placeholder="Telefone ((00) 00000-0000)"
+                  onChange={(e) =>
+                    setTelefone(
+                      mascaraTelefone(e.target.value),
+                    )
+                  }
+                  placeholder="Telefone"
                   icon={<FaPhone />}
                   type="tel"
                   disabled={loading}
                 />
               </div>
 
+              {/* LINHA EXCLUSIVA PARA DATA DE NASCIMENTO */}
               <div className={Style.inputRow}>
                 <InputDate
                   selectedDate={dataNascimento}
@@ -213,42 +232,60 @@ const CadastroPage = () => {
                   placeholderText="Nascimento"
                   disabled={loading}
                 />
-                <div className={Style.inputContainer}>
-                  <span
-                    className={`${Style.icon} ${Style.left}`}
-                  >
-                    <FaVenusMars />
+              </div>
+
+              {/* SEÇÃO DE GÊNERO INDEPENDENTE (SEM INPUTROW) */}
+              <div className={Style.genderSelection}>
+                <div className={Style.genderLabelWrapper}>
+                  <FaVenusMars />
+                  <span className={Style.genderLabel}>
+                    Gênero
                   </span>
-                  <select
-                    value={sexo}
-                    onChange={(e) =>
-                      setSexo(e.target.value)
-                    }
-                    className={`${Style.inputField} ${Style.withIconLeft}`}
-                    disabled={loading}
+                </div>
+                <div className={Style.genderOptions}>
+                  <div
+                    className={`${Style.genderOption} ${
+                      sexo === 'masculino'
+                        ? Style.genderOptionActive
+                        : ''
+                    }`}
+                    onClick={() => setSexo('masculino')}
                   >
-                    <option value="outro">
-                      Gênero: Outro
-                    </option>
-                    <option value="feminino">
-                      Feminino
-                    </option>
-                    <option value="masculino">
-                      Masculino
-                    </option>
-                  </select>
+                    Masculino
+                  </div>
+                  <div
+                    className={`${Style.genderOption} ${
+                      sexo === 'feminino'
+                        ? Style.genderOptionActive
+                        : ''
+                    }`}
+                    onClick={() => setSexo('feminino')}
+                  >
+                    Feminino
+                  </div>
+                  <div
+                    className={`${Style.genderOption} ${
+                      sexo === 'outro'
+                        ? Style.genderOptionActive
+                        : ''
+                    }`}
+                    onClick={() => setSexo('outro')}
+                  >
+                    Outro
+                  </div>
                 </div>
               </div>
 
               <Input
                 value={cep}
-                onChange={(e) => setCep(mascaraCep(e.target.value))}
-                placeholder="CEP (00000-000)"
+                onChange={(e) =>
+                  setCep(mascaraCep(e.target.value))
+                }
+                placeholder="CEP"
                 icon={<FaMapMarkerAlt />}
                 disabled={loading}
               />
 
-              {/* RUA E NÚMERO NA MESMA LINHA */}
               <div className={Style.inputRow}>
                 <div style={{ flex: 3 }}>
                   <Input
@@ -262,7 +299,11 @@ const CadastroPage = () => {
                 <div style={{ flex: 1 }}>
                   <Input
                     value={numero}
-                    onChange={(e) => setNumero(mascaraNumero(e.target.value))}
+                    onChange={(e) =>
+                      setNumero(
+                        mascaraNumero(e.target.value),
+                      )
+                    }
                     placeholder="Nº"
                     icon={<FaHashtag />}
                     disabled={loading}
@@ -290,7 +331,9 @@ const CadastroPage = () => {
                 />
                 <Input
                   value={estado}
-                  onChange={(e) => setEstado(mascaraUf(e.target.value))}
+                  onChange={(e) =>
+                    setEstado(mascaraUf(e.target.value))
+                  }
                   placeholder="UF"
                   disabled={loading}
                 />
@@ -337,7 +380,9 @@ const CadastroPage = () => {
                 variant="primary"
                 disabled={loading}
               >
-                {loading ? 'Cadastrando...' : 'Cadastrar'}
+                {loading
+                  ? 'Cadastrando...'
+                  : 'Finalizar Cadastro'}
               </Button>
             </div>
           </form>

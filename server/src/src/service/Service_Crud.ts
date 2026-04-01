@@ -82,6 +82,33 @@ class ServiceCrud {
     }
   }
 
+  static async findFirst(
+    entity: string,
+    where: object,
+  ): Promise<any> {
+    try {
+      if (
+        !(await this.checkIfEntityExists(entity)) &&
+        !(await this.bloqueia_user(entity))
+      ) {
+        throw new Error(
+          `Entidade ${entity} não existe no banco de dados.`,
+        );
+      }
+
+      const prisma = new PrismaClient();
+      return await (prisma as any)[entity].findFirst({
+        where,
+      });
+    } catch (error) {
+      console.error(
+        `Erro ao buscar o primeiro registro na entidade ${entity}: `,
+        error,
+      );
+      throw error;
+    }
+  }
+
   static async findAll(entity: string): Promise<any[]> {
     try {
       if (

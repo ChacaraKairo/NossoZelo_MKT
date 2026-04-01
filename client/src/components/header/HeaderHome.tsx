@@ -31,6 +31,10 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({
     }
   }, [variant]);
 
+  // ✅ Se quiser debugar, o log deve ficar aqui, antes do return!
+  if (usuario)
+    console.log('Usuário autenticado:', usuario.nome);
+
   return (
     <header className={styles.headerContainer}>
       <div className={styles.logoWrapper}>

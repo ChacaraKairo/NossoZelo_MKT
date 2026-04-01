@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import ServiceRecuperacaoSenha from '../service/Service_REc_Senha';
+import ServiceRecuperacaoSenha from '../service/Service_Rec_Senha';
 
 export class RecuperacaoSenhaController {
   static async enviarEmail(req: Request, res: Response) {

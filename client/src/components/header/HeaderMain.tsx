@@ -16,7 +16,7 @@ import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
 import { TbUserSearch } from 'react-icons/tb';
 
 // --- Lógica Sênior ---
-import { useBuscaStore } from '@/utils/useBuscaStore'; // ✅ Zustand
+import { useBuscaStore } from '@/store/useBuscaStore'; // ✅ Zustand
 import { getUsuarioDoCookie } from '@/utils/auth'; // ✅ Utilitário de Auth
 
 // Não precisamos mais da prop onSearch! O componente agora é independente.
