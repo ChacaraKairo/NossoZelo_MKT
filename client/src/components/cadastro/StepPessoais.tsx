@@ -8,7 +8,6 @@ import InputDate from '@/components/inputs/InputDate';
 import { mascaraCpf, mascaraTelefone } from '@/utils/masks';
 
 const StepPessoais = () => {
-  // Puxamos os "erros" da Store!
   const { dadosPessoais, updateDadosPessoais, erros } =
     useCadastroPrestadorStore();
 
@@ -22,10 +21,7 @@ const StepPessoais = () => {
 
       {/* LINHA 1: NOME E SOBRENOME */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Nome</label>
           <Input
             value={dadosPessoais.nome}
@@ -40,10 +36,7 @@ const StepPessoais = () => {
             </span>
           )}
         </div>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Sobrenome</label>
           <Input
             value={dadosPessoais.sobrenome}
@@ -64,10 +57,7 @@ const StepPessoais = () => {
 
       {/* LINHA 2: CPF E TELEFONE */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>CPF</label>
           <Input
             value={dadosPessoais.cpf}
@@ -84,10 +74,7 @@ const StepPessoais = () => {
             </span>
           )}
         </div>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Telefone / WhatsApp</label>
           <Input
             value={dadosPessoais.telefone}
@@ -109,10 +96,7 @@ const StepPessoais = () => {
 
       {/* LINHA 3: NASCIMENTO E GÊNERO */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Data de Nascimento</label>
           <InputDate
             selectedDate={
@@ -136,10 +120,7 @@ const StepPessoais = () => {
           )}
         </div>
 
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1.5 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Gênero</label>
           <div className={Style.genderOptions}>
             {['Feminino', 'Masculino', 'Outro'].map(
@@ -172,12 +153,9 @@ const StepPessoais = () => {
         </div>
       </div>
 
-      {/* LINHA 4: E-MAIL E SENHA (ADICIONADOS) */}
+      {/* LINHA 4: E-MAIL E SENHA */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>E-mail</label>
           <Input
             value={dadosPessoais.email}
@@ -193,10 +171,7 @@ const StepPessoais = () => {
             </span>
           )}
         </div>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Senha</label>
           <Input
             value={dadosPessoais.senha}

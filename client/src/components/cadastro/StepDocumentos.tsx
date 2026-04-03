@@ -8,7 +8,6 @@ const StepDocumentos = () => {
   const { documentos, updateDocumentos } =
     useCadastroPrestadorStore();
 
-  // Função genérica para lidar com arquivos
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     tipoDoc: keyof typeof documentos,
@@ -16,7 +15,6 @@ const StepDocumentos = () => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
 
-      // Validação simples de tamanho (Ex: Máx 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('O arquivo deve ter no máximo 5MB.');
         return;
@@ -26,7 +24,6 @@ const StepDocumentos = () => {
     }
   };
 
-  // Componente interno para evitar repetição de código no design dos botões de upload
   const UploadButton = ({
     label,
     descricao,
@@ -56,12 +53,17 @@ const StepDocumentos = () => {
             type="file"
             accept={accept}
             onChange={(e) => handleFileChange(e, tipoDoc)}
-            style={{ display: 'none' }} // Esconde o input padrão
+            style={{ display: 'none' }}
           />
           {file ? (
             <>
-              <FaCheckCircle /> {file.name.substring(0, 15)}
-              ...
+              <FaCheckCircle />
+              {/* 🔥 Ajuste Sênior: Limita o nome do arquivo para não quebrar o layout no Mobile */}
+              <span style={{ marginLeft: '5px' }}>
+                {file.name.length > 15
+                  ? `${file.name.substring(0, 12)}...`
+                  : file.name}
+              </span>
             </>
           ) : (
             <>

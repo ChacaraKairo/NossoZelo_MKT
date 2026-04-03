@@ -431,3 +431,31 @@
     display: none; /* Esconde os textos dos passos no mobile para poupar espaço */
   }
 }
+/* Adicionar dentro do @media (max-width: 768px) no seu Wizard.module.css */
+@media (max-width: 768px) {
+  /* ... seu código existente ... */
+
+  .inputRow > div {
+    flex: none !important; /* Ignora o flex: 1 ou flex: 2 do inline style */
+    width: 100% !important;
+  }
+
+  .wizardHeader {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .wizardFooter {
+    padding: 15px;
+    flex-direction: column-reverse; /* Coloca o 'Próximo' acima do 'Voltar' no Mobile */
+    gap: 12px;
+  }
+
+  .btnNext,
+  .btnSubmit,
+  .btnBack {
+    width: 100%; /* Botões ocupam largura total no dedão do usuário */
+    justify-content: center;
+  }
+}

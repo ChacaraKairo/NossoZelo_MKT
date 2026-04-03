@@ -56,11 +56,9 @@ const StepEndereco = () => {
         atender?
       </p>
 
+      {/* LINHA 1: CEP E RUA */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>CEP</label>
           <input
             type="text"
@@ -75,12 +73,15 @@ const StepEndereco = () => {
           />
           {buscandoCep && (
             <span
-              style={{ fontSize: '12px', color: '#0cc0df' }}
+              style={{
+                fontSize: '12px',
+                color: '#0cc0df',
+                display: 'block',
+              }}
             >
               Buscando...
             </span>
           )}
-          {/* Mostra erro do ViaCEP ou erro de validação do formulário */}
           {(erroCep || erros.cep) && (
             <span className={Style.errorText}>
               {erroCep || erros.cep}
@@ -91,6 +92,8 @@ const StepEndereco = () => {
           className={Style.inputGroup}
           style={{ flex: 2 }}
         >
+          {' '}
+          {/* Mantemos o flex aqui apenas para Desktop, o CSS mobile vai sobrescrever */}
           <label>Rua / Logradouro</label>
           <input
             type="text"
@@ -107,11 +110,9 @@ const StepEndereco = () => {
         </div>
       </div>
 
+      {/* LINHA 2: NÚMERO E BAIRRO */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Número</label>
           <input
             type="text"
@@ -146,6 +147,7 @@ const StepEndereco = () => {
         </div>
       </div>
 
+      {/* LINHA 3: CIDADE E UF */}
       <div className={Style.inputRow}>
         <div
           className={Style.inputGroup}
@@ -165,10 +167,7 @@ const StepEndereco = () => {
             </span>
           )}
         </div>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 1 }}
-        >
+        <div className={Style.inputGroup}>
           <label>Estado (UF)</label>
           <input
             type="text"
@@ -188,6 +187,7 @@ const StepEndereco = () => {
         </div>
       </div>
 
+      {/* RAIO DE ATUAÇÃO */}
       <div
         className={Style.inputGroup}
         style={{ marginTop: '15px' }}

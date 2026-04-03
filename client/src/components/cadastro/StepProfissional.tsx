@@ -14,6 +14,7 @@ const StepProfissional = () => {
         Nos conte sobre sua experiência e especialidades.
       </p>
 
+      {/* CATEGORIA */}
       <div className={Style.inputGroup}>
         <label>Categoria</label>
         <select
@@ -36,6 +37,7 @@ const StepProfissional = () => {
         )}
       </div>
 
+      {/* REGISTRO (COREN) - Condicional */}
       {(profissional.categoria === 'enfermeiro' ||
         profissional.categoria === 'tec_enfermagem') && (
         <div className={Style.inputGroup}>
@@ -58,8 +60,12 @@ const StepProfissional = () => {
         </div>
       )}
 
+      {/* EXPERIÊNCIA E VALOR HORA - Ajustado para empilhar no mobile */}
       <div className={Style.inputRow}>
-        <div className={Style.inputGroup}>
+        <div
+          className={Style.inputGroup}
+          style={{ flex: 1 }}
+        >
           <label>Anos de Experiência</label>
           <input
             type="number"
@@ -73,7 +79,10 @@ const StepProfissional = () => {
           />
         </div>
 
-        <div className={Style.inputGroup}>
+        <div
+          className={Style.inputGroup}
+          style={{ flex: 1 }}
+        >
           <label>Valor Hora (R$)</label>
           <input
             type="number"
@@ -89,6 +98,7 @@ const StepProfissional = () => {
         </div>
       </div>
 
+      {/* BIOGRAFIA */}
       <div className={Style.inputGroup}>
         <label>Biografia (Apresentação)</label>
         <textarea
@@ -98,15 +108,27 @@ const StepProfissional = () => {
           onChange={(e) =>
             updateProfissional({ bio: e.target.value })
           }
+          style={{ minHeight: '120px' }} // Garante uma área de toque melhor no mobile
         />
-        <span className={Style.charCount}>
-          {profissional.bio.length} / 500
-        </span>
-        {erros.bio && (
-          <span className={Style.errorText}>
-            {erros.bio}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: '4px',
+          }}
+        >
+          {erros.bio ? (
+            <span className={Style.errorText}>
+              {erros.bio}
+            </span>
+          ) : (
+            <div />
+          )}{' '}
+          {/* Espaçador para manter o contador à direita */}
+          <span className={Style.charCount}>
+            {profissional.bio.length} / 500
           </span>
-        )}
+        </div>
       </div>
     </div>
   );

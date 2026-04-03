@@ -1,0 +1,48 @@
+services:
+  # --- BACKEND ---
+  backend:
+    build: ./server
+    container_name: nossozelo_backend
+    restart: always
+    ports:
+      - '4000:4000'
+    environment:
+      # 🔥 O SEGREDO ESTÁ AQUI:
+      # Como você mapeou -p 3306:3306, o banco está acessível pelo IP do seu PC.
+      # 'host.docker.internal' é um nome especial que o Docker usa para
+      # se referir ao seu computador de dentro de um container.
+      - DATABASE_URL=mysql://root:nossozelo123@host.docker.internal:3306/db
+      - PORT=4000
+      - API_URL=http://192.168.0.3:4000
+      - ALLOWED_ORIGINS=http://localhost:3000,http://192.168.0.3:3000
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
+    # Adicionamos extra_hosts para garantir que o container reconheça o host.docker.internal
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - nossozelo_network
+
+  # --- FRONTEND ---
+  frontend:
+    build: ./client
+    container_name: nossozelo_frontend
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_PUBLIC_API_URL=http://192.168.0.3:4000
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - nuestrozelo_network
+
+networks:
+  nossozelo_network:
+    driver: bridge
