@@ -1,4 +1,20 @@
 services:
+  # docker-compose up --build
+  # --- BANCO DE DADOS (Agora dentro do grupo) ---
+  db:
+    image: mysql:latest
+    container_name: nossozelo_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: nossozelo123
+      MYSQL_DATABASE: db
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql # Isso mantém seus dados salvos
+    networks:
+      - nossozelo_network
+
   # --- BACKEND ---
   backend:
     build: ./server
@@ -7,21 +23,16 @@ services:
     ports:
       - '4000:4000'
     environment:
-      # 🔥 O SEGREDO ESTÁ AQUI:
-      # Como você mapeou -p 3306:3306, o banco está acessível pelo IP do seu PC.
-      # 'host.docker.internal' é um nome especial que o Docker usa para
-      # se referir ao seu computador de dentro de um container.
-      - DATABASE_URL=mysql://root:nossozelo123@host.docker.internal:3306/db
+      # 🔥 MUDANÇA IMPORTANTE: Agora usamos o nome do serviço 'db' em vez de host.docker.internal
+      - DATABASE_URL=mysql://root:nossozelo123@db:3306/db
       - PORT=4000
       - API_URL=http://192.168.0.3:4000
-      - ALLOWED_ORIGINS=http://localhost:3000,http://192.168.0.3:3000
     volumes:
       - ./server:/app
       - /app/node_modules
       - ./uploads:/app/uploads
-    # Adicionamos extra_hosts para garantir que o container reconheça o host.docker.internal
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+    depends_on:
+      - db
     networks:
       - nossozelo_network
 
@@ -41,8 +52,11 @@ services:
     depends_on:
       - backend
     networks:
-      - nuestrozelo_network
+      - nossozelo_network
 
 networks:
   nossozelo_network:
     driver: bridge
+
+volumes:
+  mysql_data: # Define onde o volume do banco será guardado

@@ -59,6 +59,7 @@ model assinaturas {
 
 model avaliacoes {
   id                                           Int                       @id @default(autoincrement())
+  contratacao_id                               Int                       @unique
   cliente_id                                   String                    @db.VarChar(20)
   prestador_id                                 String                    @db.VarChar(20)
   tipo_prestador                               avaliacoes_tipo_prestador
@@ -279,6 +280,7 @@ model usuarios {
   tipo                                             usuarios_tipo
   email_confirmado                                 Boolean              @default(false)
   criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
+  avaliacao_media                                  Decimal?             @default(0.00) @db.Decimal(3, 2)
   
   // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
   admins                                           admins?
@@ -445,4 +447,5 @@ enum contratacoes_status {
   concluido
   paga
   cancelado
+  manual
 }

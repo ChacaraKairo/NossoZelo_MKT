@@ -1,3 +1,12 @@
+/**
+ * @author Kairo Chácara
+ * @version 1.0
+ * @date 14/04/2026
+ * @description Classe de serviço responsável pela orquestração de operações de negócio relacionadas ao usuário,
+ * incluindo criação com perfis específicos, geolocalização, integração de e-mail e persistência de dados.
+ * @rota server\src\src\service\Service_User.ts
+ */
+
 import fs from 'fs';
 import path from 'path';
 import ServiceCrud from './Service_Crud';
@@ -7,8 +16,20 @@ import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
 
 class ServiceUser {
+  /**
+   * Cria um usuário completo, incluindo geolocalização, perfil específico e envio de e-mail.
+   * Implementa lógica de rollback em caso de falha.
+   * * @param {any} data - Objeto contendo dados do usuário e perfis específicos (enfermeiro, cuidador, acompanhante, admin).
+   * @returns {Promise<any>} - Retorna o objeto do usuário criado e perfis associados.
+   * @throws {Error} - Lança erro em caso de falha na validação, persistência ou violação de constraints.
+   */
   static async criarUsuarioComTipo(data: any) {
-    // Recebe os objetos dinâmicos vindos do frontend
+    console.log(
+      `[LOG-FLUXO] Iniciando criarUsuarioComTipo. Payload de entrada: ${JSON.stringify(
+        data,
+      )}`,
+    );
+
     const {
       usuario,
       enfermeiro,
@@ -20,20 +41,42 @@ class ServiceUser {
     let id = '';
 
     try {
+      // Geração de identificador único
       id = nanoid(20);
+      console.log(
+        `[LOG-FLUXO] Identificador nanoid gerado para o novo usuário: ${id}`,
+      );
+
+      // Processamento de segurança da senha
+      console.log(
+        '[LOG-FLUXO] Solicitando criptografia de senha (bcrypt salt 10).',
+      );
       const senhaCriptografada = await bcrypt.hash(
         usuario.senha,
         10,
       );
+      console.log(
+        '[LOG-FLUXO] Hash de senha gerado com sucesso.',
+      );
 
       let dataNascimentoObj: Date | undefined;
       if (usuario.data_nascimento) {
+        console.log(
+          `[LOG-FLUXO] Convertendo string de data_nascimento para objeto Date: ${usuario.data_nascimento}`,
+        );
         dataNascimentoObj = new Date(
           usuario.data_nascimento,
         );
+
         if (isNaN(dataNascimentoObj.getTime())) {
+          console.error(
+            `[ERRO-FLUXO] Falha de validação: A data '${usuario.data_nascimento}' é inválida.`,
+          );
           throw new Error('data_nascimento inválida');
         }
+        console.log(
+          '[LOG-FLUXO] Data de nascimento validada com sucesso.',
+        );
       }
 
       // 1. CRIAÇÃO DO USUÁRIO BASE
@@ -44,35 +87,63 @@ class ServiceUser {
         data_nascimento: dataNascimentoObj,
       };
 
+      console.log(
+        `[LOG-FLUXO] Chamando persistência ServiceCrud.create na tabela 'usuarios' para o e-mail: ${usuario.email}`,
+      );
       await ServiceCrud.create('usuarios', usuarioData);
+      console.log(
+        `[LOG-FLUXO] Sucesso: Registro base criado na tabela 'usuarios' (ID: ${id}).`,
+      );
 
       // 2. GEOLOCALIZAÇÃO (Resiliente a falhas)
       try {
+        console.log(
+          `[LOG-FLUXO] Iniciando integração com GeolocalizacaoService para o CEP: ${usuario.cep}`,
+        );
         const geolocalizacao =
           await GeolocalizacaoService.buscarCoordenadasPorCep(
             usuario.cep,
           );
+
+        console.log(
+          `[LOG-FLUXO] Coordenadas obtidas: [Lat: ${geolocalizacao.latitude}, Lon: ${geolocalizacao.longitude}]. Persistindo localização.`,
+        );
         await ServiceCrud.create('localizacoes', {
           usuario_id: id,
           latitude: geolocalizacao.latitude,
           longitude: geolocalizacao.longitude,
         });
-      } catch (geoError) {
+        console.log(
+          '[LOG-FLUXO] Registro de geolocalização vinculado ao usuário com sucesso.',
+        );
+      } catch (geoError: any) {
         console.warn(
-          'Aviso: Não foi possível obter coordenadas precisas para o CEP informado.',
+          `[LOG-FLUXO] Aviso: Falha não impeditiva na geolocalização. O cadastro continuará. Detalhes: ${geoError.message}`,
         );
       }
 
-      // 3. ROTEAMENTO DE TABELAS ESPECÍFICAS (Mapeamento rigoroso para o Prisma)
+      // 3. ROTEAMENTO DE TABELAS ESPECÍFICAS
+      console.log(
+        `[LOG-FLUXO] Avaliando ramificação de perfil para o tipo: ${usuario.tipo}`,
+      );
+
       if (usuario.tipo === 'enfermeiro') {
         const docCoren =
           enfermeiro?.coren ||
-          enfermeiro?.documento_profissional;
+          enfermeiro?.documento_professional;
+        console.log(
+          '[LOG-FLUXO] Processando perfil do tipo enfermeiro.',
+        );
+
         if (!docCoren) {
+          console.error(
+            '[ERRO-FLUXO] Erro de negócio: Enfermeiro sem COREN ou documento profissional.',
+          );
           throw new Error(
             'COREN/Registro obrigatório para enfermeiros.',
           );
         }
+
         await ServiceCrud.create('enfermeiros', {
           usuario_id: id,
           coren: docCoren,
@@ -80,7 +151,13 @@ class ServiceUser {
             ? Number(enfermeiro.experiencia)
             : 0,
         });
+        console.log(
+          '[LOG-FLUXO] Dados específicos de enfermeiro persistidos.',
+        );
       } else if (usuario.tipo === 'cuidador') {
+        console.log(
+          '[LOG-FLUXO] Processando perfil do tipo cuidador.',
+        );
         await ServiceCrud.create('cuidadores', {
           usuario_id: id,
           bio: cuidador?.bio || '',
@@ -88,7 +165,13 @@ class ServiceUser {
             ? Number(cuidador.experiencia)
             : 0,
         });
+        console.log(
+          '[LOG-FLUXO] Dados específicos de cuidador persistidos.',
+        );
       } else if (usuario.tipo === 'acompanhante') {
+        console.log(
+          '[LOG-FLUXO] Processando perfil do tipo acompanhante.',
+        );
         await ServiceCrud.create('acompanhantes', {
           usuario_id: id,
           bio: acompanhante?.bio || '',
@@ -96,54 +179,91 @@ class ServiceUser {
             ? Number(acompanhante.experiencia)
             : 0,
         });
+        console.log(
+          '[LOG-FLUXO] Dados específicos de acompanhante persistidos.',
+        );
       } else if (usuario.tipo === 'admin') {
+        console.log(
+          '[LOG-FLUXO] Processando perfil do tipo administrador.',
+        );
         await ServiceCrud.create('admins', {
           usuario_id: id,
           ...admin,
         });
+        console.log(
+          '[LOG-FLUXO] Dados específicos de admin persistidos.',
+        );
       } else if (usuario.tipo !== 'cliente') {
-        // Se não for nenhum dos prestadores acima, nem admin, nem cliente (usuário comum), bloqueia.
+        console.error(
+          `[ERRO-FLUXO] Erro de validação: Tipo '${usuario.tipo}' é desconhecido.`,
+        );
         throw new Error(
           `Tipo de usuário inválido: ${usuario.tipo}`,
         );
+      } else {
+        console.log(
+          "[LOG-FLUXO] Usuário identificado como 'cliente'. Sem necessidade de tabelas satélites.",
+        );
       }
 
-      // 4. ENVIO DE E-MAIL (Fire and Forget)
+      // 4. ENVIO DE E-MAIL (Background)
       try {
+        console.log(
+          `[LOG-FLUXO] Iniciando processo de envio de e-mail de boas-vindas para: ${usuario.email}`,
+        );
         const emailService = new EmailService();
         const templatePath = path.join(
           __dirname,
           '../../HTML/emails/cadastro.html',
         );
-        let html = fs.readFileSync(templatePath, 'utf-8');
 
-        html = html
-          .replace('{{nome}}', usuario.nome)
-          .replace(
-            '{{link}}',
-            'https://devmarkt.com.br/login',
+        if (fs.existsSync(templatePath)) {
+          console.log(
+            `[LOG-FLUXO] Template de e-mail localizado em: ${templatePath}`,
           );
+          let html = fs.readFileSync(templatePath, 'utf-8');
 
-        // Não bloqueamos a criação do usuário se houver demora no email
-        emailService
-          .send(
-            usuario.email,
-            'Bem-vindo ao Nosso Zelo!',
-            html,
-          )
-          .catch((err) => {
-            console.error(
-              'Falha ao enviar e-mail em background:',
-              err,
+          html = html
+            .replace('{{nome}}', usuario.nome)
+            .replace(
+              '{{link}}',
+              'https://devmarkt.com.br/login',
             );
-          });
-      } catch (emailErr) {
+
+          emailService
+            .send(
+              usuario.email,
+              'Bem-vindo ao Nosso Zelo!',
+              html,
+            )
+            .then(() =>
+              console.log(
+                `[LOG-FLUXO] E-mail enviado com sucesso para: ${usuario.email}`,
+              ),
+            )
+            .catch((err) =>
+              console.error(
+                `[ERRO-FLUXO] Falha assíncrona no envio de e-mail: ${err.message}`,
+              ),
+            );
+
+          console.log(
+            '[LOG-FLUXO] Solicitação de envio de e-mail encaminhada ao serviço de correio.',
+          );
+        } else {
+          console.warn(
+            `[LOG-FLUXO] Aviso: Arquivo de template de e-mail não encontrado em ${templatePath}`,
+          );
+        }
+      } catch (emailErr: any) {
         console.error(
-          'Erro na preparação do e-mail:',
-          emailErr,
+          `[ERRO-FLUXO] Erro crítico na preparação do e-mail: ${emailErr.message}`,
         );
       }
 
+      console.log(
+        `[LOG-FLUXO] Finalização bem-sucedida da criação do usuário ID: ${id}`,
+      );
       return {
         data: usuarioData,
         enfermeiro,
@@ -153,16 +273,20 @@ class ServiceUser {
       };
     } catch (error: any) {
       console.error(
-        'Erro ao criar usuário com tipo:',
-        error.message || error,
+        `[ERRO-FLUXO] Exceção capturada em criarUsuarioComTipo: ${
+          error.message || error
+        }`,
       );
 
-      // 5. TRADUÇÃO DE ERROS DO PRISMA
+      // 5. TRADUÇÃO DE ERROS DO PRISMA / DB
       let mensagemAmigavel =
         'Não foi possível criar o usuário.';
 
       if (error.code === 'P2002') {
         const alvo = error.meta?.target;
+        console.log(
+          `[LOG-FLUXO] Conflito de dados detectado (Constraint Unique). Campos afetados: ${alvo}`,
+        );
         if (alvo && alvo.includes('email')) {
           mensagemAmigavel =
             'Este e-mail já está cadastrado no sistema.';
@@ -178,18 +302,24 @@ class ServiceUser {
           error.message || 'Erro interno no servidor.';
       }
 
-      // Rollback inteligente
+      // Lógica de Rollback Manual para garantir consistência em caso de erro no meio do processo
       if (id) {
+        console.log(
+          `[LOG-FLUXO] Iniciando Rollback de segurança para remover rastro do ID: ${id}`,
+        );
         try {
           await ServiceCrud.delete('usuarios', id);
           console.log(
-            'Rollback: Usuário base removido com sucesso via delete em cascata.',
+            `[LOG-FLUXO] Rollback concluído: Registro parcial de ID ${id} removido.`,
           );
         } catch (rollbackError: any) {
           if (rollbackError.code !== 'P2025') {
             console.error(
-              'Erro ao remover usuário durante o rollback:',
-              rollbackError,
+              `[ERRO-FLUXO] Falha crítica no Rollback (ID: ${id}): ${rollbackError.message}`,
+            );
+          } else {
+            console.log(
+              '[LOG-FLUXO] Rollback finalizado: Registro já não existia ou foi removido.',
             );
           }
         }
@@ -199,114 +329,273 @@ class ServiceUser {
     }
   }
 
+  /**
+   * Stub para o método de validação de e-mail.
+   * Atualmente apenas registra a intenção de execução.
+   * * @returns {Promise<void>}
+   */
   static async validarEmail() {
-    // Implemente a lógica de validação de email aqui se necessário
+    console.log(
+      '[LOG-FLUXO] Executando validarEmail (Stub). Aguardando implementação da lógica de tokens.',
+    );
   }
 
+  /**
+   * Busca um perfil de usuário completo, agregando dados da tabela base e tabelas de perfil satélites.
+   * * @param {string} id - UUID/NanoID do usuário.
+   * @returns {Promise<any>} - Objeto com dados básicos e perfil detalhado enriquecido.
+   * @throws {Error} - Lança erro caso usuário não seja localizado.
+   */
   static async buscarUsuarioCompleto(id: string) {
-    const usuarioBase = await ServiceCrud.findById(
-      'usuarios',
-      id,
+    console.log(
+      `[LOG-FLUXO] Iniciando buscarUsuarioCompleto para o ID: ${id}`,
     );
-    if (!usuarioBase)
-      throw new Error('Usuário não encontrado.');
 
-    let dadosExtras = null;
-
-    // Busca na tabela específica dependendo do tipo
-    if (usuarioBase.tipo === 'enfermeiro') {
-      dadosExtras = await ServiceCrud.findFirst(
-        'enfermeiros',
-        { usuario_id: id },
+    try {
+      console.log(
+        `[LOG-FLUXO] Consultando dados base na tabela 'usuarios' para ID: ${id}`,
       );
-    } else if (usuarioBase.tipo === 'cuidador') {
-      dadosExtras = await ServiceCrud.findFirst(
-        'cuidadores',
-        { usuario_id: id },
+      const usuarioBase = await ServiceCrud.findById(
+        'usuarios',
+        id,
       );
-    } else if (usuarioBase.tipo === 'acompanhante') {
-      dadosExtras = await ServiceCrud.findFirst(
-        'acompanhantes',
-        { usuario_id: id },
+
+      if (!usuarioBase) {
+        console.error(
+          `[ERRO-FLUXO] Erro: Usuário com ID ${id} não existe na base.`,
+        );
+        throw new Error('Usuário não encontrado.');
+      }
+
+      console.log(
+        `[LOG-FLUXO] Usuário '${usuarioBase.nome}' localizado. Tipo: ${usuarioBase.tipo}`,
       );
-    }
 
-    // Remove a senha por segurança antes de retornar ao front
-    const { senha, ...usuarioSemSenha } = usuarioBase;
+      let dadosExtras = null;
 
-    return {
-      ...usuarioSemSenha,
-      perfil: dadosExtras,
-    };
-  }
-
-  static async atualizarUsuario(id: string, data: any) {
-    const { usuario, perfil } = data;
-
-    // 1. Atualiza dados básicos
-    // Impedimos que a senha seja atualizada por aqui (temos rota própria)
-    if (usuario?.senha) delete usuario.senha;
-
-    await ServiceCrud.update('usuarios', id, usuario);
-
-    // 2. Atualiza dados específicos se houver
-    const usuarioAtual = await ServiceCrud.findById(
-      'usuarios',
-      id,
-    );
-    const tipo = usuarioAtual.tipo;
-
-    if (perfil) {
-      let tabelaExtra = '';
-      if (tipo === 'enfermeiro')
-        tabelaExtra = 'enfermeiros';
-      else if (tipo === 'cuidador')
-        tabelaExtra = 'cuidadores';
-      else if (tipo === 'acompanhante')
-        tabelaExtra = 'acompanhantes';
-
-      if (tabelaExtra) {
-        // Buscamos o registro na tabela extra para pegar o ID dele
-        const registroExtra = await ServiceCrud.findFirst(
-          tabelaExtra,
+      // Verificação condicional de tabelas satélites baseada no tipo
+      if (usuarioBase.tipo === 'enfermeiro') {
+        console.log(
+          '[LOG-FLUXO] Enriquecendo dados via tabela enfermeiros.',
+        );
+        dadosExtras = await ServiceCrud.findFirst(
+          'enfermeiros',
           { usuario_id: id },
         );
-        if (registroExtra) {
-          await ServiceCrud.update(
-            tabelaExtra,
-            registroExtra.id,
-            perfil,
-          );
-        }
+      } else if (usuarioBase.tipo === 'cuidador') {
+        console.log(
+          '[LOG-FLUXO] Enriquecendo dados via tabela cuidadores.',
+        );
+        dadosExtras = await ServiceCrud.findFirst(
+          'cuidadores',
+          { usuario_id: id },
+        );
+      } else if (usuarioBase.tipo === 'acompanhante') {
+        console.log(
+          '[LOG-FLUXO] Enriquecendo dados via tabela acompanhantes.',
+        );
+        dadosExtras = await ServiceCrud.findFirst(
+          'acompanhantes',
+          { usuario_id: id },
+        );
       }
-    }
 
-    return this.buscarUsuarioCompleto(id);
+      console.log(
+        '[LOG-FLUXO] Processo de enriquecimento de dados concluído.',
+      );
+
+      // LGPD: Remoção de dados sensíveis antes de retornar ao controller
+      const { senha, ...usuarioSemSenha } = usuarioBase;
+      console.log(
+        `[LOG-FLUXO] Sucesso ao recuperar perfil completo do usuário: ${id}`,
+      );
+
+      return {
+        ...usuarioSemSenha,
+        perfil: dadosExtras,
+      };
+    } catch (error: any) {
+      console.error(
+        `[ERRO-FLUXO] Erro na busca completa do usuário ${id}: ${error.message}`,
+      );
+      throw error;
+    }
   }
 
+  /**
+   * Atualiza os dados de um usuário e seu respectivo perfil satélite.
+   * * @param {string} id - Identificador do usuário.
+   * @param {any} data - Objeto contendo chaves 'usuario' e/ou 'perfil' para atualização.
+   * @returns {Promise<any>} - Retorna o perfil completo e atualizado.
+   */
+  static async atualizarUsuario(id: string, data: any) {
+    console.log(
+      `[LOG-FLUXO] Iniciando atualizarUsuario para ID: ${id}. Dados: ${JSON.stringify(
+        data,
+      )}`,
+    );
+
+    try {
+      const { usuario, perfil } = data;
+
+      // Proteção de segurança: Senhas devem ser tratadas pelo método especializado atualizarSenha
+      if (usuario?.senha) {
+        console.warn(
+          `[LOG-FLUXO] Bloqueio: Campo 'senha' removido do payload genérico para o usuário: ${id}`,
+        );
+        delete usuario.senha;
+      }
+
+      if (usuario) {
+        console.log(
+          `[LOG-FLUXO] Atualizando dados base do usuário ${id} na tabela 'usuarios'.`,
+        );
+        await ServiceCrud.update('usuarios', id, usuario);
+        console.log('[LOG-FLUXO] Tabela base atualizada.');
+      }
+
+      console.log(
+        '[LOG-FLUXO] Verificando perfil atual para atualização de dados extras.',
+      );
+      const usuarioAtual = await ServiceCrud.findById(
+        'usuarios',
+        id,
+      );
+      const tipo = usuarioAtual.tipo;
+
+      if (perfil) {
+        let tabelaExtra = '';
+        if (tipo === 'enfermeiro')
+          tabelaExtra = 'enfermeiros';
+        else if (tipo === 'cuidador')
+          tabelaExtra = 'cuidadores';
+        else if (tipo === 'acompanhante')
+          tabelaExtra = 'acompanhantes';
+
+        if (tabelaExtra) {
+          console.log(
+            `[LOG-FLUXO] Localizando registro vinculado na tabela satélite: ${tabelaExtra}`,
+          );
+          const registroExtra = await ServiceCrud.findFirst(
+            tabelaExtra,
+            { usuario_id: id },
+          );
+
+          if (registroExtra) {
+            console.log(
+              `[LOG-FLUXO] Atualizando registro de perfil específico (ID: ${registroExtra.id}).`,
+            );
+            await ServiceCrud.update(
+              tabelaExtra,
+              registroExtra.id,
+              perfil,
+            );
+            console.log(
+              `[LOG-FLUXO] Tabela ${tabelaExtra} atualizada com sucesso.`,
+            );
+          } else {
+            console.warn(
+              `[LOG-FLUXO] Aviso: Perfil detectado, mas nenhum registro em ${tabelaExtra} foi encontrado para o usuário ${id}`,
+            );
+          }
+        }
+      }
+
+      console.log(
+        '[LOG-FLUXO] Atualização concluída. Recarregando dados para resposta.',
+      );
+      return this.buscarUsuarioCompleto(id);
+    } catch (error: any) {
+      console.error(
+        `[ERRO-FLUXO] Falha na atualização do usuário ${id}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Atualiza a senha de um usuário após aplicar hash criptográfico.
+   * * @param {string} id - Identificador do usuário.
+   * @param {string} novaSenha - Senha em texto plano.
+   * @returns {Promise<any>} - Objeto do banco com resultado da atualização.
+   * @throws {Error} - Lança erro caso a senha seja inválida.
+   */
   static async atualizarSenha(
     id: string,
     novaSenha: string,
   ) {
-    if (!novaSenha || novaSenha.length < 6) {
-      throw new Error(
-        'A senha deve ter pelo menos 6 caracteres.',
-      );
-    }
-
-    const senhaCriptografada = await bcrypt.hash(
-      novaSenha,
-      10,
+    console.log(
+      `[LOG-FLUXO] Iniciando atualização de senha para o ID: ${id}`,
     );
-    return await ServiceCrud.update('usuarios', id, {
-      senha: senhaCriptografada,
-    });
+
+    try {
+      if (!novaSenha || novaSenha.length < 6) {
+        console.error(
+          `[ERRO-FLUXO] Validação falhou: Senha curta ou nula para o usuário ${id}.`,
+        );
+        throw new Error(
+          'A senha deve ter pelo menos 6 caracteres.',
+        );
+      }
+
+      console.log(
+        '[LOG-FLUXO] Gerando novo hash seguro via bcrypt.',
+      );
+      const senhaCriptografada = await bcrypt.hash(
+        novaSenha,
+        10,
+      );
+
+      console.log(
+        `[LOG-FLUXO] Gravando nova senha na tabela 'usuarios' para ID: ${id}`,
+      );
+      const result = await ServiceCrud.update(
+        'usuarios',
+        id,
+        { senha: senhaCriptografada },
+      );
+
+      console.log(
+        `[LOG-FLUXO] Senha atualizada com sucesso para o usuário ${id}.`,
+      );
+      return result;
+    } catch (error: any) {
+      console.error(
+        `[ERRO-FLUXO] Exceção ao atualizar senha do usuário ${id}: ${error.message}`,
+      );
+      throw error;
+    }
   }
 
+  /**
+   * Deleta um usuário e propaga a exclusão para dados dependentes (Cascade).
+   * * @param {string} id - Identificador do usuário.
+   * @returns {Promise<any>} - Resultado da operação de deleção.
+   */
   static async deletarUsuario(id: string) {
-    // Se o banco estiver configurado com ON DELETE CASCADE,
-    // deletar o usuário já removerá localizações e perfis.
-    return await ServiceCrud.delete('usuarios', id);
+    console.log(
+      `[LOG-FLUXO] Iniciando remoção definitiva do usuário ID: ${id}`,
+    );
+
+    try {
+      console.log(
+        `[LOG-FLUXO] Solicitando ServiceCrud.delete para ID: ${id} na tabela 'usuarios'.`,
+      );
+      const result = await ServiceCrud.delete(
+        'usuarios',
+        id,
+      );
+
+      console.log(
+        `[LOG-FLUXO] Sucesso: Usuário ${id} e todas as dependências foram removidos.`,
+      );
+      return result;
+    } catch (error: any) {
+      console.error(
+        `[ERRO-FLUXO] Falha crítica ao deletar usuário ${id}: ${error.message}`,
+      );
+      throw error;
+    }
   }
 }
 

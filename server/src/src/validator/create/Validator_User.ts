@@ -1,3 +1,12 @@
+/**
+ * @author Kairo Chácara
+ * @version 1.0
+ * @date 15/04/2026
+ * @description Conjunto de funções e tipos para validação de integridade de dados (DTO)
+ * no processo de criação de usuários, cobrindo dados base e perfis específicos (Enfermeiro, Cuidador, etc).
+ * @rota server\src\src\validator\create\Validator_User.ts
+ */
+
 import validator from 'validator';
 
 enum TipoUsuario {
@@ -40,26 +49,53 @@ interface AdminExtra {
   permissao_total?: boolean;
 }
 
+/**
+ * Valida o objeto de entrada para a criação de um novo usuário.
+ * Realiza checagem de tipos, formatos de string, CPF e regras específicas por perfil.
+ * @param {any} input - Objeto de entrada contendo 'usuario' e dados de perfil.
+ * @returns {{ valid: boolean, erros: Record<string, string[]> }} - Status da validação e mapa de erros.
+ */
 export function validarCreateUsuarioDto(input: any): {
   valid: boolean;
   erros: Record<string, string[]>;
 } {
+  console.log(
+    `[LOG-FLUXO] Iniciando validarCreateUsuarioDto. Analisando estrutura do payload.`,
+  );
+
   const erros: Record<string, string[]> = {};
 
+  // Normalização do input mantendo nomenclaturas originais
   const usuario = input.usuario ?? input;
   const tipo = usuario.tipo;
 
+  console.log(
+    `[LOG-FLUXO] Identificado tipo de usuário para validação: ${
+      tipo || 'Não informado'
+    }.`,
+  );
+
   // ========== VALIDAÇÃO DO USUÁRIO BASE ==========
+  console.log(
+    '[LOG-FLUXO] Iniciando validação do bloco de dados base.',
+  );
+
   if (
     !usuario.nome ||
     typeof usuario.nome !== 'string' ||
     usuario.nome.trim().length < 3 ||
     usuario.nome.trim().length > 100
   ) {
+    console.warn(
+      '[LOG-FLUXO] Falha de validação: nome inválido ou fora dos limites (3-100 carac).',
+    );
     erros.nome = ['Nome deve ter entre 3 e 100 caracteres'];
   }
 
   if (!usuario.email || !validator.isEmail(usuario.email)) {
+    console.warn(
+      `[LOG-FLUXO] Falha de validação: e-mail '${usuario.email}' inválido.`,
+    );
     erros.email = ['Email inválido'];
   }
 
@@ -69,6 +105,9 @@ export function validarCreateUsuarioDto(input: any): {
     usuario.senha.length < 6 ||
     usuario.senha.length > 255
   ) {
+    console.warn(
+      '[LOG-FLUXO] Falha de validação: senha curta ou inexistente.',
+    );
     erros.senha = [
       'Senha deve ter entre 6 e 255 caracteres',
     ];
@@ -78,6 +117,9 @@ export function validarCreateUsuarioDto(input: any): {
     usuario.telefone &&
     !validator.isMobilePhone(usuario.telefone, 'pt-BR')
   ) {
+    console.warn(
+      `[LOG-FLUXO] Falha de validação: telefone '${usuario.telefone}' fora do padrão pt-BR.`,
+    );
     erros.telefone = [
       'Telefone inválido. Use formato nacional brasileiro',
     ];
@@ -90,6 +132,9 @@ export function validarCreateUsuarioDto(input: any): {
       /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
     )
   ) {
+    console.warn(
+      `[LOG-FLUXO] Falha de validação: CPF '${usuario.cpf}' não atende ao regex de máscara.`,
+    );
     erros.cpf = [
       'CPF inválido. Formato esperado: 000.000.000-00',
     ];
@@ -99,6 +144,9 @@ export function validarCreateUsuarioDto(input: any): {
     usuario.data_nascimento &&
     !validator.isISO8601(usuario.data_nascimento)
   ) {
+    console.warn(
+      `[LOG-FLUXO] Falha de validação: data_nascimento '${usuario.data_nascimento}' não é ISO8601.`,
+    );
     erros.data_nascimento = [
       'Data de nascimento inválida. Use o formato ISO: YYYY-MM-DDTHH:mm:ss.sssZ',
     ];
@@ -133,6 +181,9 @@ export function validarCreateUsuarioDto(input: any): {
     usuario.url_foto_perfil &&
     !validator.isURL(usuario.url_foto_perfil)
   ) {
+    console.warn(
+      `[LOG-FLUXO] Falha de validação: URL de perfil inválida.`,
+    );
     erros.url_foto_perfil = [
       'URL de foto de perfil inválida',
     ];
@@ -142,10 +193,17 @@ export function validarCreateUsuarioDto(input: any): {
     !usuario.tipo ||
     !Object.values(TipoUsuario).includes(usuario.tipo)
   ) {
+    console.warn(
+      `[LOG-FLUXO] Falha de validação: Tipo de usuário '${usuario.tipo}' é desconhecido.`,
+    );
     erros.tipo = ['Tipo de usuário inválido'];
   }
 
   // ========== VALIDAÇÕES POR TIPO DE USUÁRIO ==========
+  console.log(
+    `[LOG-FLUXO] Verificando campos específicos para o perfil: ${tipo}`,
+  );
+
   if (tipo === TipoUsuario.CUIDADOR) {
     const cuidador = input.cuidador || {};
     if (cuidador.bio && typeof cuidador.bio !== 'string') {
@@ -160,10 +218,10 @@ export function validarCreateUsuarioDto(input: any): {
       ];
     }
     if (
-      cuidador.documento_profissional &&
-      typeof cuidador.documento_profissional !== 'string'
+      cuidador.documento_professional &&
+      typeof cuidador.documento_professional !== 'string'
     ) {
-      erros.documento_profissional = [
+      erros.documento_professional = [
         'Documento profissional deve ser uma string',
       ];
     }
@@ -175,6 +233,9 @@ export function validarCreateUsuarioDto(input: any): {
       !enfermeiro.coren ||
       typeof enfermeiro.coren !== 'string'
     ) {
+      console.warn(
+        '[LOG-FLUXO] Falha de validação: COREN ausente para perfil enfermeiro.',
+      );
       erros.coren = [
         'COREN é obrigatório e deve ser uma string',
       ];
@@ -212,8 +273,22 @@ export function validarCreateUsuarioDto(input: any): {
     }
   }
 
+  const isValid = Object.keys(erros).length === 0;
+
+  if (isValid) {
+    console.log(
+      '[LOG-FLUXO] DTO validado com sucesso. Nenhuma inconsistência encontrada.',
+    );
+  } else {
+    console.warn(
+      `[LOG-FLUXO] Validação do DTO finalizada com ${
+        Object.keys(erros).length
+      } erro(s) detectado(s).`,
+    );
+  }
+
   return {
-    valid: Object.keys(erros).length === 0,
+    valid: isValid,
     erros,
   };
 }
