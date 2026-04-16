@@ -1,6 +1,6 @@
 /**
  * @author Kairo Chácara
- * @version 1.0
+ * @version 1.1
  * @date 15/04/2026
  * @description Ponto central de roteamento da API Nosso Zelo, responsável por orquestrar
  * e unificar os sub-roteadores especializados em um único ponto de entrada para a aplicação Express.
@@ -14,6 +14,8 @@ import LoginRouter from './Route_Login';
 import LocalizacaoRouter from './Route_Localizacao';
 import AgendamentoRouter from './Route_Agendamento';
 import UploadRouter from './Route_Upload';
+import PerfilRouter from './Route_Perfil';
+import AvaliacaoRouter from './Route_Avaliacao';
 
 console.log(
   '[LOG-FLUXO] Inicializando roteador central (index) e iniciando acoplamento de módulos.',
@@ -71,6 +73,22 @@ console.log(
  * Rota para gerenciamento de upload de arquivos e documentos.
  */
 router.use('/upload', UploadRouter);
+
+console.log(
+  '[LOG-FLUXO] Acoplando módulo: /perfil -> PerfilRouter',
+);
+/**
+ * Rota para gerenciamento e vitrine de perfis.
+ */
+router.use('/perfil', PerfilRouter);
+
+console.log(
+  '[LOG-FLUXO] Acoplando módulo: /avaliacoes -> AvaliacaoRouter',
+);
+/**
+ * Rota para sistema de avaliações cruzadas e gestão de reputação.
+ */
+router.use('/avaliacoes', AvaliacaoRouter);
 
 console.log(
   '[LOG-FLUXO] Roteamento central configurado com sucesso. Árvore de endpoints operacional.',

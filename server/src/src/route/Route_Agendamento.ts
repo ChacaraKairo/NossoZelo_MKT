@@ -1,64 +1,105 @@
 /**
  * @author Kairo Chácara
- * @version 1.0
+ * @version 1.1
  * @date 15/04/2026
- * @description Definição das rotas de Agendamento, centralizando os endpoints para criação
- * de novas contratações e consulta histórica de agendas tanto para prestadores quanto para clientes.
- * @rota server\src\src\route\Route_Agendamento
+ * @description Definição das rotas de Agendamento, centralizando os endpoints para criação,
+ * alteração de fluxo (Aceite/Finalização) e Registro Manual de serviços.
  */
 
 import { Router } from 'express';
 import AgendamentoController from '../controller/Controller_Agendamentos';
+import { authMiddleware } from '../middleware/autenticacao';
 
 console.log(
-  '[LOG-FLUXO] Inicializando AgendamentoRouter e configurando endpoints de agenda.',
+  '[LOG-FLUXO] Inicializando AgendamentoRouter e configurando endpoints de ciclo de vida de serviço.',
 );
 const AgendamentoRouter = Router();
 
 // ==========================================
-// GESTÃO DE CONTRATAÇÕES E AGENDAS
+// GESTÃO DE CONTRATAÇÕES E FLUXO
 // ==========================================
 
 console.log(
-  '[LOG-FLUXO] Mapeando Rota: POST /agendamentos -> AgendamentoController.criar',
+  '[LOG-FLUXO] Mapeando Rota: POST / -> AgendamentoController.criar (Protegida)',
 );
 /**
- * Criar um novo agendamento (agenda + contratação).
- * Recebe o payload completo da contratação e aciona o gatilho de agenda no banco.
+ * Criar um novo agendamento (Status inicial: Pendente).
+ * Requer autenticação para vincular o autor da solicitação.
  */
 AgendamentoRouter.post(
-  '/agendamentos',
+  '/',
+  authMiddleware,
   AgendamentoController.criar,
 );
 
 console.log(
-  '[LOG-FLUXO] Mapeando Rota: GET /agendamentos/prestador/:id -> AgendamentoController.listarPorTempo',
+  '[LOG-FLUXO] Mapeando Rota: PATCH /aceitar/:id -> AgendamentoController.aceitar (Protegida)',
 );
 /**
- * Listar agendamentos de um prestador por tempo.
- * Exemplo: /agendamentos/prestador/USR456?dias=7
- * Permite a visualização cronológica das atividades do prestador.
+ * Aceitar uma contratação (Status: Confirmado).
+ * Libera o Privacy Gate para o prestador visualizar os dados de contacto do cliente.
+ */
+AgendamentoRouter.patch(
+  '/aceitar/:id',
+  authMiddleware,
+  AgendamentoController.aceitar,
+);
+
+console.log(
+  '[LOG-FLUXO] Mapeando Rota: PATCH /finalizar/:id -> AgendamentoController.finalizar (Protegida)',
+);
+/**
+ * Finalizar um serviço (Status: Concluído).
+ * Habilita a contratação para receber avaliações de desempenho na Etapa 4.
+ */
+AgendamentoRouter.patch(
+  '/finalizar/:id',
+  authMiddleware,
+  AgendamentoController.finalizar,
+);
+
+console.log(
+  '[LOG-FLUXO] Mapeando Rota: POST /manual -> AgendamentoController.registroManual (Protegida)',
+);
+/**
+ * Registrar serviço realizado fora da plataforma para fins de métricas de experiência.
+ */
+AgendamentoRouter.post(
+  '/manual',
+  authMiddleware,
+  AgendamentoController.registroManual,
+);
+
+// ==========================================
+// CONSULTAS HISTÓRICAS E AGENDAS
+// ==========================================
+
+console.log(
+  '[LOG-FLUXO] Mapeando Rota: GET /prestador/:id -> AgendamentoController.listarPorTempo',
+);
+/**
+ * Recupera a agenda cronológica de um prestador.
  */
 AgendamentoRouter.get(
-  '/agendamentos/prestador/:id',
+  '/prestador/:id',
+  authMiddleware,
   AgendamentoController.listarPorTempo,
 );
 
 console.log(
-  '[LOG-FLUXO] Mapeando Rota: GET /agendamentos/cliente/:id -> AgendamentoController.listarPorCliente',
+  '[LOG-FLUXO] Mapeando Rota: GET /cliente/:id -> AgendamentoController.listarPorCliente',
 );
 /**
- * Listar agendamentos de um cliente.
- * Exemplo: /agendamentos/cliente/USR123
- * Retorna o histórico de todas as contratações solicitadas pelo usuário cliente.
+ * Recupera o histórico de todas as contratações de um cliente específico.
  */
 AgendamentoRouter.get(
-  '/agendamentos/cliente/:id',
+  '/cliente/:id',
+  authMiddleware,
   AgendamentoController.listarPorCliente,
 );
 
 console.log(
-  '[LOG-FLUXO] AgendamentoRouter configurado com sucesso e pronto para acoplamento principal.',
+  '[LOG-FLUXO] AgendamentoRouter configurado com sucesso e árvore de estados operacional.',
 );
 
 export default AgendamentoRouter;

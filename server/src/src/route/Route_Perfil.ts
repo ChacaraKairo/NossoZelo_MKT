@@ -1,6 +1,6 @@
 /**
  * @author Kairo Chácara
- * @version 1.0
+ * @version 1.1
  * @date 15/04/2026
  * @description Definição das rotas de Perfil, centralizando endpoints para visualização
  * de dados próprios, vitrine pública de prestadores e acesso restrito a dados de clientes.
@@ -21,40 +21,40 @@ const router = Router();
 // ==========================================
 
 console.log(
-  '[LOG-FLUXO] Mapeando Rota: GET /perfil/meu -> ControllerPerfil.obterMeuPerfil (Protegida)',
+  '[LOG-FLUXO] Mapeando Rota: GET /meu -> ControllerPerfil.obterMeuPerfil (Protegida)',
 );
 /**
  * Ver o próprio perfil (Telas A e B).
  * Requer autenticação via token JWT.
  */
 router.get(
-  '/perfil/meu',
+  '/meu', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
   ControllerPerfil.obterMeuPerfil,
 );
 
 console.log(
-  '[LOG-FLUXO] Mapeando Rota: GET /perfil/prestador/:id -> ControllerPerfil.vitrinePrestador (Protegida)',
+  '[LOG-FLUXO] Mapeando Rota: GET /prestador/:id -> ControllerPerfil.vitrinePrestador (Protegida)',
 );
 /**
  * Ver vitrine de um prestador (Tela D).
  * Requer autenticação para controle de métricas de visualização.
  */
 router.get(
-  '/perfil/prestador/:id',
+  '/prestador/:id', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
   ControllerPerfil.vitrinePrestador,
 );
 
 console.log(
-  '[LOG-FLUXO] Mapeando Rota: GET /perfil/cliente/:id -> ControllerPerfil.dadosClienteParaPrestador (Protegida)',
+  '[LOG-FLUXO] Mapeando Rota: GET /cliente/:id -> ControllerPerfil.dadosClienteParaPrestador (Protegida)',
 );
 /**
  * Ver dados de um cliente (Tela C - Triagem).
  * Endpoint com lógica de negócio para liberação de contato.
  */
 router.get(
-  '/perfil/cliente/:id',
+  '/cliente/:id', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
   ControllerPerfil.dadosClienteParaPrestador,
 );
