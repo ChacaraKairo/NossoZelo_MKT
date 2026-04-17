@@ -59,7 +59,7 @@ export const cadastrarUsuario = async (
       let erroData;
       try {
         erroData = await resposta.json();
-      } catch (err) {
+      } catch {
         throw new Error(
           `Erro no servidor (Status: ${resposta.status}). O backend não retornou um JSON válido.`,
         );

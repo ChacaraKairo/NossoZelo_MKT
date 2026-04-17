@@ -1,9 +1,9 @@
 /**
  * @author Kairo Chácara
- * @version 1.0
- * @date 14/04/2026
+ * @version 1.1
+ * @date 15/04/2026
  * @description Controller responsável por mediar as operações de upload de arquivos,
- * capturando payloads multipart/form-data e delegando a persistência física para o StorageService.
+ * capturando payloads multipart/form-data e delegando a persistência na AWS S3 via StorageService.
  * @rota server\src\src\controller\Controller_Upload.ts
  */
 
@@ -12,12 +12,11 @@ import { StorageService } from '../service/Service_Storage';
 
 export class UploadController {
   /**
-   * Endpoint para processamento de upload de arquivos.
-   * Suporta definição de pasta de destino e nome customizado para o arquivo.
+   * Endpoint para processamento de upload de arquivos para a nuvem.
+   * Suporta definição de pasta, nome customizado e privacidade (Público/Privado).
    * @param {Request} req - Requisição Express contendo o arquivo (Multer) e metadados no body.
    * @param {Response} res - Resposta HTTP.
    * @returns {Promise<void>}
-   * @throws {Error} - Lança erro em caso de falha no processamento do buffer ou escrita em disco.
    */
   static async fazerUpload(
     req: Request,
@@ -47,27 +46,34 @@ export class UploadController {
       const pastaDesejada = req.body.pasta || 'geral';
       const nomeCustomizado = req.body.nomeCustomizado;
 
+      // 🔥 Ajuste Sênior: Formulários multipart enviam tudo como string.
+      // Se 'true' for enviado, convertemos para o booleano true.
+      const isPrivado = req.body.isPrivado === 'true';
+
       console.log(
         `[LOG-FLUXO] Configurações de destino -> Pasta: '${pastaDesejada}', Nome Sugerido: '${
           nomeCustomizado || 'Gerado Automaticamente'
-        }'.`,
+        }', Privado: ${isPrivado}.`,
       );
 
-      // Invocação de serviço assíncrono
+      // Invocação de serviço assíncrono repassando a flag de privacidade
       console.log(
         `[LOG-FLUXO] Delegando persistência para StorageService.uploadFile.`,
       );
-      const urlFinal = await StorageService.uploadFile(
-        req.file,
-        pastaDesejada,
-        nomeCustomizado,
-      );
+      const urlOuChaveFinal =
+        await StorageService.uploadFile(
+          req.file,
+          pastaDesejada,
+          nomeCustomizado,
+          isPrivado, // O S3 agora saberá para qual bucket enviar
+        );
 
       console.log(
-        `[LOG-FLUXO] Persistência concluída com sucesso. URL de acesso gerada: ${urlFinal}`,
+        `[LOG-FLUXO] Persistência concluída com sucesso. Retorno do S3: ${urlOuChaveFinal}`,
       );
 
-      res.status(200).json({ url: urlFinal });
+      // Retorna a URL (se público) ou a AWS Key (se privado)
+      res.status(200).json({ url: urlOuChaveFinal });
 
       console.log(
         `[LOG-FLUXO] Resposta enviada ao cliente com status 200.`,
@@ -82,7 +88,7 @@ export class UploadController {
       res.status(500).json({
         message:
           error.message ||
-          'Erro interno ao processar o upload.',
+          'Erro interno ao processar o upload para a nuvem.',
       });
     }
   }

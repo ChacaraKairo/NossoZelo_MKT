@@ -1,49 +1,51 @@
 /**
  * @author Kairo Chácara
- * @version 1.0
+ * @version 1.1
  * @date 14/04/2026
- * @description Classe de serviço responsável pelo gerenciamento de persistência física de arquivos (uploads) no sistema local,
- * cuidando da estruturação de diretórios e geração de URLs acessíveis.
+ * @description Classe de serviço responsável pelo gerenciamento de persistência de arquivos na AWS S3.
+ * Roteia automaticamente entre buckets públicos (imagens) e privados (documentos).
  * @rota server\src\src\service\Service_Storage.ts
- 
  */
 
-import fs from 'fs';
+import {
+  S3Client,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
 import path from 'path';
 import { nanoid } from 'nanoid';
 
+// 1. Inicializa o cliente do S3 usando as chaves do seu arquivo .env
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION as string,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+    secretAccessKey: process.env
+      .AWS_SECRET_ACCESS_KEY as string,
+  },
+});
+
 export class StorageService {
   /**
-   * Realiza o upload de arquivos para o sistema local.
-   * @param {Express.Multer.File} file - Objeto de arquivo processado pelo middleware Multer.
-   * @param {string} [pastaDestino='geral'] - Nome da subpasta dentro do diretório raiz de uploads.
-   * @param {string} [nomeCustomizado] - Nome opcional sugerido para o arquivo (sem extensão).
-   * @returns {Promise<string>} - Retorna a URL completa e acessível do arquivo após o upload.
-   * @throws {Error} - Lança uma exceção caso ocorra falha na escrita física do arquivo ou criação de diretório.
+   * Realiza o upload de arquivos para a AWS S3.
+   * @param {Express.Multer.File} file - Objeto de arquivo processado pelo middleware Multer (precisa usar memoryStorage).
+   * @param {string} [pastaDestino='geral'] - Nome da subpasta dentro do bucket S3.
+   * @param {string} [nomeCustomizado] - Nome opcional sugerido para o arquivo.
+   * @param {boolean} [isPrivado=false] - Define se vai para o bucket de Documentos (Privado) ou Imagens (Público).
+   * @returns {Promise<string>} - Retorna a URL completa do S3 ou a chave do arquivo.
    */
   static async uploadFile(
     file: Express.Multer.File,
     pastaDestino: string = 'geral',
     nomeCustomizado?: string,
+    isPrivado: boolean = false,
   ): Promise<string> {
     console.log(
-      `[LOG-FLUXO] Iniciando uploadFile. Parâmetros: pastaDestino='${pastaDestino}', nomeCustomizado='${
-        nomeCustomizado || 'N/A'
-      }', originalName='${file.originalname}', fileSize=${
-        file.size
-      } bytes`,
+      `[LOG-FLUXO] Iniciando upload S3. Parâmetros: pastaDestino='${pastaDestino}', Privado: ${isPrivado}, originalName='${file.originalname}', fileSize=${file.size} bytes`,
     );
 
     try {
-      console.log(
-        `[LOG-FLUXO] Extraindo extensão do arquivo original: ${file.originalname}`,
-      );
       const extensao = path.extname(file.originalname);
-      console.log(
-        `[LOG-FLUXO] Extensão identificada: ${extensao}`,
-      );
 
-      // Lógica de definição do nome do arquivo (Preservando nomenclatura)
       console.log(
         '[LOG-FLUXO] Processando definição do nome de persistência.',
       );
@@ -51,69 +53,49 @@ export class StorageService {
         ? `${nomeCustomizado}${extensao}`
         : `${nanoid(15)}${extensao}`;
 
+      // No S3 não temos pastas reais, usamos o "Key" para simular o caminho
+      const s3Key = `${pastaDestino}/${nomeArquivo}`;
+
+      // Decide qual bucket usar baseado no nível de segurança exigido
+      const bucketName = isPrivado
+        ? process.env.AWS_PRIVATE_BUCKET_NAME
+        : process.env.AWS_PUBLIC_BUCKET_NAME;
+
       console.log(
-        `[LOG-FLUXO] Nome de persistência definido: ${nomeArquivo}`,
+        `[LOG-FLUXO] Solicitando escrita no S3: Bucket '${bucketName}' | Key: '${s3Key}'`,
       );
 
-      const uploadDir = path.join(
-        __dirname,
-        `../../../uploads/${pastaDestino}`,
-      );
+      // 2. Monta o comando de envio para a AWS
+      const command = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: s3Key,
+        Body: file.buffer, // O arquivo cru na memória
+        ContentType: file.mimetype, // Ex: 'image/jpeg' ou 'application/pdf'
+      });
 
+      // 3. Dispara o envio
+      await s3Client.send(command);
       console.log(
-        `[LOG-FLUXO] Verificando infraestrutura de diretórios no sistema de arquivos em: ${uploadDir}`,
+        `[LOG-FLUXO] Sincronização com AWS S3 concluída para o arquivo: ${nomeArquivo}`,
       );
 
-      // Garantia de existência do diretório (Ramificação condicional)
-      if (!fs.existsSync(uploadDir)) {
-        console.log(
-          `[LOG-FLUXO] Condição detectada: Diretório '${pastaDestino}' não existe. Iniciando criação recursiva.`,
-        );
-        fs.mkdirSync(uploadDir, { recursive: true });
-        console.log(
-          '[LOG-FLUXO] Estrutura de pastas criada com sucesso no disco.',
-        );
+      // 4. Retorno
+      // Se for privado, retornamos apenas o caminho (s3Key) para o banco de dados.
+      // Se for público, podemos retornar a URL direta que o S3 gera.
+      if (isPrivado) {
+        return s3Key; // Você salvará essa key no banco MySQL para gerar URL assinada depois
       } else {
+        const urlFinal = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
         console.log(
-          `[LOG-FLUXO] Condição detectada: Diretório de destino já está disponível para escrita.`,
+          `[LOG-FLUXO] Operação uploadFile finalizada com sucesso. URL Pública: ${urlFinal}`,
         );
+        return urlFinal;
       }
-
-      const caminhoCompleto = path.join(
-        uploadDir,
-        nomeArquivo,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Solicitando escrita física do buffer no disco: ${caminhoCompleto}`,
-      );
-
-      /**
-       * Realiza a escrita síncrona do buffer no disco.
-       * Mantendo padrão original de escrita síncrona conforme o código fonte.
-       */
-      fs.writeFileSync(caminhoCompleto, file.buffer);
-
-      console.log(
-        `[LOG-FLUXO] Sincronização de dados concluída para o arquivo: ${nomeArquivo}`,
-      );
-
-      console.log(
-        '[LOG-FLUXO] Iniciando construção da URL de acesso público via variáveis de ambiente.',
-      );
-      const baseUrl =
-        process.env.API_URL || 'http://localhost:4000';
-      const urlFinal = `${baseUrl}/uploads/${pastaDestino}/${nomeArquivo}`;
-
-      console.log(
-        `[LOG-FLUXO] Operação uploadFile finalizada com sucesso. URL gerada: ${urlFinal}`,
-      );
-      return urlFinal;
     } catch (error: any) {
       console.error(
-        `[ERRO-FLUXO] Falha crítica no gerenciamento de armazenamento (Subpasta: ${pastaDestino}). Motivo: ${
+        `[ERRO-FLUXO] Falha crítica no upload S3 (Bucket: destino). Motivo: ${
           error.message || error
-        }. Detalhes técnicos: ${JSON.stringify(error)}`,
+        }. Detalhes: ${JSON.stringify(error)}`,
       );
       throw error;
     }

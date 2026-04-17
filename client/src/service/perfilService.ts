@@ -15,6 +15,7 @@ const baseURL = `${apiUrl}/nossozelo`;
 // Configuração do Axios com interceptor para injetar o Token em todas as chamadas
 const api = axios.create({ baseURL });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 api.interceptors.request.use((config: any) => {
   const token = Cookies.get('token');
   if (token && config.headers) {
@@ -24,7 +25,9 @@ api.interceptors.request.use((config: any) => {
 });
 
 api.interceptors.response.use(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (response: any) => response,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (error: any) => {
     // Se o token for inválido/expirado, desloga o usuário por segurança
     if (error.response && error.response.status === 401) {

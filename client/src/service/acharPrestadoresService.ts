@@ -76,7 +76,7 @@ export const buscarPrestadores = async (
       let erroData;
       try {
         erroData = await resposta.json();
-      } catch (err) {
+      } catch {
         throw new Error(
           `Erro no servidor (Status: ${resposta.status}).`,
         );
@@ -90,28 +90,43 @@ export const buscarPrestadores = async (
 
     const dados = await resposta.json();
 
-    // 3. Mapeamento para o Card
-    // Se o seu Prisma usa raw query ($queryRaw), os dados podem vir ligeiramente diferentes,
-    // mas esta estrutura de fallback previne que o Card "quebre".
-    return dados.map((prestador: any) => ({
-      id: prestador.id,
-      nome: prestador.nome,
-      tipo:
-        prestador.tipo.charAt(0).toUpperCase() +
-        prestador.tipo.slice(1),
-      localidade:
-        prestador.cidade && prestador.estado
-          ? `${prestador.cidade}, ${prestador.estado}`
-          : 'Localidade não informada',
-      imageUrl:
-        prestador.url_foto_perfil || '/logos/OnlyLogo.png',
-      precoHora:
-        prestador.valorHora || prestador.preco || 0,
-      avaliacao:
-        prestador.avaliacao_media ||
-        prestador.avaliacao ||
-        0,
-    }));
+    // 3. Mapeamento para o Card (Ajustado para Prisma + AWS S3)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return dados.map((prestador: any) => {
+      // Tenta achar a imagem na propriedade nova (AWS), ou na antiga, ou usa o logo como fallback
+      const imagemAchar =
+        prestador.providerProfile?.avatarUrlAws ||
+        prestador.avatarUrlAws ||
+        prestador.url_foto_perfil ||
+        '/logos/OnlyLogo.png';
+
+      // Tenta achar o nome na estrutura aninhada do Prisma ou na raiz
+      const nomeAchar =
+        prestador.providerProfile?.name ||
+        prestador.nome ||
+        prestador.name ||
+        'Prestador sem nome';
+
+      return {
+        id: prestador.id,
+        nome: nomeAchar,
+        tipo: prestador.tipo
+          ? prestador.tipo.charAt(0).toUpperCase() +
+            prestador.tipo.slice(1)
+          : 'Serviço',
+        localidade:
+          prestador.cidade && prestador.estado
+            ? `${prestador.cidade}, ${prestador.estado}`
+            : 'Indaiatuba, SP',
+        imageUrl: imagemAchar,
+        precoHora:
+          prestador.valorHora || prestador.preco || 0,
+        avaliacao:
+          prestador.avaliacao_media ||
+          prestador.avaliacao ||
+          0,
+      };
+    });
   } catch (error) {
     console.error(
       'Erro no serviço de busca de prestadores:',

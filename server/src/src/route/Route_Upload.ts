@@ -1,6 +1,6 @@
 /**
  * @author Kairo Chácara
- * @version 1.0
+ * @version 1.1
  * @date 15/04/2026
  * @description Definição das rotas de upload de arquivos, utilizando o middleware Multer
  * para interceptação de buffers em memória (RAM) e delegação ao controlador de persistência.
@@ -10,6 +10,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { UploadController } from '../controller/Controller_Upload';
+// Importe o seu authMiddleware aqui se quiser proteger a rota!
+// import { authMiddleware } from '../middleware/autenticacao';
 
 console.log(
   '[LOG-FLUXO] Inicializando UploadRouter para gestão de arquivos.',
@@ -18,12 +20,15 @@ const UploadRouter = Router();
 
 /**
  * Configuração do Multer utilizando memoryStorage.
- * O arquivo não toca no disco rígido nesta etapa; permanece como Buffer na RAM para processamento volátil.
+ * Adicionado limite de 5MB por arquivo por questões de segurança.
  */
 console.log(
-  '[LOG-FLUXO] Configurando middleware Multer com estratégia de memoryStorage.',
+  '[LOG-FLUXO] Configurando middleware Multer com estratégia de memoryStorage e limite de 5MB.',
 );
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 Megabytes
+});
 
 // Endpoint: POST /
 // Prefixo herdado do roteador principal: /nossozelo/upload
@@ -35,6 +40,7 @@ console.log(
  */
 UploadRouter.post(
   '/',
+  // authMiddleware, // 🔥 Descomente esta linha para impedir uploads de usuários não logados
   upload.single('file'),
   UploadController.fazerUpload,
 );
