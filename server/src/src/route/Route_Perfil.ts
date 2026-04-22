@@ -30,7 +30,7 @@ console.log(
 router.get(
   '/meu', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
-  ControllerPerfil.obterMeuPerfil,
+  ControllerPerfil.obterMeuPerfil as any,
 );
 
 console.log(
@@ -43,7 +43,7 @@ console.log(
 router.get(
   '/prestador/:id', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
-  ControllerPerfil.vitrinePrestador,
+  ControllerPerfil.vitrinePrestador as any,
 );
 
 console.log(
@@ -56,11 +56,29 @@ console.log(
 router.get(
   '/cliente/:id', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
-  ControllerPerfil.dadosClienteParaPrestador,
+  ControllerPerfil.dadosClienteParaPrestador as any,
+);
+
+console.log(
+  '[LOG-FLUXO] Mapeando Rota: PATCH /update -> ControllerPerfil.atualizarDadosPerfil (Protegida)',
+);
+/**
+ * Atualizar o próprio perfil.
+ * Rota que estava faltando e causando o erro 404.
+ */
+router.patch(
+  '/update',
+  authMiddleware,
+  ControllerPerfil.atualizarDadosPerfil as any,
 );
 
 console.log(
   '[LOG-FLUXO] RoutePerfil configurado com sucesso e pronto para o Router Principal.',
+);
+router.patch(
+  '/update',
+  authMiddleware,
+  ControllerPerfil.atualizarDadosPerfil as any,
 );
 
 export default router;

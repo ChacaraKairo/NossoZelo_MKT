@@ -7,7 +7,7 @@
     "start": "node dist/server.js",
     "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev src/server.ts",
     "build": "npx prisma generate && tsc",
-    "db:keep-alive": "ts-node src/scripts/ping-db.ts",
+    "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
     "test": "echo \"No test specified\" && exit 0"
   },
   "repository": {
