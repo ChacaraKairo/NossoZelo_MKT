@@ -341,6 +341,13 @@ model localizacoes {
   longitude  Decimal? @db.Decimal(9, 6)
   usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_localizacoes_usuario")
 }
+// ✅ TABELA DE MANUTENÇÃO: Evita que o banco da Aiven desligue por inatividade
+model aiven_keep_alive {
+  id        Int      @id @default(1)
+  last_ping DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("_aiven_keep_alive")
+}
 
 // ==========================================
 // ✅ ENUMS
