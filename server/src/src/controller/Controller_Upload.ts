@@ -1,10 +1,8 @@
 /**
- * @author Kairo Chácara
- * @version 1.1
- * @date 15/04/2026
- * @description Controller responsável por mediar as operações de upload de arquivos,
- * capturando payloads multipart/form-data e delegando a persistência na AWS S3 via StorageService.
- * @rota server\src\src\controller\Controller_Upload.ts
+ * @author Kairo Chácara & Gemini Sócio
+ * @version 2.1
+ * @description Controller orquestrador para múltiplos uploads de prestadores.
+ * Garante que o vínculo entre S3 e Banco de Dados ocorra de forma atômica por arquivo.
  */
 
 import { Request, Response } from 'express';
@@ -12,83 +10,104 @@ import { StorageService } from '../service/Service_Storage';
 
 export class UploadController {
   /**
-   * Endpoint para processamento de upload de arquivos para a nuvem.
-   * Suporta definição de pasta, nome customizado e privacidade (Público/Privado).
-   * @param {Request} req - Requisição Express contendo o arquivo (Multer) e metadados no body.
-   * @param {Response} res - Resposta HTTP.
-   * @returns {Promise<void>}
+   * Endpoint: POST /nossozelo/upload/completar-cadastro
+   * Processa paralelamente cada arquivo enviado, garantindo a conversão e o vínculo no MySQL.
    */
   static async fazerUpload(
     req: Request,
     res: Response,
   ): Promise<void> {
     console.log(
-      `[LOG-FLUXO] Iniciando fazerUpload no UploadController. Verificando presença de arquivo.`,
+      `[LOG-FLUXO] Iniciando Controller de Upload.`,
     );
 
-    try {
-      // Ramificação condicional: Validação de presença do arquivo (Fail Fast)
-      if (!req.file) {
-        console.error(
-          `[ERRO-FLUXO] Falha na requisição de upload: Nenhum arquivo foi detectado no multipart/form-data.`,
-        );
-        res.status(400).json({
-          message: 'Nenhum arquivo enviado na requisição.',
+    // 1. Recuperação de arquivos e metadados
+    const arquivos = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    // 🔥 Captura o ID real do usuário e o SessionID do Body
+    const { usuarioId, sessionId } = req.body;
+
+    // Validação de segurança: Sem usuarioId, o vínculo na tabela documentos_cuidadores falha.
+    if (!usuarioId || usuarioId === 'undefined') {
+      console.error(
+        '[ERRO-CONTROLLER] Tentativa de upload sem usuarioId válido.',
+      );
+      res.status(400).json({
+        error:
+          'ID do usuário (usuarioId) não fornecido ou inválido. O vínculo no banco é impossível.',
+      });
+      return;
+    }
+
+    if (!arquivos || Object.keys(arquivos).length === 0) {
+      res
+        .status(400)
+        .json({
+          error:
+            'Nenhum arquivo detectado para processamento.',
         });
-        return;
-      }
+      return;
+    }
 
-      console.log(
-        `[LOG-FLUXO] Arquivo recebido: ${req.file.originalname} (${req.file.size} bytes). Processando metadados do body.`,
+    try {
+      const resultados: any = {};
+
+      /**
+       * 🔥 LÓGICA DE ORQUESTRAÇÃO PARALELA:
+       * Mapeamos os campos (foto, identidade, certificado, antecedentes) enviados.
+       */
+      const promises = Object.keys(arquivos).map(
+        async (campo) => {
+          const arquivo = arquivos[campo][0];
+          const isPrivado = campo !== 'foto'; // Apenas o campo 'foto' vai para o bucket público.
+
+          console.log(
+            `[LOG-UPLOAD] Orquestrando processamento para o campo: ${campo} (Privado: ${isPrivado})`,
+          );
+
+          /**
+           * Delega para o StorageService a responsabilidade de:
+           * 1. Converter Imagem para JPG (Sharp)
+           * 2. Renomear com {usuarioId}_{campo}_{random}
+           * 3. Persistir no S3 correspondente
+           * 4. Criar registro na tabela documentos_cuidadores ou atualizar usuário
+           */
+          const urlOuKey =
+            await StorageService.processarUploadEVinculo(
+              arquivo,
+              usuarioId,
+              campo as any,
+              isPrivado,
+              sessionId, // Passamos o sessionId opcionalmente para reforçar a nomenclatura
+            );
+
+          resultados[campo] = urlOuKey;
+        },
       );
 
-      // Definição de variáveis mantendo nomes originais
-      const pastaDesejada = req.body.pasta || 'geral';
-      const nomeCustomizado = req.body.nomeCustomizado;
-
-      // 🔥 Ajuste Sênior: Formulários multipart enviam tudo como string.
-      // Se 'true' for enviado, convertemos para o booleano true.
-      const isPrivado = req.body.isPrivado === 'true';
+      // Aguarda todos os processos terminarem para dar a resposta única ao frontend.
+      await Promise.all(promises);
 
       console.log(
-        `[LOG-FLUXO] Configurações de destino -> Pasta: '${pastaDesejada}', Nome Sugerido: '${
-          nomeCustomizado || 'Gerado Automaticamente'
-        }', Privado: ${isPrivado}.`,
+        `[LOG-SUCESSO] Todos os vínculos realizados para o usuário: ${usuarioId}`,
       );
 
-      // Invocação de serviço assíncrono repassando a flag de privacidade
-      console.log(
-        `[LOG-FLUXO] Delegando persistência para StorageService.uploadFile.`,
-      );
-      const urlOuChaveFinal =
-        await StorageService.uploadFile(
-          req.file,
-          pastaDesejada,
-          nomeCustomizado,
-          isPrivado, // O S3 agora saberá para qual bucket enviar
-        );
-
-      console.log(
-        `[LOG-FLUXO] Persistência concluída com sucesso. Retorno do S3: ${urlOuChaveFinal}`,
-      );
-
-      // Retorna a URL (se público) ou a AWS Key (se privado)
-      res.status(200).json({ url: urlOuChaveFinal });
-
-      console.log(
-        `[LOG-FLUXO] Resposta enviada ao cliente com status 200.`,
-      );
+      res.status(200).json({
+        message:
+          'Todos os documentos foram processados, convertidos e vinculados com sucesso.',
+        data: resultados,
+      });
     } catch (error: any) {
       console.error(
-        `[ERRO-FLUXO] Exceção crítica capturada no UploadController.fazerUpload: ${
-          error.message || error
-        }`,
+        `[ERRO-CONTROLLER] Falha crítica na orquestração: ${error.message}`,
       );
 
       res.status(500).json({
-        message:
-          error.message ||
-          'Erro interno ao processar o upload para a nuvem.',
+        error:
+          'Erro interno ao processar e vincular arquivos.',
+        details: error.message,
       });
     }
   }

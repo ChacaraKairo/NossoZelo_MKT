@@ -1,0 +1,71 @@
+/* client/src/styles/Perfil.module.css */
+
+.container {
+  min-height: 100vh;
+  background-color: #f4f7fc; /* Fundo cinza frio profissional */
+  width: 100%;
+  overflow-x: hidden; /* Mata a barra de rolagem horizontal */
+  box-sizing: border-box;
+}
+
+.mainContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 6rem 1.5rem 3rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr; /* Mobile: Uma coluna */
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Breakpoint para Desktop: Sistema de 12 colunas */
+@media (min-width: 1024px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .leftColumn {
+    grid-column: span 3;
+  }
+
+  .centerColumn {
+    grid-column: span 6;
+  }
+
+  .rightColumn {
+    grid-column: span 3;
+  }
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cardTitle {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.stickySidebar {
+  position: sticky;
+  top: 6rem; /* Faz a lateral acompanhar o scroll */
+  height: fit-content;
+}

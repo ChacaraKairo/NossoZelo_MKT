@@ -1,6 +1,17 @@
-// client/src/service/acharPrestadoresService.ts
+/**
+ * @author Kairo Chácara
+ * @version 1.1
+ * @date 22/04/2026
+ * @description Service especializado na orquestração de buscas de prestadores por geolocalização.
+ * Realiza a ponte entre os filtros do useBuscaStore e o Controller_Localizacao no backend.
+ * Implementa mapeamento de dados para compatibilidade com AWS S3 e estruturas aninhadas do Prisma.
+ */
 
-// 1. Tipagem exata dos parâmetros que vêm do Zustand
+/* STREAMING_CHUNK:Defining Service Interfaces... */
+
+/**
+ * Interface para os filtros originados no Zustand Store.
+ */
 export interface FiltrosBusca {
   idUsuario?: string;
   nome?: string;
@@ -10,7 +21,9 @@ export interface FiltrosBusca {
   precoMax?: string;
 }
 
-// 2. Tipagem do objeto que o componente UserCard espera receber
+/**
+ * Interface do modelo de dados esperado pelo componente UserCard.
+ */
 export interface PrestadorCardData {
   id: string;
   nome: string;
@@ -21,20 +34,33 @@ export interface PrestadorCardData {
   avaliacao?: number;
 }
 
+/* STREAMING_CHUNK:Implementing Fetch Logic with Flux Logs... */
+
+/**
+ * Executa a chamada à API de geolocalização e processa os resultados para o Front-end.
+ * @param {FiltrosBusca} filtros - Objeto contendo os critérios de pesquisa.
+ * @returns {Promise<PrestadorCardData[]>} - Lista de prestadores formatada para exibição.
+ */
 export const buscarPrestadores = async (
   filtros: FiltrosBusca,
 ): Promise<PrestadorCardData[]> => {
+  console.log(
+    `[LOG-FLUXO] Iniciando buscarPrestadores. Filtros ativos: ${JSON.stringify(filtros)}`,
+  );
+
   try {
     const baseUrl =
       process.env.NEXT_PUBLIC_API_URL ||
       'http://localhost:4000';
-
-    // 🔥 Apontamos para a SUA rota oficial de geolocalização
     const url = new URL(
       `${baseUrl}/nossozelo/geolocalizacao/prestadores`,
     );
 
-    // 🔥 Tradução Sênior: Mapeamos o estado do Zustand para o que o seu Controller_Localizacao.ts espera ler
+    console.log(
+      '[LOG-FLUXO] Traduzindo filtros do Front-end para parâmetros de Query da API.',
+    );
+
+    // Mapeamento de Parâmetros (Tradução Sênior)
     if (filtros.idUsuario)
       url.searchParams.append(
         'idUsuario',
@@ -48,22 +74,34 @@ export const buscarPrestadores = async (
         filtros.localizacao,
       );
 
-    // O seu controller espera "tipo", mas o front usa "categoria"
-    if (filtros.categoria)
+    // Mapeamento: categoria (Front) -> tipo (Back)
+    if (filtros.categoria) {
+      console.log(
+        `[LOG-FLUXO] Mapeando categoria '${filtros.categoria}' para parâmetro 'tipo'.`,
+      );
       url.searchParams.append(
         'tipo',
         filtros.categoria.toLowerCase(),
       );
+    }
 
-    // O seu controller espera "raioKm", mas o front usa "distancia"
-    if (filtros.distancia)
+    // Mapeamento: distancia (Front) -> raioKm (Back)
+    if (filtros.distancia) {
+      console.log(
+        `[LOG-FLUXO] Mapeando raio de ${filtros.distancia}km para parâmetro 'raioKm'.`,
+      );
       url.searchParams.append(
         'raioKm',
         filtros.distancia.toString(),
       );
+    }
 
     if (filtros.precoMax)
       url.searchParams.append('precoMax', filtros.precoMax);
+
+    console.log(
+      `[LOG-FLUXO] Efetuando requisição GET para o endpoint de geolocalização: ${url.pathname}`,
+    );
 
     const resposta = await fetch(url.toString(), {
       method: 'GET',
@@ -73,6 +111,9 @@ export const buscarPrestadores = async (
     });
 
     if (!resposta.ok) {
+      console.error(
+        `[ERRO-FLUXO] Resposta da API inválida. Status: ${resposta.status}`,
+      );
       let erroData;
       try {
         erroData = await resposta.json();
@@ -89,19 +130,22 @@ export const buscarPrestadores = async (
     }
 
     const dados = await resposta.json();
+    console.log(
+      `[LOG-FLUXO] Dados recebidos da API. Iniciando mapeamento de ${dados.length} registros.`,
+    );
 
-    // 3. Mapeamento para o Card (Ajustado para Prisma + AWS S3)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* STREAMING_CHUNK:Mapping Data to UI Format (Prisma + AWS S3 Support)... */
+
     return dados.map((prestador: any) => {
-      // Tenta achar a imagem na propriedade nova (AWS), ou na antiga, ou usa o logo como fallback
-      const imagemAchar =
+      // Resolução de imagem: Prioridade para AWS S3 (providerProfile) com fallback para logo padrão
+      const imagemFinal =
         prestador.providerProfile?.avatarUrlAws ||
         prestador.avatarUrlAws ||
         prestador.url_foto_perfil ||
         '/logos/OnlyLogo.png';
 
-      // Tenta achar o nome na estrutura aninhada do Prisma ou na raiz
-      const nomeAchar =
+      // Resolução de Nome: Tratando estruturas aninhadas do Prisma
+      const nomeFinal =
         prestador.providerProfile?.name ||
         prestador.nome ||
         prestador.name ||
@@ -109,7 +153,7 @@ export const buscarPrestadores = async (
 
       return {
         id: prestador.id,
-        nome: nomeAchar,
+        nome: nomeFinal,
         tipo: prestador.tipo
           ? prestador.tipo.charAt(0).toUpperCase() +
             prestador.tipo.slice(1)
@@ -118,7 +162,7 @@ export const buscarPrestadores = async (
           prestador.cidade && prestador.estado
             ? `${prestador.cidade}, ${prestador.estado}`
             : 'Indaiatuba, SP',
-        imageUrl: imagemAchar,
+        imageUrl: imagemFinal,
         precoHora:
           prestador.valorHora || prestador.preco || 0,
         avaliacao:
@@ -127,10 +171,9 @@ export const buscarPrestadores = async (
           0,
       };
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(
-      'Erro no serviço de busca de prestadores:',
-      error,
+      `[ERRO-FLUXO] Falha crítica no serviço de busca de prestadores: ${error.message}`,
     );
     throw error;
   }

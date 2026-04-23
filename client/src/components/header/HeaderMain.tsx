@@ -10,18 +10,18 @@ import LoginButton from '../btn/BtnLogin';
 import BtnCadastrar from '../btn/BtnCadastrar';
 import Logo from '../logos/LogoLink';
 import Button from '../btn/Button';
+import UserDropdown from './UserDropdown'; // 🔥 IMPORTAMOS O NOVO COMPONENTE
 
 // --- Ícones ---
 import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
 import { TbUserSearch } from 'react-icons/tb';
 
 // --- Lógica Sênior ---
-import { useBuscaStore } from '@/store/useBuscaStore'; // ✅ Zustand
-import { getUsuarioDoCookie } from '@/utils/auth'; // ✅ Utilitário de Auth
+import { useBuscaStore } from '@/store/useBuscaStore';
+import { getUsuarioDoCookie } from '@/utils/auth';
 
-// Não precisamos mais da prop onSearch! O componente agora é independente.
 const HeaderMain: React.FC = () => {
-  // ✅ 1. Conexão direta com a "Mente" da Busca (Store)
+  // 1. Conexão direta com a "Mente" da Busca (Store)
   const {
     searchLocation,
     setSearchLocation,
@@ -29,31 +29,35 @@ const HeaderMain: React.FC = () => {
     setSearchService,
   } = useBuscaStore();
 
-  // ✅ 2. Estados de Controle de Autenticação e Hidratação
+  // 2. Estados de Controle de Autenticação e Hidratação
   const [usuario, setUsuario] = useState<{
     nome: string;
+    tipo?: string;
   } | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // Evita o erro de hidratação (SSR vs Client)
+    setIsClient(true);
 
     const decoded = getUsuarioDoCookie();
     if (decoded) {
       const nomeCompleto = decoded.nome || 'Usuário';
       const primeiroNome = nomeCompleto.split(' ')[0];
-      setUsuario({ nome: primeiroNome });
+      setUsuario({
+        nome: primeiroNome,
+        tipo: decoded.tipo,
+      });
     }
   }, []);
 
   return (
     <header className={styles.headerContainer}>
+      {/* O Logo agora empurra a busca, não fica em cima dela */}
       <div className={styles.logoWrapper}>
         <Logo />
       </div>
 
       <div className={styles.searchBar}>
-        {/* Input de Localização conectado ao Zustand */}
         <Input
           value={searchLocation}
           onChange={(e) =>
@@ -66,7 +70,6 @@ const HeaderMain: React.FC = () => {
 
         <div className={styles.separator}></div>
 
-        {/* Input de Busca conectado ao Zustand */}
         <Input
           value={searchService}
           onChange={(e) => setSearchService(e.target.value)}
@@ -75,33 +78,26 @@ const HeaderMain: React.FC = () => {
           iconPosition="left"
         />
 
-        {/* Botão de Busca: Mantido pela UX, mas a busca já é reativa 
-            enquanto o usuário digita (graças ao Debounce no Grid!) */}
         <Button
           variant="primary"
-          onClick={() =>
-            console.log('Buscando via Store...')
-          }
+          onClick={() => console.log('Buscando...')}
           className={styles.searchButton}
         >
           <TbUserSearch />
-          <span>Buscar</span>
+          <span className="hidden md:inline">Buscar</span>
         </Button>
       </div>
 
       <div className={styles.buttonsWrapper}>
-        {/* Renderização Condicional Limpa e sem "piscar" na tela */}
         {!isClient ? (
-          <div className="w-24 h-8 bg-gray-200 animate-pulse rounded"></div>
+          <div className="w-10 h-10 bg-gray-100 animate-pulse rounded-full"></div>
         ) : usuario ? (
-          <span className={styles.saudacao}>
-            Olá {usuario.nome}, estamos a sua disposição
-          </span>
+          <UserDropdown />
         ) : (
-          <>
+          <div className="flex gap-4">
             <LoginButton />
             <BtnCadastrar />
-          </>
+          </div>
         )}
       </div>
     </header>

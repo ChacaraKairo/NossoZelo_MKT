@@ -1,4 +1,9 @@
-// client/src/service/cadastroService.ts
+/**
+ * @author Kairo Chácara & Gemini Sócio
+ * @version 1.2
+ * @date 23/04/2026
+ * @description Service ajustado para garantir a captura do ID do usuário após o cadastro.
+ */
 
 export interface CadastroPayload {
   usuario: {
@@ -17,63 +22,87 @@ export interface CadastroPayload {
     url_foto_perfil?: string;
     tipo: string;
   };
-  // Opcionais: Dependendo do "tipo" selecionado, um destes será enviado
   cuidador?: {
     bio: string;
     experiencia: number;
     valorHora?: number;
-    documentos?: string; // URL do S3
+    documentos?: string;
   };
   enfermeiro?: {
     coren: string;
     bio: string;
     experiencia: number;
     valorHora?: number;
-    documentos?: string; // URL do S3
+    documentos?: string;
   };
   acompanhante?: {
     bio: string;
     experiencia: number;
     valorHora?: number;
-    documentos?: string; // URL do S3
+    documentos?: string;
   };
 }
 
+/**
+ * Realiza o cadastro e garante o retorno do ID para o fluxo de upload.
+ */
 export const cadastrarUsuario = async (
   dados: CadastroPayload,
-) => {
+): Promise<any> => {
+  console.log(
+    `[LOG-FLUXO] Iniciando cadastrarUsuario para: ${dados.usuario.email}.`,
+  );
+
   try {
-    // 1. Juntamos a variável de ambiente com a rota real do backend
-    const URL_COMPLETA = `${process.env.NEXT_PUBLIC_API_URL}/nossozelo/create-users/usuario`;
+    const api_url =
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:4000';
+    const URL_COMPLETA = `${api_url}/nossozelo/create-users/usuario`;
 
     const resposta = await fetch(URL_COMPLETA, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dados),
     });
 
     if (!resposta.ok) {
-      // 2. Proteção para caso o backend retorne HTML (Ex: erro 404 ou 500)
-      let erroData;
-      try {
-        erroData = await resposta.json();
-      } catch {
-        throw new Error(
-          `Erro no servidor (Status: ${resposta.status}). O backend não retornou um JSON válido.`,
-        );
-      }
-
+      const erroData = await resposta
+        .json()
+        .catch(() => ({ message: 'Erro desconhecido.' }));
       throw new Error(
-        erroData.message ||
-          'Ocorreu um erro ao tentar cadastrar.',
+        erroData.message || 'Falha ao cadastrar.',
       );
     }
 
-    return await resposta.json();
-  } catch (error) {
-    console.error('Erro no serviço de cadastro:', error);
+    const resultado = await resposta.json();
+
+    // 🔥 MAPEAMENTO DE ACORDO COM O LOG REAL:
+    // O log mostrou que o ID está em: resultado.data.data.id
+    const idFinal =
+      resultado.data?.data?.id ||
+      resultado.id ||
+      resultado.data?.id ||
+      resultado.usuario?.id;
+
+    console.log(
+      `[LOG-FLUXO] Sucesso: ID extraído para upload: ${idFinal || 'NÃO ENCONTRADO'}`,
+    );
+
+    if (!idFinal) {
+      console.warn(
+        '[AVISO-ESTRUTURA] Backend não enviou ID reconhecido:',
+        resultado,
+      );
+    }
+
+    return {
+      ...resultado,
+      id: idFinal, // Injeta na raiz para o Hook useFinalizarCadastro consumir
+    };
+  } catch (error: any) {
+    console.error(
+      `[ERRO-FLUXO] Erro crítico: ${error.message}`,
+    );
     throw error;
   }
 };

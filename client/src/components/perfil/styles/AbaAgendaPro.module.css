@@ -1,0 +1,84 @@
+/* AbaAgendaPro.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+  border-left: 2px solid #E2E8F0;
+  margin-left: 1rem;
+}
+
+.timelineItem {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.timelineDot {
+  position: absolute;
+  left: -2.45rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid #F4F7FC;
+}
+
+.dotBlue { background-color: #3B82F6; }
+.dotGreen { background-color: #10B981; }
+
+.dateHeader {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.appointmentCard {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.appointmentCard:hover {
+  border-color: #CBD5E1;
+  transform: translateX(5px);
+}
+
+.timeInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeRange {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1E293B;
+}
+
+.statusBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+}
+
+.badgeSuccess { background: #ECFDF5; color: #059669; }
+.badgeWarning { background: #FFF7ED; color: #D97706; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -1,0 +1,216 @@
+/* UserDropdown.module.css */
+
+.container {
+  position: relative;
+  display: inline-block;
+  text-align: left;
+}
+
+.triggerButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  min-width: 140px; /* Ajustado para acomodar o texto com folga */
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-right: 20px;
+}
+
+.triggerButton:hover {
+  background-color: #f1f5f9;
+}
+
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  margin-right: 1rem;
+}
+
+.userName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.iconWrapper {
+  position: relative;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdownMenu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.75rem;
+  width: 20rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  z-index: 9999;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.menuHeader {
+  padding: 1.25rem 1.5rem;
+  background-color: rgba(249, 250, 251, 0.8);
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.fullName {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.welcomeText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.menuBody {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.menuItem:hover {
+  background-color: #f9fafb;
+}
+
+.iconBox {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* Variantes de cores para os ícones */
+.blueIcon {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.menuItem:hover .blueIcon {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.greenIcon {
+  background: #ecfdf5;
+  color: #059669;
+}
+.menuItem:hover .greenIcon {
+  background: #059669;
+  color: #ffffff;
+}
+
+.purpleIcon {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+.menuItem:hover .purpleIcon {
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+.orangeIcon {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.menuItem:hover .orangeIcon {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.redIcon {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.menuItem:hover .redIcon {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.itemTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.itemDesc {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.menuFooter {
+  padding: 0.75rem;
+  background-color: rgba(249, 250, 251, 0.5);
+  border-top: 1px solid #f3f4f6;
+}
+
+.logoutButton {
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}

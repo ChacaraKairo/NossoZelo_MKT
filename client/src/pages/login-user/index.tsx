@@ -1,42 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import Style from '@/styles/LoginPage.module.css';
 
 // --- Importações Corrigidas ---
-// Assumindo que seus componentes customizados estão nos caminhos corretos
 import InputEmail from '@/components/inputs/InputEmail';
 import InputPassword from '@/components/inputs/InputPassword';
-import Logo from '@/components/logos/OnlyLogo'; // Assumindo que o caminho está correto
-// Importando o novo botão reutilizável
+import Logo from '@/components/logos/OnlyLogo';
 import Button from '@/components/btn/Button';
 import { loginService } from '@/service/Login';
 
 const LoginPage = () => {
   const router = useRouter();
-  // Estado para controlar os valores dos inputs, loading e erros
+
+  // Estados para controlar os valores dos inputs, loading e erros
   const [identificador, setIdentificador] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 🔥 NOVO: Estado para controlar o checkbox "Lembrar-me"
+  const [lembrarMe, setLembrarMe] = useState(false);
+
+  // 🔥 NOVO: Efeito que roda assim que a página carrega para preencher os campos
+  useEffect(() => {
+    const credenciaisSalvas = localStorage.getItem(
+      'nossozelo_lembrar_me',
+    );
+    if (credenciaisSalvas) {
+      try {
+        const { emailSalvo, senhaSalva } = JSON.parse(
+          credenciaisSalvas,
+        );
+        if (emailSalvo) setIdentificador(emailSalvo);
+        if (senhaSalva) setSenha(senhaSalva);
+        setLembrarMe(true); // Deixa o checkbox marcado automaticamente
+      } catch (e) {
+        console.error('Erro ao ler credenciais salvas', e);
+      }
+    }
+  }, []);
+
   // Função para lidar com o envio do formulário
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (!identificador.trim() || !senha.trim()) {
+      setError('Por favor, preencha o e-mail e a senha.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const response = await loginService.login({
-        identificador,
+        identificador: identificador, // Mandando o nome exato que o Backend quer
         senha,
       });
 
-      // O token já foi salvo nos cookies pelo serviço.
-      // Apenas redirecionamos o usuário para a página principal.
       console.log('Login bem-sucedido:', response);
-      router.push('/prestadores'); // Ajuste a rota de destino se necessário
+
+      // 🔥 NOVO: Se o usuário marcou "Lembrar-me", salvamos no localStorage.
+      // Se ele desmarcou, nós apagamos o que estava lá.
+      if (lembrarMe) {
+        localStorage.setItem(
+          'nossozelo_lembrar_me',
+          JSON.stringify({
+            emailSalvo: identificador,
+            senhaSalva: senha,
+          }),
+        );
+      } else {
+        localStorage.removeItem('nossozelo_lembrar_me');
+      }
+
+      setLoading(false);
+      router.push('/prestadores');
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -108,9 +149,14 @@ const LoginPage = () => {
 
               <div className={Style.options}>
                 <label className={Style.checkboxContainer}>
+                  {/* 🔥 NOVO: Conectando o checkbox ao nosso estado lembrarMe */}
                   <input
                     type="checkbox"
                     disabled={loading}
+                    checked={lembrarMe}
+                    onChange={(e) =>
+                      setLembrarMe(e.target.checked)
+                    }
                   />
                   Lembrar-me
                 </label>

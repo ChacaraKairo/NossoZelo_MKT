@@ -3,91 +3,64 @@
 .headerContainer {
   display: flex;
   align-items: center;
-  /* Adicionamos position: relative para ancorar o logo */
-  position: relative;
-  padding: 1rem 2rem; /* 16px 32px */
-  /* Aumentamos o padding superior para dar espaço para o logo que vai flutuar */
-
-  background-color: #f9f9f95b;
-  box-shadow: 0 2px 6px rgba(201, 201, 201, 0.1);
+  justify-content: space-between;
+  padding: 0 2rem; /* Reduzimos o padding vertical para o header ser fino */
+  height: 70px; /* Altura fixa para o header */
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   width: 100%;
-  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  /* 🔥 CRUCIAL: Permite que elementos saiam para fora do limite do header */
+  overflow: visible !important;
 }
 
 .logoWrapper {
-  /* A chave para tirar o logo do fluxo do layout */
-  position: absolute;
-  /* Posiciona o logo no topo e à esquerda do headerContainer */
-  top: 1px; /* 16px */
-  left: 1px; /* 32px */
-  z-index: 10; /* Garante que o logo fique acima de outros elementos */
-}
-
-/* --- Barra de Busca Central --- */
-.searchBar {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: 800px;
-  /* Adicionamos margem para centralizar a barra de busca no espaço disponível */
-  margin: 0 auto;
-  padding-left: 0.5rem;
-}
-
-.separator {
-  height: 2rem;
-  width: 1px;
-  background-color: #d1d5db;
+  /* 🔥 RESERVA ESPAÇO: Largura fixa para a busca não encostar no logo */
+  width: 250px;
+  height: 100%;
+  position: relative;
+  right: 30px;
   flex-shrink: 0;
-  margin: 0 0.5rem;
+  display: flex;
+  align-items: center;
 }
 
-/* --- Seção de Botões à Direita --- */
+.logoWrapper :global(a),
+.logoWrapper :global(img) {
+  /* 🔥 O PULO DO GATO: O logo flutua para fora */
+  position: absolute;
+  top: 5px; /* Ajuste para alinhar ao topo */
+  left: 0;
+  height: 180px; /* A logo é maior que os 70px do header */
+  width: auto;
+  z-index: 1001;
+  transition: transform 0.3s ease;
+}
+
+.logoWrapper:hover :global(img) {
+  transform: scale(
+    1.05
+  ); /* Efeito interativo ao passar o mouse */
+}
+
+.searchBar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  max-width: 650px;
+  background-color: #f1f3f4;
+  border-radius: 8px;
+  padding: 4px 12px;
+  margin: 0 1rem;
+}
+
 .buttonsWrapper {
+  flex-shrink: 0;
+  min-width: max-content;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  /* Como o logo está fora do fluxo, os botões ficam no final do container flex */
-}
-
-/* --- Media Queries --- */
-@media (max-width: 768px) {
-  .headerContainer {
-    padding-top: 5rem; /* Aumenta ainda mais o espaço para o logo */
-    flex-direction: column; /* Empilha os itens verticalmente */
-    gap: 1rem;
-  }
-
-  .logoWrapper {
-    /* Centraliza o logo em telas menores */
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  .searchBar {
-    order: 2; /* Coloca a busca abaixo dos botões se necessário */
-    margin: 0;
-  }
-
-  .buttonsWrapper {
-    order: 1; /* Coloca os botões acima da busca */
-  }
-}
-
-@media (max-width: 640px) {
-  .searchBar {
-    /* Mantém a barra de busca visível ou a esconde, conforme sua preferência */
-    /* display: none; */
-  }
-}
-/* Adicionar ao arquivo: client/src/components/header/styles/HeaderMain.module.css */
-
-.searchButton {
-  padding: 0; /* Remove o padding do texto para não deformar o círculo */
-  /* 2. Alinhamento: Centraliza o ícone dentro do botão */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 10px;
-  gap: 0.5rem;
+  gap: 1rem;
 }

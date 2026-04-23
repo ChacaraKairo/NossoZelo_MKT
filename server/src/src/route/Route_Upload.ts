@@ -1,52 +1,48 @@
-/**
- * @author Kairo Chácara
- * @version 1.1
- * @date 15/04/2026
- * @description Definição das rotas de upload de arquivos, utilizando o middleware Multer
- * para interceptação de buffers em memória (RAM) e delegação ao controlador de persistência.
- * @rota server\src\src\route\Route_Upload
- */
+// server/src/src/route/Route_Upload.ts
 
 import { Router } from 'express';
 import multer from 'multer';
 import { UploadController } from '../controller/Controller_Upload';
-// Importe o seu authMiddleware aqui se quiser proteger a rota!
-// import { authMiddleware } from '../middleware/autenticacao';
 
-console.log(
-  '[LOG-FLUXO] Inicializando UploadRouter para gestão de arquivos.',
-);
 const UploadRouter = Router();
 
-/**
- * Configuração do Multer utilizando memoryStorage.
- * Adicionado limite de 5MB por arquivo por questões de segurança.
- */
-console.log(
-  '[LOG-FLUXO] Configurando middleware Multer com estratégia de memoryStorage e limite de 5MB.',
-);
+// A configuração que estava no seu middleware agora vive aqui,
+// mas otimizada para o nosso novo fluxo.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 Megabytes
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB para aguentar todos os docs juntos
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+    ];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          'Formato não suportado. Use JPG, PNG, WebP ou PDF.',
+        ),
+      );
+    }
+  },
 });
 
-// Endpoint: POST /
-// Prefixo herdado do roteador principal: /nossozelo/upload
-console.log(
-  '[LOG-FLUXO] Mapeando Rota: POST / -> UploadController.fazerUpload (Interceptor: single "file")',
-);
-/**
- * O middleware "upload.single('file')" diz ao Multer para interceptar o arquivo enviado com o nome 'file'.
- */
-UploadRouter.post(
-  '/',
-  // authMiddleware, // 🔥 Descomente esta linha para impedir uploads de usuários não logados
-  upload.single('file'),
-  UploadController.fazerUpload,
-);
+// Mapeamento dos campos que o Multer deve "caçar" no FormData
+const camposCadastro = [
+  { name: 'foto', maxCount: 1 },
+  { name: 'identidade', maxCount: 1 },
+  { name: 'certificado', maxCount: 1 },
+  { name: 'antecedentes', maxCount: 1 },
+];
 
-console.log(
-  '[LOG-FLUXO] UploadRouter configurado com sucesso e pronto para interceptar streams de dados.',
+// Rota integrada
+UploadRouter.post(
+  '/completar-cadastro',
+  upload.fields(camposCadastro),
+  UploadController.fazerUpload,
 );
 
 export default UploadRouter;

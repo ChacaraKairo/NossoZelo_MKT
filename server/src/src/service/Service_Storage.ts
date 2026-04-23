@@ -1,10 +1,7 @@
 /**
- * @author Kairo Chácara
- * @version 1.1
- * @date 14/04/2026
- * @description Classe de serviço responsável pelo gerenciamento de persistência de arquivos na AWS S3.
- * Roteia automaticamente entre buckets públicos (imagens) e privados (documentos).
- * @rota server\src\src\service\Service_Storage.ts
+ * @author Kairo Chácara & Gemini Sócio
+ * @version 3.2
+ * @description Service orquestrador: Processamento -> S3 -> Banco de Dados (MySQL).
  */
 
 import {
@@ -13,11 +10,16 @@ import {
 } from '@aws-sdk/client-s3';
 import path from 'path';
 import { nanoid } from 'nanoid';
+import sharp from 'sharp';
+import { PrismaClient } from '@prisma/client';
 
-// 1. Inicializa o cliente do S3 usando as chaves do seu arquivo .env
+const prisma = new PrismaClient();
+// server/src/src/service/Service_Storage.ts
+
 const s3Client = new S3Client({
   region: process.env.AWS_REGION as string,
   credentials: {
+    // 🔥 CORREÇÃO: O nome correto da propriedade é accessKeyId
     accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
     secretAccessKey: process.env
       .AWS_SECRET_ACCESS_KEY as string,
@@ -26,76 +28,123 @@ const s3Client = new S3Client({
 
 export class StorageService {
   /**
-   * Realiza o upload de arquivos para a AWS S3.
-   * @param {Express.Multer.File} file - Objeto de arquivo processado pelo middleware Multer (precisa usar memoryStorage).
-   * @param {string} [pastaDestino='geral'] - Nome da subpasta dentro do bucket S3.
-   * @param {string} [nomeCustomizado] - Nome opcional sugerido para o arquivo.
-   * @param {boolean} [isPrivado=false] - Define se vai para o bucket de Documentos (Privado) ou Imagens (Público).
-   * @returns {Promise<string>} - Retorna a URL completa do S3 ou a chave do arquivo.
+   * FUNÇÃO MESTRE: Orquestra o fluxo completo.
+   * Adicionado sessionId como 5º argumento para resolver o erro de tipagem.
    */
-  static async uploadFile(
+  static async processarUploadEVinculo(
     file: Express.Multer.File,
-    pastaDestino: string = 'geral',
-    nomeCustomizado?: string,
+    usuarioId: string,
+    tipoDoc:
+      | 'foto'
+      | 'identidade'
+      | 'certificado'
+      | 'antecedentes',
     isPrivado: boolean = false,
+    sessionId?: string, // 🔥 Agora aceita o 5º argumento vindo do Controller
   ): Promise<string> {
-    console.log(
-      `[LOG-FLUXO] Iniciando upload S3. Parâmetros: pastaDestino='${pastaDestino}', Privado: ${isPrivado}, originalName='${file.originalname}', fileSize=${file.size} bytes`,
+    // 1. Otimização (PNG -> JPG)
+    const { buffer, mimetype, extensao } =
+      await this.otimizarImagem(file);
+
+    // 2. Nomenclatura Padrão: user_{id/sessao}_{tipo}_{random}
+    // Priorizamos o sessionId para o nome do arquivo se disponível
+    const identificadorNome = sessionId || usuarioId;
+    const nomeArquivo = `user_${identificadorNome}_${tipoDoc}_${nanoid(6)}${extensao}`;
+
+    const pastaS3 = isPrivado ? 'documentos' : 'fotos';
+    const s3Key = `${pastaS3}/${nomeArquivo}`;
+
+    const bucket = isPrivado
+      ? process.env.AWS_PRIVATE_BUCKET_NAME
+      : process.env.AWS_PUBLIC_BUCKET_NAME;
+
+    // 3. Persistência na AWS
+    const urlOuKey = await this.persistirNoS3(
+      buffer,
+      s3Key,
+      bucket!,
+      mimetype,
+      isPrivado,
     );
 
+    // 4. Persistência no Banco (MySQL)
+    await this.registrarNoBanco(
+      usuarioId,
+      tipoDoc,
+      urlOuKey,
+    );
+
+    return urlOuKey;
+  }
+
+  private static async otimizarImagem(
+    file: Express.Multer.File,
+  ) {
+    let buffer = file.buffer;
+    let extensao = path
+      .extname(file.originalname)
+      .toLowerCase();
+    let mimetype = file.mimetype;
+
+    if (
+      mimetype.startsWith('image/') &&
+      !mimetype.includes('gif')
+    ) {
+      buffer = await sharp(file.buffer)
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      extensao = '.jpg';
+      mimetype = 'image/jpeg';
+    }
+    return { buffer, mimetype, extensao };
+  }
+
+  private static async persistirNoS3(
+    buffer: Buffer,
+    key: string,
+    bucket: string,
+    mimetype: string,
+    isPrivado: boolean,
+  ) {
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: mimetype,
+      }),
+    );
+
+    return isPrivado
+      ? key
+      : `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  }
+
+  private static async registrarNoBanco(
+    usuarioId: string,
+    tipoDoc: string,
+    caminho: string,
+  ) {
     try {
-      const extensao = path.extname(file.originalname);
-
-      console.log(
-        '[LOG-FLUXO] Processando definição do nome de persistência.',
-      );
-      const nomeArquivo = nomeCustomizado
-        ? `${nomeCustomizado}${extensao}`
-        : `${nanoid(15)}${extensao}`;
-
-      // No S3 não temos pastas reais, usamos o "Key" para simular o caminho
-      const s3Key = `${pastaDestino}/${nomeArquivo}`;
-
-      // Decide qual bucket usar baseado no nível de segurança exigido
-      const bucketName = isPrivado
-        ? process.env.AWS_PRIVATE_BUCKET_NAME
-        : process.env.AWS_PUBLIC_BUCKET_NAME;
-
-      console.log(
-        `[LOG-FLUXO] Solicitando escrita no S3: Bucket '${bucketName}' | Key: '${s3Key}'`,
-      );
-
-      // 2. Monta o comando de envio para a AWS
-      const command = new PutObjectCommand({
-        Bucket: bucketName,
-        Key: s3Key,
-        Body: file.buffer, // O arquivo cru na memória
-        ContentType: file.mimetype, // Ex: 'image/jpeg' ou 'application/pdf'
-      });
-
-      // 3. Dispara o envio
-      await s3Client.send(command);
-      console.log(
-        `[LOG-FLUXO] Sincronização com AWS S3 concluída para o arquivo: ${nomeArquivo}`,
-      );
-
-      // 4. Retorno
-      // Se for privado, retornamos apenas o caminho (s3Key) para o banco de dados.
-      // Se for público, podemos retornar a URL direta que o S3 gera.
-      if (isPrivado) {
-        return s3Key; // Você salvará essa key no banco MySQL para gerar URL assinada depois
+      if (tipoDoc === 'foto') {
+        await prisma.usuarios.update({
+          where: { id: usuarioId },
+          data: { url_foto_perfil: caminho },
+        });
       } else {
-        const urlFinal = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
-        console.log(
-          `[LOG-FLUXO] Operação uploadFile finalizada com sucesso. URL Pública: ${urlFinal}`,
-        );
-        return urlFinal;
+        // Vincula na tabela de documentos_cuidadores
+        await prisma.documentos_cuidadores.create({
+          data: {
+            usuario_id: usuarioId, // 🔥 FK garantida pelo ID validado no Controller
+            tipo: tipoDoc,
+            url_arquivo: caminho,
+          },
+        });
       }
     } catch (error: any) {
       console.error(
-        `[ERRO-FLUXO] Falha crítica no upload S3 (Bucket: destino). Motivo: ${
-          error.message || error
-        }. Detalhes: ${JSON.stringify(error)}`,
+        `[ERRO-DB-SERVICE] Falha ao registrar ${tipoDoc}:`,
+        error.message,
       );
       throw error;
     }
