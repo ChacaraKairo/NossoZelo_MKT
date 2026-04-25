@@ -1,286 +1,612 @@
-/**
- * @author Kairo Chácara
- * @version 1.1
- * @date 15/04/2026
- * @description Classe de serviço responsável pela orquestração de contratações e agendamentos,
- * gerenciando a persistência na tabela de contratações e consultas temporais na agenda dos prestadores.
- * Integra lógica de transição de status (Aceite/Finalização) e Registro Manual para métricas.
- */
-
 import {
-  PrismaClient,
   contratacoes_status,
+  contratacoes_tipo_prestador,
+  Prisma,
+  PrismaClient,
+  usuarios_tipo,
 } from '@prisma/client';
-import ServiceCrud from './Service_Crud';
+import EmailService from './Service_Email';
 
-console.log(
-  '[LOG-FLUXO] Inicializando instância do PrismaClient para o ServiceAgendamento.',
-);
 const prisma = new PrismaClient();
 
+const TIPOS_PRESTADOR = ['cuidador', 'enfermeiro', 'acompanhante'];
+
+type UsuarioAutenticado = {
+  id: string;
+  tipo: string;
+};
+
+type CriarAgendamentoInput = {
+  cliente_id?: string;
+  prestador_id?: string;
+  tipo_prestador?: string;
+  servico_id?: number | string;
+  data?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
+  preco?: number | string;
+  observacoes?: string;
+  observacao?: string;
+};
+
+type ContratacaoComUsuarios = Prisma.contratacoesGetPayload<{
+  include: {
+    usuarios_contratacoes_cliente_idTousuarios: {
+      select: {
+        id: true;
+        nome: true;
+        email: true;
+      };
+    };
+    usuarios_contratacoes_prestador_idTousuarios: {
+      select: {
+        id: true;
+        nome: true;
+        email: true;
+      };
+    };
+  };
+}>;
+
+function erroNegocio(mensagem: string, status = 400) {
+  const error = new Error(mensagem) as Error & { status?: number };
+  error.status = status;
+  return error;
+}
+
+function dataSomenteData(valor?: string) {
+  if (!valor) {
+    throw erroNegocio('Informe a data desejada para o agendamento.');
+  }
+
+  const data = new Date(`${valor}T00:00:00`);
+  if (Number.isNaN(data.getTime())) {
+    throw erroNegocio('Data de agendamento invalida.');
+  }
+
+  return data;
+}
+
+function horaSomenteHora(valor?: string, campo = 'horario') {
+  if (!valor) {
+    throw erroNegocio(`Informe ${campo} do agendamento.`);
+  }
+
+  const [hora, minuto = '00'] = valor.split(':');
+  const horas = Number(hora);
+  const minutos = Number(minuto);
+
+  if (
+    Number.isNaN(horas) ||
+    Number.isNaN(minutos) ||
+    horas < 0 ||
+    horas > 23 ||
+    minutos < 0 ||
+    minutos > 59
+  ) {
+    throw erroNegocio(`${campo} invalido.`);
+  }
+
+  return new Date(
+    Date.UTC(1970, 0, 1, horas, minutos, 0, 0),
+  );
+}
+
+function horaFimPadrao(horaInicio?: string, horaFim?: string) {
+  if (horaFim) return horaSomenteHora(horaFim, 'o horario final');
+
+  const inicio = horaSomenteHora(horaInicio, 'o horario inicial');
+  const fim = new Date(inicio);
+  fim.setUTCHours(fim.getUTCHours() + 1);
+  return fim;
+}
+
+function formatarMoeda(valor: Prisma.Decimal | number | string) {
+  return Number(valor).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+function formatarData(valor: Date) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(valor);
+}
+
+function formatarHora(valor: Date) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }).format(valor);
+}
+
+function htmlBase(titulo: string, corpo: string) {
+  return `
+    <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
+      <h1 style="color: #0f766e; font-size: 22px;">${titulo}</h1>
+      ${corpo}
+      <p style="margin-top: 24px; color: #64748b; font-size: 13px;">
+        Este e-mail foi enviado automaticamente pela plataforma NossoZelo.
+      </p>
+    </div>
+  `;
+}
+
+async function enviarEmailSeguro(
+  to: string | null | undefined,
+  subject: string,
+  html: string,
+) {
+  if (!to) return false;
+
+  try {
+    const emailService = new EmailService();
+    await emailService.send(to, subject, html);
+    return true;
+  } catch (error) {
+    console.error('[AGENDAMENTO_EMAIL] Falha ao enviar e-mail', {
+      to,
+      subject,
+      error,
+    });
+    return false;
+  }
+}
+
+async function notificarCriacao(contratacao: ContratacaoComUsuarios) {
+  const cliente =
+    contratacao.usuarios_contratacoes_cliente_idTousuarios;
+  const prestador =
+    contratacao.usuarios_contratacoes_prestador_idTousuarios;
+
+  const detalhes = `
+    <p><strong>Cliente:</strong> ${cliente.nome}</p>
+    <p><strong>Prestador:</strong> ${prestador.nome}</p>
+    <p><strong>Data:</strong> ${formatarData(contratacao.data)}</p>
+    <p><strong>Horario:</strong> ${formatarHora(contratacao.hora_inicio)} ate ${formatarHora(contratacao.hora_fim)}</p>
+    <p><strong>Valor:</strong> ${formatarMoeda(contratacao.preco)}</p>
+    <p><strong>Status:</strong> pendente</p>
+  `;
+
+  const [emailCliente, emailPrestador] = await Promise.all([
+    enviarEmailSeguro(
+      cliente.email,
+      'Solicitacao de agendamento enviada',
+      htmlBase(
+        'Solicitacao enviada com sucesso',
+        `${detalhes}<p>Agora aguarde o prestador aceitar ou negar o pedido.</p>`,
+      ),
+    ),
+    enviarEmailSeguro(
+      prestador.email,
+      'Nova solicitacao de agendamento recebida',
+      htmlBase(
+        'Voce recebeu uma nova solicitacao',
+        `${detalhes}<p>Acesse sua area de solicitacoes para aceitar ou negar o pedido.</p>`,
+      ),
+    ),
+  ]);
+
+  return { cliente: emailCliente, prestador: emailPrestador };
+}
+
+async function notificarMudancaStatus(
+  contratacao: ContratacaoComUsuarios,
+  status: contratacoes_status,
+) {
+  const cliente =
+    contratacao.usuarios_contratacoes_cliente_idTousuarios;
+  const prestador =
+    contratacao.usuarios_contratacoes_prestador_idTousuarios;
+
+  const statusTexto =
+    status === 'confirmado'
+      ? 'aceita'
+      : status === 'cancelado'
+        ? 'negada'
+        : status === 'concluido'
+          ? 'concluida'
+          : String(status);
+
+  const detalhes = `
+    <p><strong>Cliente:</strong> ${cliente.nome}</p>
+    <p><strong>Prestador:</strong> ${prestador.nome}</p>
+    <p><strong>Data:</strong> ${formatarData(contratacao.data)}</p>
+    <p><strong>Horario:</strong> ${formatarHora(contratacao.hora_inicio)} ate ${formatarHora(contratacao.hora_fim)}</p>
+    <p><strong>Status atualizado:</strong> ${statusTexto}</p>
+  `;
+
+  const [emailCliente, emailPrestador] = await Promise.all([
+    enviarEmailSeguro(
+      cliente.email,
+      `Solicitacao ${statusTexto}`,
+      htmlBase(
+        `Sua solicitacao foi ${statusTexto}`,
+        `${detalhes}<p>Consulte a plataforma para acompanhar os detalhes.</p>`,
+      ),
+    ),
+    enviarEmailSeguro(
+      prestador.email,
+      `Agendamento ${statusTexto}`,
+      htmlBase(
+        `Agendamento ${statusTexto}`,
+        `${detalhes}<p>A atualizacao ja esta registrada na plataforma.</p>`,
+      ),
+    ),
+  ]);
+
+  return { cliente: emailCliente, prestador: emailPrestador };
+}
+
+async function buscarContratacaoCompleta(id: number) {
+  return prisma.contratacoes.findUnique({
+    where: { id },
+    include: {
+      usuarios_contratacoes_cliente_idTousuarios: {
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+        },
+      },
+      usuarios_contratacoes_prestador_idTousuarios: {
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+        },
+      },
+    },
+  });
+}
+
 class ServiceAgendamento {
-  /**
-   * Cria uma nova contratação no sistema com status inicial 'pendente'.
-   * Nota: O registro na tabela 'agenda' é gerado automaticamente via trigger no banco de dados.
-   * @param {any} data - Objeto contendo dados da contratação (cliente_id, prestador_id, preco, etc).
-   * @returns {Promise<any>} - O registro da contratação criada.
-   * @throws {Error} - Lança erro em caso de falha na persistência dos dados.
-   */
-  static async criarAgendamento(data: any) {
-    console.log(
-      `[LOG-FLUXO] Iniciando criarAgendamento. Payload recebido: ${JSON.stringify(
-        data,
-      )}`,
+  static async criarAgendamento(
+    data: CriarAgendamentoInput,
+    usuario: UsuarioAutenticado,
+  ) {
+    if (!usuario?.id) {
+      throw erroNegocio('Cliente nao identificado na sessao.', 401);
+    }
+
+    if (usuario.tipo !== 'cliente') {
+      throw erroNegocio(
+        'Apenas clientes podem solicitar agendamentos.',
+        403,
+      );
+    }
+
+    if (!data.prestador_id) {
+      throw erroNegocio('Informe o prestador desejado.');
+    }
+
+    if (data.prestador_id === usuario.id) {
+      throw erroNegocio(
+        'Nao e possivel solicitar agendamento para si mesmo.',
+      );
+    }
+
+    const prestador = await prisma.usuarios.findUnique({
+      where: { id: data.prestador_id },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        tipo: true,
+      },
+    });
+
+    if (!prestador) {
+      throw erroNegocio('Prestador nao encontrado.', 404);
+    }
+
+    if (!TIPOS_PRESTADOR.includes(prestador.tipo)) {
+      throw erroNegocio('Usuario informado nao e um prestador.', 400);
+    }
+
+    const servicoId = Number(data.servico_id);
+    if (!servicoId || Number.isNaN(servicoId)) {
+      throw erroNegocio('Selecione um servico para solicitar o agendamento.');
+    }
+
+    const servico = await prisma.servicos.findFirst({
+      where: {
+        id: servicoId,
+        prestador_id: prestador.id,
+      },
+    });
+
+    if (!servico) {
+      throw erroNegocio(
+        'Servico nao encontrado para este prestador.',
+        404,
+      );
+    }
+
+    const dataAgendamento = dataSomenteData(data.data);
+    const horaInicio = horaSomenteHora(
+      data.hora_inicio,
+      'o horario inicial',
     );
+    const horaFim = horaFimPadrao(data.hora_inicio, data.hora_fim);
 
-    const {
-      cliente_id,
-      prestador_id,
-      tipo_prestador,
-      data: dataAgendamento,
-      hora_inicio,
-      hora_fim,
-      preco,
-      observacoes,
-    } = data;
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Preparando inserção de novo contrato pendente para o Cliente: ${cliente_id} e Prestador: ${prestador_id}`,
+    if (horaFim <= horaInicio) {
+      throw erroNegocio(
+        'O horario final deve ser maior que o horario inicial.',
       );
+    }
 
-      console.log(
-        "[LOG-FLUXO] Invocando ServiceCrud.create na entidade 'contratacoes'.",
-      );
-      const contratacao = await ServiceCrud.create(
-        'contratacoes',
-        {
-          cliente_id,
-          prestador_id,
-          tipo_prestador,
-          data: new Date(dataAgendamento),
-          hora_inicio,
-          hora_fim,
-          preco,
-          status: 'pendente',
-          observacoes,
+    const conflito = await prisma.contratacoes.findFirst({
+      where: {
+        prestador_id: prestador.id,
+        data: dataAgendamento,
+        status: {
+          in: ['pendente', 'confirmado'],
         },
-      );
+        OR: [
+          {
+            hora_inicio: { lt: horaFim },
+            hora_fim: { gt: horaInicio },
+          },
+        ],
+      },
+      select: { id: true },
+    });
 
-      console.log(
-        `[LOG-FLUXO] Sucesso: Contratação ID ${contratacao.id} criada com status: ${contratacao.status}.`,
+    if (conflito) {
+      throw erroNegocio(
+        'Este horario ja possui uma solicitacao ou agendamento confirmado.',
+        409,
       );
-      return contratacao;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha crítica ao registrar contratação: ${error.message}`,
-      );
-      throw error;
     }
-  }
 
-  /**
-   * Aceita uma contratação pendente, alterando o status para 'confirmado' e liberando dados de contato.
-   * @param {number} contratacaoId - Identificador numérico da contratação.
-   * @returns {Promise<any>} - Objeto da contratação atualizada.
-   * @throws {Error} - Lança erro em caso de falha no update do Prisma.
-   */
-  static async aceitarContratacao(contratacaoId: number) {
-    console.log(
-      `[LOG-FLUXO] Iniciando aceitarContratacao para o registro ID: ${contratacaoId}`,
-    );
-
-    try {
-      // Regra de Ouro: Bypass de tipagem para enums Prisma mantendo consistência
-      console.log(
-        '[LOG-FLUXO] Mapeando transição de status para: confirmado.',
-      );
-      const statusConfirmado =
-        'confirmado' as any as contratacoes_status;
-
-      console.log(
-        `[LOG-FLUXO] Executando update na tabela 'contratacoes' para o ID: ${contratacaoId}`,
-      );
-      const resultado = await prisma.contratacoes.update({
-        where: { id: Number(contratacaoId) },
-        data: { status: statusConfirmado },
-      });
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Contratação ${contratacaoId} CONFIRMADA. O Privacy Gate foi liberado para as partes.`,
-      );
-      return resultado;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao processar o aceite da contratação ${contratacaoId}: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Finaliza uma contratação, marcando o serviço como concluído para viabilizar o fluxo de avaliações.
-   * @param {number} contratacaoId - Identificador numérico da contratação.
-   * @returns {Promise<any>} - Objeto da contratação concluída.
-   * @throws {Error} - Lança erro em caso de falha na persistência.
-   */
-  static async finalizarContratacao(contratacaoId: number) {
-    console.log(
-      `[LOG-FLUXO] Iniciando finalizarContratacao para o registro ID: ${contratacaoId}`,
-    );
-
-    try {
-      console.log(
-        '[LOG-FLUXO] Mapeando transição de status para: concluido.',
-      );
-      const statusConcluido =
-        'concluido' as any as contratacoes_status;
-
-      console.log(
-        `[LOG-FLUXO] Solicitando atualização definitiva para o ID: ${contratacaoId}`,
-      );
-      const resultado = await prisma.contratacoes.update({
-        where: { id: Number(contratacaoId) },
-        data: { status: statusConcluido },
-      });
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Contratação ${contratacaoId} CONCLUÍDA. Fluxo de negócio pronto para Etapa 4 (Avaliação).`,
-      );
-      return resultado;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro crítico ao finalizar serviço ID ${contratacaoId}: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Registra um serviço realizado de forma externa, mantendo a integridade das métricas do prestador.
-   * @param {any} data - Objeto contendo os dados do serviço externo.
-   * @returns {Promise<any>} - O registro da contratação manual criada.
-   * @throws {Error} - Lança erro em caso de falha na inserção.
-   */
-  static async registroManual(data: any) {
-    console.log(
-      `[LOG-FLUXO] Iniciando registroManual de serviço externo para o prestador: ${data.prestador_id}`,
-    );
-
-    try {
-      console.log(
-        '[LOG-FLUXO] Mapeando entrada para status: manual.',
-      );
-      const statusManual =
-        'manual' as any as contratacoes_status;
-
-      console.log(
-        "[LOG-FLUXO] Executando inserção direta via Prisma na tabela 'contratacoes'.",
-      );
-      const registro = await prisma.contratacoes.create({
-        data: {
-          ...data,
-          status: statusManual,
-          data: new Date(data.data),
+    const contratacao = await prisma.contratacoes.create({
+      data: {
+        cliente_id: usuario.id,
+        prestador_id: prestador.id,
+        tipo_prestador:
+          prestador.tipo as contratacoes_tipo_prestador,
+        data: dataAgendamento,
+        hora_inicio: horaInicio,
+        hora_fim: horaFim,
+        preco: servico.valor,
+        status: 'pendente',
+        observacoes: data.observacoes || data.observacao || null,
+      },
+      include: {
+        usuarios_contratacoes_cliente_idTousuarios: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
         },
-      });
+        usuarios_contratacoes_prestador_idTousuarios: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
+      },
+    });
 
-      console.log(
-        `[LOG-FLUXO] Sucesso: Registro manual ID ${registro.id} inserido para fins de métricas de experiência.`,
-      );
-      return registro;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao processar registro manual externo: ${error.message}`,
-      );
-      throw error;
-    }
+    const email_status = await notificarCriacao(contratacao);
+
+    return {
+      ...contratacao,
+      email_status,
+    };
   }
 
-  /**
-   * Recupera o histórico de agendamentos de um prestador filtrado por uma janela temporal em dias.
-   * @param {number} tempoEmDias - Intervalo de dias retroativos.
-   * @param {string} prestadorId - UUID/ID do prestador.
-   * @returns {Promise<any[]>} - Lista de registros localizados na agenda.
-   * @throws {Error} - Lança erro em caso de falha na consulta.
-   */
+  static async aceitarContratacao(
+    contratacaoId: number,
+    usuario: UsuarioAutenticado,
+  ) {
+    return this.atualizarStatusContratacao(
+      contratacaoId,
+      usuario,
+      'confirmado',
+    );
+  }
+
+  static async cancelarContratacao(
+    contratacaoId: number,
+    usuario: UsuarioAutenticado,
+  ) {
+    return this.atualizarStatusContratacao(
+      contratacaoId,
+      usuario,
+      'cancelado',
+    );
+  }
+
+  static async finalizarContratacao(
+    contratacaoId: number,
+    usuario: UsuarioAutenticado,
+  ) {
+    return this.atualizarStatusContratacao(
+      contratacaoId,
+      usuario,
+      'concluido',
+    );
+  }
+
+  static async atualizarStatusContratacao(
+    contratacaoId: number,
+    usuario: UsuarioAutenticado,
+    status: contratacoes_status,
+  ) {
+    if (!usuario?.id) {
+      throw erroNegocio('Usuario nao identificado na sessao.', 401);
+    }
+
+    if (!Number.isInteger(contratacaoId) || contratacaoId <= 0) {
+      throw erroNegocio('Contratacao invalida.');
+    }
+
+    const contratacaoAtual = await prisma.contratacoes.findUnique({
+      where: { id: contratacaoId },
+      select: {
+        id: true,
+        prestador_id: true,
+        cliente_id: true,
+        status: true,
+      },
+    });
+
+    if (!contratacaoAtual) {
+      throw erroNegocio('Contratacao nao encontrada.', 404);
+    }
+
+    const ehPrestadorDaContratacao =
+      contratacaoAtual.prestador_id === usuario.id;
+    const ehClienteDaContratacao =
+      contratacaoAtual.cliente_id === usuario.id;
+
+    if (status === 'confirmado' || status === 'cancelado') {
+      if (!ehPrestadorDaContratacao) {
+        throw erroNegocio(
+          'Apenas o prestador desta contratacao pode aceitar ou negar.',
+          403,
+        );
+      }
+
+      if (contratacaoAtual.status !== 'pendente') {
+        throw erroNegocio(
+          'Somente contratacoes pendentes podem ser aceitas ou negadas.',
+          409,
+        );
+      }
+    }
+
+    if (status === 'concluido') {
+      if (!ehPrestadorDaContratacao && !ehClienteDaContratacao) {
+        throw erroNegocio(
+          'Apenas envolvidos na contratacao podem finaliza-la.',
+          403,
+        );
+      }
+
+      if (contratacaoAtual.status !== 'confirmado') {
+        throw erroNegocio(
+          'Somente contratacoes confirmadas podem ser concluidas.',
+          409,
+        );
+      }
+    }
+
+    await prisma.contratacoes.update({
+      where: { id: contratacaoId },
+      data: { status },
+    });
+
+    const contratacao = await buscarContratacaoCompleta(contratacaoId);
+    if (!contratacao) {
+      throw erroNegocio('Contratacao nao encontrada apos atualizacao.', 404);
+    }
+
+    const email_status = await notificarMudancaStatus(
+      contratacao,
+      status,
+    );
+
+    return {
+      ...contratacao,
+      email_status,
+    };
+  }
+
+  static async registroManual(data: any, usuario: UsuarioAutenticado) {
+    if (!usuario?.id || !TIPOS_PRESTADOR.includes(usuario.tipo)) {
+      throw erroNegocio(
+        'Apenas prestadores podem registrar atendimento manual.',
+        403,
+      );
+    }
+
+    return prisma.contratacoes.create({
+      data: {
+        cliente_id: data.cliente_id,
+        prestador_id: usuario.id,
+        tipo_prestador:
+          usuario.tipo as contratacoes_tipo_prestador,
+        data: dataSomenteData(data.data),
+        hora_inicio: horaSomenteHora(
+          data.hora_inicio,
+          'o horario inicial',
+        ),
+        hora_fim: horaFimPadrao(data.hora_inicio, data.hora_fim),
+        preco: data.preco,
+        status: 'manual',
+        observacoes: data.observacoes || data.observacao || null,
+      },
+    });
+  }
+
   static async listar_agendamentos_por_tempo(
     tempoEmDias: number,
     prestadorId: string,
+    usuario: UsuarioAutenticado,
   ) {
-    console.log(
-      `[LOG-FLUXO] Iniciando listar_agendamentos_por_tempo. Prestador: ${prestadorId}, Janela: ${tempoEmDias} dias.`,
-    );
-
-    try {
-      const hoje = new Date();
-      const dataInicial = new Date();
-      dataInicial.setDate(hoje.getDate() - tempoEmDias);
-
-      console.log(
-        `[LOG-FLUXO] Filtro temporal configurado: De ${dataInicial.toISOString()} até ${hoje.toISOString()}`,
+    if (usuario.id !== prestadorId && usuario.tipo !== 'admin') {
+      throw erroNegocio(
+        'Voce nao tem permissao para listar esta agenda.',
+        403,
       );
+    }
 
-      console.log(
-        "[LOG-FLUXO] Consultando ServiceCrud.findMany na entidade 'agenda' com filtros espaciais.",
-      );
-      const agendamentos = await ServiceCrud.findMany(
-        'agenda',
-        {
-          where: {
-            prestador_id: prestadorId,
-            data: { gte: dataInicial, lte: hoje },
+    const hoje = new Date();
+    const dataInicial = new Date();
+    dataInicial.setDate(hoje.getDate() - tempoEmDias);
+
+    return prisma.contratacoes.findMany({
+      where: {
+        prestador_id: prestadorId,
+        data: { gte: dataInicial },
+      },
+      orderBy: [{ data: 'desc' }, { hora_inicio: 'desc' }],
+      include: {
+        usuarios_contratacoes_cliente_idTousuarios: {
+          select: {
+            id: true,
+            nome: true,
+            url_foto_perfil: true,
           },
         },
-      );
-
-      console.log(
-        `[LOG-FLUXO] Busca cronológica concluída. Registros encontrados: ${
-          agendamentos ? agendamentos.length : 0
-        }`,
-      );
-      return agendamentos;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao recuperar agenda temporal do prestador ${prestadorId}: ${error.message}`,
-      );
-      throw error;
-    }
+      },
+    });
   }
 
-  /**
-   * Retorna o histórico de todas as contratações vinculadas a um determinado cliente.
-   * @param {string} clienteId - UUID/ID do cliente.
-   * @returns {Promise<any[]>} - Lista de contratações do cliente.
-   * @throws {Error} - Lança erro em caso de falha na consulta por campo.
-   */
-  static async agendamentos_cliente(clienteId: string) {
-    console.log(
-      `[LOG-FLUXO] Iniciando agendamentos_cliente para o Cliente ID: ${clienteId}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Executando ServiceCrud.findByField na tabela 'contratacoes' para cliente_id: ${clienteId}`,
+  static async agendamentos_cliente(
+    clienteId: string,
+    usuario: UsuarioAutenticado,
+  ) {
+    if (usuario.id !== clienteId && usuario.tipo !== 'admin') {
+      throw erroNegocio(
+        'Voce nao tem permissao para listar estes agendamentos.',
+        403,
       );
-      const agendamentos = await ServiceCrud.findByField(
-        'contratacoes',
-        'cliente_id',
-        clienteId,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Sucesso ao recuperar histórico do cliente ${clienteId}. Total: ${
-          agendamentos ? agendamentos.length : 0
-        } itens.`,
-      );
-      return agendamentos;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro ao buscar histórico de contratações do cliente ${clienteId}: ${error.message}`,
-      );
-      throw error;
     }
+
+    return prisma.contratacoes.findMany({
+      where: { cliente_id: clienteId },
+      orderBy: [{ data: 'desc' }, { hora_inicio: 'desc' }],
+      include: {
+        usuarios_contratacoes_prestador_idTousuarios: {
+          select: {
+            id: true,
+            nome: true,
+            url_foto_perfil: true,
+            tipo: true,
+          },
+        },
+      },
+    });
   }
 }
 

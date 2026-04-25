@@ -22,6 +22,19 @@ function normalizarNumero(valor: unknown): number | undefined {
   return Number.isNaN(numero) ? undefined : numero;
 }
 
+function obterCoordenadaSalva(chave: 'latitude' | 'longitude') {
+  if (typeof window === 'undefined') return undefined;
+
+  const localStorageValor = window.localStorage.getItem(chave);
+  if (localStorageValor) return localStorageValor;
+
+  const cookie = document.cookie
+    .split('; ')
+    .find((item) => item.startsWith(`${chave}=`));
+
+  return cookie?.split('=')[1];
+}
+
 function formatarTipo(tipo?: string | null) {
   if (!tipo) return 'Serviço';
   return tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
@@ -106,6 +119,13 @@ export const buscarPrestadores = async (
     if (filtros.categoria) params.tipo = filtros.categoria.toLowerCase();
     if (filtros.distancia) params.raioKm = String(filtros.distancia);
     if (filtros.precoMax) params.precoMax = filtros.precoMax;
+
+    const latitude = obterCoordenadaSalva('latitude');
+    const longitude = obterCoordenadaSalva('longitude');
+    if (latitude && longitude) {
+      params.latitude = latitude;
+      params.longitude = longitude;
+    }
 
     logger.debug(CONTEXTO, 'Parâmetros enviados para API', params);
 

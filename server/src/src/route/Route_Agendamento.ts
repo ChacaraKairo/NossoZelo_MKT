@@ -45,6 +45,12 @@ AgendamentoRouter.patch(
   AgendamentoController.aceitar as any,
 );
 
+AgendamentoRouter.patch(
+  '/cancelar/:id',
+  authMiddleware,
+  AgendamentoController.cancelar as any,
+);
+
 console.log(
   '[LOG-FLUXO] Mapeando Rota: PATCH /finalizar/:id -> AgendamentoController.finalizar (Protegida)',
 );
@@ -83,7 +89,7 @@ console.log(
 AgendamentoRouter.get(
   '/prestador/:id',
   authMiddleware,
-  AgendamentoController.listarPorTempo,
+  AgendamentoController.listarPorTempo as any,
 );
 
 console.log(
@@ -95,7 +101,7 @@ console.log(
 AgendamentoRouter.get(
   '/cliente/:id',
   authMiddleware,
-  AgendamentoController.listarPorCliente,
+  AgendamentoController.listarPorCliente as any,
 );
 
 console.log(

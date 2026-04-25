@@ -296,6 +296,19 @@ export class GeolocalizacaoService {
     }
   }
 
+  public static async buscarCoordenadasPorTexto(
+    localizacao: string,
+  ): Promise<Coordenadas | null> {
+    const texto = localizacao.trim();
+    if (!texto) return null;
+
+    const query = texto.toLowerCase().includes('brasil')
+      ? texto
+      : `${texto}, Brasil`;
+
+    return this.buscarPorEndereco(query);
+  }
+
   // --- MÉTODOS DE BUSCA NO BANCO ---
 
   /**
@@ -307,6 +320,8 @@ export class GeolocalizacaoService {
     idUsuario?: string;
     nome?: string;
     localizacao?: string;
+    latitude?: number;
+    longitude?: number;
     tipo?: string;
     raioKm?: number;
     precoMax?: number;
@@ -322,6 +337,8 @@ export class GeolocalizacaoService {
       idUsuario,
       nome,
       localizacao,
+      latitude,
+      longitude,
       tipo,
       raioKm,
       precoMax,
@@ -367,7 +384,7 @@ export class GeolocalizacaoService {
       }
 
       // Filtro de Localização Textual
-      if (localizacao) {
+      if (false && localizacao) {
         console.log(
           `[LOG-FLUXO] Aplicando filtro geográfico textual: ${localizacao}`,
         );
@@ -393,9 +410,34 @@ export class GeolocalizacaoService {
       let selectDistancia = Prisma.empty;
       let havingClause = Prisma.empty;
       let orderClause = Prisma.sql`ORDER BY u.criado_em DESC`;
+      let origemBusca: Coordenadas | null = null;
+
+      if (
+        typeof latitude === 'number' &&
+        typeof longitude === 'number' &&
+        !Number.isNaN(latitude) &&
+        !Number.isNaN(longitude)
+      ) {
+        origemBusca = { latitude, longitude };
+      }
+
+      if (localizacao) {
+        const coordenadasLocalizacao =
+          await this.buscarCoordenadasPorTexto(localizacao);
+
+        if (coordenadasLocalizacao) {
+          origemBusca = coordenadasLocalizacao;
+        } else {
+          conditions.push(
+            Prisma.sql`(u.cidade LIKE ${
+              '%' + localizacao + '%'
+            } OR u.estado LIKE ${'%' + localizacao + '%'})`,
+          );
+        }
+      }
 
       // Lógica de Cálculo de Raio Dinâmico
-      if (idUsuario && raioKm) {
+      if (!origemBusca && idUsuario && raioKm) {
         console.log(
           `[LOG-FLUXO] Requisitado filtro por raio (${raioKm}km) baseado na localização do usuário logado: ${idUsuario}`,
         );
@@ -419,6 +461,23 @@ export class GeolocalizacaoService {
             `[LOG-FLUXO] Aviso: Cálculo de raio ignorado. Usuário ${idUsuario} não possui geolocalização definida.`,
           );
         }
+      }
+
+      if (origemBusca) {
+        const raioEfetivo = Number(
+          raioKm || (localizacao ? 100 : undefined),
+        );
+
+        selectDistancia = Prisma.sql`, ${this.getSqlDistancia(
+          origemBusca.latitude,
+          origemBusca.longitude,
+        )} AS distancia`;
+
+        if (raioEfetivo && !Number.isNaN(raioEfetivo)) {
+          havingClause = Prisma.sql`HAVING distancia <= ${raioEfetivo}`;
+        }
+
+        orderClause = Prisma.sql`ORDER BY distancia ASC`;
       }
 
       const whereClause =

@@ -1,59 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Logo from '../logos/LogoLink';
-import AuthButtons from './AuthButtons';
 import styles from './styles/HeaderHome.module.css';
 import { getUsuarioDoCookie } from '@/utils/auth';
+import logger from '@/utils/logger';
 
 interface HeaderHomeProps {
   variant?: 'public' | 'private';
 }
 
+const CONTEXTO = 'HeaderHome';
+
 const HeaderHome: React.FC<HeaderHomeProps> = ({
   variant = 'private',
 }) => {
-  // --- ESTADOS DE AUTENTICAÇÃO E HIDRATAÇÃO ---
-  const [usuario, setUsuario] = useState<{
-    nome: string;
-  } | null>(null);
+  const [usuario, setUsuario] = useState<{ nome: string } | null>(
+    null,
+  );
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // Confirma que estamos no navegador
+    setIsClient(true);
 
     if (variant === 'public') return;
 
     const decoded = getUsuarioDoCookie();
+    if (!decoded) return;
 
-    if (decoded) {
-      const nomeCompleto = decoded.nome || 'Usuário';
-      const primeiroNome = nomeCompleto.split(' ')[0];
-      setUsuario({ nome: primeiroNome });
-    }
+    const nomeCompleto = decoded.nome || 'Usuario';
+    setUsuario({ nome: nomeCompleto.split(' ')[0] });
   }, [variant]);
 
-  // ✅ Se quiser debugar, o log deve ficar aqui, antes do return!
-  if (usuario)
-    console.log('Usuário autenticado:', usuario.nome);
+  useEffect(() => {
+    if (usuario) {
+      logger.debug(CONTEXTO, 'Usuario autenticado no header home', {
+        nome: usuario.nome,
+      });
+    }
+  }, [usuario]);
 
   return (
     <header className={styles.headerContainer}>
-      <div className={styles.logoWrapper}>
-        <Logo />
-      </div>
+      <div className={styles.inner}>
+        <div className={styles.logoWrapper}>
+          <Logo />
+        </div>
 
-      <div className={styles.buttonsWrapper}>
-        {/* Evita o "piscar" dos botões durante o carregamento do SSR no Next.js */}
-        {!isClient ? (
-          <div className="w-24 h-8 bg-gray-200 animate-pulse rounded"></div> // Skeleton de loading elegante
-        ) : variant === 'public' ? (
-          <AuthButtons />
-        ) : usuario ? (
-          <span className={styles.saudacao}>
-            Olá {usuario.nome}, estamos a sua disposição
-          </span>
-        ) : (
-          <AuthButtons />
-        )}
+        <nav className={styles.nav} aria-label="Navegacao principal">
+          <Link href="/prestadores" className={styles.navLink}>
+            Buscar profissionais
+          </Link>
+          <Link href="/cadastro-prestador" className={styles.navLink}>
+            Seja prestador
+          </Link>
+        </nav>
+
+        <div className={styles.actions}>
+          {!isClient ? (
+            <div
+              className={styles.skeleton}
+              aria-label="Carregando acoes"
+            />
+          ) : variant !== 'public' && usuario ? (
+            <>
+              <span className={styles.greeting}>Ola, {usuario.nome}</span>
+              <Link href="/dashboard" className={styles.primaryLink}>
+                Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login-user" className={styles.secondaryLink}>
+                Entrar
+              </Link>
+              <Link href="/cadastro-user" className={styles.primaryLink}>
+                Criar conta
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

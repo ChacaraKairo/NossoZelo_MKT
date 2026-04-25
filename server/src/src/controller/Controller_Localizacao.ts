@@ -83,6 +83,8 @@ export class GeolocalizacaoController {
         idUsuario,
         nome,
         localizacao,
+        latitude,
+        longitude,
         tipo,
         limit,
         raioKm,
@@ -102,6 +104,12 @@ export class GeolocalizacaoController {
           idUsuario: idUsuario as string,
           nome: nome as string,
           localizacao: localizacao as string,
+          latitude: latitude
+            ? parseFloat(latitude as string)
+            : undefined,
+          longitude: longitude
+            ? parseFloat(longitude as string)
+            : undefined,
           tipo: tipo as string,
           raioKm: raioKm
             ? parseFloat(raioKm as string)

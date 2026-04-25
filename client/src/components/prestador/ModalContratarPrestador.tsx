@@ -84,6 +84,16 @@ export default function ModalContratarPrestador({
       return;
     }
 
+    if (!hora) {
+      setErro('Informe o horario desejado.');
+      return;
+    }
+
+    if (!servicoId) {
+      setErro('Selecione um servico para solicitar o agendamento.');
+      return;
+    }
+
     if (!confirmado) {
       setErro('Confirme os dados antes de solicitar a contratação.');
       return;
@@ -165,7 +175,7 @@ export default function ModalContratarPrestador({
               onChange={(event) => setServicoId(event.target.value)}
               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             >
-              <option value="">Selecionar depois</option>
+              <option value="">Selecione um servico</option>
               {servicos.map((servico) => (
                 <option key={servico.id} value={servico.id}>
                   {servico.nome || servico.tipo || `Serviço #${servico.id}`}

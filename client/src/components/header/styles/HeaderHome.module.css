@@ -1,19 +1,166 @@
 .headerContainer {
-  display: flex;
-  justify-content: right; /* Logo à esquerda, botões à direita */
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  width: 100%;
+  border-bottom: 1px solid rgba(15, 118, 110, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.inner {
+  width: min(100% - 32px, 1280px);
+  min-height: 76px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: 16px 32px;
-  background-color: #f9f9f95b; /* Cor clara neutra */
-  box-shadow: 0 2px 6px rgba(201, 201, 201, 0.1);
+  gap: 28px;
 }
 
 .logoWrapper {
-  position: absolute;
-  top: 1px;
-  left: 1px;
+  display: flex;
+  align-items: center;
+  min-width: 158px;
 }
 
-.buttonsWrapper {
+.nav {
   display: flex;
-  gap: 16px; /* Espaço entre os botões */
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.navLink {
+  border-radius: 999px;
+  color: #334155;
+  font-size: 0.94rem;
+  font-weight: 800;
+  padding: 10px 14px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  background: #ecfeff;
+  color: #0f766e;
+  outline: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: max-content;
+}
+
+.greeting {
+  color: #475569;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.primaryLink,
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-size: 0.94rem;
+  font-weight: 900;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease, color 0.2s ease;
+}
+
+.primaryLink {
+  border: 1px solid #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.18);
+}
+
+.primaryLink:hover,
+.primaryLink:focus-visible {
+  background: #115e59;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.secondaryLink {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f766e;
+}
+
+.secondaryLink:hover,
+.secondaryLink:focus-visible {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+  outline: none;
+}
+
+.skeleton {
+  width: 168px;
+  height: 42px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+  background-size: 180% 100%;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 180% 50%;
+  }
+}
+
+@media (max-width: 860px) {
+  .inner {
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    padding: 10px 0;
+  }
+
+  .nav {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    order: 3;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+}
+
+@media (max-width: 560px) {
+  .inner {
+    width: min(100% - 24px, 1280px);
+  }
+
+  .logoWrapper {
+    min-width: 120px;
+  }
+
+  .actions {
+    gap: 6px;
+  }
+
+  .primaryLink,
+  .secondaryLink {
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 0.86rem;
+  }
+
+  .greeting {
+    display: none;
+  }
 }

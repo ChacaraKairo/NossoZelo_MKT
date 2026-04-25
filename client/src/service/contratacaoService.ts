@@ -1,5 +1,6 @@
 import api, { extrairErroApi } from '@/service/api';
 import { ContratacaoPerfil } from '@/types/perfil';
+import { getUsuarioDoCookie } from '@/utils/auth';
 import logger from '@/utils/logger';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 
@@ -95,12 +96,15 @@ export const contratacaoService = {
         ? `/agendamentos/aceitar/${contratacaoId}`
         : statusNormalizado === 'concluido'
           ? `/agendamentos/finalizar/${contratacaoId}`
-          : null;
+          : statusNormalizado === 'cancelado' ||
+              statusNormalizado === 'negado'
+            ? `/agendamentos/cancelar/${contratacaoId}`
+            : null;
 
     if (!endpoint) {
       const error = criarErroRotaInexistente(
         `Nao existe rota real no backend para atualizar contratacao ${contratacaoId} para status "${status}". ` +
-          'As rotas confirmadas hoje sao PATCH /agendamentos/aceitar/:id e PATCH /agendamentos/finalizar/:id.',
+          'As rotas confirmadas hoje sao PATCH /agendamentos/aceitar/:id, PATCH /agendamentos/cancelar/:id e PATCH /agendamentos/finalizar/:id.',
       );
       logger.error(CONTEXTO, 'Erro com status HTTP', {
         endpoint: '/contratacoes/:id/status',
@@ -128,41 +132,62 @@ export const contratacaoService = {
     }
   },
 
-  listarMinhasSolicitacoes: async (): Promise<
-    ContratacaoPerfil[]
-  > => {
-    const error = criarErroRotaInexistente(
-      'Nao existe rota real equivalente a GET /contratacoes/minhas no backend atual. ' +
-        'As listagens confirmadas exigem id: GET /agendamentos/cliente/:id e GET /agendamentos/prestador/:id.',
-    );
-    logger.error(CONTEXTO, 'Erro com status HTTP', {
-      endpoint: '/contratacoes/minhas',
-      status: undefined,
-      mensagem: error.message,
-    });
-    throw error;
-  },
-
-  listarSolicitacoesPrestador: async (
-    prestadorId?: string,
+  listarMinhasSolicitacoes: async (
+    clienteId?: string,
   ): Promise<ContratacaoPerfil[]> => {
-    if (!prestadorId) {
+    const usuario = getUsuarioDoCookie();
+    const id = clienteId || usuario?.id;
+
+    if (!id) {
       const error = criarErroRotaInexistente(
-        'Nao existe rota real GET /contratacoes/prestador/solicitacoes baseada apenas no token. ' +
-          'Para usar a rota confirmada, informe prestadorId e chame GET /agendamentos/prestador/:id.',
+        'Nao foi possivel listar agendamentos sem cliente autenticado.',
       );
       logger.error(CONTEXTO, 'Erro com status HTTP', {
-        endpoint: '/contratacoes/prestador/solicitacoes',
+        endpoint: '/agendamentos/cliente/:id',
         status: undefined,
         mensagem: error.message,
       });
       throw error;
     }
 
-    const endpoint = `/agendamentos/prestador/${prestadorId}`;
+    const endpoint = `/agendamentos/cliente/${id}`;
 
     try {
-      logarEndpoint(endpoint, { prestadorId });
+      logarEndpoint(endpoint, { clienteId: id });
+
+      const response =
+        await api.get<ContratacaoPerfil[]>(endpoint);
+
+      logarResposta(endpoint, response.status);
+      return response.data;
+    } catch (error: unknown) {
+      logarErro(endpoint, error);
+      throw error;
+    }
+  },
+
+  listarSolicitacoesPrestador: async (
+    prestadorId?: string,
+  ): Promise<ContratacaoPerfil[]> => {
+    const usuario = getUsuarioDoCookie();
+    const id = prestadorId || usuario?.id;
+
+    if (!id) {
+      const error = criarErroRotaInexistente(
+        'Nao foi possivel listar solicitacoes sem prestador autenticado.',
+      );
+      logger.error(CONTEXTO, 'Erro com status HTTP', {
+        endpoint: '/agendamentos/prestador/:id',
+        status: undefined,
+        mensagem: error.message,
+      });
+      throw error;
+    }
+
+    const endpoint = `/agendamentos/prestador/${id}`;
+
+    try {
+      logarEndpoint(endpoint, { prestadorId: id });
 
       const response =
         await api.get<ContratacaoPerfil[]>(endpoint);
