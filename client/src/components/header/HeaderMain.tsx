@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import styles from './styles/HeaderMain.module.css';
 
 // --- Componentes Reutilizáveis ---
@@ -19,8 +20,12 @@ import { TbUserSearch } from 'react-icons/tb';
 // --- Lógica Sênior ---
 import { useBuscaStore } from '@/store/useBuscaStore';
 import { getUsuarioDoCookie } from '@/utils/auth';
+import logger from '@/utils/logger';
+
+const CONTEXTO = 'HeaderMain';
 
 const HeaderMain: React.FC = () => {
+  const router = useRouter();
   // 1. Conexão direta com a "Mente" da Busca (Store)
   const {
     searchLocation,
@@ -49,6 +54,17 @@ const HeaderMain: React.FC = () => {
       });
     }
   }, []);
+
+  const handleBuscar = () => {
+    logger.info(CONTEXTO, 'Botão Buscar acionado', {
+      searchLocation,
+      searchService,
+    });
+
+    if (router.pathname !== '/prestadores') {
+      router.push('/prestadores');
+    }
+  };
 
   return (
     <header className={styles.headerContainer}>
@@ -80,7 +96,7 @@ const HeaderMain: React.FC = () => {
 
         <Button
           variant="primary"
-          onClick={() => console.log('Buscando...')}
+          onClick={handleBuscar}
           className={styles.searchButton}
         >
           <TbUserSearch />

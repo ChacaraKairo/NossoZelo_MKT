@@ -166,6 +166,16 @@ const PrestadorVitrinePage: React.FC = () => {
     carregarVitrine();
   }, [carregarVitrine, prestadorId, router.isReady]);
 
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.acao === 'contratar') {
+      logger.info(CONTEXTO, 'Ação de contratação recebida pela URL', {
+        prestadorId,
+      });
+      setModalContratacaoAberto(true);
+    }
+  }, [prestadorId, router.isReady, router.query.acao]);
+
   const avaliacoes = useMemo(
     () => obterAvaliacoes(prestador),
     [prestador],
@@ -394,6 +404,7 @@ const PrestadorVitrinePage: React.FC = () => {
       <ModalContratarPrestador
         aberto={modalContratacaoAberto}
         prestadorId={prestador.id}
+        tipoPrestador={prestador.tipo}
         servicos={servicos}
         onClose={() => setModalContratacaoAberto(false)}
       />

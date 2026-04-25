@@ -2,12 +2,14 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Carregando from '@/components/common/Carregando';
 import { contratacaoService } from '@/service/contratacaoService';
 import { ServicoPerfil } from '@/types/perfil';
+import { getUsuarioDoCookie } from '@/utils/auth';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
 
 interface ModalContratarPrestadorProps {
   aberto: boolean;
   prestadorId: string;
+  tipoPrestador?: string;
   servicos?: ServicoPerfil[];
   onClose: () => void;
 }
@@ -17,6 +19,7 @@ const CONTEXTO = 'ModalContratarPrestador';
 export default function ModalContratarPrestador({
   aberto,
   prestadorId,
+  tipoPrestador,
   servicos = [],
   onClose,
 }: ModalContratarPrestadorProps) {
@@ -35,14 +38,36 @@ export default function ModalContratarPrestador({
   }, [aberto, prestadorId]);
 
   const payload = useMemo(
-    () => ({
-      prestador_id: prestadorId,
-      servico_id: servicoId ? Number(servicoId) : undefined,
-      data,
-      hora_inicio: hora || undefined,
-      observacao,
-    }),
-    [data, hora, observacao, prestadorId, servicoId],
+    () => {
+      const usuario = getUsuarioDoCookie();
+      const servicoSelecionado = servicos.find(
+        (servico) => String(servico.id) === servicoId,
+      );
+      const [horas, minutos] = hora.split(':');
+      const horaFim =
+        hora && horas
+          ? `${String((Number(horas) + 1) % 24).padStart(2, '0')}:${
+              minutos || '00'
+            }`
+          : undefined;
+
+      return {
+        cliente_id: usuario?.id,
+        prestador_id: prestadorId,
+        tipo_prestador: tipoPrestador,
+        servico_id: servicoId ? Number(servicoId) : undefined,
+        data,
+        hora_inicio: hora || undefined,
+        hora_fim: horaFim,
+        preco:
+          servicoSelecionado?.valor !== undefined
+            ? Number(servicoSelecionado.valor)
+            : undefined,
+        observacoes: observacao,
+        observacao,
+      };
+    },
+    [data, hora, observacao, prestadorId, servicoId, servicos, tipoPrestador],
   );
 
   if (!aberto) return null;
@@ -73,10 +98,13 @@ export default function ModalContratarPrestador({
       setTimeout(onClose, 900);
     } catch (error: unknown) {
       const mensagem = extrairMensagemErro(error);
+      const mensagemFinal = mensagem.includes('[TODO tecnico]')
+        ? 'Fluxo de contratação ainda não está disponível no servidor.'
+        : mensagem;
       logger.error(CONTEXTO, 'Erro ao solicitar contratação', {
-        mensagem,
+        mensagem: mensagemFinal,
       });
-      setErro(mensagem);
+      setErro(mensagemFinal);
     } finally {
       setLoading(false);
     }

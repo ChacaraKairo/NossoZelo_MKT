@@ -1,26 +1,11 @@
-/**
- * @author Kairo Chácara
- * @version 1.2
- * @date 22/04/2026
- * @description Service de Autenticação. Gerencia o ciclo de vida do login,
- * validação de credenciais via API e persistência de estado via Cookies.
- * Implementa tratamento rigoroso de erros de tipagem e logs de fluxo.
- */
-
 import Cookies from 'js-cookie';
+import logger from '@/utils/logger';
 
-/* STREAMING_CHUNK:Defining Local Interfaces for Type Safety... */
-/**
- * Interface de requisição de login.
- */
 export interface LoginRequestBody {
   identificador: string;
   senha: string;
 }
 
-/**
- * Interface de resposta do servidor de autenticação.
- */
 export interface LoginResponse {
   token?: string;
   usuario?: {
@@ -32,34 +17,22 @@ export interface LoginResponse {
   message?: string;
 }
 
-console.log(
-  '[LOG-FLUXO] Inicializando LoginService: Motor de autenticação e gestão de segurança ativo.',
-);
+const CONTEXTO = 'LoginService';
 
-/* STREAMING_CHUNK:Implementing LoginService Class... */
 class LoginService {
-  /**
-   * Realiza a tentativa de autenticação.
-   * @param {LoginRequestBody} data - Credenciais do usuário.
-   * @returns {Promise<LoginResponse>} - Dados da sessão.
-   */
-  public async login(
-    data: LoginRequestBody,
-  ): Promise<LoginResponse> {
-    console.log(
-      `[LOG-FLUXO] Iniciando tentativa de login para o identificador: ${data.identificador}`,
-    );
+  public async login(data: LoginRequestBody): Promise<LoginResponse> {
+    logger.info(CONTEXTO, 'Iniciando tentativa de login', {
+      identificador: data.identificador,
+    });
 
     const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:4000';
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const loginUrl = `${apiUrl}/nossozelo/login/login`;
 
-    /* STREAMING_CHUNK:Executing Fetch Request with Credentials... */
     try {
-      console.log(
-        `[LOG-FLUXO] Disparando requisição POST para: ${loginUrl}`,
-      );
+      logger.debug(CONTEXTO, 'Disparando requisicao de login', {
+        loginUrl,
+      });
 
       const response = await fetch(loginUrl, {
         method: 'POST',
@@ -70,17 +43,17 @@ class LoginService {
         body: JSON.stringify(data),
       });
 
-      console.log(
-        `[LOG-FLUXO] Resposta recebida da rede. Status HTTP: ${response.status}`,
-      );
+      logger.debug(CONTEXTO, 'Resposta recebida da rede', {
+        status: response.status,
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
-          console.error(
-            `[ERRO-FLUXO] Falha de Autenticação: Credenciais incorretas para ${data.identificador}.`,
-          );
+          logger.warn(CONTEXTO, 'Credenciais incorretas', {
+            identificador: data.identificador,
+          });
           throw new Error(
-            'Usuário ou senha inválidos. Por favor, tente novamente.',
+            'Usuario ou senha invalidos. Por favor, tente novamente.',
           );
         }
 
@@ -88,8 +61,10 @@ class LoginService {
         try {
           errorData = await response.json();
         } catch {
-          console.error(
-            '[ERRO-FLUXO] O backend retornou uma resposta não-JSON ou erro 500.',
+          logger.error(
+            CONTEXTO,
+            'Backend retornou resposta nao JSON ou erro 500',
+            { status: response.status },
           );
           throw new Error(
             `Erro no servidor (Status: ${response.status}).`,
@@ -99,51 +74,45 @@ class LoginService {
         const errorMessage =
           errorData?.message ||
           errorData?.error ||
-          (errorData?.errors &&
-            JSON.stringify(errorData.errors)) ||
+          (errorData?.errors && JSON.stringify(errorData.errors)) ||
           `Erro ${response.status}: ${response.statusText}`;
-        console.error(
-          `[ERRO-FLUXO] Erro reportado pela API: ${errorMessage}`,
-        );
+
+        logger.error(CONTEXTO, 'Erro reportado pela API', {
+          errorMessage,
+        });
         throw new Error(`Falha no login: ${errorMessage}`);
       }
 
-      const responseData: LoginResponse =
-        await response.json();
+      const responseData: LoginResponse = await response.json();
 
-      /* STREAMING_CHUNK:Handling Session Persistence... */
       if (responseData.token) {
-        console.log(
-          '[LOG-FLUXO] Token JWT detectado. Persistindo sessão via js-cookie.',
-        );
+        logger.debug(CONTEXTO, 'Token JWT detectado. Persistindo sessao');
         Cookies.set('token', responseData.token, {
-          expires: 1, // 24 horas
+          expires: 1,
           path: '/',
           sameSite: 'strict',
         });
-        console.log(
-          '[LOG-FLUXO] Cookie de sessão gravado com sucesso.',
-        );
+        logger.debug(CONTEXTO, 'Cookie de sessao gravado com sucesso');
       }
 
-      console.log(
-        `[LOG-FLUXO] Fluxo de login finalizado com sucesso para: ${data.identificador}`,
-      );
+      logger.info(CONTEXTO, 'Fluxo de login finalizado com sucesso', {
+        identificador: data.identificador,
+      });
       return responseData;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro crítico no LoginService: ${error.message}`,
-      );
+    } catch (error: unknown) {
+      logger.error(CONTEXTO, 'Erro critico no LoginService', error);
 
       if (
         error instanceof TypeError &&
         error.message === 'Failed to fetch'
       ) {
-        console.error(
-          '[ERRO-FLUXO] Erro de rede ou restrição de CORS impedindo a comunicação.',
+        logger.error(
+          CONTEXTO,
+          'Erro de rede ou restricao de CORS impedindo a comunicacao',
+          error,
         );
         throw new Error(
-          'Não foi possível conectar ao servidor. Verifique sua internet ou a disponibilidade da API.',
+          'Nao foi possivel conectar ao servidor. Verifique sua internet ou a disponibilidade da API.',
         );
       }
 

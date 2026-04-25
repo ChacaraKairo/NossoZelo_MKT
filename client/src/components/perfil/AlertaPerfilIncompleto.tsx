@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { PerfilUsuario, TipoUsuario } from '@/types/perfil';
 import logger from '@/utils/logger';
 
@@ -47,13 +47,16 @@ export default function AlertaPerfilIncompleto({
   tipoUsuario,
   onCompletarPerfil,
 }: AlertaPerfilIncompletoProps) {
-  const camposAusentes = calcularCamposAusentes(perfil, tipoUsuario);
+  const camposAusentes = useMemo(
+    () => calcularCamposAusentes(perfil, tipoUsuario),
+    [perfil, tipoUsuario],
+  );
 
   useEffect(() => {
     logger.info(CONTEXTO, 'Campos faltantes detectados', {
       camposAusentes,
     });
-  }, [camposAusentes.join('|')]);
+  }, [camposAusentes]);
 
   if (camposAusentes.length === 0) return null;
 

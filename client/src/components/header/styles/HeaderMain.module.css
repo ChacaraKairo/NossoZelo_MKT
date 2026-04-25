@@ -1,60 +1,62 @@
-/* file: client/src/components/header/styles/HeaderMain.module.css */
-
 .headerContainer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem; /* Reduzimos o padding vertical para o header ser fino */
-  height: 70px; /* Altura fixa para o header */
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  min-height: 76px;
   background-color: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
   width: 100%;
   position: sticky;
   top: 0;
   z-index: 1000;
-
-  /* 🔥 CRUCIAL: Permite que elementos saiam para fora do limite do header */
-  overflow: visible !important;
 }
 
 .logoWrapper {
-  /* 🔥 RESERVA ESPAÇO: Largura fixa para a busca não encostar no logo */
-  width: 250px;
-  height: 100%;
-  position: relative;
-  right: 30px;
+  width: 180px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
 }
 
-.logoWrapper :global(a),
+.logoWrapper :global(a) {
+  display: flex;
+  align-items: center;
+}
+
 .logoWrapper :global(img) {
-  /* 🔥 O PULO DO GATO: O logo flutua para fora */
-  position: absolute;
-  top: 5px; /* Ajuste para alinhar ao topo */
-  left: 0;
-  height: 180px; /* A logo é maior que os 70px do header */
+  max-height: 72px;
   width: auto;
-  z-index: 1001;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 .logoWrapper:hover :global(img) {
-  transform: scale(
-    1.05
-  ); /* Efeito interativo ao passar o mouse */
+  transform: scale(1.03);
 }
 
 .searchBar {
   flex: 1;
   display: flex;
   align-items: center;
-  max-width: 650px;
-  background-color: #f1f3f4;
-  border-radius: 8px;
-  padding: 4px 12px;
-  margin: 0 1rem;
+  min-width: 240px;
+  max-width: 720px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 5px 10px;
+  gap: 8px;
+}
+
+.separator {
+  width: 1px;
+  height: 28px;
+  background-color: #d7e1e8;
+}
+
+.searchButton {
+  white-space: nowrap;
+  min-height: 38px;
 }
 
 .buttonsWrapper {
@@ -63,4 +65,43 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+@media (max-width: 980px) {
+  .headerContainer {
+    flex-wrap: wrap;
+  }
+
+  .logoWrapper {
+    width: 140px;
+  }
+
+  .searchBar {
+    order: 3;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerContainer {
+    padding: 0.75rem;
+  }
+
+  .logoWrapper {
+    width: 110px;
+  }
+
+  .logoWrapper :global(img) {
+    max-height: 56px;
+  }
+
+  .searchBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .separator {
+    display: none;
+  }
 }

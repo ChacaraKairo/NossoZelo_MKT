@@ -1,100 +1,147 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import HeaderMain from '@/components/header/HeaderMain'; // ⚠️ Certifique-se de que este é o header conectado ao Zustand
+import HeaderMain from '@/components/header/HeaderMain';
 import Style from '@/styles/PrestadoresPage.module.css';
 import Filtro from '@/components/main-page/filter/Filtro';
 import PrestadoresGrid from '@/components/main-page/prestadores-grid/PrestadoresGrid';
 import Footer from '@/components/footer/Footer';
-import { useBuscaStore } from '@/store/useBuscaStore'; // ✅ Lógica de busca
+import { useBuscaStore } from '@/store/useBuscaStore';
+import { useGeolocalizacao } from '@/hooks/useGeolocalizacao';
+import logger from '@/utils/logger';
+import ClientOnly from '@/components/common/ClientOnly';
 
-const NossoZeloHome = () => {
+const CONTEXTO = 'PrestadoresPage';
+
+function queryString(valor: string | string[] | undefined) {
+  return Array.isArray(valor) ? valor[0] : valor;
+}
+
+const PrestadoresPage = () => {
   const router = useRouter();
-  const setCategoria = useBuscaStore(
-    (state) => state.setCategoria,
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const filtrosIniciaisAplicados = useRef(false);
+  const {
+    searchLocation,
+    setSearchLocation,
+    searchService,
+    setSearchService,
+    categoria,
+    setCategoria,
+    distancia,
+    setDistancia,
+    precoMax,
+    setPrecoMax,
+  } = useBuscaStore();
+  const { solicitarGeolocalizacao } = useGeolocalizacao();
+
+  useEffect(() => {
+    logger.info(CONTEXTO, 'Montagem da página');
+    solicitarGeolocalizacao();
+  }, [solicitarGeolocalizacao]);
+
+  useEffect(() => {
+    if (!router.isReady || filtrosIniciaisAplicados.current) return;
+    filtrosIniciaisAplicados.current = true;
+
+    const tipo = queryString(router.query.tipo);
+    const localizacao = queryString(router.query.localizacao);
+    const busca = queryString(router.query.busca);
+    const distanciaQuery = queryString(router.query.distancia);
+    const precoMaxQuery = queryString(router.query.precoMax);
+
+    logger.info(CONTEXTO, 'Leitura de query params', router.query);
+
+    if (tipo) {
+      const categoriaFormatada =
+        tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
+      logger.info(CONTEXTO, 'Categoria aplicada no Zustand', {
+        categoria: categoriaFormatada,
+      });
+      setCategoria(categoriaFormatada);
+    }
+    if (localizacao) setSearchLocation(localizacao);
+    if (busca) setSearchService(busca);
+    if (distanciaQuery) setDistancia(Number(distanciaQuery));
+    if (precoMaxQuery) setPrecoMax(precoMaxQuery);
+  }, [
+    router.isReady,
+    router.query,
+    setCategoria,
+    setDistancia,
+    setPrecoMax,
+    setSearchLocation,
+    setSearchService,
+  ]);
+
+  const queryAtualizada = useMemo(() => {
+    const query: Record<string, string> = {};
+    if (categoria) query.tipo = categoria.toLowerCase();
+    if (searchLocation) query.localizacao = searchLocation;
+    if (searchService) query.busca = searchService;
+    if (distancia !== 50) query.distancia = String(distancia);
+    if (precoMax) query.precoMax = precoMax;
+    return query;
+  }, [categoria, distancia, precoMax, searchLocation, searchService]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const atual = JSON.stringify(router.query);
+    const proxima = JSON.stringify(queryAtualizada);
+    if (atual === proxima) return;
+
+    logger.debug(CONTEXTO, 'Sincronizando filtros com URL', queryAtualizada);
+    router.replace(
+      {
+        pathname: '/prestadores',
+        query: queryAtualizada,
+      },
+      undefined,
+      { shallow: true },
+    );
+  }, [queryAtualizada, router]);
+
+  const conteudo = (
+    <div className={Style.page}>
+      <HeaderMain />
+      <main className={Style.mainContainer}>
+        <div className={Style.contentWrapper}>
+          <button
+            type="button"
+            className={Style.mobileFilterToggle}
+            onClick={() => setFiltrosAbertos((aberto) => !aberto)}
+          >
+            {filtrosAbertos ? 'Ocultar filtros' : 'Mostrar filtros'}
+          </button>
+
+          <aside
+            className={`${Style.sidebar} ${
+              filtrosAbertos ? Style.sidebarOpen : ''
+            }`}
+          >
+            <Filtro />
+          </aside>
+
+          <section className={Style.gridArea}>
+            <PrestadoresGrid />
+          </section>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 
-  // ✅ 1. LÓGICA DO ZUSTAND: Lê a URL na montagem (Ex: /home?tipo=enfermeiro) e joga na Store
-  useEffect(() => {
-    if (router.isReady) {
-      const { tipo } = router.query;
-      if (tipo) {
-        const categoriaFormatada =
-          (tipo as string).charAt(0).toUpperCase() +
-          (tipo as string).slice(1).toLowerCase();
-        setCategoria(categoriaFormatada);
-      }
-    }
-  }, [router.isReady, router.query, setCategoria]);
-
-  // ✅ 2. LÓGICA DE GEOLOCALIZAÇÃO: Salva latitude/longitude em cookies (Trazido da sua pág de prestadores)
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-
-          // Define a data de expiração para o cookie (ex: 7 dias)
-          const diasExp = 7;
-          const dataExpiracao = new Date();
-          dataExpiracao.setTime(
-            dataExpiracao.getTime() +
-              diasExp * 24 * 60 * 60 * 1000,
-          );
-          const expires =
-            'expires=' + dataExpiracao.toUTCString();
-
-          // Salva a longitude e latitude nos cookies
-          document.cookie = `latitude=${latitude}; ${expires}; path=/`;
-          document.cookie = `longitude=${longitude}; ${expires}; path=/`;
-        },
-        (error) => {
-          console.error(
-            'Erro ao obter a localização do usuário:',
-            error.message,
-          );
-        },
-      );
-    } else {
-      console.warn(
-        'API de geolocalização não é suportada por este navegador.',
-      );
-    }
-  }, []);
-
   return (
-    <div>
-      {/* Header: Retiramos o onSearch={} pois o HeaderMain agora 
-        deve se comunicar direto com o Zustand (useBuscaStore) 
-      */}
-      <HeaderMain />
-
-      {/* 🎨 ESTRUTURA VISUAL CORRETA (Copiada da página Prestadores) */}
-      <main
-        className={Style.mainContainer}
-        style={{
-          display: 'flex',
-          padding: '20px',
-          gap: '20px',
-          marginTop: '100px',
-        }}
-      >
-        {/* Sidebar com o Filtro */}
-        <aside
-          className={Style.sidebar}
-          style={{ width: '250px' }}
-        >
-          <Filtro />
-        </aside>
-
-        {/* Grid de Prestadores Componentizado */}
-        <PrestadoresGrid />
-      </main>
-
-      <footer>
-        <Footer />
-      </footer>
-    </div>
+    <ClientOnly
+      fallback={
+        <div className={Style.page}>
+          <div className={Style.clientFallback}>Carregando busca...</div>
+        </div>
+      }
+    >
+      {conteudo}
+    </ClientOnly>
   );
 };
 
-export default NossoZeloHome;
+export default PrestadoresPage;

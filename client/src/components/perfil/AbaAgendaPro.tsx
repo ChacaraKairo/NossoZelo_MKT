@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { FaClock } from 'react-icons/fa';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import { AgendaPerfil, PerfilUsuario } from '@/types/perfil';
@@ -59,7 +59,7 @@ function horarioCompleto(item: AgendaPerfil) {
 export default function AbaAgendaPro({
   perfil,
 }: AbaAgendaProProps) {
-  const agenda = perfil.agenda || [];
+  const agenda = useMemo(() => perfil.agenda || [], [perfil.agenda]);
   const dadosInvalidos = !Array.isArray(agenda);
 
   useEffect(() => {

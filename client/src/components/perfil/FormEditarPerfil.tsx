@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { usePerfilEditor } from '@/hooks/usePerfilEditor';
 import { PerfilUsuario, TipoUsuario } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
@@ -97,17 +97,21 @@ export default function FormEditarPerfil({
   onSave,
 }: FormEditarPerfilProps) {
   const editor = usePerfilEditor();
+  const { iniciarEdicao } = editor;
   const [errosValidacao, setErrosValidacao] = useState<
     Record<string, string>
   >({});
   const [avisosValidacao, setAvisosValidacao] = useState<
     Record<string, string>
   >({});
-  const tipo =
-    tipoUsuario ||
-    perfil.perfil_tipo ||
-    perfil.tipo ||
-    perfil.dados_usuario?.tipo;
+  const tipo = useMemo(
+    () =>
+      tipoUsuario ||
+      perfil.perfil_tipo ||
+      perfil.tipo ||
+      perfil.dados_usuario?.tipo,
+    [perfil, tipoUsuario],
+  );
   const isPrestador = ['cuidador', 'enfermeiro', 'acompanhante'].includes(
     String(tipo),
   );
@@ -117,8 +121,8 @@ export default function FormEditarPerfil({
     logger.info(CONTEXTO, 'Abertura do formulário', {
       tipoUsuario: tipo,
     });
-    editor.iniciarEdicao(perfil);
-  }, [perfil]);
+    iniciarEdicao(perfil);
+  }, [iniciarEdicao, perfil, tipo]);
 
   const alterarCampo = (campo: string, valor: string) => {
     logger.debug(CONTEXTO, 'Alteração de campo', { campo });

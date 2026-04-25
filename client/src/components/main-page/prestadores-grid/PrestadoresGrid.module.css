@@ -1,0 +1,94 @@
+.wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.stateBox {
+  width: 100%;
+  padding: 28px 0;
+}
+
+.skeletonCard {
+  width: 100%;
+  min-height: 430px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.skeletonImage,
+.skeletonLineLarge,
+.skeletonLineMedium,
+.skeletonLineSmall,
+.skeletonButton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeletonImage {
+  aspect-ratio: 4 / 3;
+}
+
+.skeletonBody {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.skeletonLineLarge {
+  width: 70%;
+  height: 18px;
+  border-radius: 999px;
+}
+
+.skeletonLineMedium {
+  width: 52%;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.skeletonLineSmall {
+  width: 86%;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.skeletonActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.skeletonButton {
+  height: 42px;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}

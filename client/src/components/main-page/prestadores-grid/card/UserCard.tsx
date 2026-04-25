@@ -1,51 +1,160 @@
-// file: /components/cards/UserCard.tsx
-import React from 'react';
-import Button from '@/components/btn/Button';
-import { FaPlusCircle } from 'react-icons/fa';
+import React, { KeyboardEvent, MouseEvent, useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { FaCheckCircle, FaMapMarkerAlt, FaStar } from 'react-icons/fa';
+import { PrestadorCardData } from '@/types/prestador';
+import logger from '@/utils/logger';
 import styles from './styles/UserCard.module.css';
 
-// A interface foi movida para cá para manter o componente auto-contido
-interface DadosSimples {
-  nome: string;
-  tipo: string;
-  localidade: string;
-  imageUrl: string; // Adicionada para a imagem do perfil
-}
-
 interface UserCardProps {
-  user: DadosSimples;
+  user: PrestadorCardData;
+  onContratar?: (prestador: PrestadorCardData) => void;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user }) => {
+const CONTEXTO = 'UserCard';
+const FALLBACK_IMAGE = '/logos/OnlyLogo.png';
+
+function formatarPreco(valor?: number) {
+  if (valor === undefined) return null;
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+const UserCard: React.FC<UserCardProps> = ({ user, onContratar }) => {
+  const router = useRouter();
+  const [imageSrc, setImageSrc] = useState(user.imageUrl || FALLBACK_IMAGE);
+  const hrefPerfil = `/prestador/${user.id}`;
+
+  useEffect(() => {
+    logger.debug(CONTEXTO, 'Card renderizado', {
+      id: user.id,
+      tipo: user.tipo,
+    });
+  }, [user.id, user.tipo]);
+
+  const navegarParaPerfil = () => {
+    logger.info(CONTEXTO, 'Clique em ver perfil', {
+      prestadorId: user.id,
+    });
+    router.push(hrefPerfil);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      navegarParaPerfil();
+    }
+  };
+
+  const handleContratar = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    logger.info(CONTEXTO, 'Clique em contratar', {
+      prestadorId: user.id,
+      origem: 'card',
+    });
+
+    if (onContratar) {
+      onContratar(user);
+      return;
+    }
+
+    router.push(`/prestador/${user.id}?acao=contratar`);
+  };
+
+  const preco = formatarPreco(user.precoHora);
+
   return (
-    <div className={styles.cardContainer}>
-      <img
-        src={user.imageUrl}
-        alt={user.nome}
-        className={styles.profileImage}
-      />
-      <div className={styles.plusIconWrapper}>
-        <FaPlusCircle />
+    <article
+      className={styles.cardContainer}
+      role="button"
+      tabIndex={0}
+      onClick={navegarParaPerfil}
+      onKeyDown={handleKeyDown}
+      aria-label={`Ver perfil de ${user.nome}`}
+    >
+      <div className={styles.imageWrapper}>
+        <img
+          src={imageSrc}
+          alt={`Foto de ${user.nome}`}
+          className={styles.profileImage}
+          onError={() => {
+            logger.warn(CONTEXTO, 'Imagem do prestador falhou', {
+              prestadorId: user.id,
+              imageUrl: user.imageUrl,
+            });
+            setImageSrc(FALLBACK_IMAGE);
+          }}
+        />
+        {user.verificado && (
+          <span className={styles.verifiedBadge}>
+            <FaCheckCircle aria-hidden="true" />
+            Verificado
+          </span>
+        )}
       </div>
 
-      <div className={styles.infoOverlay}>
-        <div className={styles.textWrapper}>
-          <h3 className={styles.userName}>{user.nome}</h3>
-          <p className={styles.userInfo}>{user.tipo}</p>
-          <p className={styles.userInfo}>
-            {user.localidade}
-          </p>
+      <div className={styles.content}>
+        <div className={styles.headerRow}>
+          <div className={styles.titleBlock}>
+            <h3 className={styles.userName}>{user.nome}</h3>
+            <p className={styles.userType}>{user.tipo}</p>
+          </div>
+          {user.avaliacao !== undefined && (
+            <span className={styles.rating} aria-label={`Nota ${user.avaliacao}`}>
+              <FaStar aria-hidden="true" />
+              {user.avaliacao.toFixed(1)}
+            </span>
+          )}
         </div>
-        <Button
-          variant="secondary" // Usando a variante secundária para o estilo de contorno
-          onClick={() =>
-            console.log('Contratar ' + user.nome)
-          }
-        >
-          Contratar
-        </Button>
+
+        <p className={styles.location}>
+          <FaMapMarkerAlt aria-hidden="true" />
+          {user.localidade}
+        </p>
+
+        <div className={styles.metaRow}>
+          {preco && <span className={styles.price}>{preco}/h</span>}
+          {user.disponibilidade && (
+            <span className={styles.availability}>
+              {typeof user.disponibilidade === 'boolean'
+                ? 'Disponível'
+                : user.disponibilidade}
+            </span>
+          )}
+        </div>
+
+        {user.especialidades && (
+          <p className={styles.specialties}>
+            {Array.isArray(user.especialidades)
+              ? user.especialidades.join(', ')
+              : user.especialidades}
+          </p>
+        )}
+
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              navegarParaPerfil();
+            }}
+            aria-label={`Ver perfil de ${user.nome}`}
+          >
+            Ver perfil
+          </button>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={handleContratar}
+            aria-label={`Contratar ${user.nome}`}
+          >
+            Contratar
+          </button>
+        </div>
       </div>
-    </div>
+    </article>
   );
 };
 
