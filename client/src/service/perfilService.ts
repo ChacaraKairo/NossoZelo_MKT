@@ -1,79 +1,122 @@
-import axios from 'axios';
-import Cookies from 'js-cookie';
+import logger from '@/utils/logger';
+import api, { extrairErroApi } from '@/service/api';
+import { extrairMensagemErro } from '@/utils/tratarErroApi';
+import {
+  AtualizarPerfilPayload,
+  PerfilClienteParaPrestador,
+  PerfilPrestadorPublico,
+  PerfilUsuario,
+} from '@/types/perfil';
 
-const apiUrl =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:4000';
-const baseURL = `${apiUrl}/nossozelo`;
+export type {
+  AtualizarPerfilPayload,
+  PerfilClienteParaPrestador,
+  PerfilPrestadorPublico,
+  PerfilUsuario,
+} from '@/types/perfil';
 
-const api = axios.create({ baseURL });
+const CONTEXTO = 'perfilService';
 
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get('token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      Cookies.remove('token');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login-user';
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+function logarErro(endpoint: string, error: unknown) {
+  const { status, mensagem } = extrairErroApi(error);
+  logger.error(
+    CONTEXTO,
+    `Falha ao buscar ${endpoint}`,
+    { status, mensagem, mensagemAmigavel: extrairMensagemErro(error) },
+  );
+}
 
 export const perfilService = {
-  obterMeuPerfil: async () => {
+  obterMeuPerfil: async (): Promise<PerfilUsuario> => {
+    const endpoint = '/perfil/meu';
     try {
-      const response = await api.get('/perfil/meu');
+      logger.info(
+        CONTEXTO,
+        'Carregando perfil do usuário autenticado',
+      );
+      const response = await api.get<PerfilUsuario>(endpoint);
+      logger.info(CONTEXTO, 'Perfil carregado com sucesso', {
+        perfil_tipo: response.data?.perfil_tipo,
+      });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logarErro(endpoint, error);
       throw error;
     }
   },
 
-  atualizarDadosPerfil: async (dados: any) => {
+  atualizarDadosPerfil: async (
+    dados: AtualizarPerfilPayload,
+  ): Promise<PerfilUsuario> => {
+    const endpoint = '/perfil/update';
     try {
-      const response = await api.patch(
-        '/perfil/update',
+      logger.info(CONTEXTO, 'Atualizando dados do perfil', {
+        campos: Object.keys(dados),
+      });
+      const response = await api.patch<PerfilUsuario>(
+        endpoint,
         dados,
       );
+      logger.info(
+        CONTEXTO,
+        'Perfil atualizado com sucesso',
+        { perfil_tipo: response.data?.perfil_tipo },
+      );
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logarErro(endpoint, error);
       throw error;
     }
   },
 
-  obterVitrinePrestador: async (prestadorId: string) => {
+  obterVitrinePrestador: async (
+    prestadorId: string,
+  ): Promise<PerfilPrestadorPublico> => {
+    const endpoint = `/perfil/prestador/${prestadorId}`;
     try {
-      const response = await api.get(
-        `/perfil/prestador/${prestadorId}`,
+      logger.info(CONTEXTO, 'Carregando vitrine pública', {
+        prestadorId,
+      });
+      const response =
+        await api.get<PerfilPrestadorPublico>(endpoint);
+      logger.info(
+        CONTEXTO,
+        'Vitrine pública carregada com sucesso',
+        { prestadorId },
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logarErro(endpoint, error);
       throw error;
     }
   },
 
-  obterDadosCliente: async (clienteId: string) => {
+  obterDadosCliente: async (
+    clienteId: string,
+  ): Promise<PerfilClienteParaPrestador> => {
+    const endpoint = `/perfil/cliente/${clienteId}`;
     try {
-      const response = await api.get(
-        `/perfil/cliente/${clienteId}`,
+      logger.info(
+        CONTEXTO,
+        'Carregando dados liberados do cliente',
+        { clienteId },
+      );
+      const response =
+        await api.get<PerfilClienteParaPrestador>(
+          endpoint,
+        );
+      logger.info(
+        CONTEXTO,
+        'Dados do cliente carregados com sucesso',
+        {
+          clienteId,
+          contato_liberado:
+            response.data?.contato_liberado,
+        },
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logarErro(endpoint, error);
       throw error;
     }
   },

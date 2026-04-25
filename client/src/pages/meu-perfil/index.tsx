@@ -9,6 +9,7 @@ import { withAuth } from '@/utils/withAuth';
 import { perfilService } from '@/service/perfilService';
 import HeaderMain from '@/components/header/HeaderMain';
 import Footer from '@/components/footer/Footer';
+import ErroComRetry from '@/components/common/ErroComRetry';
 
 // Estilização Modular
 import styles from '@/styles/Perfil.module.css';
@@ -29,29 +30,75 @@ import AbaAgendaPro from '@/components/perfil/Abas/AbaAgendaPro';
 import AbaServicosPro from '@/components/perfil/Abas/AbaServicosPro';
 import AbaAvaliacoesPro from '@/components/perfil/Abas/AbaAvaliacoesPro'; // 🚀 Nova Importação
 
+function normalizarPerfilDashboard(dados: any): PerfilCompleto {
+  const usuario = dados?.dados_usuario || {};
+  const profissional = dados?.dados_profissionais || {};
+
+  return {
+    ...dados,
+    ...usuario,
+    ...profissional,
+    id: usuario.id || dados?.id || '',
+    nome: usuario.nome || dados?.nome || 'Usuário',
+    email: usuario.email || dados?.email || '',
+    tipo:
+      usuario.tipo ||
+      dados?.perfil_tipo ||
+      dados?.tipo ||
+      'cliente',
+    telefone: usuario.telefone || dados?.telefone,
+    endereco: usuario.endereco || dados?.endereco,
+    bairro: usuario.bairro || dados?.bairro,
+    cidade: usuario.cidade || dados?.cidade,
+    estado: usuario.estado || dados?.estado,
+    url_foto_perfil:
+      usuario.url_foto_perfil || dados?.url_foto_perfil,
+    avaliacao_media:
+      Number(usuario.avaliacao_media || dados?.avaliacao_media) ||
+      0,
+    servicos: dados?.servicos || [],
+    agenda: dados?.agenda || [],
+    avaliacoes_avaliacoes_prestador_idTousuarios:
+      dados?.avaliacoes_avaliacoes_prestador_idTousuarios ||
+      dados?.avaliacoes_recebidas ||
+      [],
+    bio: profissional.bio || dados?.bio,
+    anos_experiencia:
+      profissional.anos_experiencia || dados?.anos_experiencia,
+    coren: profissional.coren || dados?.coren,
+  } as PerfilCompleto;
+}
+
 const DashboardPerfil = () => {
   const [perfil, setPerfil] =
     useState<PerfilCompleto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
   const [abaAtiva, setAbaAtiva] = useState('sobre');
 
+  const carregarDadosDashboard = async () => {
+    try {
+      setLoading(true);
+      setErro(null);
+      console.log(
+        '[LOG-FLUXO] Dashboard: Iniciando carga de dados.',
+      );
+      const dados = await perfilService.obterMeuPerfil();
+      setPerfil(normalizarPerfilDashboard(dados));
+    } catch (err: any) {
+      console.error(
+        '[ERRO-FLUXO] Falha na carga do dashboard:',
+        err.message,
+      );
+      setErro(
+        err.message || 'Não foi possível carregar seu perfil.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const carregarDadosDashboard = async () => {
-      try {
-        console.log(
-          '[LOG-FLUXO] Dashboard: Iniciando carga de dados.',
-        );
-        const dados = await perfilService.obterMeuPerfil();
-        setPerfil(dados);
-      } catch (err: any) {
-        console.error(
-          '[ERRO-FLUXO] Falha na carga do dashboard:',
-          err.message,
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
     carregarDadosDashboard();
   }, []);
 
@@ -66,7 +113,40 @@ const DashboardPerfil = () => {
   }
 
   // Fallback de segurança caso o perfil não carregue
+  if (erro) {
+    return (
+      <div className={styles.container}>
+        <HeaderMain />
+        <main className={styles.mainContent}>
+          <ErroComRetry
+            titulo="Não foi possível carregar o perfil"
+            mensagem="Tente novamente para sincronizar seus dados com o servidor."
+            detalhes={erro}
+            onRetry={carregarDadosDashboard}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!perfil) return null;
+
+  const primeiroNome = perfil.nome?.split(' ')[0] || 'usuário';
+  const setPerfilCompat: React.Dispatch<
+    React.SetStateAction<PerfilCompleto | null>
+  > = (valor) => {
+    setPerfil((perfilAtual) => {
+      const proximoValor =
+        typeof valor === 'function'
+          ? valor(perfilAtual)
+          : valor;
+
+      return proximoValor
+        ? normalizarPerfilDashboard(proximoValor)
+        : null;
+    });
+  };
 
   return (
     <div className={styles.container}>
@@ -99,7 +179,7 @@ const DashboardPerfil = () => {
                 <p className="text-slate-400 text-sm font-medium">
                   Bem-vindo de volta,{' '}
                   <span className="text-blue-600">
-                    {perfil.nome.split(' ')[0]}
+                    {primeiroNome}
                   </span>
                   .
                 </p>
@@ -110,7 +190,7 @@ const DashboardPerfil = () => {
                 {abaAtiva === 'sobre' && (
                   <AbaSobrePro
                     perfil={perfil}
-                    setPerfil={setPerfil}
+                    setPerfil={setPerfilCompat}
                   />
                 )}
                 {abaAtiva === 'agenda' && (

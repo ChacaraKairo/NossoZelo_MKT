@@ -100,16 +100,19 @@ export function withAuth<P extends object>(
       console.log(
         '[LOG-FLUXO] Renderizando estado de carregamento/verificação de segurança.',
       );
-      return createElement('div', {
-        style: {
-          display: 'flex',
-          height: '100vh',
-          width: '100%',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#f9fafb',
+      return createElement(
+        'div',
+        {
+          style: {
+            display: 'flex',
+            height: '100vh',
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f9fafb',
+          },
         },
-        children: createElement('div', {
+        createElement('div', {
           style: {
             width: '40px',
             height: '40px',
@@ -119,7 +122,7 @@ export function withAuth<P extends object>(
             animation: 'spin 1s linear infinite',
           },
         }),
-      });
+      );
     }
 
     // Retorna o componente original após validação de fluxo bem-sucedida
