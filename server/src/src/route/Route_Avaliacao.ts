@@ -9,6 +9,7 @@
 import { Router } from 'express';
 import ControllerAvaliacao from '../controller/Controller_Avaliacao';
 import { authMiddleware } from '../middleware/autenticacao';
+import { permitirTipos } from '../middleware/permitirTipos';
 
 console.log(
   '[LOG-FLUXO] Inicializando RouteAvaliacao e configurando endpoints de reputação.',
@@ -26,7 +27,17 @@ console.log(
 router.post(
   '/',
   authMiddleware,
-  ControllerAvaliacao.registrar,
+  permitirTipos(['cliente']),
+  ControllerAvaliacao.registrar as any,
+);
+
+console.log(
+  '[LOG-FLUXO] Mapeando Rota: GET /prestador/:id -> ControllerAvaliacao.listarPorPrestador (Pública)',
+);
+// Listar avaliações de um prestador
+router.get(
+  '/prestador/:id',
+  ControllerAvaliacao.listarPorPrestador,
 );
 
 console.log(

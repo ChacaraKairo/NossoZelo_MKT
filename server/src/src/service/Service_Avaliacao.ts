@@ -6,7 +6,10 @@
  * Orquestra a criação de avaliações e garante a atualização da reputação dos prestadores no banco MySQL.
  */
 
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  contratacoes_status,
+} from '@prisma/client';
 import { ServicePerfil } from './Service_Perfil';
 
 console.log(
@@ -28,6 +31,59 @@ class ServiceAvaliacao {
     );
 
     try {
+      const contratacaoId = Number(data.contratacao_id);
+      const nota = Number(data.nota);
+
+      if (!Number.isInteger(contratacaoId)) {
+        throw new Error('Contratação inválida.');
+      }
+
+      if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
+        throw new Error('A nota deve estar entre 1 e 5.');
+      }
+
+      const contratacao =
+        await prisma.contratacoes.findUnique({
+          where: { id: contratacaoId },
+        });
+
+      if (!contratacao) {
+        throw new Error('Contratação não encontrada.');
+      }
+
+      if (contratacao.cliente_id !== data.cliente_id) {
+        throw new Error(
+          'A contratação não pertence ao cliente autenticado.',
+        );
+      }
+
+      if (contratacao.prestador_id !== data.prestador_id) {
+        throw new Error(
+          'Prestador informado não corresponde à contratação.',
+        );
+      }
+
+      if (
+        contratacao.status !==
+        ('concluido' as contratacoes_status)
+      ) {
+        throw new Error(
+          'A contratação precisa estar concluída para ser avaliada.',
+        );
+      }
+
+      const avaliacaoExistente =
+        await prisma.avaliacoes.findUnique({
+          where: { contratacao_id: contratacaoId },
+          select: { id: true },
+        });
+
+      if (avaliacaoExistente) {
+        throw new Error(
+          'Esta contratação já possui avaliação.',
+        );
+      }
+
       /**
        * 1. PERSISTÊNCIA DA AVALIAÇÃO
        * Realiza o cast explícito para Number para evitar conflitos de tipo com o driver MySQL.
@@ -38,11 +94,11 @@ class ServiceAvaliacao {
 
       const novaAvaliacao = await prisma.avaliacoes.create({
         data: {
-          contratacao_id: Number(data.contratacao_id),
+          contratacao_id: contratacaoId,
           cliente_id: data.cliente_id,
           prestador_id: data.prestador_id,
-          tipo_prestador: data.tipo_prestador,
-          nota: Number(data.nota),
+          tipo_prestador: contratacao.tipo_prestador,
+          nota,
           comentario: data.comentario,
         },
       });
@@ -72,7 +128,52 @@ class ServiceAvaliacao {
       console.error(
         `[ERRO-FLUXO] Falha crítica ao registrar avaliação para a contratação ${data.contratacao_id}: ${error.message}`,
       );
-      throw error;
+      throw new Error(
+        `Erro ao registar avaliação: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * LEITURA: Procura todos os feedbacks de um prestador.
+   * Centraliza como as avaliações são apresentadas (ordem, campos do cliente, etc).
+   * @param {string} prestadorId - Identificador único do prestador.
+   * @returns {Promise<any[]>} - Lista de avaliações ordenadas com dados dos clientes.
+   */
+  static async obterAvaliacoesPorPrestador(
+    prestadorId: string,
+  ) {
+    console.log(
+      `[LOG-FLUXO] Iniciando obterAvaliacoesPorPrestador para o Prestador ID: ${prestadorId}`,
+    );
+
+    try {
+      const avaliacoes = await prisma.avaliacoes.findMany({
+        where: { prestador_id: prestadorId },
+        include: {
+          // Traz dados básicos de quem avaliou para a UI
+          usuarios_avaliacoes_cliente_idTousuarios: {
+            select: {
+              nome: true,
+              url_foto_perfil: true,
+            },
+          },
+        },
+        orderBy: { data_avaliacao: 'desc' },
+      });
+
+      console.log(
+        `[LOG-FLUXO] Busca de avaliações concluída. Total encontrado: ${avaliacoes.length}`,
+      );
+
+      return avaliacoes;
+    } catch (error: any) {
+      console.error(
+        `[ERRO-FLUXO] Falha ao recuperar avaliações para o prestador ${prestadorId}: ${error.message}`,
+      );
+      throw new Error(
+        `Erro ao procurar avaliações: ${error.message}`,
+      );
     }
   }
 }

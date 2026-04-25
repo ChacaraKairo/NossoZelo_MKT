@@ -13,7 +13,7 @@ import Footer from '@/components/footer/Footer';
 // Estilização Modular
 import styles from '@/styles/Perfil.module.css';
 
-// Tipagem
+// Tipagem Estrita
 import { PerfilCompleto } from '@/components/perfil/types/types';
 
 // Componentes de Identidade e Navegação (Coluna 1)
@@ -27,6 +27,7 @@ import PerfilStatsWidgets from '@/components/perfil/PerfilStatsWidgets';
 import AbaSobrePro from '@/components/perfil/Abas/AbaSobrePro';
 import AbaAgendaPro from '@/components/perfil/Abas/AbaAgendaPro';
 import AbaServicosPro from '@/components/perfil/Abas/AbaServicosPro';
+import AbaAvaliacoesPro from '@/components/perfil/Abas/AbaAvaliacoesPro'; // 🚀 Nova Importação
 
 const DashboardPerfil = () => {
   const [perfil, setPerfil] =
@@ -38,13 +39,13 @@ const DashboardPerfil = () => {
     const carregarDadosDashboard = async () => {
       try {
         console.log(
-          '[LOG-FLUXO] Dashboard: Iniciando carga de dados via perfilService.',
+          '[LOG-FLUXO] Dashboard: Iniciando carga de dados.',
         );
         const dados = await perfilService.obterMeuPerfil();
         setPerfil(dados);
       } catch (err: any) {
         console.error(
-          '[ERRO-FLUXO] Falha na carga inicial do dashboard:',
+          '[ERRO-FLUXO] Falha na carga do dashboard:',
           err.message,
         );
       } finally {
@@ -54,7 +55,6 @@ const DashboardPerfil = () => {
     carregarDadosDashboard();
   }, []);
 
-  // Estado de carregamento com consistência visual
   if (loading) {
     return (
       <div className={styles.container}>
@@ -65,20 +65,20 @@ const DashboardPerfil = () => {
     );
   }
 
+  // Fallback de segurança caso o perfil não carregue
+  if (!perfil) return null;
+
   return (
     <div className={styles.container}>
       <HeaderMain />
 
       <main className={styles.mainContent}>
         <div className={styles.dashboardGrid}>
-          {/* COLUNA 1: IDENTIDADE & NAVEGAÇÃO VERTICAL  */}
+          {/* COLUNA 1: IDENTIDADE & NAVEGAÇÃO VERTICAL */}
           <aside
             className={`${styles.leftColumn} ${styles.stickySidebar} space-y-6`}
           >
-            {/* Foto pequena e dados básicos de status */}
             <HeaderPro perfil={perfil} />
-
-            {/* Menu lateral de navegação (Abas) */}
             <PerfilTabsVertical
               ativa={abaAtiva}
               setAtiva={setAbaAtiva}
@@ -86,29 +86,32 @@ const DashboardPerfil = () => {
             />
           </aside>
 
-          {/* COLUNA 2: ÁREA DE TRABALHO CENTRAL (CONTEÚDO)  */}
+          {/* COLUNA 2: ÁREA DE TRABALHO CENTRAL (CONTEÚDO DINÂMICO) */}
           <section className={styles.centerColumn}>
             <div className={`${styles.card} min-h-[650px]`}>
               <header className="mb-8 border-b border-slate-50 pb-4">
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">
                   Painel de{' '}
-                  {perfil?.tipo === 'cliente'
+                  {perfil.tipo === 'cliente'
                     ? 'Cliente'
                     : 'Gestão'}
                 </h2>
                 <p className="text-slate-400 text-sm font-medium">
                   Bem-vindo de volta,{' '}
                   <span className="text-blue-600">
-                    {perfil?.nome.split(' ')[0]}
+                    {perfil.nome.split(' ')[0]}
                   </span>
                   .
                 </p>
               </header>
 
-              {/* Renderização Dinâmica de Abas com Animação de Entrada */}
+              {/* Renderização Dinâmica de Abas */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 {abaAtiva === 'sobre' && (
-                  <AbaSobrePro perfil={perfil} />
+                  <AbaSobrePro
+                    perfil={perfil}
+                    setPerfil={setPerfil}
+                  />
                 )}
                 {abaAtiva === 'agenda' && (
                   <AbaAgendaPro perfil={perfil} />
@@ -116,8 +119,11 @@ const DashboardPerfil = () => {
                 {abaAtiva === 'servicos' && (
                   <AbaServicosPro perfil={perfil} />
                 )}
+                {abaAtiva === 'avaliacoes' && (
+                  <AbaAvaliacoesPro perfil={perfil} />
+                )}
 
-                {/* Fallback para abas em desenvolvimento */}
+                {/* Fallback para segurança */}
                 {abaAtiva === 'seguranca' && (
                   <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-3xl">
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
@@ -129,13 +135,15 @@ const DashboardPerfil = () => {
             </div>
           </section>
 
-          {/* COLUNA 3: WIDGETS E MÉTRICAS LATERAIS  */}
+          {/* COLUNA 3: WIDGETS E MÉTRICAS LATERAIS */}
           <aside
             className={`${styles.rightColumn} ${styles.stickySidebar}`}
           >
-            <PerfilStatsWidgets perfil={perfil} />
+            <PerfilStatsWidgets
+              perfil={perfil}
+              setAtiva={setAbaAtiva} // 🎯 Permite que os widgets troquem a aba central
+            />
 
-            {/* Espaço extra para novos widgets futuros */}
             <div className="mt-6 p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-lg shadow-blue-100 hidden lg:block">
               <p className="text-white font-bold text-sm mb-2">
                 Dica de Performance

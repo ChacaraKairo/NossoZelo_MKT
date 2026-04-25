@@ -1,3 +1,5 @@
+// client/src/components/perfil/Abas/AbaSobrePro.tsx
+
 import React from 'react';
 import {
   FaUser,
@@ -6,13 +8,17 @@ import {
   FaPen,
   FaCheck,
   FaTimes,
+  FaBriefcase,
 } from 'react-icons/fa';
 import { usePerfilEditor } from '../script/usePerfilEditor';
 import styles from '../styles/AbaSobrePro.module.css';
+import { PerfilCompleto } from '../types/types';
 
 interface AbaSobreProProps {
-  perfil: any;
-  setPerfil: any;
+  perfil: PerfilCompleto;
+  setPerfil: React.Dispatch<
+    React.SetStateAction<PerfilCompleto | null>
+  >;
 }
 
 const AbaSobrePro: React.FC<AbaSobreProProps> = ({
@@ -29,6 +35,8 @@ const AbaSobrePro: React.FC<AbaSobreProProps> = ({
   } = usePerfilEditor(perfil, setPerfil);
 
   if (!perfil) return null;
+
+  const isPrestador = perfil.tipo !== 'cliente';
 
   return (
     <div className={styles.abaContainer}>
@@ -81,16 +89,26 @@ const AbaSobrePro: React.FC<AbaSobreProProps> = ({
         )}
       </section>
 
-      {/* SEÇÃO: DADOS DE CONTATO */}
+      {/* SEÇÃO: DADOS DE CONTATO E PROFISSIONAIS */}
       <section>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
             <FaIdCard className="text-blue-500" /> Dados de
-            Contato
+            Contato e Profissionais
           </h3>
         </div>
 
         <div className={styles.dataGrid}>
+          {/* CAMPO ESTÁTICO: E-MAIL */}
+          <div className={styles.fieldWrapper}>
+            <span className={styles.label}>
+              E-mail (Não editável)
+            </span>
+            <span className={styles.value}>
+              {perfil.email}
+            </span>
+          </div>
+
           {/* CAMPO EDITÁVEL: TELEFONE */}
           <div className={styles.fieldWrapper}>
             <span className={styles.label}>
@@ -106,6 +124,10 @@ const AbaSobrePro: React.FC<AbaSobreProProps> = ({
                       'telefone',
                       e.target.value,
                     )
+                  }
+                  onKeyDown={(e) =>
+                    e.key === 'Enter' &&
+                    salvarEdicao('telefone')
                   }
                   autoFocus
                 />
@@ -124,7 +146,7 @@ const AbaSobrePro: React.FC<AbaSobreProProps> = ({
               </div>
             ) : (
               <div
-                className="flex justify-between items-center group"
+                className="flex justify-between items-center group cursor-pointer"
                 onClick={() => iniciarEdicao('telefone')}
               >
                 <span className={styles.value}>
@@ -135,15 +157,32 @@ const AbaSobrePro: React.FC<AbaSobreProProps> = ({
             )}
           </div>
 
-          {/* CAMPO ESTÁTICO (EXEMPLO): E-MAIL */}
-          <div className={styles.fieldWrapper}>
-            <span className={styles.label}>
-              E-mail (Não editável)
-            </span>
-            <span className={styles.value}>
-              {perfil.email}
-            </span>
-          </div>
+          {/* RENDERIZAÇÃO CONDICIONAL: CAMPOS DE PRESTADOR */}
+          {isPrestador && (
+            <>
+              {perfil.tipo === 'enfermeiro' && (
+                <div className={styles.fieldWrapper}>
+                  <span className={styles.label}>
+                    Registro COREN
+                  </span>
+                  <span className={styles.value}>
+                    {perfil.coren || 'Não informado'}
+                  </span>
+                </div>
+              )}
+
+              <div className={styles.fieldWrapper}>
+                <span className={styles.label}>
+                  Anos de Experiência
+                </span>
+                <span className={styles.value}>
+                  {perfil.anos_experiencia
+                    ? `${perfil.anos_experiencia} anos`
+                    : 'Não informado'}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -161,13 +200,22 @@ const AbaSobrePro: React.FC<AbaSobreProProps> = ({
         </div>
         <div className={styles.dataGrid}>
           {/* Renderização do endereço conforme perfil */}
-          <div className={styles.dataItem}>
-            <span className={styles.label}>Cidade</span>
+          <div className={styles.fieldWrapper}>
+            <span className={styles.label}>
+              Cidade e Estado
+            </span>
             <span className={styles.value}>
-              {perfil.cidade} - {perfil.estado}
+              {perfil.cidade
+                ? `${perfil.cidade} - ${perfil.estado}`
+                : 'Endereço não cadastrado'}
             </span>
           </div>
-          {/* ... outros campos seguindo o padrão fieldWrapper */}
+          <div className={styles.fieldWrapper}>
+            <span className={styles.label}>Endereço</span>
+            <span className={styles.value}>
+              {perfil.endereco || 'Não informado'}
+            </span>
+          </div>
         </div>
       </section>
     </div>

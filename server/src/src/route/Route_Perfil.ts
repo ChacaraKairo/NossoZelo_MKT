@@ -10,6 +10,7 @@
 import { Router } from 'express';
 import ControllerPerfil from '../controller/Controller_Perfil';
 import { authMiddleware } from '../middleware/autenticacao';
+import { permitirTipos } from '../middleware/permitirTipos';
 
 console.log(
   '[LOG-FLUXO] Inicializando RoutePerfil e configurando endpoints de acesso a perfis.',
@@ -31,6 +32,12 @@ router.get(
   '/meu', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
   ControllerPerfil.obterMeuPerfil as any,
+);
+
+router.get(
+  '/resumo',
+  authMiddleware,
+  ControllerPerfil.obterResumoPerfil as any,
 );
 
 console.log(
@@ -56,6 +63,7 @@ console.log(
 router.get(
   '/cliente/:id', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
+  permitirTipos(['cuidador', 'enfermeiro', 'acompanhante']),
   ControllerPerfil.dadosClienteParaPrestador as any,
 );
 
@@ -74,11 +82,6 @@ router.patch(
 
 console.log(
   '[LOG-FLUXO] RoutePerfil configurado com sucesso e pronto para o Router Principal.',
-);
-router.patch(
-  '/update',
-  authMiddleware,
-  ControllerPerfil.atualizarDadosPerfil as any,
 );
 
 export default router;

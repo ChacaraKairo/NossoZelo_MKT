@@ -6,7 +6,7 @@
  * atuando como intermediário entre a requisição de avaliação e o serviço de persistência de prova social.
  */
 
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthRequest } from './Controller_Perfil';
 import ServiceAvaliacao from '../service/Service_Avaliacao';
 
@@ -31,9 +31,9 @@ class ControllerAvaliacao {
         console.error(
           '[ERRO-FLUXO] Falha de autorização: Tentativa de registro de avaliação sem cliente identificado na sessão.',
         );
-        throw new Error(
-          'Cliente não identificado na sessão.',
-        );
+        return res.status(401).json({
+          error: 'Cliente não identificado na sessão.',
+        });
       }
 
       /**
@@ -66,8 +66,27 @@ class ControllerAvaliacao {
         }`,
       );
 
-      // Retorno de erro interno
-      return res.status(500).json({ erro: error.message });
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Lista as avaliações de um prestador específico.
+   * Rota: GET /avaliacoes/prestador/:id
+   */
+  static async listarPorPrestador(
+    req: Request,
+    res: Response,
+  ) {
+    const { id } = req.params;
+    try {
+      const avaliacoes =
+        await ServiceAvaliacao.obterAvaliacoesPorPrestador(
+          id,
+        );
+      return res.status(200).json(avaliacoes);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
     }
   }
 }

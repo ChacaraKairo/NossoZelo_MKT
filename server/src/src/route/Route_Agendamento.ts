@@ -29,7 +29,7 @@ console.log(
 AgendamentoRouter.post(
   '/',
   authMiddleware,
-  AgendamentoController.criar,
+  AgendamentoController.criar as any,
 );
 
 console.log(
@@ -42,7 +42,7 @@ console.log(
 AgendamentoRouter.patch(
   '/aceitar/:id',
   authMiddleware,
-  AgendamentoController.aceitar,
+  AgendamentoController.aceitar as any,
 );
 
 console.log(
@@ -55,7 +55,7 @@ console.log(
 AgendamentoRouter.patch(
   '/finalizar/:id',
   authMiddleware,
-  AgendamentoController.finalizar,
+  AgendamentoController.finalizar as any,
 );
 
 console.log(
@@ -67,7 +67,7 @@ console.log(
 AgendamentoRouter.post(
   '/manual',
   authMiddleware,
-  AgendamentoController.registroManual,
+  AgendamentoController.registroManual as any,
 );
 
 // ==========================================
