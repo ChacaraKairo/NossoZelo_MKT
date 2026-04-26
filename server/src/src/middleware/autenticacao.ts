@@ -2,6 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import logger from '../lib/logger';
 
+export type UsuarioAutenticado = {
+  id: string;
+  nome?: string;
+  email?: string;
+  tipo: string;
+  iat?: number;
+  exp?: number;
+};
+
+type AuthenticatedRequest = Request & {
+  user?: UsuarioAutenticado;
+};
+
 function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
 
@@ -25,7 +38,7 @@ function extrairBearerToken(authHeader?: string) {
 
 function payloadValido(
   decoded: string | JwtPayload,
-): decoded is Express.AuthenticatedUser {
+): decoded is JwtPayload & UsuarioAutenticado {
   return (
     typeof decoded === 'object' &&
     typeof decoded.id === 'string' &&
@@ -38,6 +51,7 @@ export function authMiddleware(
   res: Response,
   next: NextFunction,
 ) {
+  const authReq = req as AuthenticatedRequest;
   const token = extrairBearerToken(req.headers.authorization);
 
   if (!token) {
@@ -47,23 +61,23 @@ export function authMiddleware(
     });
     return res
       .status(401)
-      .json({ error: 'Token não fornecido ou mal formatado.' });
+      .json({ error: 'Token nao fornecido ou mal formatado.' });
   }
 
   try {
     const decoded = verify(token, obterJwtSecret());
 
     if (!payloadValido(decoded)) {
-      logger.warn('authMiddleware: payload JWT inválido', {
+      logger.warn('authMiddleware: payload JWT invalido', {
         rota: req.originalUrl,
         ip: req.ip,
       });
       return res
         .status(401)
-        .json({ error: 'Token inválido ou expirado.' });
+        .json({ error: 'Token invalido ou expirado.' });
     }
 
-    req.user = {
+    authReq.user = {
       id: decoded.id,
       nome: decoded.nome,
       email: decoded.email,
@@ -72,10 +86,10 @@ export function authMiddleware(
       exp: decoded.exp,
     };
 
-    logger.debug('authMiddleware: usuário autenticado', {
+    logger.debug('authMiddleware: usuario autenticado', {
       rota: req.originalUrl,
-      usuarioId: req.user.id,
-      tipo: req.user.tipo,
+      usuarioId: authReq.user.id,
+      tipo: authReq.user.tipo,
     });
 
     return next();
@@ -88,6 +102,6 @@ export function authMiddleware(
 
     return res
       .status(401)
-      .json({ error: 'Token inválido ou expirado.' });
+      .json({ error: 'Token invalido ou expirado.' });
   }
 }

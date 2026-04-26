@@ -10,6 +10,7 @@
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
     "db:backup": "ts-node src/src/scripts/backup-db.ts",
     "db:restore": "ts-node src/src/scripts/restore-db.ts",
+    "db:seed:test-users": "ts-node src/src/scripts/seed-test-users.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
