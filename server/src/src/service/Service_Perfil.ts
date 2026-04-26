@@ -372,8 +372,14 @@ export class ServicePerfil {
           dadosProfissionais?.disponibilidade ?? null,
         especialidades:
           dadosProfissionais?.especialidades ?? null,
+        contatos: {
+          email,
+          telefone,
+          cidade: perfil.cidade,
+          estado: perfil.estado,
+        },
         rating: Number(perfil.avaliacao_media) || 0,
-        pode_ver_contato: false,
+        pode_ver_contato: Boolean(email || telefone),
       };
     } catch (error: any) {
       console.error(

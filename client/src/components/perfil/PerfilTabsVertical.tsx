@@ -25,14 +25,11 @@ const PerfilTabsVertical: React.FC<PerfilTabsVerticalProps> = ({
   if (!perfil) return null;
 
   const isPrestador = perfil.tipo !== 'cliente';
-  const contratacoes =
-    (perfil as any).contratacoes ||
-    (perfil as any).contratacoes_contratacoes_prestador_idTousuarios ||
-    (perfil as any).contratacoes_contratacoes_cliente_idTousuarios ||
-    [];
-  const solicitacoesPendentes = contratacoes.filter(
-    (item: any) => item?.status === 'pendente',
-  ).length;
+  const solicitacoesPendentes = (
+    perfil.contratacoes_contratacoes_prestador_idTousuarios ||
+    perfil.contratacoes ||
+    []
+  ).filter((contratacao) => contratacao.status === 'pendente').length;
 
   const menuItems = [
     {
@@ -102,13 +99,14 @@ const PerfilTabsVertical: React.FC<PerfilTabsVerticalProps> = ({
             </small>
           </span>
 
+          {/* Badge de Notificação para Pedidos Pendentes */}
           {item.id === 'solicitacoes' &&
             isPrestador &&
             solicitacoesPendentes > 0 && (
-              <span className={styles.badge}>
-                {solicitacoesPendentes}
-              </span>
-            )}
+            <span className={styles.badge}>
+              {solicitacoesPendentes}
+            </span>
+          )}
         </button>
       ))}
     </nav>

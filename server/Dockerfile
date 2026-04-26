@@ -2,7 +2,9 @@
 FROM node:20-slim
 
 # Instalar dependências para o Prisma e utilitários
-RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -11,7 +13,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Instalar dependências e gerar o cliente Prisma
-RUN npm install
+RUN npm ci
 RUN npx prisma generate
 
 # Copiar o restante do código

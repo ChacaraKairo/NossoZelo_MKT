@@ -1,5 +1,7 @@
 // client/src/components/perfil/types/types.ts
 
+import type { ContratacaoPerfil } from '@/types/perfil';
+
 export interface Servico {
   id: number;
   nome: string;

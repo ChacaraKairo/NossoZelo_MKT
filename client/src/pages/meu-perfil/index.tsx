@@ -179,6 +179,14 @@ const DashboardPerfil = () => {
                 {abaAtiva === 'servicos' && (
                   <AbaServicosPro perfil={perfil as any} />
                 )}
+                {abaAtiva === 'solicitacoes' && (
+                  <AbaSolicitacoesPro
+                    perfil={perfil}
+                    onContratacaoAtualizada={() =>
+                      carregarDadosDashboard()
+                    }
+                  />
+                )}
                 {abaAtiva === 'avaliacoes' && (
                   <AbaAvaliacoesPro perfil={perfil as any} />
                 )}

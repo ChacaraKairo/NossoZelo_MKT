@@ -52,8 +52,13 @@ export interface ContratacaoPerfil {
   id: number;
   cliente_id: string;
   prestador_id: string;
+  tipo_prestador?: string | null;
   status: string | null;
   data?: string | Date | null;
+  hora_inicio?: string | Date | null;
+  hora_fim?: string | Date | null;
+  preco?: number | string | null;
+  observacoes?: string | null;
   servico_id?: number | null;
   servico?: Partial<ServicoPerfil> | null;
   servicos?: Partial<ServicoPerfil> | null;
@@ -95,6 +100,12 @@ export interface PerfilPrestadorPublico
   servicos?: ServicoPerfil[];
   rating: number;
   pode_ver_contato: boolean;
+  contatos?: {
+    email?: string | null;
+    telefone?: string | null;
+    cidade?: string | null;
+    estado?: string | null;
+  };
   [campo: string]: unknown;
 }
 

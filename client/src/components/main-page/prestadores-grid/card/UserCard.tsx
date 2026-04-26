@@ -7,7 +7,6 @@ import styles from './styles/UserCard.module.css';
 
 interface UserCardProps {
   user: PrestadorCardData;
-  onContratar?: (prestador: PrestadorCardData) => void;
 }
 
 const CONTEXTO = 'UserCard';
@@ -21,10 +20,11 @@ function formatarPreco(valor?: number) {
   });
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, onContratar }) => {
+const UserCard: React.FC<UserCardProps> = ({ user }) => {
   const router = useRouter();
   const [imageSrc, setImageSrc] = useState(user.imageUrl || FALLBACK_IMAGE);
   const hrefPerfil = `/prestador/${user.id}`;
+  const hrefContratacao = `/prestador/${user.id}?acao=contratar`;
 
   useEffect(() => {
     logger.debug(CONTEXTO, 'Card renderizado', {
@@ -40,10 +40,17 @@ const UserCard: React.FC<UserCardProps> = ({ user, onContratar }) => {
     router.push(hrefPerfil);
   };
 
+  const navegarParaContratacao = () => {
+    logger.info(CONTEXTO, 'Clique para solicitar contratacao', {
+      prestadorId: user.id,
+    });
+    router.push(hrefContratacao);
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      navegarParaPerfil();
+      navegarParaContratacao();
     }
   };
 
@@ -54,12 +61,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onContratar }) => {
       origem: 'card',
     });
 
-    if (onContratar) {
-      onContratar(user);
-      return;
-    }
-
-    router.push(`/prestador/${user.id}?acao=contratar`);
+    router.push(hrefContratacao);
   };
 
   const preco = formatarPreco(user.precoHora);
@@ -69,9 +71,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onContratar }) => {
       className={styles.cardContainer}
       role="button"
       tabIndex={0}
-      onClick={navegarParaPerfil}
+      onClick={navegarParaContratacao}
       onKeyDown={handleKeyDown}
-      aria-label={`Ver perfil de ${user.nome}`}
+      aria-label={`Solicitar contratacao de ${user.nome}`}
     >
       <div className={styles.imageWrapper}>
         <img

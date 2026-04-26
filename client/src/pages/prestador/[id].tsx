@@ -94,6 +94,9 @@ function obterEspecialidades(
 const PrestadorVitrinePage: React.FC = () => {
   const router = useRouter();
   const prestadorId = normalizarId(router.query.id);
+  const abrirContratacaoPelaUrl = router.asPath.includes(
+    'acao=contratar',
+  );
 
   const [prestador, setPrestador] =
     useState<VitrinePrestador | null>(null);
@@ -168,13 +171,13 @@ const PrestadorVitrinePage: React.FC = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-    if (router.query.acao === 'contratar') {
+    if (abrirContratacaoPelaUrl) {
       logger.info(CONTEXTO, 'Ação de contratação recebida pela URL', {
         prestadorId,
       });
       setModalContratacaoAberto(true);
     }
-  }, [prestadorId, router.isReady, router.query.acao]);
+  }, [abrirContratacaoPelaUrl, prestadorId, router.isReady]);
 
   const avaliacoes = useMemo(
     () => obterAvaliacoes(prestador),
@@ -196,6 +199,16 @@ const PrestadorVitrinePage: React.FC = () => {
       prestadorId,
     });
     setModalContratacaoAberto(true);
+  };
+
+  const fecharContratacao = () => {
+    setModalContratacaoAberto(false);
+
+    if (abrirContratacaoPelaUrl && prestadorId) {
+      router.replace(`/prestador/${prestadorId}`, undefined, {
+        shallow: true,
+      });
+    }
   };
 
   const handleEntrarEmContato = () => {
@@ -323,6 +336,17 @@ const PrestadorVitrinePage: React.FC = () => {
         </p>
       )}
 
+      {(modalContratacaoAberto || abrirContratacaoPelaUrl) && (
+        <ModalContratarPrestador
+          aberto
+          prestadorId={prestador.id}
+          tipoPrestador={prestador.tipo}
+          servicos={servicos}
+          onClose={fecharContratacao}
+          presentation="inline"
+        />
+      )}
+
       <section style={styles.grid}>
         <article style={styles.panel}>
           <h2 style={styles.sectionTitle}>Sobre o prestador</h2>
@@ -401,13 +425,6 @@ const PrestadorVitrinePage: React.FC = () => {
         </article>
       </section>
 
-      <ModalContratarPrestador
-        aberto={modalContratacaoAberto}
-        prestadorId={prestador.id}
-        tipoPrestador={prestador.tipo}
-        servicos={servicos}
-        onClose={() => setModalContratacaoAberto(false)}
-      />
     </main>
   );
 };
