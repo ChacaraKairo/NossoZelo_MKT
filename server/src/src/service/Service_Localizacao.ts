@@ -15,6 +15,54 @@ export interface Coordenadas {
   longitude: number;
 }
 
+const ESTADOS_BRASIL: Record<string, string> = {
+  acre: 'AC',
+  alagoas: 'AL',
+  amapa: 'AP',
+  amazonas: 'AM',
+  bahia: 'BA',
+  ceara: 'CE',
+  'distrito federal': 'DF',
+  'espirito santo': 'ES',
+  goias: 'GO',
+  maranhao: 'MA',
+  'mato grosso': 'MT',
+  'mato grosso do sul': 'MS',
+  'minas gerais': 'MG',
+  para: 'PA',
+  paraiba: 'PB',
+  parana: 'PR',
+  pernambuco: 'PE',
+  piaui: 'PI',
+  'rio de janeiro': 'RJ',
+  'rio grande do norte': 'RN',
+  'rio grande do sul': 'RS',
+  rondonia: 'RO',
+  roraima: 'RR',
+  'santa catarina': 'SC',
+  'sao paulo': 'SP',
+  sergipe: 'SE',
+  tocantins: 'TO',
+};
+
+function normalizarTextoBusca(valor: string) {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function obterUfPorTexto(localizacao: string) {
+  const texto = normalizarTextoBusca(localizacao);
+  const uf = texto.toUpperCase();
+
+  if (Object.values(ESTADOS_BRASIL).includes(uf)) {
+    return uf;
+  }
+
+  return ESTADOS_BRASIL[texto] || null;
+}
 
 export class GeolocalizacaoService {
   private static readonly userAgent =
@@ -408,17 +456,26 @@ export class GeolocalizacaoService {
       }
 
       if (localizacao) {
-        const coordenadasLocalizacao =
-          await this.buscarCoordenadasPorTexto(localizacao);
+        const ufInformada = obterUfPorTexto(localizacao);
 
-        if (coordenadasLocalizacao) {
-          origemBusca = coordenadasLocalizacao;
-        } else {
-          conditions.push(
-            Prisma.sql`(u.cidade LIKE ${
-              '%' + localizacao + '%'
-            } OR u.estado LIKE ${'%' + localizacao + '%'})`,
+        if (ufInformada) {
+          console.log(
+            `[LOG-FLUXO] Localização interpretada como estado brasileiro: ${ufInformada}.`,
           );
+          conditions.push(Prisma.sql`u.estado = ${ufInformada}`);
+        } else {
+          const coordenadasLocalizacao =
+            await this.buscarCoordenadasPorTexto(localizacao);
+
+          if (coordenadasLocalizacao) {
+            origemBusca = coordenadasLocalizacao;
+          } else {
+            conditions.push(
+              Prisma.sql`(u.cidade LIKE ${
+                '%' + localizacao + '%'
+              } OR u.estado LIKE ${'%' + localizacao + '%'})`,
+            );
+          }
         }
       }
 

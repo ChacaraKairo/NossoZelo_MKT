@@ -11,6 +11,10 @@ import Logo from '@/components/logos/OnlyLogo';
 import Button from '@/components/btn/Button';
 import { loginService } from '@/service/Login';
 
+const CHAVE_IDENTIFICADOR_LEMBRADO =
+  'nossozelo_identificador_lembrado';
+const CHAVE_LEMBRAR_ME_LEGADA = 'nossozelo_lembrar_me';
+
 const LoginPage = () => {
   const router = useRouter();
 
@@ -20,24 +24,25 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔥 NOVO: Estado para controlar o checkbox "Lembrar-me"
   const [lembrarMe, setLembrarMe] = useState(false);
 
-  // 🔥 NOVO: Efeito que roda assim que a página carrega para preencher os campos
   useEffect(() => {
-    const credenciaisSalvas = localStorage.getItem(
-      'nossozelo_lembrar_me',
+    localStorage.removeItem(CHAVE_LEMBRAR_ME_LEGADA);
+
+    const identificadorSalvo = localStorage.getItem(
+      CHAVE_IDENTIFICADOR_LEMBRADO,
     );
-    if (credenciaisSalvas) {
+
+    if (identificadorSalvo) {
       try {
-        const { emailSalvo, senhaSalva } = JSON.parse(
-          credenciaisSalvas,
-        );
-        if (emailSalvo) setIdentificador(emailSalvo);
-        if (senhaSalva) setSenha(senhaSalva);
-        setLembrarMe(true); // Deixa o checkbox marcado automaticamente
+        const { identificador } = JSON.parse(identificadorSalvo);
+        if (identificador) {
+          setIdentificador(identificador);
+          setLembrarMe(true);
+        }
       } catch (e) {
-        console.error('Erro ao ler credenciais salvas', e);
+        localStorage.removeItem(CHAVE_IDENTIFICADOR_LEMBRADO);
+        console.error('Erro ao ler identificador salvo', e);
       }
     }
   }, []);
@@ -62,18 +67,15 @@ const LoginPage = () => {
 
       console.log('Login bem-sucedido:', response);
 
-      // 🔥 NOVO: Se o usuário marcou "Lembrar-me", salvamos no localStorage.
-      // Se ele desmarcou, nós apagamos o que estava lá.
       if (lembrarMe) {
         localStorage.setItem(
-          'nossozelo_lembrar_me',
+          CHAVE_IDENTIFICADOR_LEMBRADO,
           JSON.stringify({
-            emailSalvo: identificador,
-            senhaSalva: senha,
+            identificador: identificador.trim(),
           }),
         );
       } else {
-        localStorage.removeItem('nossozelo_lembrar_me');
+        localStorage.removeItem(CHAVE_IDENTIFICADOR_LEMBRADO);
       }
 
       setLoading(false);
@@ -149,7 +151,6 @@ const LoginPage = () => {
 
               <div className={Style.options}>
                 <label className={Style.checkboxContainer}>
-                  {/* 🔥 NOVO: Conectando o checkbox ao nosso estado lembrarMe */}
                   <input
                     type="checkbox"
                     disabled={loading}
@@ -158,7 +159,7 @@ const LoginPage = () => {
                       setLembrarMe(e.target.checked)
                     }
                   />
-                  Lembrar-me
+                  Lembrar meu e-mail
                 </label>
                 <a
                   href="#"

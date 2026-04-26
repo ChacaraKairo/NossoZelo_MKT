@@ -59,14 +59,16 @@
   margin-bottom: 8px;
 }
 
-.navColumn a {
+.navColumn a,
+.contactItem a {
   text-decoration: none;
   color: #444;
   font-weight: 500;
   transition: opacity 0.2s;
 }
 
-.navColumn a:hover {
+.navColumn a:hover,
+.contactItem a:hover {
   opacity: 0.7;
 }
 

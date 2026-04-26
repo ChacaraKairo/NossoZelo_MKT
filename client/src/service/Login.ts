@@ -26,6 +26,25 @@ export interface LoginResponse {
 const CONTEXTO = 'LoginService';
 const MENSAGEM_CREDENCIAIS_INVALIDAS =
   'Usuario ou senha invalidos. Por favor, tente novamente.';
+const DIAS_SESSAO_LOGIN = 7;
+
+function obterExpiracaoCookie(token: string) {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    if (!payloadBase64) return DIAS_SESSAO_LOGIN;
+
+    const base64 = payloadBase64
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64)) as { exp?: number };
+
+    if (!payload.exp) return DIAS_SESSAO_LOGIN;
+
+    return new Date(payload.exp * 1000);
+  } catch {
+    return DIAS_SESSAO_LOGIN;
+  }
+}
 
 class LoginService {
   public async login(data: LoginRequestBody): Promise<LoginResponse> {
@@ -94,7 +113,7 @@ class LoginService {
       if (responseData.token) {
         logger.debug(CONTEXTO, 'Token JWT detectado. Persistindo sessao');
         Cookies.set('token', responseData.token, {
-          expires: 1,
+          expires: obterExpiracaoCookie(responseData.token),
           path: '/',
           sameSite: 'strict',
         });

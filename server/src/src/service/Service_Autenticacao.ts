@@ -12,6 +12,8 @@ import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 
+const TEMPO_SESSAO_LOGIN = '7d';
+
 function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
 
@@ -103,7 +105,7 @@ export class ServiceAuth {
       );
 
       console.log(
-        `[LOG-FLUXO] Iniciando assinatura do token JWT (Expiração: 2h) com os claims de identidade.`,
+        `[LOG-FLUXO] Iniciando assinatura do token JWT (Expiração: ${TEMPO_SESSAO_LOGIN}) com os claims de identidade.`,
       );
 
       const token = sign(
@@ -114,7 +116,7 @@ export class ServiceAuth {
           tipo: user.tipo,
         },
         obterJwtSecret(),
-        { expiresIn: '2h' },
+        { expiresIn: TEMPO_SESSAO_LOGIN },
       );
 
       console.log(

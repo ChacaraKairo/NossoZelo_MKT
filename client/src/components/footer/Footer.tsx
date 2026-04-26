@@ -2,6 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 import Style from './Footer.module.css';
 import {
+  contatosNossoZelo,
+  criarLinkEmail,
+  criarLinkTelefone,
+  criarLinkWhatsApp,
+  obterRedesSociaisAtivas,
+  RedeSocialNossoZelo,
+} from '@/config/contatosNossoZelo';
+import {
   FaInstagram,
   FaFacebook,
   FaLinkedin,
@@ -10,30 +18,35 @@ import {
   FaHeadset,
 } from 'react-icons/fa';
 
+const iconesRedes: Record<RedeSocialNossoZelo['nome'], React.ReactNode> = {
+  LinkedIn: <FaLinkedin />,
+  Instagram: <FaInstagram />,
+  Facebook: <FaFacebook />,
+};
+
 const Footer = () => {
+  const redesSociais = obterRedesSociaisAtivas();
+
   return (
     <footer className={Style.footer}>
       <div className={Style.container}>
-        {/* Seção Principal */}
         <div className={Style.mainGrid}>
-          {/* Coluna 1: Logo e Slogan */}
           <div className={Style.brandColumn}>
             <div className={Style.logoWrapper}>
-              {/* Substitua pela sua imagem OnlyLogo ou texto estilizado */}
-              <h1 className={Style.logoText}>NossoZelo</h1>
+              <h1 className={Style.logoText}>
+                {contatosNossoZelo.empresa}
+              </h1>
             </div>
             <p className={Style.slogan}>
-              Assim como você, cuidamos bem de quem amamos!
+              {contatosNossoZelo.slogan}
             </p>
             <p className={Style.subText}>
-              Sua plataforma de confiança para serviços de
-              cuidado.
+              {contatosNossoZelo.descricao}
             </p>
           </div>
 
-          {/* Coluna 2: Navegação */}
           <div className={Style.navColumn}>
-            <h3>Navegação</h3>
+            <h3>Navegacao</h3>
             <ul>
               <li>
                 <Link href="/sobre">Sobre a empresa</Link>
@@ -55,54 +68,82 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Coluna 3: Contatos */}
           <div className={Style.contactColumn}>
             <h3>Contatos</h3>
             <div className={Style.contactItem}>
               <FaEnvelope />
               <div>
                 <strong>E-mail</strong>
-                <span>atendimento@nossozelomkt.com.br</span>
+                <a
+                  href={criarLinkEmail(
+                    contatosNossoZelo.emailAtendimento,
+                  )}
+                >
+                  {contatosNossoZelo.emailAtendimento}
+                </a>
               </div>
             </div>
-            <div className={Style.contactItem}>
-              <FaHeadset />
-              <div>
-                <strong>Sac</strong>
-                <span>+55 (99) 9 9999-9999</span>
+
+            {contatosNossoZelo.whatsappAtendimento && (
+              <div className={Style.contactItem}>
+                <FaHeadset />
+                <div>
+                  <strong>WhatsApp</strong>
+                  <a
+                    href={criarLinkWhatsApp(
+                      contatosNossoZelo.whatsappAtendimento,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {contatosNossoZelo.whatsappAtendimento}
+                  </a>
+                </div>
               </div>
-            </div>
-            <div className={Style.contactItem}>
-              <FaPhoneAlt />
-              <span>+55 (99) 9 999-9999</span>
-            </div>
+            )}
+
+            {contatosNossoZelo.telefoneAtendimento && (
+              <div className={Style.contactItem}>
+                <FaPhoneAlt />
+                <a
+                  href={criarLinkTelefone(
+                    contatosNossoZelo.telefoneAtendimento,
+                  )}
+                >
+                  {contatosNossoZelo.telefoneAtendimento}
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Linha Divisora Estilizada */}
         <div className={Style.dividerContainer}>
           <div className={Style.dividerDark}></div>
           <div className={Style.dividerLight}></div>
         </div>
 
-        {/* Copyright */}
         <p className={Style.copyright}>
           Copyright ©2026 Todos os direitos reservados |
           Block foi criado por KORU Company
         </p>
 
-        {/* Redes Sociais */}
-        <div className={Style.socialWrapper}>
-          <a href="#" className={Style.socialBox}>
-            <FaLinkedin />
-          </a>
-          <a href="#" className={Style.socialBox}>
-            <FaInstagram />
-          </a>
-          <a href="#" className={Style.socialBox}>
-            <FaFacebook />
-          </a>
-        </div>
+        {redesSociais.length > 0 && (
+          <div className={Style.socialWrapper}>
+            {redesSociais.map((rede) => (
+              <a
+                key={rede.nome}
+                href={rede.url}
+                className={Style.socialBox}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={rede.nome}
+                title={rede.nome}
+              >
+                {iconesRedes[rede.nome]}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </footer>
   );
