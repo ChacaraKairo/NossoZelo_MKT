@@ -13,6 +13,40 @@ import { compare, hash } from 'bcrypt';
 import prisma from '../lib/prisma';
 import { STATUS_PRIVACY_GATE_CLIENTE } from '../constants/dominio';
 
+async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {
+  if (!contratacoes.length) return contratacoes;
+
+  const avaliacoes = await prisma.avaliacoes.findMany({
+    where: {
+      contratacao_id: {
+        in: contratacoes.map((contratacao) => contratacao.id),
+      },
+    },
+    select: {
+      id: true,
+      contratacao_id: true,
+      cliente_id: true,
+      prestador_id: true,
+      tipo_prestador: true,
+      nota: true,
+      comentario: true,
+      data_avaliacao: true,
+    },
+  });
+
+  const avaliacoesPorContratacao = new Map(
+    avaliacoes.map((avaliacao) => [
+      avaliacao.contratacao_id,
+      avaliacao,
+    ]),
+  );
+
+  return contratacoes.map((contratacao) => ({
+    ...contratacao,
+    avaliacao:
+      avaliacoesPorContratacao.get(contratacao.id) ?? null,
+  }));
+}
 
 export class ServicePerfil {
   static async alterarSenhaSegura(
@@ -161,13 +195,21 @@ export class ServicePerfil {
         'enfermeiro',
         'acompanhante',
       ].includes(perfilTipo);
+      const contratacoesClienteComAvaliacoes =
+        await anexarAvaliacoesEmContratacoes(
+          contratacoes_contratacoes_cliente_idTousuarios,
+        );
+      const contratacoesPrestadorComAvaliacoes =
+        await anexarAvaliacoesEmContratacoes(
+          contratacoes_contratacoes_prestador_idTousuarios,
+        );
 
       if (!ehPrestador) {
         return {
           perfil_tipo: perfilTipo,
           dados_usuario: dadosUsuario,
           contratacoes:
-            contratacoes_contratacoes_cliente_idTousuarios,
+            contratacoesClienteComAvaliacoes,
           avaliacoes_feitas:
             avaliacoes_avaliacoes_cliente_idTousuarios,
         };
@@ -194,7 +236,7 @@ export class ServicePerfil {
         avaliacoes_recebidas:
           avaliacoes_avaliacoes_prestador_idTousuarios,
         contratacoes:
-          contratacoes_contratacoes_prestador_idTousuarios,
+          contratacoesPrestadorComAvaliacoes,
         avaliacao_media: perfilEnriquecido.avaliacao_media,
       };
     } catch (error: any) {

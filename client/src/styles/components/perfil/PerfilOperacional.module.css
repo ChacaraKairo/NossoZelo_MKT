@@ -69,6 +69,50 @@
   text-transform: uppercase;
 }
 
+.badgeSuccess {
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.35rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.hint {
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0.85rem 0 0;
+}
+
+.inlineForm {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+}
+
+.ratingGroup {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.starButton {
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 1.55rem;
+  line-height: 1;
+  padding: 0.15rem;
+}
+
+.starButtonActive {
+  color: #f59e0b;
+}
+
 .form {
   display: grid;
   gap: 0.85rem;
@@ -174,6 +218,7 @@
 }
 
 .error {
+  grid-column: 1 / -1;
   border: 1px solid #fecaca;
   border-radius: 0.85rem;
   background: #fef2f2;
@@ -184,6 +229,7 @@
 }
 
 .success {
+  grid-column: 1 / -1;
   border: 1px solid #bbf7d0;
   border-radius: 0.85rem;
   background: #f0fdf4;

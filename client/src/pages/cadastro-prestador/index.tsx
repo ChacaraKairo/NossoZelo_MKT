@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useCadastroPrestadorStore } from '@/store/useCadastroPrestadorStore';
 import { useFinalizarCadastro } from '@/store/useFinalizarCadastro';
 import {
@@ -20,16 +20,30 @@ import StepProfissional from '@/components/cadastro/StepProfissional';
 import StepDocumentos from '@/components/cadastro/StepDocumentos';
 
 const WizardCadastroPrestador = () => {
-  const { step, setStep, validarEtapa } =
+  const { step, setStep, validarEtapa, erros } =
     useCadastroPrestadorStore();
   const { handleFinalizar, loading } =
     useFinalizarCadastro();
+  const stepContentRef = useRef<HTMLElement | null>(null);
 
   const totalSteps = 4;
+  const possuiErros = Object.keys(erros).length > 0;
+  const mensagensErro = Object.values(erros).filter(
+    (mensagem): mensagem is string => Boolean(mensagem),
+  );
 
   const nextStep = () => {
-    if (validarEtapa(step) && step < totalSteps)
+    const etapaValida = validarEtapa(step);
+
+    if (etapaValida && step < totalSteps) {
       setStep(step + 1);
+      return;
+    }
+
+    stepContentRef.current?.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   };
 
   const stepsConfig = [
@@ -81,8 +95,24 @@ const WizardCadastroPrestador = () => {
         </div>
 
         {/* Conteúdo do Formulário */}
-        <main className={Style.stepContent}>
+        <main className={Style.stepContent} ref={stepContentRef}>
           <section className={Style.stepForm}>
+            {possuiErros && (
+              <div
+                className={Style.validationBanner}
+                role="alert"
+                aria-live="polite"
+              >
+                <p>
+                  Revise os campos destacados antes de avancar para a proxima etapa.
+                </p>
+                <ul className={Style.validationList}>
+                  {mensagensErro.map((mensagem, index) => (
+                    <li key={`${mensagem}-${index}`}>{mensagem}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {step === 1 && <StepPessoais />}
             {step === 2 && <StepEndereco />}
             {step === 3 && <StepProfissional />}
@@ -102,13 +132,9 @@ const WizardCadastroPrestador = () => {
 
           {step < totalSteps ? (
             <button
-              onClick={
-                () => {
-                  console.log('Validando etapa antes de avançar...');
-                  nextStep();
-                }
-              }
+              onClick={nextStep}
               className={Style.btnNext}
+              type="button"
             >
               Próximo Passo <FaArrowRight />
             </button>

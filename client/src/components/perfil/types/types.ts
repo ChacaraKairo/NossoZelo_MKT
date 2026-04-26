@@ -21,9 +21,9 @@ export interface AgendaItem {
 
 export interface Avaliacao {
   id: number;
-  nota: number;
-  comentario?: string;
-  data_avaliacao: string | Date;
+  nota: number | null;
+  comentario?: string | null;
+  data_avaliacao: string | Date | null;
   // Se vier com dados do cliente (include)
   usuarios_avaliacoes_cliente_idTousuarios?: {
     nome: string;
@@ -46,6 +46,7 @@ export interface Contratacao {
     nome?: string | null;
     url_foto_perfil?: string | null;
   };
+  avaliacao?: Avaliacao | null;
 }
 
 export interface PerfilCompleto {

@@ -159,6 +159,37 @@
   gap: 25px;
 }
 
+.validationBanner {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #f5c2c7;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.validationBanner p {
+  margin: 0;
+}
+
+.validationList {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.validationList li + li {
+  margin-top: 4px;
+}
+
+.errorText {
+  color: #b42318;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
 /* Estilização para quando usar inputs nativos (Profissional) */
 .inputGroup {
   display: flex;

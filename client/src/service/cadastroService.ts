@@ -53,6 +53,32 @@ export interface CadastroPayload {
   };
 }
 
+type ErrosApi = Record<string, string[]>;
+
+export class CadastroApiError extends Error {
+  status?: number;
+  fieldErrors?: Record<string, string>;
+
+  constructor(
+    message: string,
+    status?: number,
+    erros?: ErrosApi,
+  ) {
+    super(message);
+    this.name = 'CadastroApiError';
+    this.status = status;
+
+    if (erros) {
+      this.fieldErrors = Object.fromEntries(
+        Object.entries(erros).map(([campo, mensagens]) => [
+          campo,
+          mensagens[0] || message,
+        ]),
+      );
+    }
+  }
+}
+
 /**
  * Realiza o cadastro e garante o retorno do ID para o fluxo de upload.
  */
@@ -79,11 +105,13 @@ export const cadastrarUsuario = async (
       const erroData = await resposta
         .json()
         .catch(() => ({ message: 'Erro desconhecido.' }));
-      throw new Error(
+      throw new CadastroApiError(
         erroData.error ||
           erroData.message ||
           erroData.mensagem ||
           'Falha ao cadastrar.',
+        resposta.status,
+        erroData.erros,
       );
     }
 
