@@ -70,6 +70,7 @@ export interface ContratacaoPerfil {
     nome?: string | null;
     url_foto_perfil?: string | null;
   };
+  avaliacao?: AvaliacaoPerfil | null;
 }
 
 export interface PerfilUsuario extends PerfilBase {

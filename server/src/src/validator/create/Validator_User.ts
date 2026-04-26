@@ -8,6 +8,76 @@ enum TipoUsuario {
   ADMIN = 'admin',
 }
 
+const DDD_VALIDOS_BR = new Set([
+  '11',
+  '12',
+  '13',
+  '14',
+  '15',
+  '16',
+  '17',
+  '18',
+  '19',
+  '21',
+  '22',
+  '24',
+  '27',
+  '28',
+  '31',
+  '32',
+  '33',
+  '34',
+  '35',
+  '37',
+  '38',
+  '41',
+  '42',
+  '43',
+  '44',
+  '45',
+  '46',
+  '47',
+  '48',
+  '49',
+  '51',
+  '53',
+  '54',
+  '55',
+  '61',
+  '62',
+  '63',
+  '64',
+  '65',
+  '66',
+  '67',
+  '68',
+  '69',
+  '71',
+  '73',
+  '74',
+  '75',
+  '77',
+  '79',
+  '81',
+  '82',
+  '83',
+  '84',
+  '85',
+  '86',
+  '87',
+  '88',
+  '89',
+  '91',
+  '92',
+  '93',
+  '94',
+  '95',
+  '96',
+  '97',
+  '98',
+  '99',
+]);
+
 type ErrosValidacao = Record<string, string[]>;
 
 function normalizarDigitos(valor: unknown): string {
@@ -53,6 +123,30 @@ function cpfValido(cpfOriginal: string): boolean {
 function cepValido(cepOriginal: string): boolean {
   const cep = normalizarDigitos(cepOriginal);
   return cep.length === 8 && !/^(\d)\1+$/.test(cep);
+}
+
+function telefoneBrasileiroValido(telefoneOriginal: unknown): boolean {
+  const telefone = normalizarDigitos(telefoneOriginal);
+
+  if (!/^\d{10,11}$/.test(telefone) || /^(\d)\1+$/.test(telefone)) {
+    return false;
+  }
+
+  const ddd = telefone.slice(0, 2);
+  if (!DDD_VALIDOS_BR.has(ddd)) {
+    return false;
+  }
+
+  const numero = telefone.slice(2);
+  if (/^(\d)\1+$/.test(numero)) {
+    return false;
+  }
+
+  if (telefone.length === 11) {
+    return numero.startsWith('9');
+  }
+
+  return /^[2-5]/.test(numero);
 }
 
 function senhaForte(senha: unknown): boolean {
@@ -182,10 +276,7 @@ export function validarCreateUsuarioDto(input: any): {
 
   if (
     usuario.telefone &&
-    !validator.isMobilePhone(
-      normalizarDigitos(usuario.telefone),
-      'pt-BR',
-    )
+    !telefoneBrasileiroValido(usuario.telefone)
   ) {
     adicionarErro(
       erros,

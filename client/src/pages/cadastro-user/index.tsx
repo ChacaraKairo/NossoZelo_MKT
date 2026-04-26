@@ -7,7 +7,10 @@ import InputDate from '@/components/inputs/InputDate';
 import Button from '@/components/btn/Button';
 import Logo from '@/components/logos/OnlyLogo';
 
-import { cadastrarUsuario } from '@/service/cadastroService';
+import {
+  cadastrarUsuario,
+  CadastroApiError,
+} from '@/service/cadastroService';
 import {
   mascaraCep,
   mascaraCpf,
@@ -74,6 +77,14 @@ const CadastroPage = () => {
 
   const erroDoCampo = (...campos: string[]) =>
     campos.map((campo) => fieldErrors[campo]).find(Boolean);
+
+  const mapearCampoApi = (campo: string) => {
+    const mapa: Record<string, string> = {
+      data_nascimento: 'dataNascimento',
+    };
+
+    return mapa[campo] || campo;
+  };
 
   useEffect(() => {
     const buscarCep = async () => {
@@ -167,6 +178,19 @@ const CadastroPage = () => {
       alert('Cadastro realizado com sucesso!');
       router.push('/login-user');
     } catch (err: any) {
+      if (err instanceof CadastroApiError && err.fieldErrors) {
+        setFieldErrors(
+          Object.fromEntries(
+            Object.entries(err.fieldErrors).map(
+              ([campo, mensagem]) => [
+                mapearCampoApi(campo),
+                mensagem,
+              ],
+            ),
+          ),
+        );
+      }
+
       setError(err.message || 'Erro ao completar o cadastro.');
     } finally {
       setLoading(false);

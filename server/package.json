@@ -5,7 +5,7 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev src/server.ts",
+    "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev --files src/server.ts",
     "build": "npx prisma generate && tsc",
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
     "db:backup": "ts-node src/src/scripts/backup-db.ts",

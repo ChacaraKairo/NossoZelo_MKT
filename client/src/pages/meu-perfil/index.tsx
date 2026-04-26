@@ -17,6 +17,24 @@ import AbaSolicitacoesPro from '@/components/perfil/AbaSolicitacoesPro';
 import AbaHistoricoPerfil from '@/components/perfil/AbaHistoricoPerfil';
 import AbaSeguranca from '@/components/perfil/AbaSeguranca';
 
+function normalizarTipoUsuario(
+  valor: unknown,
+): 'cliente' | 'cuidador' | 'enfermeiro' | 'acompanhante' {
+  const tipo = String(valor || '')
+    .trim()
+    .toLowerCase();
+
+  if (
+    tipo === 'cuidador' ||
+    tipo === 'enfermeiro' ||
+    tipo === 'acompanhante'
+  ) {
+    return tipo;
+  }
+
+  return 'cliente';
+}
+
 function normalizarPerfilDashboard(dados: any): PerfilCompleto {
   const usuario = dados?.dados_usuario || {};
   const profissional = dados?.dados_profissionais || {};
@@ -33,11 +51,9 @@ function normalizarPerfilDashboard(dados: any): PerfilCompleto {
     id: usuario.id || dados?.id || '',
     nome: usuario.nome || dados?.nome || 'Usuário',
     email: usuario.email || dados?.email || '',
-    tipo:
-      usuario.tipo ||
-      dados?.perfil_tipo ||
-      dados?.tipo ||
-      'cliente',
+    tipo: normalizarTipoUsuario(
+      usuario.tipo || dados?.perfil_tipo || dados?.tipo,
+    ),
     telefone: usuario.telefone || dados?.telefone,
     endereco: usuario.endereco || dados?.endereco,
     bairro: usuario.bairro || dados?.bairro,
@@ -202,6 +218,7 @@ const DashboardPerfil = () => {
                     modo={
                       perfil.tipo === 'cliente' ? 'cliente' : 'prestador'
                     }
+                    onAvaliacaoRegistrada={carregarDadosDashboard}
                   />
                 )}
                 {abaAtiva === 'seguranca' && <AbaSeguranca />}

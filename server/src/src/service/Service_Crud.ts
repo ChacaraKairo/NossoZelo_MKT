@@ -9,7 +9,45 @@
 
 import prisma from '../lib/prisma';
 
+const entidadesComIdNumerico = new Set([
+  'agenda',
+  'agenda_recorrente',
+  'assinaturas',
+  'avaliacoes',
+  'contratacoes',
+  'cuidador_especialidade',
+  'denuncias',
+  'documentos_cuidadores',
+  'especialidades',
+  'faturas',
+  'logs_acao',
+  'logs_acesso',
+  'metodos_pagamento',
+  'pagamentos',
+  'planos',
+  'recuperacao_senhas',
+  'relatorios',
+  'servicos',
+  'cartoes',
+  'aiven_keep_alive',
+]);
+
 class ServiceCrud {
+  static normalizarId(entity: string, id: string) {
+    if (!entidadesComIdNumerico.has(entity)) {
+      return id;
+    }
+
+    const idNumerico = Number(id);
+
+    if (!Number.isInteger(idNumerico)) {
+      throw new Error(
+        `ID invalido para a entidade ${entity}. Era esperado um inteiro.`,
+      );
+    }
+
+    return idNumerico;
+  }
 
   /**
    * Verifica se a operação em uma entidade específica deve ser bloqueada por segurança.
@@ -121,10 +159,8 @@ class ServiceCrud {
       }      console.log(
         `[LOG-FLUXO] Executando findUnique dinâmico na entidade: ${entity} para o ID: ${id}`,
       );
-      const result = await (prisma as any)[
-        entity
-      ].findUnique({
-        where: { id: id },
+      const result = await (prisma as any)[entity].findUnique({
+        where: { id: this.normalizarId(entity, id) },
       });
 
       console.log(
@@ -402,7 +438,7 @@ class ServiceCrud {
         `[LOG-FLUXO] Executando alteração do registro ${id} em: ${entity}`,
       );
       const result = await (prisma as any)[entity].update({
-        where: { id },
+        where: { id: this.normalizarId(entity, id) },
         data,
       });
 
@@ -446,7 +482,7 @@ class ServiceCrud {
         `[LOG-FLUXO] Executando exclusão física do registro ${id} na entidade ${entity}`,
       );
       const result = await (prisma as any)[entity].delete({
-        where: { id },
+        where: { id: this.normalizarId(entity, id) },
       });
 
       console.log(
