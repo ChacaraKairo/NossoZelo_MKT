@@ -23,6 +23,11 @@ const PerfilTabsVertical: React.FC<
 
   // Lógica de visualização baseada no tipo de usuário
   const isPrestador = perfil.tipo !== 'cliente';
+  const solicitacoesPendentes = (
+    perfil.contratacoes_contratacoes_prestador_idTousuarios ||
+    perfil.contratacoes ||
+    []
+  ).filter((contratacao) => contratacao.status === 'pendente').length;
 
   const menuItems = [
     {
@@ -77,8 +82,12 @@ const PerfilTabsVertical: React.FC<
           {item.label}
 
           {/* Badge de Notificação para Pedidos Pendentes */}
-          {item.id === 'solicitacoes' && isPrestador && (
-            <span className={styles.badge}>Novo</span>
+          {item.id === 'solicitacoes' &&
+            isPrestador &&
+            solicitacoesPendentes > 0 && (
+            <span className={styles.badge}>
+              {solicitacoesPendentes}
+            </span>
           )}
         </button>
       ))}

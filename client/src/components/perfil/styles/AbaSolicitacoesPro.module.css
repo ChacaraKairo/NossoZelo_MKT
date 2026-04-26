@@ -1,0 +1,346 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.counter {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #e0f2fe;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.errorBox {
+  border: 1px solid #fecaca;
+  border-radius: 1rem;
+  background: #fef2f2;
+  padding: 1rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.list {
+  display: grid;
+  gap: 1rem;
+}
+
+.requestCard {
+  display: grid;
+  gap: 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.requestCard:hover {
+  border-color: #cbd5e1;
+  box-shadow:
+    0 14px 30px -18px rgba(15, 23, 42, 0.28),
+    0 6px 14px -12px rgba(15, 23, 42, 0.18);
+  transform: translateY(-2px);
+}
+
+.cardTop {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.clientBlock {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.avatar {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #e0f2fe;
+}
+
+.avatarFallback {
+  display: grid;
+  place-items: center;
+  color: #0369a1;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.clientName {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.serviceName {
+  margin: 0.25rem 0 0;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.statusBadge {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.statusPendente {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.statusConfirmado {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.statusCancelado {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.statusConcluido {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.statusDefault {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid #f1f5f9;
+  border-radius: 1rem;
+  background: #f8fafc;
+  padding: 0.85rem;
+}
+
+.metaIcon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.metaLabel {
+  display: block;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metaValue {
+  display: block;
+  margin-top: 0.1rem;
+  color: #0f172a;
+  font-size: 0.88rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.notes {
+  border-left: 3px solid #0f766e;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  padding: 0.9rem 1rem;
+}
+
+.notesLabel {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #0f766e;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.notesText {
+  margin: 0;
+  color: #334155;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.actionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.acceptButton {
+  border: 1px solid #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.acceptButton:hover:not(:disabled) {
+  background: #115e59;
+  border-color: #115e59;
+}
+
+.denyButton {
+  border: 1px solid #fecaca;
+  background: #ffffff;
+  color: #dc2626;
+}
+
+.denyButton:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.contactButton {
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
+}
+
+.contactButton:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+}
+
+.contactPanel {
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .cardTop {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .metaGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actionButton {
+    width: 100%;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

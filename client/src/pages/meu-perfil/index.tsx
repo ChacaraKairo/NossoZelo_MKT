@@ -29,6 +29,7 @@ import AbaSobrePro from '@/components/perfil/Abas/AbaSobrePro';
 import AbaAgendaPro from '@/components/perfil/Abas/AbaAgendaPro';
 import AbaServicosPro from '@/components/perfil/Abas/AbaServicosPro';
 import AbaAvaliacoesPro from '@/components/perfil/Abas/AbaAvaliacoesPro'; // 🚀 Nova Importação
+import AbaSolicitacoesPro from '@/components/perfil/AbaSolicitacoesPro';
 
 function normalizarPerfilDashboard(dados: any): PerfilCompleto {
   const usuario = dados?.dados_usuario || {};
@@ -198,6 +199,14 @@ const DashboardPerfil = () => {
                 )}
                 {abaAtiva === 'servicos' && (
                   <AbaServicosPro perfil={perfil} />
+                )}
+                {abaAtiva === 'solicitacoes' && (
+                  <AbaSolicitacoesPro
+                    perfil={perfil}
+                    onContratacaoAtualizada={() =>
+                      carregarDadosDashboard()
+                    }
+                  />
                 )}
                 {abaAtiva === 'avaliacoes' && (
                   <AbaAvaliacoesPro perfil={perfil} />

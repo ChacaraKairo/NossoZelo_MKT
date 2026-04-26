@@ -103,7 +103,12 @@ const WizardCadastroPrestador = () => {
 
           {step < totalSteps ? (
             <button
-              onClick={nextStep}
+              onClick={
+                () => {
+                  console.log('Validando etapa antes de avançar...');
+                  nextStep();
+                }
+              }
               className={Style.btnNext}
             >
               Próximo Passo <FaArrowRight />

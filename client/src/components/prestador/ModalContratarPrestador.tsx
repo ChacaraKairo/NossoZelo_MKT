@@ -5,6 +5,7 @@ import { ServicoPerfil } from '@/types/perfil';
 import { getUsuarioDoCookie } from '@/utils/auth';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
+import styles from './ModalContratarPrestador.module.css';
 
 interface ModalContratarPrestadorProps {
   aberto: boolean;
@@ -12,9 +13,44 @@ interface ModalContratarPrestadorProps {
   tipoPrestador?: string;
   servicos?: ServicoPerfil[];
   onClose: () => void;
+  presentation?: 'modal' | 'inline';
 }
 
+type FormErrors = Partial<{
+  data: string;
+  hora: string;
+  servicoId: string;
+  observacao: string;
+  usuario: string;
+}>;
+
 const CONTEXTO = 'ModalContratarPrestador';
+const DESCRICAO_MINIMA = 10;
+
+function hojeIsoLocal() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+function formatarMoeda(valor?: string | number | null) {
+  if (valor === null || valor === undefined || valor === '') return null;
+  const numero = Number(valor);
+  if (Number.isNaN(numero)) return String(valor);
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+function texto(valor?: string | number | null) {
+  if (valor === null || valor === undefined || valor === '') {
+    return 'Nao informado';
+  }
+  return String(valor);
+}
 
 export default function ModalContratarPrestador({
   aberto,
@@ -22,55 +58,101 @@ export default function ModalContratarPrestador({
   tipoPrestador,
   servicos = [],
   onClose,
+  presentation = 'modal',
 }: ModalContratarPrestadorProps) {
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
   const [servicoId, setServicoId] = useState('');
   const [observacao, setObservacao] = useState('');
-  const [confirmado, setConfirmado] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+  const minDate = hojeIsoLocal();
 
   useEffect(() => {
     if (!aberto) return;
     logger.info(CONTEXTO, 'Abertura do modal', { prestadorId });
   }, [aberto, prestadorId]);
 
-  const payload = useMemo(
-    () => {
-      const usuario = getUsuarioDoCookie();
-      const servicoSelecionado = servicos.find(
-        (servico) => String(servico.id) === servicoId,
-      );
-      const [horas, minutos] = hora.split(':');
-      const horaFim =
-        hora && horas
-          ? `${String((Number(horas) + 1) % 24).padStart(2, '0')}:${
-              minutos || '00'
-            }`
-          : undefined;
-
-      return {
-        cliente_id: usuario?.id,
-        prestador_id: prestadorId,
-        tipo_prestador: tipoPrestador,
-        servico_id: servicoId ? Number(servicoId) : undefined,
-        data,
-        hora_inicio: hora || undefined,
-        hora_fim: horaFim,
-        preco:
-          servicoSelecionado?.valor !== undefined
-            ? Number(servicoSelecionado.valor)
-            : undefined,
-        observacoes: observacao,
-        observacao,
-      };
-    },
-    [data, hora, observacao, prestadorId, servicoId, servicos, tipoPrestador],
+  const servicoSelecionado = useMemo(
+    () =>
+      servicos.find((servico) => String(servico.id) === servicoId),
+    [servicoId, servicos],
   );
 
+  const payload = useMemo(() => {
+    const usuario = getUsuarioDoCookie();
+    const [horas, minutos] = hora.split(':');
+    const horaFim =
+      hora && horas
+        ? `${String((Number(horas) + 1) % 24).padStart(2, '0')}:${
+            minutos || '00'
+          }`
+        : undefined;
+
+    return {
+      cliente_id: usuario?.id,
+      prestador_id: prestadorId,
+      tipo_prestador: tipoPrestador,
+      servico_id: servicoId ? Number(servicoId) : undefined,
+      data,
+      hora_inicio: hora || undefined,
+      hora_fim: horaFim,
+      preco:
+        servicoSelecionado?.valor !== undefined
+          ? Number(servicoSelecionado.valor)
+          : undefined,
+      observacoes: observacao.trim(),
+      observacao: observacao.trim(),
+    };
+  }, [
+    data,
+    hora,
+    observacao,
+    prestadorId,
+    servicoId,
+    servicoSelecionado?.valor,
+    tipoPrestador,
+  ]);
+
   if (!aberto) return null;
+
+  const validarFormulario = () => {
+    const usuario = getUsuarioDoCookie();
+    const descricao = observacao.trim();
+    const erros: FormErrors = {};
+
+    if (!usuario?.id) {
+      erros.usuario =
+        'Voce precisa estar logado como cliente para enviar uma proposta.';
+    }
+
+    if (!data) {
+      erros.data = 'Informe a data do atendimento.';
+    } else if (data < minDate) {
+      erros.data = 'Escolha uma data de hoje em diante.';
+    }
+
+    if (!hora) {
+      erros.hora = 'Informe o horario desejado.';
+    }
+
+    if (servicos.length === 0) {
+      erros.servicoId =
+        'Este prestador ainda nao possui servicos cadastrados.';
+    } else if (!servicoId) {
+      erros.servicoId = 'Selecione o tipo de servico.';
+    }
+
+    if (descricao.length < DESCRICAO_MINIMA) {
+      erros.observacao =
+        'Descreva a necessidade com pelo menos 10 caracteres.';
+    }
+
+    setFieldErrors(erros);
+    return Object.keys(erros).length === 0;
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,39 +161,21 @@ export default function ModalContratarPrestador({
 
     logger.info(CONTEXTO, 'Dados preenchidos', payload);
 
-    if (!data) {
-      setErro('Informe a data desejada.');
-      return;
-    }
-
-    if (!hora) {
-      setErro('Informe o horario desejado.');
-      return;
-    }
-
-    if (!servicoId) {
-      setErro('Selecione um servico para solicitar o agendamento.');
-      return;
-    }
-
-    if (!confirmado) {
-      setErro('Confirme os dados antes de solicitar a contratação.');
-      return;
-    }
+    if (!validarFormulario()) return;
 
     try {
       setLoading(true);
-      logger.info(CONTEXTO, 'Envio de solicitação', payload);
+      logger.info(CONTEXTO, 'Envio de solicitacao', payload);
       await contratacaoService.solicitarContratacao(payload);
-      logger.info(CONTEXTO, 'Solicitação criada com sucesso');
-      setSucesso('Solicitação enviada com sucesso.');
-      setTimeout(onClose, 900);
+      logger.info(CONTEXTO, 'Solicitacao criada com sucesso');
+      setSucesso('Solicitacao enviada com sucesso.');
+      setTimeout(onClose, 1100);
     } catch (error: unknown) {
       const mensagem = extrairMensagemErro(error);
       const mensagemFinal = mensagem.includes('[TODO tecnico]')
-        ? 'Fluxo de contratação ainda não está disponível no servidor.'
+        ? 'Fluxo de contratacao ainda nao esta disponivel no servidor.'
         : mensagem;
-      logger.error(CONTEXTO, 'Erro ao solicitar contratação', {
+      logger.error(CONTEXTO, 'Erro ao solicitar contratacao', {
         mensagem: mensagemFinal,
       });
       setErro(mensagemFinal);
@@ -120,115 +184,209 @@ export default function ModalContratarPrestador({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
-      <section className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-        <header className="mb-5 flex items-start justify-between gap-4">
+  const content = (
+      <section
+        className={`${styles.modal} ${
+          presentation === 'inline' ? styles.inlinePanel : ''
+        }`}
+        role={presentation === 'modal' ? 'dialog' : undefined}
+        aria-modal={presentation === 'modal' ? true : undefined}
+        aria-labelledby="modal-contratar-titulo"
+      >
+        <header className={styles.header}>
           <div>
-            <h2 className="text-xl font-black text-slate-800">
-              Solicitar contratação
+            <p className={styles.kicker}>Proposta de atendimento</p>
+            <h2 id="modal-contratar-titulo" className={styles.title}>
+              Solicitar contratacao
             </h2>
-            <p className="text-sm text-slate-500">
-              Envie uma solicitação real para o prestador.
+            <p className={styles.subtitle}>
+              Informe data, horario, servico e detalhes para o prestador
+              avaliar sua solicitacao.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-bold text-slate-500"
+            className={styles.closeButton}
           >
-            Fechar
+            {presentation === 'inline' ? 'Fechar formulario' : 'Fechar'}
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
-              Data desejada
-            </span>
-            <input
-              type="date"
-              value={data}
-              onChange={(event) => setData(event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-          </label>
+        <form onSubmit={handleSubmit} className={styles.form} noValidate>
+          {fieldErrors.usuario && (
+            <p className={styles.errorBox}>{fieldErrors.usuario}</p>
+          )}
 
-          <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
-              Horário desejado
-            </span>
-            <input
-              type="time"
-              value={hora}
-              onChange={(event) => setHora(event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-          </label>
+          <div className={styles.row}>
+            <label className={styles.field}>
+              <span className={styles.label}>Data desejada</span>
+              <input
+                type="date"
+                value={data}
+                min={minDate}
+                onChange={(event) => {
+                  setData(event.target.value);
+                  setFieldErrors((atual) => ({
+                    ...atual,
+                    data: undefined,
+                  }));
+                }}
+                className={`${styles.input} ${
+                  fieldErrors.data ? styles.inputError : ''
+                }`}
+              />
+              {fieldErrors.data && (
+                <span className={styles.fieldError}>
+                  {fieldErrors.data}
+                </span>
+              )}
+            </label>
 
-          <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
-              Serviço
-            </span>
+            <label className={styles.field}>
+              <span className={styles.label}>Horario desejado</span>
+              <input
+                type="time"
+                value={hora}
+                onChange={(event) => {
+                  setHora(event.target.value);
+                  setFieldErrors((atual) => ({
+                    ...atual,
+                    hora: undefined,
+                  }));
+                }}
+                className={`${styles.input} ${
+                  fieldErrors.hora ? styles.inputError : ''
+                }`}
+              />
+              {fieldErrors.hora && (
+                <span className={styles.fieldError}>
+                  {fieldErrors.hora}
+                </span>
+              )}
+            </label>
+          </div>
+
+          <label className={styles.field}>
+            <span className={styles.label}>Tipo de servico</span>
             <select
               value={servicoId}
-              onChange={(event) => setServicoId(event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              disabled={servicos.length === 0}
+              onChange={(event) => {
+                setServicoId(event.target.value);
+                setFieldErrors((atual) => ({
+                  ...atual,
+                  servicoId: undefined,
+                }));
+              }}
+              className={`${styles.input} ${
+                fieldErrors.servicoId ? styles.inputError : ''
+              }`}
             >
-              <option value="">Selecione um servico</option>
+              <option value="">
+                {servicos.length === 0
+                  ? 'Nenhum servico cadastrado'
+                  : 'Selecione um servico'}
+              </option>
               {servicos.map((servico) => (
                 <option key={servico.id} value={servico.id}>
-                  {servico.nome || servico.tipo || `Serviço #${servico.id}`}
+                  {servico.nome || servico.tipo || `Servico #${servico.id}`}
                 </option>
               ))}
             </select>
+            {fieldErrors.servicoId && (
+              <span className={styles.fieldError}>
+                {fieldErrors.servicoId}
+              </span>
+            )}
           </label>
 
-          <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
-              Observações
-            </span>
+          {servicoSelecionado && (
+            <div className={styles.servicePreview}>
+              <div>
+                <span className={styles.previewLabel}>
+                  Servico selecionado
+                </span>
+                <strong>
+                  {texto(servicoSelecionado.nome || servicoSelecionado.tipo)}
+                </strong>
+                {servicoSelecionado.descricao && (
+                  <p>{servicoSelecionado.descricao}</p>
+                )}
+              </div>
+              {formatarMoeda(servicoSelecionado.valor) && (
+                <span className={styles.price}>
+                  {formatarMoeda(servicoSelecionado.valor)}
+                </span>
+              )}
+            </div>
+          )}
+
+          <label className={styles.field}>
+            <span className={styles.label}>Descricao da necessidade</span>
             <textarea
               value={observacao}
-              onChange={(event) => setObservacao(event.target.value)}
-              className="mt-2 min-h-[96px] w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              maxLength={500}
+              onChange={(event) => {
+                setObservacao(event.target.value);
+                setFieldErrors((atual) => ({
+                  ...atual,
+                  observacao: undefined,
+                }));
+              }}
+              className={`${styles.textarea} ${
+                fieldErrors.observacao ? styles.inputError : ''
+              }`}
               placeholder="Descreva a necessidade do atendimento"
             />
+            <div className={styles.helperRow}>
+              {fieldErrors.observacao ? (
+                <span className={styles.fieldError}>
+                  {fieldErrors.observacao}
+                </span>
+              ) : (
+                <span>
+                  Explique o cuidado necessario, local, restricoes ou
+                  observacoes importantes.
+                </span>
+              )}
+              <span>{observacao.trim().length}/500</span>
+            </div>
           </label>
 
-          <label className="flex items-start gap-3 text-sm font-semibold text-slate-600">
-            <input
-              type="checkbox"
-              checked={confirmado}
-              onChange={(event) => setConfirmado(event.target.checked)}
-              className="mt-1"
-            />
-            Confirmo que os dados da solicitação estão corretos.
-          </label>
+          {erro && <p className={styles.errorBox}>{erro}</p>}
+          {sucesso && <p className={styles.successBox}>{sucesso}</p>}
 
-          {erro && (
-            <p className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-              {erro}
-            </p>
-          )}
-          {sucesso && (
-            <p className="rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm font-semibold text-teal-700">
-              {sucesso}
-            </p>
-          )}
-
-          {loading ? (
-            <Carregando mensagem="Enviando solicitação..." />
-          ) : (
+          <div className={styles.actions}>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className={styles.secondaryButton}
+            >
+              Cancelar
+            </button>
             <button
               type="submit"
-              className="w-full rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700"
+              disabled={loading || servicos.length === 0}
+              className={styles.primaryButton}
             >
-              Confirmar solicitação
+              {loading ? 'Enviando...' : 'Enviar solicitacao'}
             </button>
-          )}
+          </div>
+
+          {loading && <Carregando mensagem="Enviando solicitacao..." />}
         </form>
       </section>
+  );
+
+  if (presentation === 'inline') {
+    return content;
+  }
+
+  return (
+    <div className={styles.overlay}>
+      {content}
     </div>
   );
 }

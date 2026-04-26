@@ -1,5 +1,7 @@
 // client/src/components/perfil/types/types.ts
 
+import type { ContratacaoPerfil } from '@/types/perfil';
+
 export interface Servico {
   id: number;
   nome: string;
@@ -50,6 +52,8 @@ export interface PerfilCompleto {
   servicos?: Servico[];
   agenda?: AgendaItem[];
   avaliacoes_avaliacoes_prestador_idTousuarios?: Avaliacao[];
+  contratacoes?: ContratacaoPerfil[];
+  contratacoes_contratacoes_prestador_idTousuarios?: ContratacaoPerfil[];
 
   // Campos específicos de prestadores
   bio?: string;

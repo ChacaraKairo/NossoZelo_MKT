@@ -1,8 +1,7 @@
 services:
   # docker-compose up --build
-  # --- BANCO DE DADOS (Agora dentro do grupo) ---
   db:
-    image: mysql:latest
+    image: mysql:8.4
     container_name: nossozelo_db
     restart: always
     environment:
@@ -11,32 +10,39 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - mysql_data:/var/lib/mysql # Isso mantém seus dados salvos
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - nossozelo_network
 
-  # --- BACKEND ---
   backend:
     build: ./server
     container_name: nossozelo_backend
     restart: always
+    command: sh -c "npx prisma db push && npm run dev"
     ports:
       - '4000:4000'
     environment:
-      # 🔥 MUDANÇA IMPORTANTE: Agora usamos o nome do serviço 'db' em vez de host.docker.internal
-      - DATABASE_URL=mysql://root:nossozelo123@db:3306/db
-      - PORT=4000
-      - API_URL=http://192.168.0.3:4000
+      DATABASE_URL: mysql://root:nossozelo123@db:3306/db
+      ENABLE_AIVEN_KEEP_ALIVE: 'false'
+      NODE_ENV: development
+      PORT: 4000
+      API_URL: http://localhost:4000
     volumes:
       - ./server:/app
       - /app/node_modules
       - ./uploads:/app/uploads
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - nossozelo_network
 
-  # --- FRONTEND ---
   frontend:
     build: ./client
     container_name: nossozelo_frontend
@@ -44,7 +50,7 @@ services:
     ports:
       - '3000:3000'
     environment:
-      - NEXT_PUBLIC_API_URL=http://192.168.0.3:4000
+      NEXT_PUBLIC_API_URL: http://localhost:4000
     volumes:
       - ./client:/app
       - /app/node_modules
@@ -59,4 +65,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data: # Define onde o volume do banco será guardado
+  mysql_data:

@@ -1,5 +1,5 @@
 /**
- * @author Kairo Chácara
+ * @author Kairo Chacara
  * @version 1.2
  * @date 21/04/2026
  * @description Ponto de entrada (Bootstrap) com rotinas Keep-Alive para Render e Aiven.
@@ -7,20 +7,21 @@
  */
 
 import dotenv from 'dotenv';
-// Carregamento imediato das variáveis de ambiente
+
 dotenv.config();
 
 import app from './main';
 import axios from 'axios';
-import { exec } from 'child_process'; // Importado para executar o ping do banco
+import { exec } from 'child_process';
 import prisma from './src/lib/prisma';
 
-console.log(
-  '[LOG-FLUXO] Iniciando o bootstrap da aplicação.',
-);
+console.log('[LOG-FLUXO] Iniciando o bootstrap da aplicacao.');
 
 const PORT = process.env.PORT || '4000';
-const link = process.env.LINK || 'http://localhost';
+const SERVER_URL =
+  process.env.RENDER_EXTERNAL_URL ||
+  process.env.API_URL ||
+  `http://localhost:${PORT}`;
 
 if (!process.env.JWT_SECRET) {
   throw new Error(
@@ -28,12 +29,23 @@ if (!process.env.JWT_SECRET) {
   );
 }
 
-// Link do Render para o auto-ping
-const RENDER_URL =
-  process.env.RENDER_EXTERNAL_URL || `${link}:${PORT}`;
+function shouldRunAivenKeepAlive() {
+  if (process.env.ENABLE_AIVEN_KEEP_ALIVE === 'true') {
+    return true;
+  }
+
+  if (process.env.ENABLE_AIVEN_KEEP_ALIVE === 'false') {
+    return false;
+  }
+
+  return (
+    process.env.NODE_ENV === 'production' &&
+    Boolean(process.env.DATABASE_URL?.includes('aivencloud.com'))
+  );
+}
 
 /**
- * Executa o script de manutenção do banco de dados Aiven
+ * Executa o script de manutencao do banco de dados Aiven.
  */
 function triggerDatabasePing() {
   exec('npm run db:keep-alive', (error, stdout) => {
@@ -43,55 +55,57 @@ function triggerDatabasePing() {
       );
       return;
     }
-    if (stdout) console.log(`[LOG-AIVEN] ${stdout.trim()}`);
+
+    if (stdout) {
+      console.log(`[LOG-AIVEN] ${stdout.trim()}`);
+    }
   });
 }
 
 /**
- * Função responsável por validar a conectividade com o banco de dados.
+ * Funcao responsavel por validar a conectividade com o banco de dados.
  */
 async function testDatabaseConnection() {
   console.log(
     '[LOG-FLUXO] Validando conectividade com o banco de dados...',
   );
+
   try {
     await prisma.$connect();
     console.log(
-      '[LOG-FLUXO] ✅ Sucesso: Conexão com o banco de dados estabelecida.',
+      '[LOG-FLUXO] Sucesso: Conexao com o banco de dados estabelecida.',
     );
   } catch (error: any) {
     console.error(
-      `[ERRO-FLUXO] Falha crítica no banco de dados: ${error.message || error}`,
+      `[ERRO-FLUXO] Falha critica no banco de dados: ${error.message || error}`,
     );
     process.exit(1);
   }
 }
 
 /**
- * Rotina Keep-Alive: Impede o Sleep do Render e o desligamento da Aiven.
+ * Rotina Keep-Alive: impede o sleep do Render e, quando habilitado,
+ * o desligamento da Aiven por inatividade.
  */
-function startKeepAlive() {
+function startKeepAlive(runDatabasePing: boolean) {
   console.log(
-    `[LOG-FLUXO] Configurando rotina Keep-Alive para: ${RENDER_URL}`,
+    `[LOG-FLUXO] Configurando rotina Keep-Alive para: ${SERVER_URL}`,
   );
 
-  // Intervalo de 10 minutos
   setInterval(
     async () => {
       try {
-        // 1. Mantém o Render acordado
-        await axios.get(RENDER_URL);
+        await axios.get(SERVER_URL);
         console.log(
-          '[LOG-FLUXO] 💓 Keep-Alive: Servidor Render acordado.',
+          '[LOG-FLUXO] Keep-Alive: Servidor Render acordado.',
         );
 
-        // 2. Aproveita o ciclo para pulsar o banco de dados (Aiven)
-        // Nota: O banco só precisa de atividade a cada algumas horas,
-        // mas rodar aqui garante segurança total.
-        triggerDatabasePing();
-      } catch (error: any) {
+        if (runDatabasePing) {
+          triggerDatabasePing();
+        }
+      } catch {
         console.warn(
-          '[LOG-FLUXO] ⚠️ Keep-Alive: Falha no ping autônomo.',
+          '[LOG-FLUXO] Keep-Alive: Falha no ping autonomo.',
         );
       }
     },
@@ -100,25 +114,26 @@ function startKeepAlive() {
 }
 
 /**
- * Inicia o servidor HTTP
+ * Inicia o servidor HTTP.
  */
 app.listen(parseInt(PORT), async () => {
   console.log(
     `[LOG-FLUXO] Servidor Express disparado na porta: ${PORT}.`,
   );
 
-  // 1. Valida Banco de Dados
   await testDatabaseConnection();
 
-  // 2. Pulso inicial no banco de dados Aiven
-  triggerDatabasePing();
+  const runAivenKeepAlive = shouldRunAivenKeepAlive();
 
-  // 3. Inicia rotina para não deixar o Render dormir em produção
+  if (runAivenKeepAlive) {
+    triggerDatabasePing();
+  }
+
   if (process.env.NODE_ENV === 'production') {
-    startKeepAlive();
+    startKeepAlive(runAivenKeepAlive);
   }
 
   console.log(
-    `[LOG-FLUXO] Bootstrap finalizado. 🚀 Operacional em: ${RENDER_URL}`,
+    `[LOG-FLUXO] Bootstrap finalizado. Operacional em: ${SERVER_URL}`,
   );
 });

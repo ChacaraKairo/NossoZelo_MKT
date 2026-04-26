@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  FaCalendarAlt,
+  FaCheck,
+  FaClock,
+  FaPhoneAlt,
+  FaTimes,
+  FaWallet,
+} from 'react-icons/fa';
 import DadosClienteLiberado from '@/components/perfil/DadosClienteLiberado';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import { contratacaoService } from '@/service/contratacaoService';
 import { ContratacaoPerfil, PerfilUsuario } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
+import styles from './styles/AbaSolicitacoesPro.module.css';
 
 interface AbaSolicitacoesProProps {
   perfil: PerfilUsuario;
@@ -29,6 +38,73 @@ function formatarData(valor?: string | Date | null) {
   return data.toLocaleDateString('pt-BR');
 }
 
+function formatarHora(valor?: string | Date | null) {
+  if (!valor) return 'Não informado';
+
+  const valorTexto = String(valor);
+  const matchIso = valorTexto.match(/T(\d{2}:\d{2})/);
+  const matchSimples = valorTexto.match(/^(\d{2}:\d{2})/);
+
+  if (matchIso?.[1]) return matchIso[1];
+  if (matchSimples?.[1]) return matchSimples[1];
+
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return texto(valor);
+
+  return data.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatarMoeda(valor?: number | string | null) {
+  if (valor === null || valor === undefined || valor === '') {
+    return 'Não informado';
+  }
+
+  const numero = Number(valor);
+  if (Number.isNaN(numero)) return texto(valor);
+
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+function labelStatus(status?: string | null) {
+  const normalizado = String(status || '').toLowerCase();
+
+  if (normalizado === 'pendente') return 'Pendente';
+  if (normalizado === 'confirmado' || normalizado === 'aceito') {
+    return 'Aceito';
+  }
+  if (normalizado === 'cancelado' || normalizado === 'negado') {
+    return 'Negado';
+  }
+  if (normalizado === 'concluido' || normalizado === 'concluida') {
+    return 'Concluído';
+  }
+
+  return texto(status);
+}
+
+function statusClassName(status?: string | null) {
+  const normalizado = String(status || '').toLowerCase();
+
+  if (normalizado === 'pendente') return styles.statusPendente;
+  if (normalizado === 'confirmado' || normalizado === 'aceito') {
+    return styles.statusConfirmado;
+  }
+  if (normalizado === 'cancelado' || normalizado === 'negado') {
+    return styles.statusCancelado;
+  }
+  if (normalizado === 'concluido' || normalizado === 'concluida') {
+    return styles.statusConcluido;
+  }
+
+  return styles.statusDefault;
+}
+
 function nomeCliente(contratacao: ContratacaoPerfil) {
   return (
     contratacao.usuarios_contratacoes_cliente_idTousuarios?.nome ||
@@ -40,10 +116,23 @@ function nomeServico(contratacao: ContratacaoPerfil) {
   return (
     contratacao.servico?.nome ||
     contratacao.servicos?.nome ||
+    (contratacao.tipo_prestador
+      ? `Atendimento ${contratacao.tipo_prestador}`
+      : null) ||
     (contratacao.servico_id
       ? `Serviço #${contratacao.servico_id}`
       : 'Serviço não informado')
   );
+}
+
+function iniciaisCliente(nome: string) {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0])
+    .join('')
+    .toUpperCase();
 }
 
 export default function AbaSolicitacoesPro({
@@ -55,13 +144,18 @@ export default function AbaSolicitacoesPro({
       perfil.contratacoes_contratacoes_prestador_idTousuarios ||
       perfil.contratacoes ||
       [],
-    [perfil.contratacoes_contratacoes_prestador_idTousuarios, perfil.contratacoes],
+    [
+      perfil.contratacoes_contratacoes_prestador_idTousuarios,
+      perfil.contratacoes,
+    ],
   );
   const prestadorId = perfil.dados_usuario?.id || perfil.id;
-  const [solicitacoes, setSolicitacoes] = useState<ContratacaoPerfil[]>(
-    solicitacoesIniciais,
+  const [solicitacoes, setSolicitacoes] = useState<
+    ContratacaoPerfil[]
+  >(solicitacoesIniciais);
+  const [processandoId, setProcessandoId] = useState<number | null>(
+    null,
   );
-  const [processandoId, setProcessandoId] = useState<number | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [clienteContatoAberto, setClienteContatoAberto] = useState<
     string | null
@@ -72,10 +166,10 @@ export default function AbaSolicitacoesPro({
   }, [solicitacoesIniciais]);
 
   useEffect(() => {
-    logger.info(CONTEXTO, 'Renderização da aba', {
+    logger.info(CONTEXTO, 'Renderizacao da aba', {
       perfilId: perfil.dados_usuario?.id || perfil.id,
     });
-    logger.info(CONTEXTO, 'Quantidade de solicitações', {
+    logger.info(CONTEXTO, 'Quantidade de solicitacoes', {
       total: solicitacoes.length,
     });
   }, [perfil, solicitacoes.length]);
@@ -102,12 +196,13 @@ export default function AbaSolicitacoesPro({
     tipoAcao: 'aceitar' | 'negar',
     contratacao: ContratacaoPerfil,
   ) => {
-    const statusEnviado = tipoAcao === 'aceitar' ? 'confirmado' : 'cancelado';
+    const statusEnviado =
+      tipoAcao === 'aceitar' ? 'confirmado' : 'cancelado';
 
     logger.info(CONTEXTO, `Clique em ${tipoAcao}`, {
       contratacaoId: contratacao.id,
     });
-    logger.info(CONTEXTO, 'Ação escolhida', {
+    logger.info(CONTEXTO, 'Acao escolhida', {
       contratacaoId: contratacao.id,
       acao: tipoAcao,
       statusEnviado,
@@ -117,17 +212,11 @@ export default function AbaSolicitacoesPro({
     setProcessandoId(contratacao.id);
 
     try {
-      // TODO técnico: o frontend apenas chama aceitar/negar; email/Telegram devem ser disparados no backend após mudança de status.
       const resultado =
-        tipoAcao === 'aceitar'
-          ? await contratacaoService.atualizarStatusContratacao(
-              contratacao.id,
-              statusEnviado,
-            )
-          : await contratacaoService.atualizarStatusContratacao(
-              contratacao.id,
-              statusEnviado,
-            );
+        await contratacaoService.atualizarStatusContratacao(
+          contratacao.id,
+          statusEnviado,
+        );
 
       logger.info(CONTEXTO, `Sucesso ao ${tipoAcao}`, {
         contratacaoId: contratacao.id,
@@ -154,12 +243,14 @@ export default function AbaSolicitacoesPro({
 
   if (solicitacoes.length === 0) {
     return (
-      <section className="space-y-5">
-        <header>
-          <h2 className="text-xl font-black text-slate-800">Solicitações</h2>
-          <p className="text-sm text-slate-500">
-            Contratações recebidas pelos clientes.
-          </p>
+      <section className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <h2 className={styles.title}>Pedidos Recebidos</h2>
+            <p className={styles.subtitle}>
+              Contratações recebidas pelos clientes.
+            </p>
+          </div>
         </header>
         <EstadoVazio
           titulo="Você ainda não recebeu solicitações."
@@ -170,21 +261,23 @@ export default function AbaSolicitacoesPro({
   }
 
   return (
-    <section className="space-y-5">
-      <header>
-        <h2 className="text-xl font-black text-slate-800">Solicitações</h2>
-        <p className="text-sm text-slate-500">
-          Contratações recebidas pelos clientes.
-        </p>
+    <section className={styles.container}>
+      <header className={styles.header}>
+        <div>
+          <h2 className={styles.title}>Pedidos Recebidos</h2>
+          <p className={styles.subtitle}>
+            Analise os detalhes do pedido antes de aceitar ou negar.
+          </p>
+        </div>
+        <span className={styles.counter}>
+          {solicitacoes.length} pedido
+          {solicitacoes.length === 1 ? '' : 's'}
+        </span>
       </header>
 
-      {erroAcao && (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-          {erroAcao}
-        </div>
-      )}
+      {erroAcao && <div className={styles.errorBox}>{erroAcao}</div>}
 
-      <div className="space-y-3">
+      <div className={styles.list}>
         {solicitacoes.map((contratacao) => {
           const pendente = contratacao.status === 'pendente';
           const contatoPodeSerConsultado = [
@@ -194,73 +287,157 @@ export default function AbaSolicitacoesPro({
             'concluida',
           ].includes(String(contratacao.status));
           const processando = processandoId === contratacao.id;
+          const cliente = nomeCliente(contratacao);
+          const fotoCliente =
+            contratacao.usuarios_contratacoes_cliente_idTousuarios
+              ?.url_foto_perfil;
 
           return (
-            <article
-              key={contratacao.id}
-              className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
-            >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="font-bold text-slate-800">
-                    {nomeCliente(contratacao)}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    Serviço: {nomeServico(contratacao)}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    Data: {formatarData(contratacao.data)}
-                  </p>
-                  <p className="text-sm font-semibold text-slate-700">
-                    Status: {texto(contratacao.status)}
-                  </p>
+            <article key={contratacao.id} className={styles.requestCard}>
+              <div className={styles.cardTop}>
+                <div className={styles.clientBlock}>
+                  {fotoCliente ? (
+                    <img
+                      src={fotoCliente}
+                      alt={`Foto de ${cliente}`}
+                      className={styles.avatar}
+                    />
+                  ) : (
+                    <span
+                      className={`${styles.avatar} ${styles.avatarFallback}`}
+                      aria-hidden="true"
+                    >
+                      {iniciaisCliente(cliente) || 'CL'}
+                    </span>
+                  )}
+
+                  <div>
+                    <p className={styles.eyebrow}>Pedido #{contratacao.id}</p>
+                    <h3 className={styles.clientName}>{cliente}</h3>
+                    <p className={styles.serviceName}>
+                      {nomeServico(contratacao)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {pendente && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={processando}
-                        onClick={() => executarAcao('aceitar', contratacao)}
-                        className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
-                      >
-                        {processando ? 'Processando...' : 'Aceitar'}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={processando}
-                        onClick={() => executarAcao('negar', contratacao)}
-                        className="rounded-lg border border-red-100 px-4 py-2 text-sm font-bold text-red-600 disabled:opacity-60"
-                      >
-                        Negar
-                      </button>
-                    </>
-                  )}
+                <span
+                  className={`${styles.statusBadge} ${statusClassName(
+                    contratacao.status,
+                  )}`}
+                >
+                  {labelStatus(contratacao.status)}
+                </span>
+              </div>
 
-                  {contatoPodeSerConsultado && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setClienteContatoAberto((atual) =>
-                          atual === contratacao.cliente_id
-                            ? null
-                            : contratacao.cliente_id,
-                        )
-                      }
-                      className="rounded-lg border border-teal-100 px-4 py-2 text-sm font-bold text-teal-700"
-                    >
-                      Ver contato
-                    </button>
-                  )}
+              <div className={styles.metaGrid}>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaIcon}>
+                    <FaCalendarAlt aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className={styles.metaLabel}>Data</span>
+                    <span className={styles.metaValue}>
+                      {formatarData(contratacao.data)}
+                    </span>
+                  </span>
+                </div>
+
+                <div className={styles.metaItem}>
+                  <span className={styles.metaIcon}>
+                    <FaClock aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className={styles.metaLabel}>Horário</span>
+                    <span className={styles.metaValue}>
+                      {formatarHora(contratacao.hora_inicio)} -{' '}
+                      {formatarHora(contratacao.hora_fim)}
+                    </span>
+                  </span>
+                </div>
+
+                <div className={styles.metaItem}>
+                  <span className={styles.metaIcon}>
+                    <FaWallet aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className={styles.metaLabel}>Valor</span>
+                    <span className={styles.metaValue}>
+                      {formatarMoeda(contratacao.preco)}
+                    </span>
+                  </span>
+                </div>
+
+                <div className={styles.metaItem}>
+                  <span className={styles.metaIcon}>
+                    <FaCheck aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className={styles.metaLabel}>Status</span>
+                    <span className={styles.metaValue}>
+                      {labelStatus(contratacao.status)}
+                    </span>
+                  </span>
                 </div>
               </div>
 
+              <div className={styles.notes}>
+                <span className={styles.notesLabel}>Descrição do pedido</span>
+                <p className={styles.notesText}>
+                  {texto(contratacao.observacoes)}
+                </p>
+              </div>
+
+              <div className={styles.actions}>
+                {pendente && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={processando}
+                      onClick={() => executarAcao('aceitar', contratacao)}
+                      className={`${styles.actionButton} ${styles.acceptButton}`}
+                    >
+                      <FaCheck aria-hidden="true" />
+                      {processando ? 'Processando...' : 'Aceitar pedido'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={processando}
+                      onClick={() => executarAcao('negar', contratacao)}
+                      className={`${styles.actionButton} ${styles.denyButton}`}
+                    >
+                      <FaTimes aria-hidden="true" />
+                      Negar pedido
+                    </button>
+                  </>
+                )}
+
+                {contatoPodeSerConsultado && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setClienteContatoAberto((atual) =>
+                        atual === contratacao.cliente_id
+                          ? null
+                          : contratacao.cliente_id,
+                      )
+                    }
+                    className={`${styles.actionButton} ${styles.contactButton}`}
+                  >
+                    <FaPhoneAlt aria-hidden="true" />
+                    {clienteContatoAberto === contratacao.cliente_id
+                      ? 'Ocultar contato'
+                      : 'Ver contato'}
+                  </button>
+                )}
+              </div>
+
               {clienteContatoAberto === contratacao.cliente_id && (
-                <DadosClienteLiberado
-                  clienteId={contratacao.cliente_id}
-                  isPrestador
-                />
+                <div className={styles.contactPanel}>
+                  <DadosClienteLiberado
+                    clienteId={contratacao.cliente_id}
+                    isPrestador
+                  />
+                </div>
               )}
             </article>
           );
