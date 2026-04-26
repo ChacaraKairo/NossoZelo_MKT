@@ -213,6 +213,7 @@ export interface DadosPessoaisPrestador {
   sexo: string;
   email: string;
   senha: string;
+  confirmarSenha: string;
 }
 
 export function validarDadosPessoaisPrestador(
@@ -243,6 +244,10 @@ export function validarDadosPessoaisPrestador(
 
   if (!validarSenhaForte(dados.senha)) {
     erros.senha = mensagemSenhaForte();
+  }
+
+  if (dados.senha !== dados.confirmarSenha) {
+    erros.confirmarSenha = 'As senhas nÃ£o coincidem.';
   }
 
   return erros;
@@ -319,6 +324,9 @@ export interface DadosProfissionaisPrestador {
   registro: string;
   experiencia: number;
   valorHora: number;
+  valorDiaria: number;
+  disponibilidade: string;
+  especialidades: string;
   bio: string;
 }
 
@@ -352,6 +360,31 @@ export function validarDadosProfissionaisPrestador(
     dados.valorHora > 1000
   ) {
     erros.valorHora = 'Valor hora deve estar entre R$ 10 e R$ 1.000.';
+  }
+
+  if (
+    !Number.isFinite(dados.valorDiaria) ||
+    dados.valorDiaria < 30 ||
+    dados.valorDiaria > 10000
+  ) {
+    erros.valorDiaria =
+      'Valor diaria deve estar entre R$ 30 e R$ 10.000.';
+  }
+
+  if (!dados.disponibilidade.trim()) {
+    erros.disponibilidade =
+      'Informe sua disponibilidade de atendimento.';
+  } else if (dados.disponibilidade.trim().length > 255) {
+    erros.disponibilidade =
+      'Disponibilidade deve ter no maximo 255 caracteres.';
+  }
+
+  if (!dados.especialidades.trim()) {
+    erros.especialidades =
+      'Informe pelo menos uma especialidade ou tipo de cuidado.';
+  } else if (dados.especialidades.trim().length > 500) {
+    erros.especialidades =
+      'Especialidades deve ter no maximo 500 caracteres.';
   }
 
   const bio = dados.bio.trim();

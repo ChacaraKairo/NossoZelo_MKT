@@ -119,6 +119,11 @@ function PerfilPage() {
       <PerfilCliente
         perfil={perfil}
         onPerfilAtualizado={definirPerfil}
+        abaInicial={
+          typeof router.query.aba === 'string'
+            ? router.query.aba
+            : undefined
+        }
       />
     );
   } else if (isPrestador) {

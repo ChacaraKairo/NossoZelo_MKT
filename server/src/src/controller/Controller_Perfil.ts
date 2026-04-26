@@ -1,24 +1,7 @@
-/**
- * @author Kairo Chácara & ZeloArchitect AI
- * @version 1.1
- * @date 22/04/2026
- * @description Controller para gestão de perfis.
- * Corrigido erro de tipagem no acesso aos dados de contato.
- * @rota server\src\src\controller\Controller_Perfil.ts
- */
-
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import { ServicePerfil } from '../service/Service_Perfil';
 
-/**
- * Interface estendida para suportar dados de autenticação injetados pelo middleware.
- */
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    tipo: string;
-  };
-}
+export type AuthRequest = Request;
 
 const camposProtegidosPerfil = [
   'id',
@@ -44,14 +27,18 @@ function removerCamposProtegidos(dados: any) {
 }
 
 function statusErroPerfil(error: any) {
+  if (typeof error?.status === 'number') {
+    return error.status;
+  }
+
   const mensagem = String(error?.message || '').toLowerCase();
 
-  if (error?.code === 'P2025' || mensagem.includes('não encontrado')) {
+  if (error?.code === 'P2025' || mensagem.includes('nÃ£o encontrado')) {
     return 404;
   }
 
   if (
-    mensagem.includes('não autorizado') ||
+    mensagem.includes('nÃ£o autorizado') ||
     mensagem.includes('token')
   ) {
     return 401;
@@ -68,8 +55,32 @@ function statusErroPerfil(error: any) {
 }
 
 class ControllerPerfil {
+  async alterarSenha(req: AuthRequest, res: Response) {
+    try {
+      const usuarioId = req.user?.id;
+      if (!usuarioId) {
+        return res.status(401).json({
+          error: 'NÃ£o autorizado: Token invÃ¡lido ou ausente.',
+        });
+      }
+
+      const { senhaAtual, novaSenha } = req.body || {};
+      const resultado = await ServicePerfil.alterarSenhaSegura(
+        usuarioId,
+        senhaAtual,
+        novaSenha,
+      );
+
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErroPerfil(error))
+        .json({ error: error.message });
+    }
+  }
+
   /**
-   * Recupera o perfil completo do usuário autenticado (Dashboard).
+   * Recupera o perfil completo do usuÃ¡rio autenticado (Dashboard).
    */
   async obterMeuPerfil(req: AuthRequest, res: Response) {
     console.log(
@@ -82,11 +93,11 @@ class ControllerPerfil {
       if (!usuarioId) {
         return res.status(401).json({
           error:
-            'Não autorizado: Token inválido ou ausente.',
+            'NÃ£o autorizado: Token invÃ¡lido ou ausente.',
         });
       }
 
-      // Chama o Service que agora traz Agenda, Serviços e Avaliações inclusos
+      // Chama o Service que agora traz Agenda, ServiÃ§os e AvaliaÃ§Ãµes inclusos
       const perfil =
         await ServicePerfil.obterMeuPerfilCompleto(
           usuarioId,
@@ -114,7 +125,7 @@ class ControllerPerfil {
       if (!usuarioId) {
         return res.status(401).json({
           error:
-            'Não autorizado: Token inválido ou ausente.',
+            'NÃ£o autorizado: Token invÃ¡lido ou ausente.',
         });
       }
 
@@ -133,7 +144,7 @@ class ControllerPerfil {
   }
 
   /**
-   * Atualiza dados parciais do perfil do usuário logado.
+   * Atualiza dados parciais do perfil do usuÃ¡rio logado.
    */
   async atualizarDadosPerfil(
     req: AuthRequest,
@@ -148,14 +159,14 @@ class ControllerPerfil {
       if (!usuarioId || !tipo) {
         return res.status(401).json({
           error:
-            'Não autorizado: Token inválido ou ausente (tipo não identificado).',
+            'NÃ£o autorizado: Token invÃ¡lido ou ausente (tipo nÃ£o identificado).',
         });
       }
 
       const dados = req.body;
       if (!dados || Object.keys(dados).length === 0) {
         return res.status(400).json({
-          error: 'Nenhum dado fornecido para atualização.',
+          error: 'Nenhum dado fornecido para atualizaÃ§Ã£o.',
         });
       }
 
@@ -164,7 +175,7 @@ class ControllerPerfil {
       if (Object.keys(dadosLimpos).length === 0) {
         return res.status(400).json({
           error:
-            'Nenhum campo permitido fornecido para atualização.',
+            'Nenhum campo permitido fornecido para atualizaÃ§Ã£o.',
         });
       }
 
@@ -186,7 +197,7 @@ class ControllerPerfil {
   }
 
   /**
-   * Retorna a vitrine pública de um prestador.
+   * Retorna a vitrine pÃºblica de um prestador.
    */
   async vitrinePrestador(req: Request, res: Response) {
     const { id } = req.params;
@@ -200,12 +211,12 @@ class ControllerPerfil {
       );
       return res
         .status(404)
-        .json({ error: 'Prestador não encontrado' });
+        .json({ error: 'Prestador nÃ£o encontrado' });
     }
   }
 
   /**
-   * BUG FIX: Corrigido o acesso à propriedade 'contato_liberado'
+   * BUG FIX: Corrigido o acesso Ã  propriedade 'contato_liberado'
    */
   async dadosClienteParaPrestador(
     req: AuthRequest,
@@ -219,7 +230,7 @@ class ControllerPerfil {
       if (!prestadorId) {
         return res
           .status(401)
-          .json({ error: 'Não autorizado' });
+          .json({ error: 'NÃ£o autorizado' });
       }
 
       const tiposPrestador = [
@@ -246,17 +257,17 @@ class ControllerPerfil {
           prestadorId,
         );
 
-      // Se o service não retornar dados (ex: sem permissão), retorna 404.
+      // Se o service nÃ£o retornar dados (ex: sem permissÃ£o), retorna 404.
       if (!dados) {
         return res
           .status(404)
-          .json({ error: 'Dados não localizados.' });
+          .json({ error: 'Dados nÃ£o localizados.' });
       }
 
-      // Log de telemetria atualizado para evitar erro de compilação
+      // Log de telemetria atualizado para evitar erro de compilaÃ§Ã£o
       console.log(
         `[LOG-FLUXO] Resposta enviada. Contato Liberado: ${
-          (dados as any).contato_liberado ? 'SIM' : 'NÃO'
+          (dados as any).contato_liberado ? 'SIM' : 'NÃƒO'
         }`,
       );
 
@@ -272,5 +283,7 @@ class ControllerPerfil {
   }
 }
 
-// Exportamos uma instância da classe para manter o padrão singleton
+// Exportamos uma instÃ¢ncia da classe para manter o padrÃ£o singleton
 export default new ControllerPerfil();
+
+

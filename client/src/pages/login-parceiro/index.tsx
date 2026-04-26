@@ -12,6 +12,7 @@ import Logo from '@/components/logos/OnlyLogo'; // Assumindo que o caminho está
 // Importando o novo botão reutilizável
 import Button from '@/components/btn/Button';
 import { loginService } from '@/service/Login';
+import logger from '@/utils/logger';
 
 const LoginPage = () => {
   const router = useRouter();
@@ -28,14 +29,14 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const response = await loginService.login({
+      await loginService.login({
         identificador,
         senha,
       });
 
       // O token já foi salvo nos cookies pelo serviço.
       // Apenas redirecionamos o usuário para a página principal.
-      console.log('Login bem-sucedido:', response);
+      logger.info('LoginParceiroPage', 'Login concluído com sucesso');
       router.push('/prestadores'); // Ajuste a rota de destino se necessário
     } catch (err) {
       const errorMessage =

@@ -1,12 +1,3 @@
-/**
- * @author Kairo Chácara
- * @version 1.0
- * @date 15/04/2026
- * @description Conjunto de funções e tipos para validação de integridade de dados (DTO)
- * no processo de criação de usuários, cobrindo dados base e perfis específicos (Enfermeiro, Cuidador, etc).
- * @rota server\src\src\validator\create\Validator_User.ts
- */
-
 import validator from 'validator';
 
 enum TipoUsuario {
@@ -17,68 +8,152 @@ enum TipoUsuario {
   ADMIN = 'admin',
 }
 
-interface UsuarioBase {
-  nome: string;
-  email: string;
-  senha: string;
-  telefone?: string;
-  cpf: string;
-  data_nascimento?: string;
-  endereco?: string;
-  cidade?: string;
-  estado?: string;
-  pais?: string;
-  url_foto_perfil?: string;
-  tipo: TipoUsuario;
+type ErrosValidacao = Record<string, string[]>;
+
+function normalizarDigitos(valor: unknown): string {
+  return String(valor || '').replace(/\D/g, '');
 }
 
-interface CuidadorExtra {
-  bio?: string;
-  experiencia?: string;
-  documento_profissional?: string;
+function adicionarErro(
+  erros: ErrosValidacao,
+  campo: string,
+  mensagem: string,
+) {
+  erros[campo] = [...(erros[campo] || []), mensagem];
 }
 
-interface EnfermeiroExtra {
-  coren: string;
-  especialidade?: string;
-  experiencia?: string;
+function cpfValido(cpfOriginal: string): boolean {
+  const cpf = normalizarDigitos(cpfOriginal);
+
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+    return false;
+  }
+
+  const calcularDigito = (base: string, pesoInicial: number) => {
+    const soma = base
+      .split('')
+      .reduce(
+        (total, numero, indice) =>
+          total + Number(numero) * (pesoInicial - indice),
+        0,
+      );
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+
+  const primeiroDigito = calcularDigito(cpf.slice(0, 9), 10);
+  const segundoDigito = calcularDigito(cpf.slice(0, 10), 11);
+
+  return (
+    primeiroDigito === Number(cpf[9]) &&
+    segundoDigito === Number(cpf[10])
+  );
 }
 
-interface AdminExtra {
-  cargo?: string;
-  permissao_total?: boolean;
+function cepValido(cepOriginal: string): boolean {
+  const cep = normalizarDigitos(cepOriginal);
+  return cep.length === 8 && !/^(\d)\1+$/.test(cep);
 }
 
-/**
- * Valida o objeto de entrada para a criação de um novo usuário.
- * Realiza checagem de tipos, formatos de string, CPF e regras específicas por perfil.
- * @param {any} input - Objeto de entrada contendo 'usuario' e dados de perfil.
- * @returns {{ valid: boolean, erros: Record<string, string[]> }} - Status da validação e mapa de erros.
- */
+function senhaForte(senha: unknown): boolean {
+  if (typeof senha !== 'string') return false;
+
+  return (
+    senha.length >= 8 &&
+    senha.length <= 72 &&
+    /[a-z]/.test(senha) &&
+    /[A-Z]/.test(senha) &&
+    /\d/.test(senha) &&
+    /[^A-Za-z0-9]/.test(senha)
+  );
+}
+
+function numeroOpcionalValido(valor: unknown, minimo = 0, maximo = 100000) {
+  if (valor === undefined || valor === null || valor === '') return true;
+  const numero = Number(valor);
+  return Number.isFinite(numero) && numero >= minimo && numero <= maximo;
+}
+
+function stringOpcionalValida(
+  valor: unknown,
+  maximo = 500,
+): boolean {
+  return (
+    valor === undefined ||
+    valor === null ||
+    (typeof valor === 'string' && valor.trim().length <= maximo)
+  );
+}
+
+function validarCamposProfissionais(
+  erros: ErrosValidacao,
+  dados: any,
+) {
+  if (!stringOpcionalValida(dados.bio, 1000)) {
+    adicionarErro(erros, 'bio', 'Bio deve ser um texto valido.');
+  }
+
+  if (!numeroOpcionalValido(dados.experiencia, 0, 80)) {
+    adicionarErro(
+      erros,
+      'experiencia',
+      'Experiencia deve estar entre 0 e 80 anos.',
+    );
+  }
+
+  if (!numeroOpcionalValido(dados.valorHora, 0, 10000)) {
+    adicionarErro(
+      erros,
+      'valorHora',
+      'Valor hora deve ser um numero positivo.',
+    );
+  }
+
+  if (!numeroOpcionalValido(dados.valorDiaria, 0, 100000)) {
+    adicionarErro(
+      erros,
+      'valorDiaria',
+      'Valor diaria deve ser um numero positivo.',
+    );
+  }
+
+  if (!stringOpcionalValida(dados.disponibilidade, 255)) {
+    adicionarErro(
+      erros,
+      'disponibilidade',
+      'Disponibilidade deve ter ate 255 caracteres.',
+    );
+  }
+
+  if (!stringOpcionalValida(dados.especialidades, 1000)) {
+    adicionarErro(
+      erros,
+      'especialidades',
+      'Especialidades deve ser um texto valido.',
+    );
+  }
+}
+
 export function validarCreateUsuarioDto(input: any): {
   valid: boolean;
-  erros: Record<string, string[]>;
+  erros: ErrosValidacao;
 } {
   console.log(
-    `[LOG-FLUXO] Iniciando validarCreateUsuarioDto. Analisando estrutura do payload.`,
+    '[LOG-FLUXO] Iniciando validarCreateUsuarioDto. Analisando estrutura do payload.',
   );
 
-  const erros: Record<string, string[]> = {};
-
-  // Normalização do input mantendo nomenclaturas originais
+  const erros: ErrosValidacao = {};
   const usuario = input.usuario ?? input;
-  const tipo = usuario.tipo;
+  const tipo = usuario?.tipo;
 
-  console.log(
-    `[LOG-FLUXO] Identificado tipo de usuário para validação: ${
-      tipo || 'Não informado'
-    }.`,
-  );
-
-  // ========== VALIDAÇÃO DO USUÁRIO BASE ==========
-  console.log(
-    '[LOG-FLUXO] Iniciando validação do bloco de dados base.',
-  );
+  if (!usuario || typeof usuario !== 'object') {
+    return {
+      valid: false,
+      erros: {
+        usuario: ['Dados de usuario sao obrigatorios.'],
+      },
+    };
+  }
 
   if (
     !usuario.nome ||
@@ -86,204 +161,150 @@ export function validarCreateUsuarioDto(input: any): {
     usuario.nome.trim().length < 3 ||
     usuario.nome.trim().length > 100
   ) {
-    console.warn(
-      '[LOG-FLUXO] Falha de validação: nome inválido ou fora dos limites (3-100 carac).',
+    adicionarErro(
+      erros,
+      'nome',
+      'Nome deve ter entre 3 e 100 caracteres.',
     );
-    erros.nome = ['Nome deve ter entre 3 e 100 caracteres'];
   }
 
   if (!usuario.email || !validator.isEmail(usuario.email)) {
-    console.warn(
-      `[LOG-FLUXO] Falha de validação: e-mail '${usuario.email}' inválido.`,
-    );
-    erros.email = ['Email inválido'];
+    adicionarErro(erros, 'email', 'Email invalido.');
   }
 
-  if (
-    !usuario.senha ||
-    typeof usuario.senha !== 'string' ||
-    usuario.senha.length < 6 ||
-    usuario.senha.length > 255
-  ) {
-    console.warn(
-      '[LOG-FLUXO] Falha de validação: senha curta ou inexistente.',
+  if (!senhaForte(usuario.senha)) {
+    adicionarErro(
+      erros,
+      'senha',
+      'Senha deve ter 8 a 72 caracteres, com letra maiuscula, minuscula, numero e caractere especial.',
     );
-    erros.senha = [
-      'Senha deve ter entre 6 e 255 caracteres',
-    ];
   }
 
   if (
     usuario.telefone &&
-    !validator.isMobilePhone(usuario.telefone, 'pt-BR')
-  ) {
-    console.warn(
-      `[LOG-FLUXO] Falha de validação: telefone '${usuario.telefone}' fora do padrão pt-BR.`,
-    );
-    erros.telefone = [
-      'Telefone inválido. Use formato nacional brasileiro',
-    ];
-  }
-
-  if (
-    !usuario.cpf ||
-    !validator.matches(
-      usuario.cpf,
-      /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
+    !validator.isMobilePhone(
+      normalizarDigitos(usuario.telefone),
+      'pt-BR',
     )
   ) {
-    console.warn(
-      `[LOG-FLUXO] Falha de validação: CPF '${usuario.cpf}' não atende ao regex de máscara.`,
+    adicionarErro(
+      erros,
+      'telefone',
+      'Telefone invalido. Use um numero brasileiro com DDD.',
     );
-    erros.cpf = [
-      'CPF inválido. Formato esperado: 000.000.000-00',
-    ];
+  }
+
+  if (!cpfValido(usuario.cpf)) {
+    adicionarErro(
+      erros,
+      'cpf',
+      'CPF invalido. Informe 11 digitos validos, com ou sem mascara.',
+    );
+  }
+
+  if (!cepValido(usuario.cep)) {
+    adicionarErro(
+      erros,
+      'cep',
+      'CEP invalido. Informe 8 digitos validos, com ou sem mascara.',
+    );
   }
 
   if (
     usuario.data_nascimento &&
     !validator.isISO8601(usuario.data_nascimento)
   ) {
-    console.warn(
-      `[LOG-FLUXO] Falha de validação: data_nascimento '${usuario.data_nascimento}' não é ISO8601.`,
+    adicionarErro(
+      erros,
+      'data_nascimento',
+      'Data de nascimento invalida. Use ISO ou YYYY-MM-DD.',
     );
-    erros.data_nascimento = [
-      'Data de nascimento inválida. Use o formato ISO: YYYY-MM-DDTHH:mm:ss.sssZ',
-    ];
   }
 
-  if (
-    usuario.endereco &&
-    typeof usuario.endereco !== 'string'
-  ) {
-    erros.endereco = ['Endereço deve ser uma string'];
-  }
-
-  if (
-    usuario.cidade &&
-    typeof usuario.cidade !== 'string'
-  ) {
-    erros.cidade = ['Cidade deve ser uma string'];
-  }
-
-  if (
-    usuario.estado &&
-    typeof usuario.estado !== 'string'
-  ) {
-    erros.estado = ['Estado deve ser uma string'];
-  }
-
-  if (usuario.pais && typeof usuario.pais !== 'string') {
-    erros.pais = ['País deve ser uma string'];
-  }
+  ['endereco', 'bairro', 'cidade', 'estado', 'pais'].forEach(
+    (campo) => {
+      if (
+        usuario[campo] !== undefined &&
+        usuario[campo] !== null &&
+        typeof usuario[campo] !== 'string'
+      ) {
+        adicionarErro(
+          erros,
+          campo,
+          `${campo} deve ser uma string.`,
+        );
+      }
+    },
+  );
 
   if (
     usuario.url_foto_perfil &&
     !validator.isURL(usuario.url_foto_perfil)
   ) {
-    console.warn(
-      `[LOG-FLUXO] Falha de validação: URL de perfil inválida.`,
+    adicionarErro(
+      erros,
+      'url_foto_perfil',
+      'URL de foto de perfil invalida.',
     );
-    erros.url_foto_perfil = [
-      'URL de foto de perfil inválida',
-    ];
   }
 
   if (
     !usuario.tipo ||
     !Object.values(TipoUsuario).includes(usuario.tipo)
   ) {
-    console.warn(
-      `[LOG-FLUXO] Falha de validação: Tipo de usuário '${usuario.tipo}' é desconhecido.`,
-    );
-    erros.tipo = ['Tipo de usuário inválido'];
+    adicionarErro(erros, 'tipo', 'Tipo de usuario invalido.');
   }
 
-  // ========== VALIDAÇÕES POR TIPO DE USUÁRIO ==========
-  console.log(
-    `[LOG-FLUXO] Verificando campos específicos para o perfil: ${tipo}`,
-  );
-
   if (tipo === TipoUsuario.CUIDADOR) {
-    const cuidador = input.cuidador || {};
-    if (cuidador.bio && typeof cuidador.bio !== 'string') {
-      erros.bio = ['Bio deve ser uma string'];
-    }
-    if (
-      cuidador.experiencia &&
-      typeof cuidador.experiencia !== 'string'
-    ) {
-      erros.experiencia = [
-        'Experiência deve ser uma string',
-      ];
-    }
-    if (
-      cuidador.documento_professional &&
-      typeof cuidador.documento_professional !== 'string'
-    ) {
-      erros.documento_professional = [
-        'Documento profissional deve ser uma string',
-      ];
-    }
+    validarCamposProfissionais(erros, input.cuidador || {});
+  }
+
+  if (tipo === TipoUsuario.ACOMPANHANTE) {
+    validarCamposProfissionais(erros, input.acompanhante || {});
   }
 
   if (tipo === TipoUsuario.ENFERMEIRO) {
     const enfermeiro = input.enfermeiro || {};
+    validarCamposProfissionais(erros, enfermeiro);
+
     if (
       !enfermeiro.coren ||
-      typeof enfermeiro.coren !== 'string'
+      typeof enfermeiro.coren !== 'string' ||
+      enfermeiro.coren.trim().length < 4 ||
+      enfermeiro.coren.trim().length > 20
     ) {
-      console.warn(
-        '[LOG-FLUXO] Falha de validação: COREN ausente para perfil enfermeiro.',
+      adicionarErro(
+        erros,
+        'coren',
+        'COREN e obrigatorio para enfermeiros.',
       );
-      erros.coren = [
-        'COREN é obrigatório e deve ser uma string',
-      ];
-    }
-    if (
-      enfermeiro.especialidade &&
-      typeof enfermeiro.especialidade !== 'string'
-    ) {
-      erros.especialidade = [
-        'Especialidade deve ser uma string',
-      ];
-    }
-    if (
-      enfermeiro.experiencia &&
-      typeof enfermeiro.experiencia !== 'string'
-    ) {
-      erros.experiencia = [
-        'Experiência deve ser uma string',
-      ];
     }
   }
 
   if (tipo === TipoUsuario.ADMIN) {
     const admin = input.admin || {};
     if (admin.cargo && typeof admin.cargo !== 'string') {
-      erros.cargo = ['Cargo deve ser uma string'];
+      adicionarErro(erros, 'cargo', 'Cargo deve ser uma string.');
     }
     if (
       admin.permissao_total !== undefined &&
       typeof admin.permissao_total !== 'boolean'
     ) {
-      erros.permissao_total = [
-        'Permissão total deve ser um booleano',
-      ];
+      adicionarErro(
+        erros,
+        'permissao_total',
+        'Permissao total deve ser booleana.',
+      );
     }
   }
 
   const isValid = Object.keys(erros).length === 0;
 
   if (isValid) {
-    console.log(
-      '[LOG-FLUXO] DTO validado com sucesso. Nenhuma inconsistência encontrada.',
-    );
+    console.log('[LOG-FLUXO] DTO validado com sucesso.');
   } else {
     console.warn(
-      `[LOG-FLUXO] Validação do DTO finalizada com ${
-        Object.keys(erros).length
-      } erro(s) detectado(s).`,
+      `[LOG-FLUXO] Validacao do DTO finalizada com ${Object.keys(erros).length} erro(s).`,
     );
   }
 

@@ -26,7 +26,7 @@ console.log(
  * Esta única rota agora substitui as antigas /cuidador, /enfermeiro e /admin.
  * O UserController.criarUsuario lê o "req.body.usuario.tipo" e roteia automaticamente.
  */
-UserRouter.post('/usuario', UserController.criarUsuario);
+UserRouter.post('/usuario', validarUsuario, UserController.criarUsuario);
 
 // ==========================================
 // 2. ROTAS DE LEITURA E ATUALIZAÇÃO

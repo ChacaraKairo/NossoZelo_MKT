@@ -27,7 +27,7 @@ const PerfilStatsWidgets: React.FC<
   // Conversão segura do Decimal do Prisma para número formatado
   const notaMedia = perfil.avaliacao_media
     ? Number(perfil.avaliacao_media).toFixed(1)
-    : '5.0';
+    : '0.0';
 
   return (
     <div className={styles.statsGrid}>

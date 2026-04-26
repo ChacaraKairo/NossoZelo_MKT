@@ -8,6 +8,8 @@
     "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev src/server.ts",
     "build": "npx prisma generate && tsc",
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
+    "db:backup": "ts-node src/src/scripts/backup-db.ts",
+    "db:restore": "ts-node src/src/scripts/restore-db.ts",
     "test": "echo \"No test specified\" && exit 0"
   },
   "repository": {

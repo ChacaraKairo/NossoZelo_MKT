@@ -16,6 +16,7 @@ import AgendamentoRouter from './Route_Agendamento';
 import UploadRouter from './Route_Upload';
 import PerfilRouter from './Route_Perfil';
 import AvaliacaoRouter from './Route_Avaliacao';
+import ServicoRouter from './Route_Servico';
 
 console.log(
   '[LOG-FLUXO] Inicializando roteador central (index) e iniciando acoplamento de módulos.',
@@ -89,6 +90,14 @@ console.log(
  * Rota para sistema de avaliações cruzadas e gestão de reputação.
  */
 router.use('/avaliacoes', AvaliacaoRouter);
+
+console.log(
+  '[LOG-FLUXO] Acoplando módulo: /servicos -> ServicoRouter',
+);
+/**
+ * Rota para gerenciamento real dos serviços oferecidos por prestadores.
+ */
+router.use('/servicos', ServicoRouter);
 
 console.log(
   '[LOG-FLUXO] Roteamento central configurado com sucesso. Árvore de endpoints operacional.',

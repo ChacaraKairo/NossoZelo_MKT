@@ -178,12 +178,33 @@ const StepPessoais = () => {
             onChange={(e) =>
               updateDadosPessoais({ senha: e.target.value })
             }
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Senha forte"
             type="password"
           />
           {erros.senha && (
             <span className={Style.errorText}>
               {erros.senha}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className={Style.inputRow}>
+        <div className={Style.inputGroup}>
+          <label>Confirmar senha</label>
+          <Input
+            value={dadosPessoais.confirmarSenha}
+            onChange={(e) =>
+              updateDadosPessoais({
+                confirmarSenha: e.target.value,
+              })
+            }
+            placeholder="Digite a senha novamente"
+            type="password"
+          />
+          {erros.confirmarSenha && (
+            <span className={Style.errorText}>
+              {erros.confirmarSenha}
             </span>
           )}
         </div>

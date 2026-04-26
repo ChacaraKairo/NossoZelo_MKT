@@ -23,9 +23,9 @@ class UserController {
     res: Response,
   ): Promise<void> {
     console.log(
-      `[LOG-FLUXO] Iniciando criarUsuario no UserController. Payload: ${JSON.stringify(
-        req.body,
-      )}`,
+      `[LOG-FLUXO] Iniciando criarUsuario no UserController para e-mail: ${
+        req.body?.usuario?.email || 'N/A'
+      } e tipo: ${req.body?.usuario?.tipo || 'N/A'}.`,
     );
 
     try {
@@ -102,17 +102,19 @@ class UserController {
         error.message || 'Erro interno ao criar usuário.';
 
       const statusCode =
-        mensagemErro.includes('obrigatório') ||
-        mensagemErro.includes('inválid')
-          ? 400
-          : 500;
+        typeof error.status === 'number'
+          ? error.status
+          : mensagemErro.includes('obrigat') ||
+              mensagemErro.includes('inv')
+            ? 400
+            : 500;
 
       console.log(
         `[LOG-FLUXO] Enviando resposta de erro com Status: ${statusCode}.`,
       );
       res
         .status(statusCode)
-        .json({ message: mensagemErro });
+        .json({ error: mensagemErro, message: mensagemErro });
     }
   }
 
@@ -160,9 +162,7 @@ class UserController {
   ): Promise<void> {
     const { id } = req.params;
     console.log(
-      `[LOG-FLUXO] Iniciando atualizarUsuario no UserController para o ID: ${id}. Dados: ${JSON.stringify(
-        req.body,
-      )}`,
+      `[LOG-FLUXO] Iniciando atualizarUsuario no UserController para o ID: ${id}.`,
     );
 
     try {

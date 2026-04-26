@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import AbaHistoricoPerfil from '@/components/perfil/AbaHistoricoPerfil';
+import AbaSeguranca from '@/components/perfil/AbaSeguranca';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import FormEditarPerfil from '@/components/perfil/FormEditarPerfil';
 import PerfilHeader from '@/components/perfil/PerfilHeader';
@@ -12,16 +14,25 @@ import logger from '@/utils/logger';
 interface PerfilClienteProps {
   perfil: PerfilUsuario;
   onPerfilAtualizado?: (perfil: PerfilUsuario) => void;
+  abaInicial?: string;
 }
 
-type AbaCliente = 'visao' | 'dados' | 'contratacoes' | 'avaliacoes';
+type AbaCliente =
+  | 'visao'
+  | 'dados'
+  | 'contratacoes'
+  | 'avaliacoes'
+  | 'historico'
+  | 'seguranca';
 
 const CONTEXTO = 'PerfilCliente';
 const ABAS: { id: AbaCliente; label: string }[] = [
   { id: 'visao', label: 'Visão geral' },
   { id: 'dados', label: 'Dados pessoais' },
-  { id: 'contratacoes', label: 'Minhas contratações' },
+  { id: 'contratacoes', label: 'Meus pedidos' },
   { id: 'avaliacoes', label: 'Avaliações' },
+  { id: 'historico', label: 'Histórico' },
+  { id: 'seguranca', label: 'Segurança' },
 ];
 
 function texto(valor: unknown) {
@@ -59,9 +70,14 @@ function VisaoGeral({
   avaliacoes: AvaliacaoPerfil[];
 }) {
   logger.debug(CONTEXTO, 'Renderização da aba visão geral');
+  const ativos = contratacoes.filter((item) =>
+    ['pendente', 'confirmado'].includes(String(item.status)),
+  ).length;
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-4">
       <CampoInfo label="Telefone" valor={usuario.telefone} />
+      <CampoInfo label="Pedidos ativos" valor={ativos} />
       <CampoInfo label="Contratações" valor={contratacoes.length} />
       <CampoInfo label="Avaliações feitas" valor={avaliacoes.length} />
     </div>
@@ -108,7 +124,8 @@ function MinhasContratacoes({
           className="rounded-xl border border-slate-100 bg-white p-5"
         >
           <p className="font-bold text-slate-800">
-            Contratação #{contratacao.id}
+            {contratacao.usuarios_contratacoes_prestador_idTousuarios
+              ?.nome || `Contratação #${contratacao.id}`}
           </p>
           <p className="text-sm text-slate-500">
             Status: {texto(contratacao.status)}
@@ -165,6 +182,7 @@ function AvaliacoesCliente({
 export default function PerfilCliente({
   perfil,
   onPerfilAtualizado,
+  abaInicial,
 }: PerfilClienteProps) {
   const [aba, setAba] = useState<AbaCliente>('visao');
   const [editando, setEditando] = useState(false);
@@ -176,6 +194,15 @@ export default function PerfilCliente({
   const avaliacoes = perfil.avaliacoes_feitas || [];
 
   useEffect(() => {
+    if (
+      abaInicial &&
+      ABAS.some((item) => item.id === abaInicial)
+    ) {
+      setAba(abaInicial as AbaCliente);
+    }
+  }, [abaInicial]);
+
+  useEffect(() => {
     logger.info(CONTEXTO, 'Renderizando PerfilCliente', {
       usuarioId: usuario.id,
       totalContratacoes: contratacoes.length,
@@ -185,6 +212,7 @@ export default function PerfilCliente({
 
   const selecionarAba = (novaAba: AbaCliente) => {
     logger.info(CONTEXTO, 'Aba selecionada', { aba: novaAba });
+    setEditando(false);
     setAba(novaAba);
   };
 
@@ -218,8 +246,14 @@ export default function PerfilCliente({
     conteudo = <DadosPessoais usuario={usuario} />;
   } else if (aba === 'contratacoes') {
     conteudo = <MinhasContratacoes contratacoes={contratacoes} />;
-  } else {
+  } else if (aba === 'avaliacoes') {
     conteudo = <AvaliacoesCliente avaliacoes={avaliacoes} />;
+  } else if (aba === 'historico') {
+    conteudo = (
+      <AbaHistoricoPerfil contratacoes={contratacoes} modo="cliente" />
+    );
+  } else {
+    conteudo = <AbaSeguranca />;
   }
 
   return (

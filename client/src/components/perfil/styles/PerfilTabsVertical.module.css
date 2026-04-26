@@ -30,6 +30,19 @@
   text-align: left;
 }
 
+.description {
+  display: block;
+  margin-top: 0.15rem;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.tabButtonActive .description {
+  color: #0369a1;
+}
+
 .tabButton:hover {
   background-color: #f8fafc;
   color: #0f172a;

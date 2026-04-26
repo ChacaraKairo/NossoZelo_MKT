@@ -10,6 +10,7 @@ import InputPassword from '@/components/inputs/InputPassword';
 import Logo from '@/components/logos/OnlyLogo';
 import Button from '@/components/btn/Button';
 import { loginService } from '@/service/Login';
+import logger from '@/utils/logger';
 
 const CHAVE_IDENTIFICADOR_LEMBRADO =
   'nossozelo_identificador_lembrado';
@@ -42,7 +43,9 @@ const LoginPage = () => {
         }
       } catch (e) {
         localStorage.removeItem(CHAVE_IDENTIFICADOR_LEMBRADO);
-        console.error('Erro ao ler identificador salvo', e);
+        logger.warn('LoginPage', 'Identificador salvo inválido removido', {
+          mensagem: e instanceof Error ? e.message : 'Erro desconhecido',
+        });
       }
     }
   }, []);
@@ -60,12 +63,12 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const response = await loginService.login({
+      await loginService.login({
         identificador: identificador, // Mandando o nome exato que o Backend quer
         senha,
       });
 
-      console.log('Login bem-sucedido:', response);
+      logger.info('LoginPage', 'Login concluído com sucesso');
 
       if (lembrarMe) {
         localStorage.setItem(

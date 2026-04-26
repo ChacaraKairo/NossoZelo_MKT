@@ -16,6 +16,7 @@ export interface CadastroPayload {
     data_nascimento: string | null;
     cep: string;
     endereco: string;
+    bairro?: string;
     cidade: string;
     estado: string;
     pais: string;
@@ -26,6 +27,9 @@ export interface CadastroPayload {
     bio: string;
     experiencia: number;
     valorHora?: number;
+    valorDiaria?: number;
+    disponibilidade?: string;
+    especialidades?: string;
     documentos?: string;
   };
   enfermeiro?: {
@@ -33,12 +37,18 @@ export interface CadastroPayload {
     bio: string;
     experiencia: number;
     valorHora?: number;
+    valorDiaria?: number;
+    disponibilidade?: string;
+    especialidades?: string;
     documentos?: string;
   };
   acompanhante?: {
     bio: string;
     experiencia: number;
     valorHora?: number;
+    valorDiaria?: number;
+    disponibilidade?: string;
+    especialidades?: string;
     documentos?: string;
   };
 }
@@ -70,7 +80,10 @@ export const cadastrarUsuario = async (
         .json()
         .catch(() => ({ message: 'Erro desconhecido.' }));
       throw new Error(
-        erroData.message || 'Falha ao cadastrar.',
+        erroData.error ||
+          erroData.message ||
+          erroData.mensagem ||
+          'Falha ao cadastrar.',
       );
     }
 
@@ -83,6 +96,10 @@ export const cadastrarUsuario = async (
       resultado.id ||
       resultado.data?.id ||
       resultado.usuario?.id;
+    const uploadToken =
+      resultado.data?.uploadToken ||
+      resultado.uploadToken ||
+      resultado.upload_token;
 
     console.log(
       `[LOG-FLUXO] Sucesso: ID extraído para upload: ${idFinal || 'NÃO ENCONTRADO'}`,
@@ -98,6 +115,7 @@ export const cadastrarUsuario = async (
     return {
       ...resultado,
       id: idFinal, // Injeta na raiz para o Hook useFinalizarCadastro consumir
+      uploadToken,
     };
   } catch (error: any) {
     console.error(

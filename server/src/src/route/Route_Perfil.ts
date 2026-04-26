@@ -80,6 +80,12 @@ router.patch(
   ControllerPerfil.atualizarDadosPerfil as any,
 );
 
+router.patch(
+  '/seguranca/senha',
+  authMiddleware,
+  ControllerPerfil.alterarSenha as any,
+);
+
 console.log(
   '[LOG-FLUXO] RoutePerfil configurado com sucesso e pronto para o Router Principal.',
 );

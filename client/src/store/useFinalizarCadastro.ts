@@ -30,6 +30,7 @@ export const useFinalizarCadastro = () => {
         data_nascimento: dadosPessoais.dataNascimento,
         cep: endereco.cep.replace(/\D/g, ''),
         endereco: `${endereco.rua}, ${endereco.numero} - ${endereco.bairro}`,
+        bairro: endereco.bairro,
         cidade: endereco.cidade,
         estado: endereco.uf,
         pais: 'Brasil',
@@ -41,6 +42,9 @@ export const useFinalizarCadastro = () => {
       bio: profissional.bio,
       experiencia: Number(profissional.experiencia),
       valorHora: Number(profissional.valorHora),
+      valorDiaria: Number(profissional.valorDiaria),
+      disponibilidade: profissional.disponibilidade,
+      especialidades: profissional.especialidades,
     };
 
     const categoria = profissional.categoria.toLowerCase();
@@ -58,7 +62,16 @@ export const useFinalizarCadastro = () => {
     return payload;
   };
 
-  const executarUploads = async (usuarioId: string) => {
+  const executarUploads = async (
+    usuarioId: string,
+    uploadToken: string,
+  ) => {
+    if (!uploadToken) {
+      throw new Error(
+        'Token temporario de upload nao recebido do servidor.',
+      );
+    }
+
     const sessionId = crypto
       .randomUUID()
       .replace(/-/g, '')
@@ -99,6 +112,9 @@ export const useFinalizarCadastro = () => {
         `${API_URL}/nossozelo/upload/completar-cadastro`,
         {
           method: 'POST',
+          headers: {
+            Authorization: `Bearer ${uploadToken}`,
+          },
           body: formData,
         },
       );
@@ -140,6 +156,7 @@ export const useFinalizarCadastro = () => {
 
       // Agora o idValido receberá o valor correto '1Mu5t...'
       const idValido = usuario.id;
+      const uploadToken = usuario.uploadToken || usuario.upload_token;
 
       if (!idValido || idValido === 'undefined') {
         throw new Error(
@@ -148,7 +165,7 @@ export const useFinalizarCadastro = () => {
       }
 
       // 🔥 O PASSO QUE FALTAVA: Disparar os uploads com o ID real
-      await executarUploads(idValido);
+      await executarUploads(idValido, uploadToken);
 
       alert('Cadastro realizado com sucesso!');
       limparRascunho();
