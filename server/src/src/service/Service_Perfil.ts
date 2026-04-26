@@ -9,10 +9,60 @@
 import {
   contratacoes_status,
 } from '@prisma/client';
+import { compare, hash } from 'bcrypt';
 import prisma from '../lib/prisma';
 
 
 export class ServicePerfil {
+  static async alterarSenhaSegura(
+    usuarioId: string,
+    senhaAtual: string,
+    novaSenha: string,
+  ) {
+    if (!senhaAtual || !novaSenha) {
+      throw new Error('Senha atual e nova senha são obrigatórias.');
+    }
+
+    if (
+      novaSenha.length < 8 ||
+      novaSenha.length > 72 ||
+      !/[a-z]/.test(novaSenha) ||
+      !/[A-Z]/.test(novaSenha) ||
+      !/\d/.test(novaSenha) ||
+      !/[^A-Za-z0-9]/.test(novaSenha)
+    ) {
+      throw new Error(
+        'A nova senha deve ter 8 a 72 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
+      );
+    }
+
+    const usuario = await prisma.usuarios.findUnique({
+      where: { id: usuarioId },
+      select: { id: true, senha: true },
+    });
+
+    if (!usuario) {
+      throw new Error('Usuário não encontrado.');
+    }
+
+    const senhaConfere = await compare(senhaAtual, usuario.senha);
+    if (!senhaConfere) {
+      const error = new Error('Senha atual incorreta.') as Error & {
+        status?: number;
+      };
+      error.status = 403;
+      throw error;
+    }
+
+    const senhaCriptografada = await hash(novaSenha, 10);
+    await prisma.usuarios.update({
+      where: { id: usuarioId },
+      data: { senha: senhaCriptografada },
+    });
+
+    return { message: 'Senha atualizada com sucesso.' };
+  }
+
   /**
    * Recupera o perfil completo do usuário logado com as relações mapeadas pelo Prisma.
    */

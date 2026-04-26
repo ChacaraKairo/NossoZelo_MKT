@@ -47,6 +47,8 @@ const UserDropdown = () => {
   if (!usuario) return null;
 
   const isPrestador = usuario.tipo !== 'cliente';
+  const nomeUsuario = usuario.nome || 'Usuário';
+  const primeiroNome = nomeUsuario.split(' ')[0] || 'Usuário';
 
   return (
     <div className={styles.container} ref={dropdownRef}>
@@ -57,7 +59,7 @@ const UserDropdown = () => {
       >
         <div className={styles.textContainer}>
           <span className={styles.userName}>
-            {usuario.nome.split(' ')[0]}
+            {primeiroNome}
           </span>
           <span className={styles.userRole}>
             {isPrestador ? 'Profissional' : 'Cliente'}
@@ -92,7 +94,7 @@ const UserDropdown = () => {
         <div className={styles.dropdownMenu}>
           <div className={styles.menuHeader}>
             <p className={styles.fullName}>
-              {usuario.nome}
+              {nomeUsuario}
             </p>
             <p className={styles.welcomeText}>
               Bem-vindo ao Nosso Zelo
@@ -123,7 +125,7 @@ const UserDropdown = () => {
             {isPrestador && (
               <>
                 <Link
-                  href="/agenda"
+                  href="/perfil/agenda"
                   onClick={() => setIsOpen(false)}
                   className={styles.menuItem}
                 >
@@ -143,7 +145,7 @@ const UserDropdown = () => {
                 </Link>
 
                 <Link
-                  href="/meus-servicos"
+                  href="/perfil/servicos"
                   onClick={() => setIsOpen(false)}
                   className={styles.menuItem}
                 >
@@ -165,7 +167,7 @@ const UserDropdown = () => {
             )}
 
             <Link
-              href="/historico"
+              href={isPrestador ? '/perfil/historico' : '/perfil/pedidos'}
               onClick={() => setIsOpen(false)}
               className={styles.menuItem}
             >

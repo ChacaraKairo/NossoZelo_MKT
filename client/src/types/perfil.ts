@@ -26,6 +26,7 @@ export interface ServicoPerfil {
   descricao?: string | null;
   valor?: number | string | null;
   tipo?: string | null;
+  tipo_cobranca?: 'hora' | 'dia' | string | null;
 }
 
 export interface AgendaPerfil {

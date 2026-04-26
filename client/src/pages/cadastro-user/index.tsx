@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Style from '@/styles/CadastroPage.module.css';
 
@@ -9,10 +9,10 @@ import Logo from '@/components/logos/OnlyLogo';
 
 import { cadastrarUsuario } from '@/service/cadastroService';
 import {
-  mascaraCpf,
-  mascaraTelefone,
   mascaraCep,
+  mascaraCpf,
   mascaraNumero,
+  mascaraTelefone,
   mascaraUf,
 } from '@/utils/masks';
 import {
@@ -21,24 +21,23 @@ import {
 } from '@/validation/cadastroValidation';
 
 import {
-  FaUser,
-  FaIdCard,
-  FaPhone,
+  FaCity,
   FaEnvelope,
-  FaLock,
   FaEye,
   FaEyeSlash,
-  FaMapMarkerAlt,
-  FaCity,
-  FaRoad,
-  FaVenusMars,
   FaHashtag,
+  FaIdCard,
+  FaLock,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaRoad,
+  FaUser,
+  FaVenusMars,
 } from 'react-icons/fa';
 
 const CadastroPage = () => {
   const router = useRouter();
 
-  // --- Estados do formulário ---
   const [tipo] = useState('cliente');
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
@@ -63,7 +62,19 @@ const CadastroPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<ErrosCadastro>({});
 
-  // --- LÓGICA DE AUTOCOMPLETE DE CEP ---
+  const limparErroCampo = useCallback((...campos: string[]) => {
+    setFieldErrors((errosAtuais) => {
+      const novosErros = { ...errosAtuais };
+      campos.forEach((campo) => {
+        delete novosErros[campo];
+      });
+      return novosErros;
+    });
+  }, []);
+
+  const erroDoCampo = (...campos: string[]) =>
+    campos.map((campo) => fieldErrors[campo]).find(Boolean);
+
   useEffect(() => {
     const buscarCep = async () => {
       const cepLimpo = cep.replace(/\D/g, '');
@@ -78,6 +89,14 @@ const CadastroPage = () => {
             setBairro(dados.bairro || '');
             setCidade(dados.localidade || '');
             setEstado(dados.uf || '');
+            limparErroCampo(
+              'cep',
+              'rua',
+              'bairro',
+              'cidade',
+              'estado',
+              'uf',
+            );
             setError(null);
           } else {
             setError('CEP não encontrado.');
@@ -88,7 +107,7 @@ const CadastroPage = () => {
       }
     };
     buscarCep();
-  }, [cep]);
+  }, [cep, limparErroCampo]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -115,7 +134,6 @@ const CadastroPage = () => {
 
     if (Object.keys(erros).length > 0) {
       setFieldErrors(erros);
-      setError('Revise os campos destacados antes de continuar.');
       return;
     }
 
@@ -148,9 +166,7 @@ const CadastroPage = () => {
       alert('Cadastro realizado com sucesso!');
       router.push('/login-user');
     } catch (err: any) {
-      setError(
-        err.message || 'Erro ao completar o cadastro.',
-      );
+      setError(err.message || 'Erro ao completar o cadastro.');
     } finally {
       setLoading(false);
     }
@@ -164,9 +180,9 @@ const CadastroPage = () => {
           <h1 className={Style.brandName}>NossoZelo</h1>
         </div>
         <blockquote className={Style.welcomeText}>
-          "Receber você em nossa comunidade é um privilégio.
-          Nosso compromisso é cuidar bem de você e de todos
-          aqueles que você ama."
+          "Receber você em nossa comunidade é um privilégio. Nosso
+          compromisso é cuidar bem de você e de todos aqueles que
+          você ama."
         </blockquote>
       </aside>
 
@@ -191,73 +207,106 @@ const CadastroPage = () => {
               {error && (
                 <div className={Style.error}>
                   <p>{error}</p>
-                  {Object.keys(fieldErrors).length > 0 && (
-                    <ul className={Style.errorList}>
-                      {Object.entries(fieldErrors).map(
-                        ([campo, mensagem]) => (
-                          <li key={campo}>{mensagem}</li>
-                        ),
-                      )}
-                    </ul>
-                  )}
                 </div>
               )}
 
               <div className={Style.inputRow}>
-                <Input
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Nome"
-                  icon={<FaUser />}
-                  disabled={loading}
-                />
-                <Input
-                  value={sobrenome}
-                  onChange={(e) =>
-                    setSobrenome(e.target.value)
-                  }
-                  placeholder="Sobrenome"
-                  disabled={loading}
-                />
+                <div className={Style.field}>
+                  <Input
+                    value={nome}
+                    onChange={(e) => {
+                      setNome(e.target.value);
+                      limparErroCampo('nome');
+                    }}
+                    placeholder="Nome"
+                    icon={<FaUser />}
+                    disabled={loading}
+                  />
+                  {fieldErrors.nome && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.nome}
+                    </span>
+                  )}
+                </div>
+
+                <div className={Style.field}>
+                  <Input
+                    value={sobrenome}
+                    onChange={(e) => {
+                      setSobrenome(e.target.value);
+                      limparErroCampo('sobrenome');
+                    }}
+                    placeholder="Sobrenome"
+                    disabled={loading}
+                  />
+                  {fieldErrors.sobrenome && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.sobrenome}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className={Style.inputRow}>
-                <Input
-                  value={cpf}
-                  onChange={(e) =>
-                    setCpf(mascaraCpf(e.target.value))
-                  }
-                  placeholder="CPF"
-                  icon={<FaIdCard />}
-                  disabled={loading}
-                />
-                <Input
-                  value={telefone}
-                  onChange={(e) =>
-                    setTelefone(
-                      mascaraTelefone(e.target.value),
-                    )
-                  }
-                  placeholder="Telefone"
-                  icon={<FaPhone />}
-                  type="tel"
-                  disabled={loading}
-                />
+                <div className={Style.field}>
+                  <Input
+                    value={cpf}
+                    onChange={(e) => {
+                      setCpf(mascaraCpf(e.target.value));
+                      limparErroCampo('cpf');
+                    }}
+                    placeholder="CPF"
+                    icon={<FaIdCard />}
+                    disabled={loading}
+                  />
+                  {fieldErrors.cpf && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.cpf}
+                    </span>
+                  )}
+                </div>
+
+                <div className={Style.field}>
+                  <Input
+                    value={telefone}
+                    onChange={(e) => {
+                      setTelefone(
+                        mascaraTelefone(e.target.value),
+                      );
+                      limparErroCampo('telefone');
+                    }}
+                    placeholder="Telefone"
+                    icon={<FaPhone />}
+                    type="tel"
+                    disabled={loading}
+                  />
+                  {fieldErrors.telefone && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.telefone}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* LINHA EXCLUSIVA PARA DATA DE NASCIMENTO */}
               <div className={Style.inputRow}>
-                <InputDate
-                  selectedDate={dataNascimento}
-                  onChange={(date) =>
-                    setDataNascimento(date)
-                  }
-                  placeholderText="Nascimento"
-                  disabled={loading}
-                />
+                <div className={Style.field}>
+                  <InputDate
+                    selectedDate={dataNascimento}
+                    onChange={(date) => {
+                      setDataNascimento(date);
+                      limparErroCampo('dataNascimento');
+                    }}
+                    placeholderText="Nascimento"
+                    disabled={loading}
+                  />
+                  {fieldErrors.dataNascimento && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.dataNascimento}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* SEÇÃO DE GÊNERO INDEPENDENTE (SEM INPUTROW) */}
               <div className={Style.genderSelection}>
                 <div className={Style.genderLabelWrapper}>
                   <FaVenusMars />
@@ -272,7 +321,10 @@ const CadastroPage = () => {
                         ? Style.genderOptionActive
                         : ''
                     }`}
-                    onClick={() => setSexo('masculino')}
+                    onClick={() => {
+                      setSexo('masculino');
+                      limparErroCampo('sexo');
+                    }}
                   >
                     Masculino
                   </div>
@@ -282,7 +334,10 @@ const CadastroPage = () => {
                         ? Style.genderOptionActive
                         : ''
                     }`}
-                    onClick={() => setSexo('feminino')}
+                    onClick={() => {
+                      setSexo('feminino');
+                      limparErroCampo('sexo');
+                    }}
                   >
                     Feminino
                   </div>
@@ -292,111 +347,197 @@ const CadastroPage = () => {
                         ? Style.genderOptionActive
                         : ''
                     }`}
-                    onClick={() => setSexo('outro')}
+                    onClick={() => {
+                      setSexo('outro');
+                      limparErroCampo('sexo');
+                    }}
                   >
                     Outro
                   </div>
                 </div>
+                {fieldErrors.sexo && (
+                  <span className={Style.errorText}>
+                    {fieldErrors.sexo}
+                  </span>
+                )}
               </div>
 
-              <Input
-                value={cep}
-                onChange={(e) =>
-                  setCep(mascaraCep(e.target.value))
-                }
-                placeholder="CEP"
-                icon={<FaMapMarkerAlt />}
-                disabled={loading}
-              />
+              <div className={Style.field}>
+                <Input
+                  value={cep}
+                  onChange={(e) => {
+                    setCep(mascaraCep(e.target.value));
+                    limparErroCampo('cep');
+                  }}
+                  placeholder="CEP"
+                  icon={<FaMapMarkerAlt />}
+                  disabled={loading}
+                />
+                {fieldErrors.cep && (
+                  <span className={Style.errorText}>
+                    {fieldErrors.cep}
+                  </span>
+                )}
+              </div>
 
               <div className={Style.inputRow}>
-                <div style={{ flex: 3 }}>
+                <div className={Style.fieldLarge}>
                   <Input
                     value={rua}
-                    onChange={(e) => setRua(e.target.value)}
+                    onChange={(e) => {
+                      setRua(e.target.value);
+                      limparErroCampo('rua');
+                    }}
                     placeholder="Rua / Logradouro"
                     icon={<FaRoad />}
                     disabled={loading}
                   />
+                  {fieldErrors.rua && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.rua}
+                    </span>
+                  )}
                 </div>
-                <div style={{ flex: 1 }}>
+
+                <div className={Style.fieldSmall}>
                   <Input
                     value={numero}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setNumero(
                         mascaraNumero(e.target.value),
-                      )
-                    }
+                      );
+                      limparErroCampo('numero');
+                    }}
                     placeholder="Nº"
                     icon={<FaHashtag />}
                     disabled={loading}
                   />
+                  {fieldErrors.numero && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.numero}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <Input
-                value={bairro}
-                onChange={(e) => setBairro(e.target.value)}
-                placeholder="Bairro"
-                icon={<FaMapMarkerAlt />}
-                disabled={loading}
-              />
-
-              <div className={Style.inputRow}>
+              <div className={Style.field}>
                 <Input
-                  value={cidade}
-                  onChange={(e) =>
-                    setCidade(e.target.value)
-                  }
-                  placeholder="Cidade"
-                  icon={<FaCity />}
+                  value={bairro}
+                  onChange={(e) => {
+                    setBairro(e.target.value);
+                    limparErroCampo('bairro');
+                  }}
+                  placeholder="Bairro"
+                  icon={<FaMapMarkerAlt />}
                   disabled={loading}
                 />
-                <Input
-                  value={estado}
-                  onChange={(e) =>
-                    setEstado(mascaraUf(e.target.value))
-                  }
-                  placeholder="UF"
-                  disabled={loading}
-                />
+                {fieldErrors.bairro && (
+                  <span className={Style.errorText}>
+                    {fieldErrors.bairro}
+                  </span>
+                )}
               </div>
 
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="E-mail"
-                type="email"
-                icon={<FaEnvelope />}
-                disabled={loading}
-              />
+              <div className={Style.inputRow}>
+                <div className={Style.field}>
+                  <Input
+                    value={cidade}
+                    onChange={(e) => {
+                      setCidade(e.target.value);
+                      limparErroCampo('cidade');
+                    }}
+                    placeholder="Cidade"
+                    icon={<FaCity />}
+                    disabled={loading}
+                  />
+                  {fieldErrors.cidade && (
+                    <span className={Style.errorText}>
+                      {fieldErrors.cidade}
+                    </span>
+                  )}
+                </div>
 
-              <Input
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="Senha forte"
-                type={mostrarSenha ? 'text' : 'password'}
-                icon={
-                  mostrarSenha ? <FaEyeSlash /> : <FaEye />
-                }
-                iconPosition="right"
-                onIconClick={() =>
-                  setMostrarSenha(!mostrarSenha)
-                }
-                disabled={loading}
-              />
+                <div className={Style.field}>
+                  <Input
+                    value={estado}
+                    onChange={(e) => {
+                      setEstado(mascaraUf(e.target.value));
+                      limparErroCampo('estado', 'uf');
+                    }}
+                    placeholder="UF"
+                    disabled={loading}
+                  />
+                  {erroDoCampo('estado', 'uf') && (
+                    <span className={Style.errorText}>
+                      {erroDoCampo('estado', 'uf')}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              <Input
-                value={confirmarSenha}
-                onChange={(e) =>
-                  setConfirmarSenha(e.target.value)
-                }
-                placeholder="Confirme a senha forte"
-                type="password"
-                icon={<FaLock />}
-                iconPosition="right"
-                disabled={loading}
-              />
+              <div className={Style.field}>
+                <Input
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    limparErroCampo('email');
+                  }}
+                  placeholder="E-mail"
+                  type="email"
+                  icon={<FaEnvelope />}
+                  disabled={loading}
+                />
+                {fieldErrors.email && (
+                  <span className={Style.errorText}>
+                    {fieldErrors.email}
+                  </span>
+                )}
+              </div>
+
+              <div className={Style.field}>
+                <Input
+                  value={senha}
+                  onChange={(e) => {
+                    setSenha(e.target.value);
+                    limparErroCampo('senha', 'confirmarSenha');
+                  }}
+                  placeholder="Senha forte"
+                  type={mostrarSenha ? 'text' : 'password'}
+                  icon={
+                    mostrarSenha ? <FaEyeSlash /> : <FaEye />
+                  }
+                  iconPosition="right"
+                  onIconClick={() =>
+                    setMostrarSenha(!mostrarSenha)
+                  }
+                  disabled={loading}
+                />
+                {fieldErrors.senha && (
+                  <span className={Style.errorText}>
+                    {fieldErrors.senha}
+                  </span>
+                )}
+              </div>
+
+              <div className={Style.field}>
+                <Input
+                  value={confirmarSenha}
+                  onChange={(e) => {
+                    setConfirmarSenha(e.target.value);
+                    limparErroCampo('confirmarSenha');
+                  }}
+                  placeholder="Confirme a senha forte"
+                  type="password"
+                  icon={<FaLock />}
+                  iconPosition="right"
+                  disabled={loading}
+                />
+                {fieldErrors.confirmarSenha && (
+                  <span className={Style.errorText}>
+                    {fieldErrors.confirmarSenha}
+                  </span>
+                )}
+              </div>
 
               <Button
                 type="submit"
@@ -416,4 +557,3 @@ const CadastroPage = () => {
 };
 
 export default CadastroPage;
-

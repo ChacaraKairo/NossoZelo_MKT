@@ -1,41 +1,50 @@
 import React from 'react';
 import {
-  FaUser,
   FaCalendarAlt,
-  FaSuitcase,
+  FaClipboardList,
+  FaHistory,
   FaShieldAlt,
-  FaStar, // Ícone para Avaliações
-  FaClipboardList, // Ícone para Solicitações/Pedidos
+  FaStar,
+  FaSuitcase,
+  FaUser,
 } from 'react-icons/fa';
 import styles from './styles/PerfilTabsVertical.module.css';
-import { PerfilCompleto } from './types/types'; // 🔥 Tipagem Estrita
+import { PerfilCompleto } from './types/types';
 
 interface PerfilTabsVerticalProps {
   ativa: string;
   setAtiva: (aba: string) => void;
-  perfil: PerfilCompleto; // 🚀 Adeus, any!
+  perfil: PerfilCompleto;
 }
 
-const PerfilTabsVertical: React.FC<
-  PerfilTabsVerticalProps
-> = ({ ativa, setAtiva, perfil }) => {
+const PerfilTabsVertical: React.FC<PerfilTabsVerticalProps> = ({
+  ativa,
+  setAtiva,
+  perfil,
+}) => {
   if (!perfil) return null;
 
-  // Lógica de visualização baseada no tipo de usuário
   const isPrestador = perfil.tipo !== 'cliente';
+  const contratacoes =
+    (perfil as any).contratacoes ||
+    (perfil as any).contratacoes_contratacoes_prestador_idTousuarios ||
+    (perfil as any).contratacoes_contratacoes_cliente_idTousuarios ||
+    [];
+  const solicitacoesPendentes = contratacoes.filter(
+    (item: any) => item?.status === 'pendente',
+  ).length;
 
   const menuItems = [
     {
       id: 'sobre',
-      label: 'Dados Pessoais',
+      label: 'Meu Perfil',
+      description: 'Ver e editar meus dados',
       icon: <FaUser />,
     },
-    // Aba de Pedidos/Solicitações (Onde aceita/nega serviços)
     {
       id: 'solicitacoes',
-      label: isPrestador
-        ? 'Pedidos Recebidos'
-        : 'Meus Pedidos',
+      label: isPrestador ? 'Pedidos Recebidos' : 'Meus Pedidos',
+      description: 'Solicitações e respostas',
       icon: <FaClipboardList />,
     },
     ...(isPrestador
@@ -43,24 +52,33 @@ const PerfilTabsVertical: React.FC<
           {
             id: 'agenda',
             label: 'Minha Agenda',
+            description: 'Gerenciar horários',
             icon: <FaCalendarAlt />,
           },
           {
             id: 'servicos',
             label: 'Meus Serviços',
+            description: 'Configurar atendimentos',
             icon: <FaSuitcase />,
           },
         ]
       : []),
-    // Nova Aba de Avaliações
+    {
+      id: 'historico',
+      label: 'Histórico',
+      description: 'Serviços passados e ativos',
+      icon: <FaHistory />,
+    },
     {
       id: 'avaliacoes',
       label: 'Avaliações',
+      description: 'Feedbacks e reputação',
       icon: <FaStar />,
     },
     {
       id: 'seguranca',
       label: 'Segurança',
+      description: 'Senha e sessão',
       icon: <FaShieldAlt />,
     },
   ];
@@ -71,15 +89,26 @@ const PerfilTabsVertical: React.FC<
         <button
           key={item.id}
           onClick={() => setAtiva(item.id)}
-          className={`${styles.tabButton} ${ativa === item.id ? styles.tabButtonActive : ''}`}
+          className={`${styles.tabButton} ${
+            ativa === item.id ? styles.tabButtonActive : ''
+          }`}
+          type="button"
         >
           <span className={styles.icon}>{item.icon}</span>
-          {item.label}
+          <span>
+            {item.label}
+            <small className={styles.description}>
+              {item.description}
+            </small>
+          </span>
 
-          {/* Badge de Notificação para Pedidos Pendentes */}
-          {item.id === 'solicitacoes' && isPrestador && (
-            <span className={styles.badge}>Novo</span>
-          )}
+          {item.id === 'solicitacoes' &&
+            isPrestador &&
+            solicitacoesPendentes > 0 && (
+              <span className={styles.badge}>
+                {solicitacoesPendentes}
+              </span>
+            )}
         </button>
       ))}
     </nav>

@@ -85,6 +85,26 @@
   width: 100%;
 }
 
+.field,
+.fieldLarge,
+.fieldSmall {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.field {
+  flex: 1;
+}
+
+.fieldLarge {
+  flex: 3;
+}
+
+.fieldSmall {
+  flex: 1;
+}
+
 .error {
   color: #991b1b;
   background-color: #fee2e2;
@@ -97,12 +117,6 @@
 .error p {
   margin: 0;
   font-weight: 700;
-}
-
-.errorList {
-  margin: 0.65rem 0 0;
-  padding-left: 1.1rem;
-  text-align: left;
 }
 
 .errorText {
@@ -183,4 +197,7 @@
   .genderOptions {
     flex-wrap: wrap;
   } /* No mobile, eles podem quebrar linha */
+  .inputRow {
+    flex-direction: column;
+  }
 }

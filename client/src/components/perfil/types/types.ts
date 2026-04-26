@@ -29,6 +29,23 @@ export interface Avaliacao {
   };
 }
 
+export interface Contratacao {
+  id: number;
+  cliente_id: string;
+  prestador_id: string;
+  status?: string | null;
+  data?: string | Date | null;
+  servico_id?: number | null;
+  usuarios_contratacoes_cliente_idTousuarios?: {
+    nome?: string | null;
+    url_foto_perfil?: string | null;
+  };
+  usuarios_contratacoes_prestador_idTousuarios?: {
+    nome?: string | null;
+    url_foto_perfil?: string | null;
+  };
+}
+
 export interface PerfilCompleto {
   id: string;
   nome: string;
@@ -50,6 +67,8 @@ export interface PerfilCompleto {
   servicos?: Servico[];
   agenda?: AgendaItem[];
   avaliacoes_avaliacoes_prestador_idTousuarios?: Avaliacao[];
+  contratacoes?: Contratacao[];
+  avaliacoes_feitas?: Avaliacao[];
 
   // Campos específicos de prestadores
   bio?: string;

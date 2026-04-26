@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import AbaAgendaPro from '@/components/perfil/AbaAgendaPro';
 import AbaAvaliacoesPro from '@/components/perfil/AbaAvaliacoesPro';
 import AbaFinanceiroPro from '@/components/perfil/AbaFinanceiroPro';
+import AbaHistoricoPerfil from '@/components/perfil/AbaHistoricoPerfil';
+import AbaSeguranca from '@/components/perfil/AbaSeguranca';
+import AbaServicosOperacionais from '@/components/perfil/AbaServicosOperacionais';
 import AbaSolicitacoesPro from '@/components/perfil/AbaSolicitacoesPro';
 import AlertaPerfilIncompleto from '@/components/perfil/AlertaPerfilIncompleto';
-import EstadoVazio from '@/components/common/EstadoVazio';
 import FormEditarPerfil from '@/components/perfil/FormEditarPerfil';
 import PerfilHeader from '@/components/perfil/PerfilHeader';
 import {
@@ -28,16 +30,20 @@ type AbaPrestador =
   | 'agenda'
   | 'solicitacoes'
   | 'avaliacoes'
+  | 'historico'
+  | 'seguranca'
   | 'financeiro';
 
 const CONTEXTO = 'PerfilPrestador';
 const ABAS: { id: AbaPrestador; label: string }[] = [
   { id: 'visao', label: 'Visão geral' },
   { id: 'dados', label: 'Dados profissionais' },
-  { id: 'servicos', label: 'Serviços' },
-  { id: 'agenda', label: 'Agenda' },
-  { id: 'solicitacoes', label: 'Solicitações' },
+  { id: 'solicitacoes', label: 'Pedidos recebidos' },
+  { id: 'agenda', label: 'Minha agenda' },
+  { id: 'servicos', label: 'Meus serviços' },
   { id: 'avaliacoes', label: 'Avaliações' },
+  { id: 'historico', label: 'Histórico' },
+  { id: 'seguranca', label: 'Segurança' },
   { id: 'financeiro', label: 'Financeiro' },
 ];
 
@@ -79,6 +85,9 @@ function VisaoGeral({
     perfil.avaliacoes_recebidas ||
     perfil.avaliacoes_avaliacoes_prestador_idTousuarios ||
     [];
+  const pendentes = contratacoes.filter(
+    (item) => item.status === 'pendente',
+  ).length;
 
   return (
     <div className="space-y-5">
@@ -87,8 +96,9 @@ function VisaoGeral({
         tipoUsuario={usuario.tipo || perfil.perfil_tipo}
         onCompletarPerfil={onCompletar}
       />
-      <div className="grid gap-4 md:grid-cols-3">
-        <CampoInfo label="Solicitações" valor={contratacoes.length} />
+      <div className="grid gap-4 md:grid-cols-4">
+        <CampoInfo label="Pedidos pendentes" valor={pendentes} />
+        <CampoInfo label="Contratações" valor={contratacoes.length} />
         <CampoInfo label="Avaliações" valor={avaliacoes.length} />
         <CampoInfo
           label="Avaliação média"
@@ -134,40 +144,6 @@ function DadosProfissionais({ perfil }: { perfil: PerfilUsuario }) {
   );
 }
 
-function ServicosPrestador({ servicos }: { servicos: ServicoPerfil[] }) {
-  logger.debug(CONTEXTO, 'Renderização da aba serviços', {
-    total: servicos.length,
-  });
-
-  if (servicos.length === 0) {
-    return (
-      <EstadoVazio
-        titulo="Nenhum serviço cadastrado."
-        descricao="Quando seus serviços vierem da API, eles aparecerão aqui."
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {servicos.map((servico) => (
-        <article
-          key={servico.id}
-          className="rounded-xl border border-slate-100 bg-white p-5"
-        >
-          <p className="font-bold text-slate-800">
-            {texto(servico.nome || servico.tipo)}
-          </p>
-          <p className="text-sm text-slate-500">{texto(servico.descricao)}</p>
-          <p className="text-sm font-semibold text-slate-700">
-            Valor: {texto(servico.valor)}
-          </p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 export default function PerfilPrestador({
   perfil,
   onPerfilAtualizado,
@@ -200,18 +176,10 @@ export default function PerfilPrestador({
   useEffect(() => {
     logger.info(CONTEXTO, 'Renderizando PerfilPrestador', {
       usuarioId: usuario.id,
-    });
-    logger.info(CONTEXTO, 'Tipo profissional detectado', {
       tipoProfissional,
-    });
-    logger.info(CONTEXTO, 'Quantidade de serviços', {
-      total: servicos.length,
-    });
-    logger.info(CONTEXTO, 'Quantidade de avaliações', {
-      total: avaliacoes.length,
-    });
-    logger.info(CONTEXTO, 'Quantidade de solicitações', {
-      total: contratacoes.length,
+      totalServicos: servicos.length,
+      totalAvaliacoes: avaliacoes.length,
+      totalSolicitacoes: contratacoes.length,
     });
   }, [
     usuario.id,
@@ -223,6 +191,7 @@ export default function PerfilPrestador({
 
   const selecionarAba = (novaAba: AbaPrestador) => {
     logger.info(CONTEXTO, 'Aba selecionada', { aba: novaAba });
+    setEditando(false);
     setAba(novaAba);
   };
 
@@ -237,6 +206,13 @@ export default function PerfilPrestador({
       status: contratacao.status,
     });
     onRecarregarPerfil?.();
+  };
+
+  const handleServicosAtualizados = (servicosAtualizados: ServicoPerfil[]) => {
+    onPerfilAtualizado?.({
+      ...perfil,
+      servicos: servicosAtualizados,
+    });
   };
 
   let conteudo;
@@ -256,7 +232,12 @@ export default function PerfilPrestador({
   } else if (aba === 'dados') {
     conteudo = <DadosProfissionais perfil={perfil} />;
   } else if (aba === 'servicos') {
-    conteudo = <ServicosPrestador servicos={servicos} />;
+    conteudo = (
+      <AbaServicosOperacionais
+        perfil={perfil}
+        onServicosAtualizados={handleServicosAtualizados}
+      />
+    );
   } else if (aba === 'agenda') {
     conteudo = <AbaAgendaPro perfil={perfil} />;
   } else if (aba === 'solicitacoes') {
@@ -268,6 +249,15 @@ export default function PerfilPrestador({
     );
   } else if (aba === 'avaliacoes') {
     conteudo = <AbaAvaliacoesPro perfil={perfil} />;
+  } else if (aba === 'historico') {
+    conteudo = (
+      <AbaHistoricoPerfil
+        contratacoes={contratacoes}
+        modo="prestador"
+      />
+    );
+  } else if (aba === 'seguranca') {
+    conteudo = <AbaSeguranca />;
   } else {
     conteudo = <AbaFinanceiroPro />;
   }

@@ -1,38 +1,30 @@
-/**
- * @author DevHelper & Sócio
- * @description Dashboard "Clean Slate" consolidado com arquitetura Pro.
- * Integração de Header, Navegação Vertical, Widgets de Métricas e Conteúdo Dinâmico.
- */
-
 import React, { useEffect, useState } from 'react';
 import { withAuth } from '@/utils/withAuth';
 import { perfilService } from '@/service/perfilService';
 import HeaderMain from '@/components/header/HeaderMain';
 import Footer from '@/components/footer/Footer';
 import ErroComRetry from '@/components/common/ErroComRetry';
-
-// Estilização Modular
 import styles from '@/styles/Perfil.module.css';
-
-// Tipagem Estrita
 import { PerfilCompleto } from '@/components/perfil/types/types';
-
-// Componentes de Identidade e Navegação (Coluna 1)
 import HeaderPro from '@/components/perfil/HeaderPro';
 import PerfilTabsVertical from '@/components/perfil/PerfilTabsVertical';
-
-// Componentes de Métricas (Coluna 3)
 import PerfilStatsWidgets from '@/components/perfil/PerfilStatsWidgets';
-
-// Componentes de Conteúdo Dinâmico (Coluna 2 - Abas)
 import AbaSobrePro from '@/components/perfil/Abas/AbaSobrePro';
 import AbaAgendaPro from '@/components/perfil/Abas/AbaAgendaPro';
 import AbaServicosPro from '@/components/perfil/Abas/AbaServicosPro';
-import AbaAvaliacoesPro from '@/components/perfil/Abas/AbaAvaliacoesPro'; // 🚀 Nova Importação
+import AbaAvaliacoesPro from '@/components/perfil/Abas/AbaAvaliacoesPro';
+import AbaSolicitacoesPro from '@/components/perfil/AbaSolicitacoesPro';
+import AbaHistoricoPerfil from '@/components/perfil/AbaHistoricoPerfil';
+import AbaSeguranca from '@/components/perfil/AbaSeguranca';
 
 function normalizarPerfilDashboard(dados: any): PerfilCompleto {
   const usuario = dados?.dados_usuario || {};
   const profissional = dados?.dados_profissionais || {};
+  const contratacoes =
+    dados?.contratacoes ||
+    dados?.contratacoes_contratacoes_prestador_idTousuarios ||
+    dados?.contratacoes_contratacoes_cliente_idTousuarios ||
+    [];
 
   return {
     ...dados,
@@ -62,6 +54,8 @@ function normalizarPerfilDashboard(dados: any): PerfilCompleto {
       dados?.avaliacoes_avaliacoes_prestador_idTousuarios ||
       dados?.avaliacoes_recebidas ||
       [],
+    contratacoes,
+    avaliacoes_feitas: dados?.avaliacoes_feitas || [],
     bio: profissional.bio || dados?.bio,
     anos_experiencia:
       profissional.anos_experiencia || dados?.anos_experiencia,
@@ -80,16 +74,9 @@ const DashboardPerfil = () => {
     try {
       setLoading(true);
       setErro(null);
-      console.log(
-        '[LOG-FLUXO] Dashboard: Iniciando carga de dados.',
-      );
       const dados = await perfilService.obterMeuPerfil();
       setPerfil(normalizarPerfilDashboard(dados));
     } catch (err: any) {
-      console.error(
-        '[ERRO-FLUXO] Falha na carga do dashboard:',
-        err.message,
-      );
       setErro(
         err.message || 'Não foi possível carregar seu perfil.',
       );
@@ -112,7 +99,6 @@ const DashboardPerfil = () => {
     );
   }
 
-  // Fallback de segurança caso o perfil não carregue
   if (erro) {
     return (
       <div className={styles.container}>
@@ -154,7 +140,6 @@ const DashboardPerfil = () => {
 
       <main className={styles.mainContent}>
         <div className={styles.dashboardGrid}>
-          {/* COLUNA 1: IDENTIDADE & NAVEGAÇÃO VERTICAL */}
           <aside
             className={`${styles.leftColumn} ${styles.stickySidebar} space-y-6`}
           >
@@ -166,26 +151,21 @@ const DashboardPerfil = () => {
             />
           </aside>
 
-          {/* COLUNA 2: ÁREA DE TRABALHO CENTRAL (CONTEÚDO DINÂMICO) */}
           <section className={styles.centerColumn}>
             <div className={`${styles.card} min-h-[650px]`}>
               <header className="mb-8 border-b border-slate-50 pb-4">
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                  Painel de{' '}
-                  {perfil.tipo === 'cliente'
-                    ? 'Cliente'
-                    : 'Gestão'}
+                  Bem-vindo ao Nosso Zelo
                 </h2>
                 <p className="text-slate-400 text-sm font-medium">
-                  Bem-vindo de volta,{' '}
+                  Olá,{' '}
                   <span className="text-blue-600">
                     {primeiroNome}
                   </span>
-                  .
+                  . Gerencie seus dados, agenda e solicitações.
                 </p>
               </header>
 
-              {/* Renderização Dinâmica de Abas */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 {abaAtiva === 'sobre' && (
                   <AbaSobrePro
@@ -194,34 +174,39 @@ const DashboardPerfil = () => {
                   />
                 )}
                 {abaAtiva === 'agenda' && (
-                  <AbaAgendaPro perfil={perfil} />
+                  <AbaAgendaPro perfil={perfil as any} />
                 )}
                 {abaAtiva === 'servicos' && (
-                  <AbaServicosPro perfil={perfil} />
+                  <AbaServicosPro perfil={perfil as any} />
                 )}
                 {abaAtiva === 'avaliacoes' && (
-                  <AbaAvaliacoesPro perfil={perfil} />
+                  <AbaAvaliacoesPro perfil={perfil as any} />
                 )}
-
-                {/* Fallback para segurança */}
-                {abaAtiva === 'seguranca' && (
-                  <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-3xl">
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
-                      Módulo de Segurança em Breve
-                    </p>
-                  </div>
+                {abaAtiva === 'solicitacoes' && (
+                  <AbaSolicitacoesPro
+                    perfil={perfil as any}
+                    onContratacaoAtualizada={carregarDadosDashboard as any}
+                  />
                 )}
+                {abaAtiva === 'historico' && (
+                  <AbaHistoricoPerfil
+                    contratacoes={(perfil as any).contratacoes || []}
+                    modo={
+                      perfil.tipo === 'cliente' ? 'cliente' : 'prestador'
+                    }
+                  />
+                )}
+                {abaAtiva === 'seguranca' && <AbaSeguranca />}
               </div>
             </div>
           </section>
 
-          {/* COLUNA 3: WIDGETS E MÉTRICAS LATERAIS */}
           <aside
             className={`${styles.rightColumn} ${styles.stickySidebar}`}
           >
             <PerfilStatsWidgets
               perfil={perfil}
-              setAtiva={setAbaAtiva} // 🎯 Permite que os widgets troquem a aba central
+              setAtiva={setAbaAtiva}
             />
 
             <div className="mt-6 p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-lg shadow-blue-100 hidden lg:block">
@@ -229,9 +214,8 @@ const DashboardPerfil = () => {
                 Dica de Performance
               </p>
               <p className="text-blue-100 text-[11px] leading-relaxed">
-                Perfis com fotos profissionais e descrições
-                detalhadas recebem até{' '}
-                <strong>4x mais visualizações</strong>.
+                Perfis com fotos profissionais e descrições detalhadas
+                recebem até <strong>4x mais visualizações</strong>.
               </p>
             </div>
           </aside>

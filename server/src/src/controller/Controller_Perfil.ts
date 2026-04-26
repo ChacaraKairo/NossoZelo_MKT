@@ -44,6 +44,10 @@ function removerCamposProtegidos(dados: any) {
 }
 
 function statusErroPerfil(error: any) {
+  if (typeof error?.status === 'number') {
+    return error.status;
+  }
+
   const mensagem = String(error?.message || '').toLowerCase();
 
   if (error?.code === 'P2025' || mensagem.includes('não encontrado')) {
@@ -68,6 +72,30 @@ function statusErroPerfil(error: any) {
 }
 
 class ControllerPerfil {
+  async alterarSenha(req: AuthRequest, res: Response) {
+    try {
+      const usuarioId = req.user?.id;
+      if (!usuarioId) {
+        return res.status(401).json({
+          error: 'Não autorizado: Token inválido ou ausente.',
+        });
+      }
+
+      const { senhaAtual, novaSenha } = req.body || {};
+      const resultado = await ServicePerfil.alterarSenhaSegura(
+        usuarioId,
+        senhaAtual,
+        novaSenha,
+      );
+
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErroPerfil(error))
+        .json({ error: error.message });
+    }
+  }
+
   /**
    * Recupera o perfil completo do usuário autenticado (Dashboard).
    */
