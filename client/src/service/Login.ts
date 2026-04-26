@@ -8,6 +8,12 @@ export interface LoginRequestBody {
 
 export interface LoginResponse {
   token?: string;
+  user?: {
+    id: string;
+    nome: string;
+    email: string;
+    tipo: string;
+  };
   usuario?: {
     id: string;
     nome: string;
@@ -18,6 +24,8 @@ export interface LoginResponse {
 }
 
 const CONTEXTO = 'LoginService';
+const MENSAGEM_CREDENCIAIS_INVALIDAS =
+  'Usuario ou senha invalidos. Por favor, tente novamente.';
 
 class LoginService {
   public async login(data: LoginRequestBody): Promise<LoginResponse> {
@@ -52,9 +60,7 @@ class LoginService {
           logger.warn(CONTEXTO, 'Credenciais incorretas', {
             identificador: data.identificador,
           });
-          throw new Error(
-            'Usuario ou senha invalidos. Por favor, tente novamente.',
-          );
+          throw new Error(MENSAGEM_CREDENCIAIS_INVALIDAS);
         }
 
         let errorData;
@@ -100,7 +106,12 @@ class LoginService {
       });
       return responseData;
     } catch (error: unknown) {
-      logger.error(CONTEXTO, 'Erro critico no LoginService', error);
+      if (
+        error instanceof Error &&
+        error.message === MENSAGEM_CREDENCIAIS_INVALIDAS
+      ) {
+        throw error;
+      }
 
       if (
         error instanceof TypeError &&
@@ -116,6 +127,7 @@ class LoginService {
         );
       }
 
+      logger.error(CONTEXTO, 'Erro critico no LoginService', error);
       throw error;
     }
   }

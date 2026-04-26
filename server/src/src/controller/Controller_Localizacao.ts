@@ -10,6 +10,36 @@
 import { Request, Response } from 'express';
 import { GeolocalizacaoService } from '../service/Service_Localizacao';
 
+function normalizarParaJson(valor: unknown): unknown {
+  if (typeof valor === 'bigint') {
+    const numero = Number(valor);
+    return Number.isSafeInteger(numero) ? numero : valor.toString();
+  }
+
+  if (valor instanceof Date) {
+    return valor.toISOString();
+  }
+
+  if (Array.isArray(valor)) {
+    return valor.map(normalizarParaJson);
+  }
+
+  if (valor && typeof valor === 'object') {
+    if ('toNumber' in valor && typeof valor.toNumber === 'function') {
+      return valor.toNumber();
+    }
+
+    return Object.fromEntries(
+      Object.entries(valor).map(([chave, item]) => [
+        chave,
+        normalizarParaJson(item),
+      ]),
+    );
+  }
+
+  return valor;
+}
+
 export class GeolocalizacaoController {
   /**
    * Endpoint para converter um CEP em coordenadas geográficas (Lat/Lon).
@@ -123,7 +153,7 @@ export class GeolocalizacaoController {
       console.log(
         `[LOG-FLUXO] Busca de prestadores finalizada. Total de registros localizados: ${prestadores.length}.`,
       );
-      return res.status(200).json(prestadores);
+      return res.status(200).json(normalizarParaJson(prestadores));
     } catch (erro: any) {
       console.error(
         `[ERRO-FLUXO] Exceção capturada na filtragem de prestadores: ${erro.message}`,
