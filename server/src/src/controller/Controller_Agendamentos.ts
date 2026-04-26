@@ -1,7 +1,6 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import ServiceAgendamento from '../service/Service_Agendamento';
-
-type AuthRequest = Request;
+import { AuthRequest } from '../types/auth';
 
 function statusErro(error: any) {
   return typeof error?.status === 'number' ? error.status : 500;

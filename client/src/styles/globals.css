@@ -1,45 +1,140 @@
-/* Importações do Tailwind (se você estiver usando) */
 @import 'tailwindcss/preflight';
 @tailwind utilities;
 
 :root {
-  /* Cores Principais da Marca */
-  --color-primary: #75e7d9; /* DarkTurquoise - Cor principal para botões e links ativos */
-  --color-primary-hover: #20b2aa; /* LightSeaGreen - Cor para hover do botão principal */
+  color-scheme: light;
 
-  /* Cores de Texto */
-  --text-primary: #008080; /* Teal - Para títulos e textos principais */
-  --text-secondary: #5f9ea0; /* CadetBlue - Para textos de apoio e parágrafos */
-  --text-link: #008b8b; /* DarkCyan - Para links */
-  --text-light: #a9a9a9; /* DarkGray - Para divisores e textos de rodapé */
-  --text-on-primary: #75e7d9; /* Branco - Texto sobre fundos coloridos */
+  --color-primary-50: #ecfeff;
+  --color-primary-100: #ccfbf1;
+  --color-primary-300: #5eead4;
+  --color-primary-500: #14b8a6;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-soft: var(--color-primary-100);
 
-  /* Cores de Fundo */
-  --bg-page: #f9f9f9; /* AliceBlue - Fundo geral da página */
-  --bg-info-section: #f9f9f9; /* Azure - Fundo da seção de informações */
-  --bg-form-section: #f9f9f9; /* Branco - Fundo da seção do formulário */
-  --bg-form-container: #f9f9f9; /* LightCyan - Fundo do container do formulário */
+  --color-info-soft: #ecfeff;
+  --color-info-700: #155e75;
+  --color-success-soft: #ecfdf5;
+  --color-success-700: #047857;
+  --color-warning-soft: #fff7ed;
+  --color-warning-700: #c2410c;
+  --color-danger-soft: #fef2f2;
+  --color-danger-700: #dc2626;
 
-  /* Cores de Borda e UI */
-  --border-color: #b0e0e6; /* PowderBlue - Cor para bordas de inputs e divisores */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-surface-subtle: #f1f5f9;
+  --color-page: #f8fafc;
 
-  /* Cores de Marcas (Social Login) */
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-text-strong: #0f172a;
+  --color-text: #334155;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 999px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 18px 42px rgba(15, 23, 42, 0.1);
+
+  --font-sans: Inter, 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont,
+    Arial, sans-serif;
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+
+  --container-page: 1280px;
+  --container-wide: 1400px;
+
+  /* Compatibilidade com nomes antigos ja usados em telas existentes. */
+  --color-primary: var(--color-primary-300);
+  --color-primary-hover: var(--color-primary-700);
+  --text-primary: var(--color-primary-700);
+  --text-secondary: var(--color-text-muted);
+  --text-link: var(--color-primary-700);
+  --text-light: var(--color-text-subtle);
+  --text-on-primary: var(--color-text-inverse);
+  --bg-page: var(--color-page);
+  --bg-info-section: var(--color-surface-muted);
+  --bg-form-section: var(--color-surface);
+  --bg-form-container: var(--color-surface);
+  --border-color: var(--color-border);
   --color-google: #db4437;
   --color-facebook: #4267b2;
 }
 
-/* Opcional: Tema Escuro (mantendo a lógica que você iniciou) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Aqui você pode redefinir as variáveis para o modo escuro no futuro */
-    --bg-page: #f9f9f9;
-    --text-primary: #75e7d9;
-    /* etc... */
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-page);
+  text-size-adjust: 100%;
 }
 
 body {
-  background-color: var(--bg-page);
-  color: var(--text-primary);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background-color: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(20, 184, 166, 0.3);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  body {
+    font-size: 15px;
+  }
 }

@@ -54,6 +54,90 @@
   box-sizing: border-box;
 }
 
+.loadingState {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-weight: 800;
+  animation: pulseText 1.4s ease-in-out infinite;
+}
+
+.profileCard {
+  min-height: 650px;
+}
+
+.stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.contentHeader {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.contentTitle {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.contentSubtitle {
+  margin: 0.35rem 0 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.emptyTitle {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.emptyText {
+  margin: 0.5rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.highlightName {
+  color: #2563eb;
+}
+
+.tabContent {
+  animation: fadeUp 0.35s ease both;
+}
+
+.performanceTip {
+  display: none;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, #2563eb, #4338ca);
+  box-shadow: 0 18px 35px rgba(37, 99, 235, 0.18);
+}
+
+.performanceTipTitle {
+  margin: 0 0 0.5rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.performanceTipText {
+  margin: 0;
+  color: #dbeafe;
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
 .cardTitle {
   color: #64748b;
   font-size: 0.75rem;
@@ -68,4 +152,44 @@
   position: sticky;
   top: 6rem; /* Faz a lateral acompanhar o scroll */
   height: fit-content;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseText {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .performanceTip {
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 2rem 1rem;
+  }
+
+  .profileCard {
+    min-height: auto;
+    padding: 1.25rem;
+  }
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import logger from '@/utils/logger';
+import styles from '@/styles/components/common/Common.module.css';
 
 interface ErroComRetryProps {
   titulo: string;
@@ -23,13 +24,13 @@ const ErroComRetry: React.FC<ErroComRetryProps> = ({
   };
 
   return (
-    <section className="mx-auto my-10 w-full max-w-xl rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-      <h2 className="text-xl font-black text-slate-900">{titulo}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">
+    <section className={styles.errorBox}>
+      <h2 className={styles.errorTitle}>{titulo}</h2>
+      <p className={styles.errorMessage}>
         {mensagem}
       </p>
       {detalhes && (
-        <p className="mt-3 text-xs leading-relaxed text-slate-400">
+        <p className={styles.errorDetails}>
           {detalhes}
         </p>
       )}
@@ -37,7 +38,7 @@ const ErroComRetry: React.FC<ErroComRetryProps> = ({
         <button
           type="button"
           onClick={handleRetry}
-          className="mt-5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+          className={styles.primaryAction}
         >
           Tentar novamente
         </button>

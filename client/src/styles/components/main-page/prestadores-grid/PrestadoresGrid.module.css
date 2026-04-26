@@ -6,6 +6,32 @@
   gap: 20px;
 }
 
+.headerTitle {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: var(--font-size-xl);
+  font-weight: 900;
+}
+
+.headerSubtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.distanceButton {
+  width: fit-content;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-primary-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-primary-700);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .grid {
   width: 100%;
   display: grid;

@@ -1,4 +1,4 @@
-import Style from './styles/Escrita.module.css';
+import Style from '@/styles/components/inicialpage/Escrita.module.css';
 const Escrita = () => {
   return (
     <div>

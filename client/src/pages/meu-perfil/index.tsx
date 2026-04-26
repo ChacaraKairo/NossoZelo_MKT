@@ -43,6 +43,12 @@ function normalizarPerfilDashboard(dados: any): PerfilCompleto {
     dados?.contratacoes_contratacoes_prestador_idTousuarios ||
     dados?.contratacoes_contratacoes_cliente_idTousuarios ||
     [];
+  const contratacoesNormalizadas = Array.isArray(contratacoes)
+    ? contratacoes.map((contratacao: any) => ({
+        ...contratacao,
+        status: contratacao?.status ?? null,
+      }))
+    : [];
 
   return {
     ...dados,
@@ -70,7 +76,13 @@ function normalizarPerfilDashboard(dados: any): PerfilCompleto {
       dados?.avaliacoes_avaliacoes_prestador_idTousuarios ||
       dados?.avaliacoes_recebidas ||
       [],
-    contratacoes,
+    contratacoes: contratacoesNormalizadas,
+    contratacoes_contratacoes_prestador_idTousuarios:
+      dados?.contratacoes_contratacoes_prestador_idTousuarios ||
+      contratacoesNormalizadas,
+    contratacoes_contratacoes_cliente_idTousuarios:
+      dados?.contratacoes_contratacoes_cliente_idTousuarios ||
+      contratacoesNormalizadas,
     avaliacoes_feitas: dados?.avaliacoes_feitas || [],
     bio: profissional.bio || dados?.bio,
     anos_experiencia:
@@ -108,7 +120,7 @@ const DashboardPerfil = () => {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className="flex items-center justify-center h-screen text-slate-500 font-bold animate-pulse">
+        <div className={styles.loadingState}>
           Sincronizando seu painel de controle...
         </div>
       </div>
@@ -157,7 +169,7 @@ const DashboardPerfil = () => {
       <main className={styles.mainContent}>
         <div className={styles.dashboardGrid}>
           <aside
-            className={`${styles.leftColumn} ${styles.stickySidebar} space-y-6`}
+            className={`${styles.leftColumn} ${styles.stickySidebar} ${styles.stack}`}
           >
             <HeaderPro perfil={perfil} />
             <PerfilTabsVertical
@@ -168,21 +180,21 @@ const DashboardPerfil = () => {
           </aside>
 
           <section className={styles.centerColumn}>
-            <div className={`${styles.card} min-h-[650px]`}>
-              <header className="mb-8 border-b border-slate-50 pb-4">
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+            <div className={`${styles.card} ${styles.profileCard}`}>
+              <header className={styles.contentHeader}>
+                <h2 className={styles.contentTitle}>
                   Bem-vindo ao Nosso Zelo
                 </h2>
-                <p className="text-slate-400 text-sm font-medium">
+                <p className={styles.contentSubtitle}>
                   Olá,{' '}
-                  <span className="text-blue-600">
+                  <span className={styles.highlightName}>
                     {primeiroNome}
                   </span>
                   . Gerencie seus dados, agenda e solicitações.
                 </p>
               </header>
 
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className={styles.tabContent}>
                 {abaAtiva === 'sobre' && (
                   <AbaSobrePro
                     perfil={perfil}
@@ -197,20 +209,12 @@ const DashboardPerfil = () => {
                 )}
                 {abaAtiva === 'solicitacoes' && (
                   <AbaSolicitacoesPro
-                    perfil={perfil}
-                    onContratacaoAtualizada={() =>
-                      carregarDadosDashboard()
-                    }
+                    perfil={perfil as any}
+                    onContratacaoAtualizada={carregarDadosDashboard as any}
                   />
                 )}
                 {abaAtiva === 'avaliacoes' && (
                   <AbaAvaliacoesPro perfil={perfil as any} />
-                )}
-                {abaAtiva === 'solicitacoes' && (
-                  <AbaSolicitacoesPro
-                    perfil={perfil as any}
-                    onContratacaoAtualizada={carregarDadosDashboard as any}
-                  />
                 )}
                 {abaAtiva === 'historico' && (
                   <AbaHistoricoPerfil
@@ -234,11 +238,11 @@ const DashboardPerfil = () => {
               setAtiva={setAbaAtiva}
             />
 
-            <div className="mt-6 p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-lg shadow-blue-100 hidden lg:block">
-              <p className="text-white font-bold text-sm mb-2">
+            <div className={styles.performanceTip}>
+              <p className={styles.performanceTipTitle}>
                 Dica de Performance
               </p>
-              <p className="text-blue-100 text-[11px] leading-relaxed">
+              <p className={styles.performanceTipText}>
                 Perfis com fotos profissionais e descrições detalhadas
                 recebem até <strong>4x mais visualizações</strong>.
               </p>

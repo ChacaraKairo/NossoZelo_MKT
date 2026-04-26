@@ -64,7 +64,6 @@ const StepProfissional = () => {
       <div className={Style.inputRow}>
         <div
           className={Style.inputGroup}
-          style={{ flex: 1 }}
         >
           <label>Anos de Experiência</label>
           <input
@@ -87,7 +86,6 @@ const StepProfissional = () => {
 
         <div
           className={Style.inputGroup}
-          style={{ flex: 1 }}
         >
           <label>Valor Hora (R$)</label>
           <input
@@ -111,7 +109,6 @@ const StepProfissional = () => {
 
         <div
           className={Style.inputGroup}
-          style={{ flex: 1 }}
         >
           <label>Valor Diaria (R$)</label>
           <input
@@ -164,7 +161,7 @@ const StepProfissional = () => {
               especialidades: e.target.value,
             })
           }
-          style={{ minHeight: '80px' }}
+          className={Style.textareaSmall}
         />
         {erros.especialidades && (
           <span className={Style.errorText}>
@@ -183,15 +180,9 @@ const StepProfissional = () => {
           onChange={(e) =>
             updateProfissional({ bio: e.target.value })
           }
-          style={{ minHeight: '120px' }} // Garante uma área de toque melhor no mobile
+          className={Style.textareaLarge}
         />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: '4px',
-          }}
-        >
+        <div className={Style.bioFooter}>
           {erros.bio ? (
             <span className={Style.errorText}>
               {erros.bio}

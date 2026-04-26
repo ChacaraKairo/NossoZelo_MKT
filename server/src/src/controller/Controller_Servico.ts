@@ -1,7 +1,6 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import ServiceServico from '../service/Service_Servico';
-
-type AuthRequest = Request;
+import { AuthRequest } from '../types/auth';
 
 function statusErro(error: any) {
   return typeof error?.status === 'number' ? error.status : 500;

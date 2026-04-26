@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaCheckCircle, FaStar } from 'react-icons/fa';
-import styles from './styles/HeaderPro.module.css';
+import styles from '@/styles/components/perfil/HeaderPro.module.css';
 
 interface HeaderProProps {
   perfil: any;

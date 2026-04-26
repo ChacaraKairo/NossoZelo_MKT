@@ -2,8 +2,12 @@ import { useMemo, useState } from 'react';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import avaliacaoService from '@/service/avaliacaoService';
 import { ContratacaoPerfil } from '@/types/perfil';
+<<<<<<< HEAD
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import styles from './styles/PerfilOperacional.module.css';
+=======
+import styles from '@/styles/components/perfil/PerfilOperacional.module.css';
+>>>>>>> aa9a152cd2852b146f9ca20d53c9e30cdc5dfe4f
 
 interface AbaHistoricoPerfilProps {
   contratacoes: ContratacaoPerfil[];

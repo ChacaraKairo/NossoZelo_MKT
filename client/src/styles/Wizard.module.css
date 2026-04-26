@@ -108,6 +108,22 @@
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.progressStep1 {
+  width: 25%;
+}
+
+.progressStep2 {
+  width: 50%;
+}
+
+.progressStep3 {
+  width: 75%;
+}
+
+.progressStep4 {
+  width: 100%;
+}
+
 .stepIndicators {
   display: flex;
   justify-content: space-between;
@@ -212,6 +228,40 @@
   flex: 1; /* Faz os campos internos dividirem o espaço disponíveligualmente */
 }
 
+.inputGrow {
+  flex: 2;
+}
+
+.fieldWithTopMargin {
+  margin-top: 15px;
+}
+
+.fieldHelpText {
+  font-size: 12px;
+  color: #607d8b;
+  margin: 0 0 10px;
+}
+
+.loadingText {
+  display: block;
+  font-size: 12px;
+  color: #0cc0df;
+}
+
+.textareaSmall {
+  min-height: 80px;
+}
+
+.textareaLarge {
+  min-height: 120px;
+}
+
+.bioFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
 /* =========================================
    ESTILIZAÇÃO DE GÊNERO E OPÇÕES
    ========================================= */
@@ -303,6 +353,14 @@
   font-weight: 600;
   cursor: pointer;
   font-size: 0.85rem;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.fileName {
+  margin-left: 5px;
 }
 
 /* =========================================

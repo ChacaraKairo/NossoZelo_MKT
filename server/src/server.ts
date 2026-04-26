@@ -18,6 +18,7 @@ import prisma from './src/lib/prisma';
 console.log('[LOG-FLUXO] Iniciando o bootstrap da aplicacao.');
 
 const PORT = process.env.PORT || '4000';
+const HOST = process.env.HOST || '0.0.0.0';
 const SERVER_URL =
   process.env.RENDER_EXTERNAL_URL ||
   process.env.API_URL ||
@@ -116,9 +117,9 @@ function startKeepAlive(runDatabasePing: boolean) {
 /**
  * Inicia o servidor HTTP.
  */
-app.listen(parseInt(PORT), async () => {
+app.listen(parseInt(PORT), HOST, async () => {
   console.log(
-    `[LOG-FLUXO] Servidor Express disparado na porta: ${PORT}.`,
+    `[LOG-FLUXO] Servidor Express disparado em ${HOST}:${PORT}.`,
   );
 
   await testDatabaseConnection();

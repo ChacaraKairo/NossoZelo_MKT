@@ -1,16 +1,18 @@
 import { RequestHandler } from 'express';
 import logger from '../lib/logger';
+import { AuthRequest } from '../types/auth';
 
 export function permitirTipos(
   tiposPermitidos: string[],
 ): RequestHandler {
   return (req, res, next) => {
-    const tipo = req.user?.tipo;
+    const authReq = req as AuthRequest;
+    const tipo = authReq.user?.tipo;
 
     if (!tipo) {
       logger.warn('permitirTipos: tipo não identificado', {
         rota: req.originalUrl,
-        usuarioId: req.user?.id,
+        usuarioId: authReq.user?.id,
       });
       return res
         .status(401)
@@ -20,7 +22,7 @@ export function permitirTipos(
     if (!tiposPermitidos.includes(tipo)) {
       logger.warn('permitirTipos: acesso negado por tipo', {
         rota: req.originalUrl,
-        usuarioId: req.user?.id,
+        usuarioId: authReq.user?.id,
         tipo,
         tiposPermitidos,
       });

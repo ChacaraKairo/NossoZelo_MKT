@@ -8,7 +8,7 @@ import {
   FaSuitcase,
   FaUser,
 } from 'react-icons/fa';
-import styles from './styles/PerfilTabsVertical.module.css';
+import styles from '@/styles/components/perfil/PerfilTabsVertical.module.css';
 import { PerfilCompleto } from './types/types';
 
 interface PerfilTabsVerticalProps {

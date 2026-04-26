@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VscEye, VscEyeClosed } from 'react-icons/vsc';
-import Style from './styles/InputPassword.module.css';
+import Style from '@/styles/components/inputs/InputPassword.module.css';
 
 // 1. Definindo a interface para as props do componente
 interface InputPasswordProps {

@@ -13,7 +13,7 @@ import { contratacaoService } from '@/service/contratacaoService';
 import { ContratacaoPerfil, PerfilUsuario } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
-import styles from './styles/AbaSolicitacoesPro.module.css';
+import styles from '@/styles/components/perfil/AbaSolicitacoesPro.module.css';
 
 interface AbaSolicitacoesProProps {
   perfil: PerfilUsuario;

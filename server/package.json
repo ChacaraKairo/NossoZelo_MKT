@@ -5,8 +5,13 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "node dist/server.js",
+<<<<<<< HEAD
     "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev --files src/server.ts",
     "build": "npx prisma generate && tsc",
+=======
+    "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev src/server.ts",
+    "build": "npx prisma generate && tsc && node scripts/copy-static-assets.js",
+>>>>>>> aa9a152cd2852b146f9ca20d53c9e30cdc5dfe4f
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
     "db:backup": "ts-node src/src/scripts/backup-db.ts",
     "db:restore": "ts-node src/src/scripts/restore-db.ts",

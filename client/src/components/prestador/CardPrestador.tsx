@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { ServicoPerfil } from '@/types/perfil';
 import logger from '@/utils/logger';
+import styles from '@/styles/components/prestador/CardPrestador.module.css';
 
 interface PrestadorCardLike {
   id: string;
@@ -66,28 +67,28 @@ export default function CardPrestador({ prestador }: CardPrestadorProps) {
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') navegar();
       }}
-      className="cursor-pointer rounded-xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className={styles.card}
     >
-      <div className="flex gap-4">
+      <div className={styles.mainRow}>
         {foto ? (
           <img
             src={foto}
             alt={prestador.nome}
-            className="h-16 w-16 rounded-full object-cover"
+            className={styles.photo}
           />
         ) : (
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-teal-50 text-xl font-black text-teal-700">
+          <div className={styles.avatarFallback}>
             {prestador.nome?.charAt(0)?.toUpperCase() || 'P'}
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-black text-slate-800">
+        <div className={styles.info}>
+          <h3 className={styles.name}>
             {texto(prestador.nome)}
           </h3>
-          <p className="text-sm font-semibold capitalize text-slate-500">
+          <p className={styles.type}>
             {texto(prestador.tipo)}
           </p>
-          <p className="text-sm text-slate-400">
+          <p className={styles.location}>
             {prestador.localidade ||
             prestador.cidade ||
             prestador.estado
@@ -98,8 +99,8 @@ export default function CardPrestador({ prestador }: CardPrestadorProps) {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-        <span className="rounded-full bg-slate-100 px-3 py-1">
+      <div className={styles.metaRow}>
+        <span className={styles.badge}>
           Nota{' '}
           {prestador.rating ??
             prestador.avaliacao_media ??
@@ -107,7 +108,7 @@ export default function CardPrestador({ prestador }: CardPrestadorProps) {
             'não informada'}
         </span>
         {preco && (
-          <span className="rounded-full bg-teal-50 px-3 py-1 text-teal-700">
+          <span className={styles.priceBadge}>
             {preco}
           </span>
         )}
@@ -119,7 +120,7 @@ export default function CardPrestador({ prestador }: CardPrestadorProps) {
           event.stopPropagation();
           navegar();
         }}
-        className="mt-4 w-full rounded-lg border border-teal-100 px-4 py-2 text-sm font-bold text-teal-700"
+        className={styles.button}
       >
         Ver perfil
       </button>

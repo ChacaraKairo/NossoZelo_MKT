@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './styles/BtnLogin.module.css';
+import styles from '@/styles/components/btn/BtnLogin.module.css';
 import { VscAccount } from 'react-icons/vsc';
 
 const LoginButton = () => {

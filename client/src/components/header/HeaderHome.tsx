@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Logo from '../logos/LogoLink';
-import styles from './styles/HeaderHome.module.css';
+import styles from '@/styles/components/header/HeaderHome.module.css';
 import { getUsuarioDoCookie } from '@/utils/auth';
 import logger from '@/utils/logger';
 

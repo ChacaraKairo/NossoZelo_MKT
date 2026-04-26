@@ -1,3 +1,5 @@
+import styles from '@/styles/components/main-page/prestadores-grid/PrestadoresGrid.module.css';
+
 interface ResultadosHeaderProps {
   total: number;
   categoria?: string;
@@ -31,8 +33,8 @@ export default function ResultadosHeader(props: ResultadosHeaderProps) {
 
   return (
     <header>
-      <h2 className="text-xl font-black text-slate-800">{titulo}</h2>
-      <p className="mt-1 text-sm font-semibold text-slate-500">
+      <h2 className={styles.headerTitle}>{titulo}</h2>
+      <p className={styles.headerSubtitle}>
         {filtros.length > 0 ? filtros.join(' • ') : 'Sem filtros aplicados'}
       </p>
     </header>

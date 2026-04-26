@@ -7,7 +7,7 @@ import Button from '../btn/Button';
 import Input from '../inputs/Input';
 import Logo from '../logos/LogoLink';
 import UserDropdown from './UserDropdown';
-import styles from './styles/HeaderMain.module.css';
+import styles from '@/styles/components/header/HeaderMain.module.css';
 import { useBuscaStore } from '@/store/useBuscaStore';
 import { getUsuarioDoCookie } from '@/utils/auth';
 import logger from '@/utils/logger';

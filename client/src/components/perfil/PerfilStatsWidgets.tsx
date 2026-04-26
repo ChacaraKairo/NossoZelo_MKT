@@ -4,7 +4,7 @@ import {
   FaStar,
   FaWallet,
 } from 'react-icons/fa';
-import styles from './styles/PerfilStatsWidgets.module.css';
+import styles from '@/styles/components/perfil/PerfilStatsWidgets.module.css';
 import { PerfilCompleto } from './types/types'; // 🔥 Tipagem Estrita
 
 interface PerfilStatsWidgetsProps {

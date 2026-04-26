@@ -95,10 +95,10 @@ function PerfilPage() {
         <HeaderMain />
         <main className={styles.mainContent}>
           <div className={styles.card}>
-            <h1 className="text-xl font-black text-slate-800">
+            <h1 className={styles.emptyTitle}>
               Perfil não encontrado
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className={styles.emptyText}>
               Não recebemos dados suficientes para renderizar sua
               tela de perfil.
             </p>
@@ -148,10 +148,10 @@ function PerfilPage() {
     });
     conteudo = (
       <section className={styles.card}>
-        <h1 className="text-xl font-black text-slate-800">
+        <h1 className={styles.emptyTitle}>
           Tipo de perfil não reconhecido
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className={styles.emptyText}>
           Não foi possível decidir qual tela exibir para o tipo{' '}
           <strong>{tipoUsuario || 'Não informado'}</strong>.
         </p>

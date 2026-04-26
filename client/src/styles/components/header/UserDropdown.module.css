@@ -58,6 +58,35 @@
   justify-content: center;
 }
 
+.menuIcon,
+.closeIcon {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.menuIconOpen {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+
+.menuIconClosed {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+.closeIcon {
+  position: absolute;
+}
+
+.closeIconOpen {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+.closeIconClosed {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
 .dropdownMenu {
   position: absolute;
   right: 0;
@@ -194,6 +223,10 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: #1f2937;
+}
+
+.dangerText {
+  color: #dc2626;
 }
 
 .itemDesc {

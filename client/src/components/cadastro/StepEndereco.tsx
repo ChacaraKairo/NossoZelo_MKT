@@ -72,13 +72,7 @@ const StepEndereco = () => {
             onBlur={handleBuscaCep}
           />
           {buscandoCep && (
-            <span
-              style={{
-                fontSize: '12px',
-                color: '#0cc0df',
-                display: 'block',
-              }}
-            >
+            <span className={Style.loadingText}>
               Buscando...
             </span>
           )}
@@ -88,10 +82,7 @@ const StepEndereco = () => {
             </span>
           )}
         </div>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 2 }}
-        >
+        <div className={`${Style.inputGroup} ${Style.inputGrow}`}>
           {' '}
           {/* Mantemos o flex aqui apenas para Desktop, o CSS mobile vai sobrescrever */}
           <label>Rua / Logradouro</label>
@@ -127,10 +118,7 @@ const StepEndereco = () => {
             </span>
           )}
         </div>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 2 }}
-        >
+        <div className={`${Style.inputGroup} ${Style.inputGrow}`}>
           <label>Bairro</label>
           <input
             type="text"
@@ -149,10 +137,7 @@ const StepEndereco = () => {
 
       {/* LINHA 3: CIDADE E UF */}
       <div className={Style.inputRow}>
-        <div
-          className={Style.inputGroup}
-          style={{ flex: 2 }}
-        >
+        <div className={`${Style.inputGroup} ${Style.inputGrow}`}>
           <label>Cidade</label>
           <input
             type="text"
@@ -188,21 +173,12 @@ const StepEndereco = () => {
       </div>
 
       {/* RAIO DE ATUAÇÃO */}
-      <div
-        className={Style.inputGroup}
-        style={{ marginTop: '15px' }}
-      >
+      <div className={`${Style.inputGroup} ${Style.fieldWithTopMargin}`}>
         <label>
           Raio de Atuação:{' '}
           <strong>Até {endereco.raioAtuacao} km</strong>
         </label>
-        <p
-          style={{
-            fontSize: '12px',
-            color: '#607d8b',
-            margin: '0 0 10px 0',
-          }}
-        >
+        <p className={Style.fieldHelpText}>
           Distância máxima que você aceita viajar para um
           atendimento.
         </p>

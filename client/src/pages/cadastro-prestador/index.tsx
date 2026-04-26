@@ -53,8 +53,8 @@ const WizardCadastroPrestador = () => {
     { id: 4, title: 'Documentos', icon: <FaFileAlt /> },
   ];
 
-  // Cálculo da porcentagem para a barra de progresso
-  const progressPercent = (step / totalSteps) * 100;
+  const progressClass =
+    Style[`progressStep${step}` as keyof typeof Style];
 
   return (
     <div className={Style.wizardPage}>
@@ -74,8 +74,7 @@ const WizardCadastroPrestador = () => {
         <div className={Style.progressWrapper}>
           <div className={Style.progressBar}>
             <div
-              className={Style.progressFill}
-              style={{ width: `${progressPercent}%` }}
+              className={`${Style.progressFill} ${progressClass}`}
             ></div>
           </div>
           <div className={Style.stepIndicators}>

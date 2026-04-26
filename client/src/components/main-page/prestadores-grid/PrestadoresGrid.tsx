@@ -11,7 +11,7 @@ import {
   buscarPrestadores,
   PrestadorCardData,
 } from '@/service/acharPrestadoresService';
-import styles from './PrestadoresGrid.module.css';
+import styles from '@/styles/components/main-page/prestadores-grid/PrestadoresGrid.module.css';
 
 const CONTEXTO = 'PrestadoresGrid';
 const DEBOUNCE_BUSCA_MS = 800;
@@ -128,7 +128,7 @@ const PrestadoresGrid = () => {
         />
         <button
           type="button"
-          className="w-fit rounded-lg border border-teal-100 px-4 py-2 text-sm font-bold text-teal-700"
+          className={styles.distanceButton}
           onClick={() => setDistancia(Math.min(100, distancia + 25))}
         >
           Aumentar distância
