@@ -15,6 +15,7 @@ export const useFinalizarCadastro = () => {
     profissional,
     documentos,
     limparRascunho,
+    validarEtapa,
   } = useCadastroPrestadorStore();
 
   const prepararPayload = (): CadastroPayload => {
@@ -127,6 +128,11 @@ export const useFinalizarCadastro = () => {
   };
 
   const handleFinalizar = async () => {
+    if (!validarEtapa(4)) {
+      alert('Revise os documentos obrigatórios antes de enviar.');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = prepararPayload();

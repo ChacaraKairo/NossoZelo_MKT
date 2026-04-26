@@ -85,6 +85,34 @@
   width: 100%;
 }
 
+.error {
+  color: #991b1b;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.error p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.errorList {
+  margin: 0.65rem 0 0;
+  padding-left: 1.1rem;
+  text-align: left;
+}
+
+.errorText {
+  display: block;
+  color: #b91c1c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
 /* Estilização de Gênero (Ajustada para não sobrepor) */
 .genderSelection {
   display: flex;

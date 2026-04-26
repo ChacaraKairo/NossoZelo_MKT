@@ -16,10 +16,9 @@ import {
   mascaraUf,
 } from '@/utils/masks';
 import {
-  cpfValido,
-  telefoneValido,
-  cepValido,
-} from '@/utils/validators';
+  ErrosCadastro,
+  validarCadastroUsuario,
+} from '@/validation/cadastroValidation';
 
 import {
   FaUser,
@@ -62,6 +61,7 @@ const CadastroPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ErrosCadastro>({});
 
   // --- LÓGICA DE AUTOCOMPLETE DE CEP ---
   useEffect(() => {
@@ -93,19 +93,31 @@ const CadastroPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setFieldErrors({});
 
-    if (!cpfValido(cpf))
-      return setError(
-        'CPF inválido. Digite os 11 dígitos.',
-      );
-    if (!telefoneValido(telefone))
-      return setError(
-        'Telefone inválido. Digite DDD + número.',
-      );
-    if (!cepValido(cep))
-      return setError('CEP inválido. Digite os 8 dígitos.');
-    if (senha !== confirmarSenha)
-      return setError('As senhas não coincidem!');
+    const erros = validarCadastroUsuario({
+      nome,
+      sobrenome,
+      cpf,
+      telefone,
+      dataNascimento,
+      sexo,
+      cep,
+      rua,
+      numero,
+      bairro,
+      cidade,
+      estado,
+      email,
+      senha,
+      confirmarSenha,
+    });
+
+    if (Object.keys(erros).length > 0) {
+      setFieldErrors(erros);
+      setError('Revise os campos destacados antes de continuar.');
+      return;
+    }
 
     setLoading(true);
 
@@ -177,7 +189,18 @@ const CadastroPage = () => {
 
             <div className={Style.loginForm}>
               {error && (
-                <p className={Style.error}>{error}</p>
+                <div className={Style.error}>
+                  <p>{error}</p>
+                  {Object.keys(fieldErrors).length > 0 && (
+                    <ul className={Style.errorList}>
+                      {Object.entries(fieldErrors).map(
+                        ([campo, mensagem]) => (
+                          <li key={campo}>{mensagem}</li>
+                        ),
+                      )}
+                    </ul>
+                  )}
+                </div>
               )}
 
               <div className={Style.inputRow}>
@@ -351,7 +374,7 @@ const CadastroPage = () => {
               <Input
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                placeholder="Senha"
+                placeholder="Senha forte"
                 type={mostrarSenha ? 'text' : 'password'}
                 icon={
                   mostrarSenha ? <FaEyeSlash /> : <FaEye />
@@ -368,7 +391,7 @@ const CadastroPage = () => {
                 onChange={(e) =>
                   setConfirmarSenha(e.target.value)
                 }
-                placeholder="Confirme a senha"
+                placeholder="Confirme a senha forte"
                 type="password"
                 icon={<FaLock />}
                 iconPosition="right"
@@ -393,3 +416,4 @@ const CadastroPage = () => {
 };
 
 export default CadastroPage;
+

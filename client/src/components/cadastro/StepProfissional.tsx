@@ -70,6 +70,7 @@ const StepProfissional = () => {
           <input
             type="number"
             min="0"
+            max="80"
             value={profissional.experiencia}
             onChange={(e) =>
               updateProfissional({
@@ -77,6 +78,11 @@ const StepProfissional = () => {
               })
             }
           />
+          {erros.experiencia && (
+            <span className={Style.errorText}>
+              {erros.experiencia}
+            </span>
+          )}
         </div>
 
         <div
@@ -86,7 +92,8 @@ const StepProfissional = () => {
           <label>Valor Hora (R$)</label>
           <input
             type="number"
-            min="30"
+            min="10"
+            max="1000"
             step="5"
             value={profissional.valorHora}
             onChange={(e) =>
@@ -95,6 +102,11 @@ const StepProfissional = () => {
               })
             }
           />
+          {erros.valorHora && (
+            <span className={Style.errorText}>
+              {erros.valorHora}
+            </span>
+          )}
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import { FaUpload, FaCheckCircle } from 'react-icons/fa';
 import Style from '@/styles/Wizard.module.css';
 
 const StepDocumentos = () => {
-  const { documentos, updateDocumentos } =
+  const { documentos, updateDocumentos, erros } =
     useCadastroPrestadorStore();
 
   const handleFileChange = (
@@ -42,6 +42,11 @@ const StepDocumentos = () => {
         <div className={Style.uploadInfo}>
           <h4>{label}</h4>
           <p>{descricao}</p>
+          {erros[tipoDoc] && (
+            <span className={Style.errorText}>
+              {erros[tipoDoc]}
+            </span>
+          )}
         </div>
 
         <label
