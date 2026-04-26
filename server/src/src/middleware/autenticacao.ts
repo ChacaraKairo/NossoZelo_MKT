@@ -13,8 +13,17 @@ import { verify } from 'jsonwebtoken';
 /**
  * Chave secreta para validação de tokens, recuperada das variáveis de ambiente.
  */
-const JWT_SECRET =
-  process.env.JWT_SECRET || 'sua-chave-secreta';
+function obterJwtSecret() {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    throw new Error(
+      'JWT_SECRET nao configurado. Defina a variavel de ambiente antes de iniciar o servidor.',
+    );
+  }
+
+  return jwtSecret;
+}
 
 /**
  * Intercepta a requisição para verificar a validade do token de autenticação no cabeçalho.
@@ -57,7 +66,7 @@ export function authMiddleware(
     );
 
     // Operação de validação
-    const decoded = verify(token, JWT_SECRET);
+    const decoded = verify(token, obterJwtSecret());
 
     /**
      * Injeta os dados decodificados (payload do JWT) no objeto de requisição para uso posterior.

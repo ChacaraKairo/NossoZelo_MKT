@@ -7,17 +7,9 @@
  * @rota server\src\src\service\Service_Crud.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 class ServiceCrud {
-  private prisma: PrismaClient;
-
-  /**
-   * Inicializa a instância do PrismaClient para operações do serviço.
-   */
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
 
   /**
    * Verifica se a operação em uma entidade específica deve ser bloqueada por segurança.
@@ -51,8 +43,6 @@ class ServiceCrud {
     console.log(
       '[LOG-FLUXO] Iniciando listar_entidades para mapear o esquema físico do banco de dados.',
     );
-    const prisma = new PrismaClient();
-
     try {
       console.log(
         '[LOG-FLUXO] Executando query bruta (queryRaw) para listar tabelas do information_schema.tables.',
@@ -128,10 +118,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Executando findUnique dinâmico na entidade: ${entity} para o ID: ${id}`,
       );
       const result = await (prisma as any)[
@@ -183,10 +170,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      const where = { [field]: value };
+      }      const where = { [field]: value };
 
       console.log(
         `[LOG-FLUXO] Executando findMany com critério dinâmico na entidade: ${entity}`,
@@ -235,10 +219,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Solicitando findFirst na entidade: ${entity}`,
       );
       const result = await (prisma as any)[
@@ -281,10 +262,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Executando leitura massiva (findMany) em: ${entity}`,
       );
       const result = await (prisma as any)[
@@ -326,10 +304,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Persistindo novo registro na entidade: ${entity}`,
       );
       const result = await (prisma as any)[entity].create({
@@ -374,10 +349,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade "${entity}" não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Executando createMany em '${entity}' (Ignorar Duplicados: ${skipDuplicates})`,
       );
       const result = await (prisma as any)[
@@ -426,10 +398,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Executando alteração do registro ${id} em: ${entity}`,
       );
       const result = await (prisma as any)[entity].update({
@@ -473,10 +442,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Executando exclusão física do registro ${id} na entidade ${entity}`,
       );
       const result = await (prisma as any)[entity].delete({
@@ -518,10 +484,7 @@ class ServiceCrud {
         throw new Error(
           `Entidade ${entity} não existe no banco de dados.`,
         );
-      }
-
-      const prisma = new PrismaClient();
-      console.log(
+      }      console.log(
         `[LOG-FLUXO] Executando findMany com filtros avançados em '${entity}'`,
       );
       const result = await (prisma as any)[entity].findMany(

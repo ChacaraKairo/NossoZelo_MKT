@@ -17,6 +17,8 @@ import logger from '@/utils/logger';
 interface PerfilPrestadorProps {
   perfil: PerfilUsuario;
   onPerfilAtualizado?: (perfil: PerfilUsuario) => void;
+  abaInicial?: string;
+  onRecarregarPerfil?: () => void;
 }
 
 type AbaPrestador =
@@ -169,6 +171,8 @@ function ServicosPrestador({ servicos }: { servicos: ServicoPerfil[] }) {
 export default function PerfilPrestador({
   perfil,
   onPerfilAtualizado,
+  abaInicial,
+  onRecarregarPerfil,
 }: PerfilPrestadorProps) {
   const [aba, setAba] = useState<AbaPrestador>('visao');
   const [editando, setEditando] = useState(false);
@@ -183,6 +187,15 @@ export default function PerfilPrestador({
     perfil.contratacoes_contratacoes_prestador_idTousuarios ||
     perfil.contratacoes ||
     [];
+
+  useEffect(() => {
+    if (
+      abaInicial &&
+      ABAS.some((item) => item.id === abaInicial)
+    ) {
+      setAba(abaInicial as AbaPrestador);
+    }
+  }, [abaInicial]);
 
   useEffect(() => {
     logger.info(CONTEXTO, 'Renderizando PerfilPrestador', {
@@ -223,6 +236,7 @@ export default function PerfilPrestador({
       contratacaoId: contratacao.id,
       status: contratacao.status,
     });
+    onRecarregarPerfil?.();
   };
 
   let conteudo;

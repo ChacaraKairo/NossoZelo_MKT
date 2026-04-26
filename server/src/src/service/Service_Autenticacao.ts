@@ -8,19 +8,19 @@
  * @rota server\src\src\service\Service_Autenticacao.ts
  */
 
-import { PrismaClient } from '@prisma/client';
 import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
+import prisma from '../lib/prisma';
 
-console.log(
-  '[LOG-FLUXO] Inicializando PrismaClient no ServiceAuth com configuração de datasourceUrl.',
-);
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL as string,
-});
+function obterJwtSecret() {
+  const jwtSecret = process.env.JWT_SECRET;
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || 'sua-chave-secreta';
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET nao configurado. Login indisponivel ate o ambiente ser corrigido.');
+  }
+
+  return jwtSecret;
+}
 
 export class ServiceAuth {
   /**
@@ -106,7 +106,7 @@ export class ServiceAuth {
           email: user.email,
           tipo: user.tipo,
         },
-        JWT_SECRET,
+        obterJwtSecret(),
         { expiresIn: '2h' },
       );
 

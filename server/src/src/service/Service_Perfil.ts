@@ -7,14 +7,10 @@
  */
 
 import {
-  PrismaClient,
   contratacoes_status,
 } from '@prisma/client';
+import prisma from '../lib/prisma';
 
-console.log(
-  '[LOG-FLUXO] Inicializando instância do PrismaClient para o ServicePerfil.',
-);
-const prisma = new PrismaClient();
 
 export class ServicePerfil {
   /**
@@ -173,6 +169,7 @@ export class ServicePerfil {
           url_foto_perfil: true,
           cidade: true,
           estado: true,
+          bairro: true,
           telefone: true,
           avaliacao_media: true,
         },
@@ -266,10 +263,21 @@ export class ServicePerfil {
       const perfil = await prisma.usuarios.findUnique({
         where: { id: prestadorId },
         include: {
+          cuidadores: true,
+          enfermeiros: true,
+          acompanhantes: true,
           servicos: true,
           avaliacoes_avaliacoes_prestador_idTousuarios: {
             take: 3,
             orderBy: { nota: 'desc' },
+            include: {
+              usuarios_avaliacoes_cliente_idTousuarios: {
+                select: {
+                  nome: true,
+                  url_foto_perfil: true,
+                },
+              },
+            },
           },
         },
       });
@@ -283,11 +291,36 @@ export class ServicePerfil {
         email,
         telefone,
         endereco,
+        cuidadores,
+        enfermeiros,
+        acompanhantes,
         ...dadosPublicos
       } = perfil;
+      const dadosProfissionais =
+        perfil.tipo === 'cuidador'
+          ? cuidadores
+          : perfil.tipo === 'enfermeiro'
+            ? enfermeiros
+            : perfil.tipo === 'acompanhante'
+              ? acompanhantes
+              : null;
 
       return {
         ...dadosPublicos,
+        dados_profissionais: dadosProfissionais,
+        bio: dadosProfissionais?.bio ?? null,
+        anos_experiencia:
+          dadosProfissionais?.anos_experiencia ?? null,
+        coren:
+          perfil.tipo === 'enfermeiro'
+            ? enfermeiros?.coren
+            : undefined,
+        valor_hora: dadosProfissionais?.valor_hora ?? null,
+        valor_diaria: dadosProfissionais?.valor_diaria ?? null,
+        disponibilidade:
+          dadosProfissionais?.disponibilidade ?? null,
+        especialidades:
+          dadosProfissionais?.especialidades ?? null,
         rating: Number(perfil.avaliacao_media) || 0,
         pode_ver_contato: false,
       };
@@ -371,6 +404,7 @@ export class ServicePerfil {
           url_foto_perfil: true,
           cidade: true,
           estado: true,
+          bairro: true,
           telefone: true,
           email: true,
           endereco: true,
@@ -390,7 +424,7 @@ export class ServicePerfil {
         url_foto_perfil: cliente.url_foto_perfil,
         cidade: cliente.cidade,
         estado: cliente.estado,
-        bairro: null,
+        bairro: cliente.bairro,
         telefone: cliente.telefone,
         email: cliente.email,
         endereco: cliente.endereco,
@@ -483,6 +517,7 @@ export class ServicePerfil {
       'telefone',
       'cidade',
       'estado',
+      'bairro',
       'endereco',
       'url_foto_perfil',
     ]);
@@ -522,13 +557,31 @@ export class ServicePerfil {
       string,
       Set<string>
     > = {
-      cuidador: new Set(['bio', 'anos_experiencia']),
+      cuidador: new Set([
+        'bio',
+        'anos_experiencia',
+        'valor_hora',
+        'valor_diaria',
+        'disponibilidade',
+        'especialidades',
+      ]),
       enfermeiro: new Set([
         'bio',
         'coren',
         'anos_experiencia',
+        'valor_hora',
+        'valor_diaria',
+        'disponibilidade',
+        'especialidades',
       ]),
-      acompanhante: new Set(['bio', 'anos_experiencia']),
+      acompanhante: new Set([
+        'bio',
+        'anos_experiencia',
+        'valor_hora',
+        'valor_diaria',
+        'disponibilidade',
+        'especialidades',
+      ]),
     };
 
     const dadosUsuario: any = {};

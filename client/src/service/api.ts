@@ -1,6 +1,6 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import logger from '@/utils/logger';
+import { getToken, logout } from '@/utils/auth';
 
 const CONTEXTO = 'api';
 
@@ -39,7 +39,7 @@ export function extrairErroApi(error: unknown) {
 api.interceptors.request.use(
   (config) => {
     const token =
-      typeof window !== 'undefined' ? Cookies.get('token') : undefined;
+      typeof window !== 'undefined' ? getToken() : undefined;
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -62,17 +62,13 @@ api.interceptors.response.use(
 
     if (status === 401) {
       if (typeof window !== 'undefined') {
-        Cookies.remove('token');
+        logout(true);
       }
       logger.warn(
         CONTEXTO,
         'Resposta 401 recebida. Token removido e usuário redirecionado.',
         { mensagem },
       );
-
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login-user';
-      }
     }
 
     return Promise.reject(error);

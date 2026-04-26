@@ -23,12 +23,13 @@ export function withAuth<P extends object>(
 
   return function ProtectedRoute(props: P) {
     const router = useRouter();
+    const { asPath, replace } = router;
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isVerifying, setIsVerifying] = useState(true);
 
     useEffect(() => {
       logger.debug(CONTEXTO, 'Iniciando verificacao de seguranca', {
-        rota: router.asPath,
+        rota: asPath,
       });
 
       try {
@@ -36,10 +37,10 @@ export function withAuth<P extends object>(
 
         if (!usuario) {
           logger.warn(CONTEXTO, 'Usuario nao autenticado', {
-            rota: router.asPath,
+            rota: asPath,
             redirectPath,
           });
-          router.replace(redirectPath);
+          replace(redirectPath);
           return;
         }
 
@@ -51,22 +52,22 @@ export function withAuth<P extends object>(
             tipoUsuario: usuario.tipo,
             rolesPermitidas,
           });
-          router.replace('/');
+          replace('/');
           return;
         }
 
         logger.debug(CONTEXTO, 'Usuario autorizado', {
           usuarioId: usuario.id,
-          rota: router.asPath,
+          rota: asPath,
         });
         setIsAuthorized(true);
       } catch (error: unknown) {
         logger.error(CONTEXTO, 'Falha no processamento do HOC', error);
-        router.replace(redirectPath);
+        replace(redirectPath);
       } finally {
         setIsVerifying(false);
       }
-    }, [router]);
+    }, [asPath, replace]);
 
     if (isVerifying || !isAuthorized) {
       return createElement(

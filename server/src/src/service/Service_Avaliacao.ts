@@ -7,15 +7,16 @@
  */
 
 import {
-  PrismaClient,
   contratacoes_status,
 } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { ServicePerfil } from './Service_Perfil';
 
-console.log(
-  '[LOG-FLUXO] Inicializando PrismaClient para o ServiceAvaliacao.',
-);
-const prisma = new PrismaClient();
+function erroNegocio(mensagem: string, status = 400) {
+  const error = new Error(mensagem) as Error & { status?: number };
+  error.status = status;
+  return error;
+}
 
 class ServiceAvaliacao {
   /**
@@ -35,11 +36,11 @@ class ServiceAvaliacao {
       const nota = Number(data.nota);
 
       if (!Number.isInteger(contratacaoId)) {
-        throw new Error('Contratação inválida.');
+        throw erroNegocio('Contratacao invalida.', 400);
       }
 
       if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
-        throw new Error('A nota deve estar entre 1 e 5.');
+        throw erroNegocio('A nota deve estar entre 1 e 5.', 400);
       }
 
       const contratacao =
@@ -48,28 +49,22 @@ class ServiceAvaliacao {
         });
 
       if (!contratacao) {
-        throw new Error('Contratação não encontrada.');
+        throw erroNegocio('Contratacao nao encontrada.', 404);
       }
 
       if (contratacao.cliente_id !== data.cliente_id) {
-        throw new Error(
-          'A contratação não pertence ao cliente autenticado.',
-        );
+        throw erroNegocio('A contratacao nao pertence ao cliente autenticado.', 403);
       }
 
       if (contratacao.prestador_id !== data.prestador_id) {
-        throw new Error(
-          'Prestador informado não corresponde à contratação.',
-        );
+        throw erroNegocio('Prestador informado nao corresponde a contratacao.', 400);
       }
 
       if (
         contratacao.status !==
         ('concluido' as contratacoes_status)
       ) {
-        throw new Error(
-          'A contratação precisa estar concluída para ser avaliada.',
-        );
+        throw erroNegocio('A contratacao precisa estar concluida para ser avaliada.', 409);
       }
 
       const avaliacaoExistente =
@@ -79,9 +74,7 @@ class ServiceAvaliacao {
         });
 
       if (avaliacaoExistente) {
-        throw new Error(
-          'Esta contratação já possui avaliação.',
-        );
+        throw erroNegocio('Esta contratacao ja possui avaliacao.', 409);
       }
 
       /**
@@ -128,9 +121,7 @@ class ServiceAvaliacao {
       console.error(
         `[ERRO-FLUXO] Falha crítica ao registrar avaliação para a contratação ${data.contratacao_id}: ${error.message}`,
       );
-      throw new Error(
-        `Erro ao registar avaliação: ${error.message}`,
-      );
+      throw error;
     }
   }
 

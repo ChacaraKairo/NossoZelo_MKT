@@ -7,19 +7,20 @@
  * @rota server\src\src\service\Service_Rec_Senha.ts
  */
 
-import { PrismaClient } from '@prisma/client';
 import { sign } from 'jsonwebtoken';
+import prisma from '../lib/prisma';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 
-console.log(
-  '[LOG-FLUXO] Inicializando instância do PrismaClient para o ServiceRecuperacaoSenha.',
-);
-const prisma = new PrismaClient();
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || 'sua-chave-secreta';
+function obterJwtSecret() {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET nao configurado. Recuperacao de senha indisponivel ate o ambiente ser corrigido.');
+  }
+  return jwtSecret;
+}
 const BASE_URL =
   process.env.FRONTEND_URL || 'http://localhost:3000';
 
@@ -62,7 +63,7 @@ export class ServiceRecuperacaoSenha {
       );
 
       // Geração do token com payload de identificação (Expira em 15 minutos para segurança)
-      const token = sign({ id: usuario.id }, JWT_SECRET, {
+      const token = sign({ id: usuario.id }, obterJwtSecret(), {
         expiresIn: '15m',
       });
 

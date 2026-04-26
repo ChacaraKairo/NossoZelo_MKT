@@ -7,21 +7,19 @@
  * @rota server\src\service\Service_Localizacao.ts
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 export interface Coordenadas {
   latitude: number;
   longitude: number;
 }
 
-console.log(
-  '[LOG-FLUXO] Inicializando PrismaClient para o GeolocalizacaoService.',
-);
-const prisma = new PrismaClient();
 
 export class GeolocalizacaoService {
   private static readonly userAgent =
-    'SeuApp/1.0 (seuemail@exemplo.com)';
+    process.env.NOMINATIM_USER_AGENT ||
+    'NossoZelo/1.0 (contato@nossozelo.com.br)';
   private static readonly EARTH_RADIUS_KM = 6371;
 
   /**
@@ -383,18 +381,6 @@ export class GeolocalizacaoService {
         );
       }
 
-      // Filtro de Localização Textual
-      if (false && localizacao) {
-        console.log(
-          `[LOG-FLUXO] Aplicando filtro geográfico textual: ${localizacao}`,
-        );
-        conditions.push(
-          Prisma.sql`(u.cidade LIKE ${
-            '%' + localizacao + '%'
-          } OR u.estado LIKE ${'%' + localizacao + '%'})`,
-        );
-      }
-
       // Filtro de Preço
       if (precoMax) {
         console.log(
@@ -490,11 +476,45 @@ export class GeolocalizacaoService {
 
       const query = Prisma.sql`
         SELECT 
-          u.id, u.nome, u.tipo, u.url_foto_perfil, u.cidade, u.estado
+          u.id,
+          u.nome,
+          u.tipo,
+          u.url_foto_perfil,
+          u.cidade,
+          u.estado,
+          u.bairro,
+          u.avaliacao_media,
+          u.email_confirmado,
+          MIN(s.valor) AS preco,
+          COUNT(DISTINCT s.id) AS total_servicos,
+          COALESCE(c.disponibilidade, e.disponibilidade, a.disponibilidade) AS disponibilidade,
+          COALESCE(c.especialidades, e.especialidades, a.especialidades) AS especialidades
           ${selectDistancia}
         FROM usuarios u
         LEFT JOIN localizacoes l ON u.id = l.usuario_id
+        LEFT JOIN servicos s ON s.prestador_id = u.id
+        LEFT JOIN cuidadores c ON c.usuario_id = u.id
+        LEFT JOIN enfermeiros e ON e.usuario_id = u.id
+        LEFT JOIN acompanhantes a ON a.usuario_id = u.id
         ${whereClause}
+        GROUP BY
+          u.id,
+          u.nome,
+          u.tipo,
+          u.url_foto_perfil,
+          u.cidade,
+          u.estado,
+          u.bairro,
+          u.avaliacao_media,
+          u.email_confirmado,
+          l.latitude,
+          l.longitude,
+          c.disponibilidade,
+          e.disponibilidade,
+          a.disponibilidade,
+          c.especialidades,
+          e.especialidades,
+          a.especialidades
         ${havingClause}
         ${orderClause}
         LIMIT ${Number(limit)};

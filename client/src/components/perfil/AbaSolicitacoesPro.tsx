@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DadosClienteLiberado from '@/components/perfil/DadosClienteLiberado';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import { contratacaoService } from '@/service/contratacaoService';
@@ -50,15 +50,26 @@ export default function AbaSolicitacoesPro({
   perfil,
   onContratacaoAtualizada,
 }: AbaSolicitacoesProProps) {
-  const solicitacoes =
-    perfil.contratacoes_contratacoes_prestador_idTousuarios ||
-    perfil.contratacoes ||
-    [];
+  const solicitacoesIniciais = useMemo(
+    () =>
+      perfil.contratacoes_contratacoes_prestador_idTousuarios ||
+      perfil.contratacoes ||
+      [],
+    [perfil.contratacoes_contratacoes_prestador_idTousuarios, perfil.contratacoes],
+  );
+  const prestadorId = perfil.dados_usuario?.id || perfil.id;
+  const [solicitacoes, setSolicitacoes] = useState<ContratacaoPerfil[]>(
+    solicitacoesIniciais,
+  );
   const [processandoId, setProcessandoId] = useState<number | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [clienteContatoAberto, setClienteContatoAberto] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    setSolicitacoes(solicitacoesIniciais);
+  }, [solicitacoesIniciais]);
 
   useEffect(() => {
     logger.info(CONTEXTO, 'Renderização da aba', {
@@ -68,6 +79,24 @@ export default function AbaSolicitacoesPro({
       total: solicitacoes.length,
     });
   }, [perfil, solicitacoes.length]);
+
+  useEffect(() => {
+    if (!prestadorId) return;
+
+    contratacaoService
+      .listarSolicitacoesPrestador(prestadorId)
+      .then((dados) => {
+        setSolicitacoes(dados);
+        logger.info(CONTEXTO, 'Solicitacoes completas carregadas', {
+          total: dados.length,
+        });
+      })
+      .catch((error) => {
+        logger.warn(CONTEXTO, 'Nao foi possivel carregar lista completa', {
+          mensagem: extrairMensagemErro(error),
+        });
+      });
+  }, [prestadorId]);
 
   const executarAcao = async (
     tipoAcao: 'aceitar' | 'negar',
@@ -104,6 +133,11 @@ export default function AbaSolicitacoesPro({
         contratacaoId: contratacao.id,
         statusEnviado,
       });
+      setSolicitacoes((atuais) =>
+        atuais.map((item) =>
+          item.id === resultado.id ? { ...item, ...resultado } : item,
+        ),
+      );
       onContratacaoAtualizada?.(resultado);
     } catch (error: unknown) {
       const mensagem = extrairMensagemErro(error);

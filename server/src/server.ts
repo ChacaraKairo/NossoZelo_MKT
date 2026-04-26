@@ -10,18 +10,23 @@ import dotenv from 'dotenv';
 // Carregamento imediato das variáveis de ambiente
 dotenv.config();
 
-import { PrismaClient } from '@prisma/client';
 import app from './main';
 import axios from 'axios';
 import { exec } from 'child_process'; // Importado para executar o ping do banco
+import prisma from './src/lib/prisma';
 
 console.log(
   '[LOG-FLUXO] Iniciando o bootstrap da aplicação.',
 );
 
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || '4000';
 const link = process.env.LINK || 'http://localhost';
+
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    'JWT_SECRET nao configurado. O servidor nao pode iniciar com chave JWT padrao.',
+  );
+}
 
 // Link do Render para o auto-ping
 const RENDER_URL =

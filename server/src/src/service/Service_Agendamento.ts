@@ -2,12 +2,11 @@ import {
   contratacoes_status,
   contratacoes_tipo_prestador,
   Prisma,
-  PrismaClient,
   usuarios_tipo,
 } from '@prisma/client';
+import prisma from '../lib/prisma';
 import EmailService from './Service_Email';
 
-const prisma = new PrismaClient();
 
 const TIPOS_PRESTADOR = ['cuidador', 'enfermeiro', 'acompanhante'];
 
@@ -144,6 +143,8 @@ async function enviarEmailSeguro(
   if (!to) return false;
 
   try {
+    // TODO tecnico: migrar notificacoes de e-mail para fila transacional no backend,
+    // mantendo credenciais e tokens sempre fora do frontend.
     const emailService = new EmailService();
     await emailService.send(to, subject, html);
     return true;

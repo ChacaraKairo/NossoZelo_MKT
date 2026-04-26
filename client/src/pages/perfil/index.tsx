@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import HeaderMain from '@/components/header/HeaderMain';
 import Footer from '@/components/footer/Footer';
 import Carregando from '@/components/common/Carregando';
@@ -25,6 +26,7 @@ function LoadingPerfil() {
 }
 
 function PerfilPage() {
+  const router = useRouter();
   const {
     perfil,
     loading,
@@ -127,6 +129,12 @@ function PerfilPage() {
       <PerfilPrestador
         perfil={perfil}
         onPerfilAtualizado={definirPerfil}
+        abaInicial={
+          typeof router.query.aba === 'string'
+            ? router.query.aba
+            : undefined
+        }
+        onRecarregarPerfil={recarregarPerfil}
       />
     );
   } else {

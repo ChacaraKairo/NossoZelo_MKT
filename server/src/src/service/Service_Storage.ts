@@ -9,11 +9,10 @@ import {
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import path from 'path';
+import prisma from '../lib/prisma';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 // server/src/src/service/Service_Storage.ts
 
 const s3Client = new S3Client({
