@@ -59,6 +59,13 @@ export class ServiceAuth {
         where: isEmail
           ? { email: data.identificador }
           : { cpf: data.identificador },
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          tipo: true,
+          senha: true,
+        },
       });
 
       // Ramificação condicional: Verificação de existência

@@ -10,6 +10,15 @@
 import { Request, Response } from 'express';
 import { ServiceAuth } from '../service/Service_Autenticacao';
 
+function erroAutenticacao(mensagem: string) {
+  return [
+    'Usuário não encontrado',
+    'Senha inválida',
+    'Usuario não encontrado',
+    'Senha invalida',
+  ].includes(mensagem);
+}
+
 export class AuthController {
   /**
    * Endpoint para realizar o login do usuário.
@@ -62,8 +71,16 @@ export class AuthController {
         }. Retornando status 401.`,
       );
 
-      // Em controllers de autenticação, erros de negócio costumam resultar em 401 (Unauthorized)
-      return res.status(401).json({ error: error.message });
+      if (erroAutenticacao(error.message)) {
+        return res.status(401).json({
+          error: 'Usu�rio ou senha inv�lidos.',
+        });
+      }
+
+      return res.status(500).json({
+        error:
+          'Erro interno ao processar login. Tente novamente em instantes.',
+      });
     }
   }
 }
