@@ -1,7 +1,9 @@
 ﻿import { Request, Response } from 'express';
 import { ServicePerfil } from '../service/Service_Perfil';
 
-export type AuthRequest = Request;
+import { AuthRequest } from '../types/auth';
+
+export type { AuthRequest };
 
 const camposProtegidosPerfil = [
   'id',

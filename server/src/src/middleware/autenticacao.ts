@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import logger from '../lib/logger';
+import { AuthRequest, UsuarioAutenticado } from '../types/auth';
 
 function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
@@ -25,7 +26,7 @@ function extrairBearerToken(authHeader?: string) {
 
 function payloadValido(
   decoded: string | JwtPayload,
-): decoded is Express.AuthenticatedUser {
+): decoded is JwtPayload & UsuarioAutenticado {
   return (
     typeof decoded === 'object' &&
     typeof decoded.id === 'string' &&
@@ -63,7 +64,9 @@ export function authMiddleware(
         .json({ error: 'Token inválido ou expirado.' });
     }
 
-    req.user = {
+    const authReq = req as AuthRequest;
+
+    authReq.user = {
       id: decoded.id,
       nome: decoded.nome,
       email: decoded.email,
@@ -74,8 +77,8 @@ export function authMiddleware(
 
     logger.debug('authMiddleware: usuário autenticado', {
       rota: req.originalUrl,
-      usuarioId: req.user.id,
-      tipo: req.user.tipo,
+      usuarioId: authReq.user.id,
+      tipo: authReq.user.tipo,
     });
 
     return next();
