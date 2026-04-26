@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { ServicePerfil } from './Service_Perfil';
+import { STATUS_CONTRATACAO } from '../constants/dominio';
 
 function erroNegocio(mensagem: string, status = 400) {
   const error = new Error(mensagem) as Error & { status?: number };
@@ -62,7 +63,7 @@ class ServiceAvaliacao {
 
       if (
         contratacao.status !==
-        ('concluido' as contratacoes_status)
+        (STATUS_CONTRATACAO.concluido as contratacoes_status)
       ) {
         throw erroNegocio('A contratacao precisa estar concluida para ser avaliada.', 409);
       }

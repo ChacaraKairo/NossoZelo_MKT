@@ -3,9 +3,10 @@ import {
   servicos_tipo_prestador,
 } from '@prisma/client';
 import prisma from '../lib/prisma';
-
-const TIPOS_PRESTADOR = ['cuidador', 'enfermeiro', 'acompanhante'];
-const TIPOS_COBRANCA = ['hora', 'dia'];
+import {
+  TIPOS_COBRANCA_SERVICO,
+  TIPOS_PRESTADOR,
+} from '../constants/dominio';
 
 type UsuarioAutenticado = {
   id: string;
@@ -30,7 +31,7 @@ function validarPrestador(usuario: UsuarioAutenticado) {
     throw erroNegocio('Usuário não identificado na sessão.', 401);
   }
 
-  if (!TIPOS_PRESTADOR.includes(usuario.tipo)) {
+  if (!TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
     throw erroNegocio(
       'Apenas prestadores podem gerenciar serviços.',
       403,
@@ -81,7 +82,7 @@ function montarDadosServico(
 
   if (!parcial || dados.tipo_cobranca !== undefined) {
     const tipoCobranca = String(dados.tipo_cobranca || '');
-    if (!TIPOS_COBRANCA.includes(tipoCobranca)) {
+    if (!TIPOS_COBRANCA_SERVICO.includes(tipoCobranca as any)) {
       throw erroNegocio('Tipo de cobrança inválido.');
     }
     data.tipo_cobranca = tipoCobranca as servicos_tipo_cobranca;

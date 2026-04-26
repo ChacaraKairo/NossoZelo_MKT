@@ -9,6 +9,14 @@ export interface UsuarioDecodificado {
 }
 
 const COOKIE_NAMES = ['zelo_token', 'token'];
+const STORAGE_KEYS_SESSAO = [
+  'token',
+  'zelo_token',
+  'usuario',
+  'user',
+  'auth',
+  'nossozelo_usuario',
+];
 
 export const getToken = (): string | undefined => {
   if (typeof document === 'undefined') return undefined;
@@ -31,8 +39,10 @@ export const logout = (silent: boolean = false) => {
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   });
 
-  localStorage.clear();
-  sessionStorage.clear();
+  STORAGE_KEYS_SESSAO.forEach((key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
 
   logger.warn(
     'auth',

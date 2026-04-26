@@ -1,12 +1,7 @@
 import { Request, Response } from 'express';
 import ServiceAgendamento from '../service/Service_Agendamento';
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    tipo: string;
-  };
-}
+type AuthRequest = Request;
 
 function statusErro(error: any) {
   return typeof error?.status === 'number' ? error.status : 500;

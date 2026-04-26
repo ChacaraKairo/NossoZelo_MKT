@@ -6,9 +6,10 @@ import {
 } from '@prisma/client';
 import prisma from '../lib/prisma';
 import EmailService from './Service_Email';
-
-
-const TIPOS_PRESTADOR = ['cuidador', 'enfermeiro', 'acompanhante'];
+import {
+  STATUS_CONTRATACAO,
+  TIPOS_PRESTADOR,
+} from '../constants/dominio';
 
 type UsuarioAutenticado = {
   id: string;
@@ -205,11 +206,11 @@ async function notificarMudancaStatus(
     contratacao.usuarios_contratacoes_prestador_idTousuarios;
 
   const statusTexto =
-    status === 'confirmado'
+    status === STATUS_CONTRATACAO.confirmado
       ? 'aceita'
-      : status === 'cancelado'
+      : status === STATUS_CONTRATACAO.cancelado
         ? 'negada'
-        : status === 'concluido'
+        : status === STATUS_CONTRATACAO.concluido
           ? 'concluida'
           : String(status);
 
@@ -305,7 +306,7 @@ class ServiceAgendamento {
       throw erroNegocio('Prestador nao encontrado.', 404);
     }
 
-    if (!TIPOS_PRESTADOR.includes(prestador.tipo)) {
+    if (!TIPOS_PRESTADOR.includes(prestador.tipo as any)) {
       throw erroNegocio('Usuario informado nao e um prestador.', 400);
     }
 
@@ -346,7 +347,10 @@ class ServiceAgendamento {
         prestador_id: prestador.id,
         data: dataAgendamento,
         status: {
-          in: ['pendente', 'confirmado'],
+          in: [
+            STATUS_CONTRATACAO.pendente,
+            STATUS_CONTRATACAO.confirmado,
+          ],
         },
         OR: [
           {
@@ -375,7 +379,7 @@ class ServiceAgendamento {
         hora_inicio: horaInicio,
         hora_fim: horaFim,
         preco: servico.valor,
-        status: 'pendente',
+        status: STATUS_CONTRATACAO.pendente,
         observacoes: data.observacoes || data.observacao || null,
       },
       include: {
@@ -411,7 +415,7 @@ class ServiceAgendamento {
     return this.atualizarStatusContratacao(
       contratacaoId,
       usuario,
-      'confirmado',
+      STATUS_CONTRATACAO.confirmado,
     );
   }
 
@@ -422,7 +426,7 @@ class ServiceAgendamento {
     return this.atualizarStatusContratacao(
       contratacaoId,
       usuario,
-      'cancelado',
+      STATUS_CONTRATACAO.cancelado,
     );
   }
 
@@ -433,7 +437,7 @@ class ServiceAgendamento {
     return this.atualizarStatusContratacao(
       contratacaoId,
       usuario,
-      'concluido',
+      STATUS_CONTRATACAO.concluido,
     );
   }
 
@@ -469,7 +473,10 @@ class ServiceAgendamento {
     const ehClienteDaContratacao =
       contratacaoAtual.cliente_id === usuario.id;
 
-    if (status === 'confirmado' || status === 'cancelado') {
+    if (
+      status === STATUS_CONTRATACAO.confirmado ||
+      status === STATUS_CONTRATACAO.cancelado
+    ) {
       if (!ehPrestadorDaContratacao) {
         throw erroNegocio(
           'Apenas o prestador desta contratacao pode aceitar ou negar.',
@@ -477,7 +484,7 @@ class ServiceAgendamento {
         );
       }
 
-      if (contratacaoAtual.status !== 'pendente') {
+      if (contratacaoAtual.status !== STATUS_CONTRATACAO.pendente) {
         throw erroNegocio(
           'Somente contratacoes pendentes podem ser aceitas ou negadas.',
           409,
@@ -485,7 +492,7 @@ class ServiceAgendamento {
       }
     }
 
-    if (status === 'concluido') {
+    if (status === STATUS_CONTRATACAO.concluido) {
       if (!ehPrestadorDaContratacao && !ehClienteDaContratacao) {
         throw erroNegocio(
           'Apenas envolvidos na contratacao podem finaliza-la.',
@@ -493,7 +500,7 @@ class ServiceAgendamento {
         );
       }
 
-      if (contratacaoAtual.status !== 'confirmado') {
+      if (contratacaoAtual.status !== STATUS_CONTRATACAO.confirmado) {
         throw erroNegocio(
           'Somente contratacoes confirmadas podem ser concluidas.',
           409,
@@ -523,7 +530,7 @@ class ServiceAgendamento {
   }
 
   static async registroManual(data: any, usuario: UsuarioAutenticado) {
-    if (!usuario?.id || !TIPOS_PRESTADOR.includes(usuario.tipo)) {
+    if (!usuario?.id || !TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
       throw erroNegocio(
         'Apenas prestadores podem registrar atendimento manual.',
         403,
@@ -543,7 +550,7 @@ class ServiceAgendamento {
         ),
         hora_fim: horaFimPadrao(data.hora_inicio, data.hora_fim),
         preco: data.preco,
-        status: 'manual',
+        status: STATUS_CONTRATACAO.manual,
         observacoes: data.observacoes || data.observacao || null,
       },
     });

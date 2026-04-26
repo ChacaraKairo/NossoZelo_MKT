@@ -1,16 +1,7 @@
-/**
- * @author Kairo Chácara
- * @version 1.0
- * @date 14/04/2026
- * @description Classe de serviço responsável pela gestão de segurança e identidade,
- * lidando com o processo de login (E-mail/CPF), validação criptográfica de senhas
- * e emissão de tokens JWT para autorização.
- * @rota server\src\src\service\Service_Autenticacao.ts
- */
-
 import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import logger from '../lib/logger';
 
 const TEMPO_SESSAO_LOGIN = '7d';
 
@@ -18,49 +9,39 @@ function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!jwtSecret) {
-    throw new Error('JWT_SECRET nao configurado. Login indisponivel ate o ambiente ser corrigido.');
+    throw new Error(
+      'JWT_SECRET nao configurado. Login indisponivel ate o ambiente ser corrigido.',
+    );
   }
 
   return jwtSecret;
 }
 
+function mascararIdentificador(identificador: string) {
+  if (identificador.includes('@')) {
+    return identificador.replace(/^(.{2}).*(@.*)$/, '$1***$2');
+  }
+
+  return `***${identificador.replace(/\D/g, '').slice(-4)}`;
+}
+
 export class ServiceAuth {
-  /**
-   * Realiza a autenticação do usuário validando as credenciais (E-mail ou CPF).
-   * @param {object} data - Objeto contendo identificador e senha.
-   * @param {string} data.identificador - E-mail ou CPF do usuário.
-   * @param {string} data.senha - Senha em texto plano.
-   * @returns {Promise<any>} - Retorna o token JWT e dados básicos do usuário autenticado.
-   * @throws {Error} - Lança erro caso o usuário não exista ou a senha seja inválida.
-   */
   static async login(data: {
     identificador: string;
     senha: string;
   }) {
-    console.log(
-      `[LOG-FLUXO] Iniciando método login para o identificador: ${data.identificador}`,
-    );
+    const identificador = String(data.identificador || '').trim();
+    const identificadorLog = mascararIdentificador(identificador);
+    const isEmail = identificador.includes('@');
+
+    logger.info('AuthService: iniciando login', {
+      identificador: identificadorLog,
+      tipoIdentificador: isEmail ? 'email' : 'cpf',
+    });
 
     try {
-      console.log(
-        '[LOG-FLUXO] Detectando padrão do identificador (Regex/@).',
-      );
-      const isEmail = data.identificador.includes('@');
-      console.log(
-        `[LOG-FLUXO] Tipo de identificador detectado: ${
-          isEmail ? 'E-mail' : 'CPF'
-        }.`,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Consultando entidade 'usuarios' no banco de dados para o valor: ${data.identificador}`,
-      );
-
-      // Chamada assíncrona ao Prisma mantendo a estrutura original
       const user = await prisma.usuarios.findUnique({
-        where: isEmail
-          ? { email: data.identificador }
-          : { cpf: data.identificador },
+        where: isEmail ? { email: identificador } : { cpf: identificador },
         select: {
           id: true,
           nome: true,
@@ -70,43 +51,22 @@ export class ServiceAuth {
         },
       });
 
-      // Ramificação condicional: Verificação de existência
       if (!user) {
-        console.error(
-          `[ERRO-FLUXO] Falha no Login: Usuário com identificador '${data.identificador}' não foi localizado na base de dados.`,
-        );
-        throw new Error('Usuário não encontrado');
+        logger.warn('AuthService: usuário não encontrado', {
+          identificador: identificadorLog,
+        });
+        throw new Error('Usuário ou senha inválidos.');
       }
 
-      console.log(
-        `[LOG-FLUXO] Usuário ID ${user.id} localizado. Tipo: ${user.tipo}. Iniciando verificação de integridade da senha.`,
-      );
+      const senhaValida = await compare(data.senha, user.senha);
 
-      console.log(
-        '[LOG-FLUXO] Comparando hash da senha armazenada com a senha fornecida via bcrypt.compare.',
-      );
-
-      // Comparação criptográfica mantendo o nome da variável issenhaValid
-      const issenhaValid = await compare(
-        data.senha,
-        user.senha,
-      );
-
-      // Ramificação condicional: Validação de senha
-      if (!issenhaValid) {
-        console.error(
-          `[ERRO-FLUXO] Falha no Login: Senha divergente fornecida para o usuário ID: ${user.id}.`,
-        );
-        throw new Error('Senha inválida');
+      if (!senhaValida) {
+        logger.warn('AuthService: senha inválida', {
+          usuarioId: user.id,
+          tipo: user.tipo,
+        });
+        throw new Error('Usuário ou senha inválidos.');
       }
-
-      console.log(
-        `[LOG-FLUXO] Credenciais validadas com êxito para o usuário: ${user.nome} (ID: ${user.id}).`,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Iniciando assinatura do token JWT (Expiração: ${TEMPO_SESSAO_LOGIN}) com os claims de identidade.`,
-      );
 
       const token = sign(
         {
@@ -119,11 +79,12 @@ export class ServiceAuth {
         { expiresIn: TEMPO_SESSAO_LOGIN },
       );
 
-      console.log(
-        `[LOG-FLUXO] Autenticação concluída com sucesso. Token gerado para o perfil do tipo: ${user.tipo}.`,
-      );
+      logger.info('AuthService: login concluído', {
+        usuarioId: user.id,
+        tipo: user.tipo,
+        expiraEm: TEMPO_SESSAO_LOGIN,
+      });
 
-      // Retorno do payload final para o controller
       return {
         token,
         user: {
@@ -134,53 +95,10 @@ export class ServiceAuth {
         },
       };
     } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha crítica no fluxo de login para o identificador ${
-          data.identificador
-        }. Detalhes: ${error.message || error}`,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Registra a intenção de troca de senha no sistema.
-   * @returns {Promise<void>}
-   */
-  static async pedido_troca_senha() {
-    console.log(
-      '[LOG-FLUXO] Iniciando execução do método pedido_troca_senha.',
-    );
-    try {
-      // Nota: Log de stub para futura implementação de lógica de tokens de redefinição
-      console.log(
-        '[LOG-FLUXO] Pedido de troca de senha processado como stub (Aguardando implementação lógica).',
-      );
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao processar pedido de troca de senha: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Efetiva a alteração definitiva da senha na base de dados.
-   * @returns {Promise<void>}
-   */
-  static async trocar_senha() {
-    console.log(
-      '[LOG-FLUXO] Iniciando execução do método trocar_senha.',
-    );
-    try {
-      // Nota: Log de stub para futura implementação da alteração física via Prisma
-      console.log(
-        '[LOG-FLUXO] Troca de senha concluída como stub (Sucesso simulado).',
-      );
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha na efetivação da troca de senha: ${error.message}`,
-      );
+      logger.warn('AuthService: falha no login', {
+        identificador: identificadorLog,
+        erro: error?.message || 'Erro desconhecido',
+      });
       throw error;
     }
   }

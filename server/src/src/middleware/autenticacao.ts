@@ -1,18 +1,7 @@
-/**
- * @author Kairo Chácara
- * @version 1.0
- * @date 15/04/2026
- * @description Middleware de segurança responsável por interceptar requisições a rotas protegidas,
- * validar a presença e integridade de tokens JWT e autorizar o acesso aos recursos do sistema.
- * @rota server\src\src\middleware\autenticacao.ts
- */
-
 import { Request, Response, NextFunction } from 'express';
-import { verify } from 'jsonwebtoken';
+import { JwtPayload, verify } from 'jsonwebtoken';
+import logger from '../lib/logger';
 
-/**
- * Chave secreta para validação de tokens, recuperada das variáveis de ambiente.
- */
 function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
 
@@ -25,71 +14,80 @@ function obterJwtSecret() {
   return jwtSecret;
 }
 
-/**
- * Intercepta a requisição para verificar a validade do token de autenticação no cabeçalho.
- * @param {Request} req - Objeto de requisição do Express.
- * @param {Response} res - Objeto de resposta do Express.
- * @param {NextFunction} next - Função de callback para transição de middleware.
- * @returns {void | Response} - Retorna 401 se não autorizado ou prossegue para o próximo handler.
- */
+function extrairBearerToken(authHeader?: string) {
+  if (!authHeader) return null;
+
+  const [scheme, token] = authHeader.trim().split(/\s+/);
+  if (scheme !== 'Bearer' || !token) return null;
+
+  return token;
+}
+
+function payloadValido(
+  decoded: string | JwtPayload,
+): decoded is Express.AuthenticatedUser {
+  return (
+    typeof decoded === 'object' &&
+    typeof decoded.id === 'string' &&
+    typeof decoded.tipo === 'string'
+  );
+}
+
 export function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  console.log(
-    `[LOG-FLUXO] authMiddleware: Iniciando verificação de autorização para a rota: ${req.originalUrl}`,
-  );
+  const token = extrairBearerToken(req.headers.authorization);
 
-  const authHeader = req.headers.authorization;
-
-  // Ramificação condicional: Verificação de presença do Header
-  if (!authHeader) {
-    console.warn(
-      `[LOG-FLUXO] Bloqueio de Acesso: Cabeçalho 'authorization' não encontrado na requisição vinda de ${req.ip}.`,
-    );
+  if (!token) {
+    logger.warn('authMiddleware: token ausente ou mal formatado', {
+      rota: req.originalUrl,
+      ip: req.ip,
+    });
     return res
       .status(401)
-      .json({ error: 'Token não fornecido' });
+      .json({ error: 'Token não fornecido ou mal formatado.' });
   }
 
-  console.log(
-    '[LOG-FLUXO] Cabeçalho de autorização detectado. Extraindo token Bearer.',
-  );
-
-  // Extração do token mantendo nomenclatura original
-  const [, token] = authHeader.split(' ');
-
   try {
-    console.log(
-      '[LOG-FLUXO] Solicitando validação criptográfica do token via jsonwebtoken (verify).',
-    );
-
-    // Operação de validação
     const decoded = verify(token, obterJwtSecret());
 
-    /**
-     * Injeta os dados decodificados (payload do JWT) no objeto de requisição para uso posterior.
-     * Mantendo o cast 'as any' conforme padrão original.
-     */
-    (req as any).user = decoded;
+    if (!payloadValido(decoded)) {
+      logger.warn('authMiddleware: payload JWT inválido', {
+        rota: req.originalUrl,
+        ip: req.ip,
+      });
+      return res
+        .status(401)
+        .json({ error: 'Token inválido ou expirado.' });
+    }
 
-    console.log(
-      `[LOG-FLUXO] Autorização bem-sucedida. Usuário autenticado vinculado à requisição. Prosseguindo fluxo.`,
-    );
+    req.user = {
+      id: decoded.id,
+      nome: decoded.nome,
+      email: decoded.email,
+      tipo: decoded.tipo,
+      iat: decoded.iat,
+      exp: decoded.exp,
+    };
 
-    // Prossegue para o próximo middleware/controller
+    logger.debug('authMiddleware: usuário autenticado', {
+      rota: req.originalUrl,
+      usuarioId: req.user.id,
+      tipo: req.user.tipo,
+    });
+
     return next();
   } catch (error: any) {
-    console.error(
-      `[ERRO-FLUXO] Falha na validação do token JWT: ${
-        error.message ||
-        'Token inválido ou assinatura corrompida'
-      }. Rejeitando acesso.`,
-    );
+    logger.warn('authMiddleware: falha ao validar JWT', {
+      rota: req.originalUrl,
+      ip: req.ip,
+      erro: error?.name || 'JwtError',
+    });
 
     return res
       .status(401)
-      .json({ error: 'Token inválido ou expirado' });
+      .json({ error: 'Token inválido ou expirado.' });
   }
 }

@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import prisma from '../lib/prisma';
+import { STATUS_PRIVACY_GATE_CLIENTE } from '../constants/dominio';
 
 
 export class ServicePerfil {
@@ -416,8 +417,7 @@ export class ServicePerfil {
     );
 
     const statusPermitidos: contratacoes_status[] = [
-      'confirmado' as contratacoes_status,
-      'concluido' as contratacoes_status,
+      ...STATUS_PRIVACY_GATE_CLIENTE,
     ];
 
     try {

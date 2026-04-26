@@ -46,6 +46,20 @@ function obterExpiracaoCookie(token: string) {
   }
 }
 
+function gravarCookieSessao(token: string) {
+  const opcoes = {
+    expires: obterExpiracaoCookie(token),
+    path: '/',
+    sameSite: 'strict' as const,
+    secure:
+      typeof window !== 'undefined' &&
+      window.location.protocol === 'https:',
+  };
+
+  Cookies.set('token', token, opcoes);
+  Cookies.set('zelo_token', token, opcoes);
+}
+
 class LoginService {
   public async login(data: LoginRequestBody): Promise<LoginResponse> {
     logger.info(CONTEXTO, 'Iniciando tentativa de login', {
@@ -112,11 +126,7 @@ class LoginService {
 
       if (responseData.token) {
         logger.debug(CONTEXTO, 'Token JWT detectado. Persistindo sessao');
-        Cookies.set('token', responseData.token, {
-          expires: obterExpiracaoCookie(responseData.token),
-          path: '/',
-          sameSite: 'strict',
-        });
+        gravarCookieSessao(responseData.token);
         logger.debug(CONTEXTO, 'Cookie de sessao gravado com sucesso');
       }
 
