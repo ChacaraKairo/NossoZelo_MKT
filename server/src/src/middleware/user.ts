@@ -53,6 +53,8 @@ export function validarUsuario(
       );
 
       return res.status(400).json({
+        error: 'Erro de validacao',
+        message: 'Erro de validacao',
         mensagem: 'Erro de validação',
         erros,
       });
@@ -72,6 +74,8 @@ export function validarUsuario(
     );
 
     return res.status(500).json({
+      error: 'Erro interno no processo de validacao.',
+      message: 'Erro interno no processo de validacao.',
       mensagem: 'Erro interno no processo de validação.',
       detalhes: error.message,
     });

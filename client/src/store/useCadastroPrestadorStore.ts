@@ -19,6 +19,7 @@ interface CadastroState {
     sexo: string;
     email: string;
     senha: string;
+    confirmarSenha: string;
   };
   endereco: {
     cep: string;
@@ -34,6 +35,9 @@ interface CadastroState {
     registro: string;
     experiencia: number;
     valorHora: number;
+    valorDiaria: number;
+    disponibilidade: string;
+    especialidades: string;
     bio: string;
   };
   documentos: {
@@ -73,6 +77,7 @@ const estadoInicial = {
     sexo: '',
     email: '',
     senha: '',
+    confirmarSenha: '',
   },
   endereco: {
     cep: '',
@@ -88,6 +93,9 @@ const estadoInicial = {
     registro: '',
     experiencia: 0,
     valorHora: 30,
+    valorDiaria: 180,
+    disponibilidade: '',
+    especialidades: '',
     bio: '',
   },
   documentos: {

@@ -7,6 +7,7 @@
 
 import { Request, Response } from 'express';
 import { StorageService } from '../service/Service_Storage';
+import { CadastroUploadRequest } from '../middleware/uploadCadastro';
 
 export class UploadController {
   /**
@@ -14,7 +15,7 @@ export class UploadController {
    * Processa paralelamente cada arquivo enviado, garantindo a conversão e o vínculo no MySQL.
    */
   static async fazerUpload(
-    req: Request,
+    req: CadastroUploadRequest,
     res: Response,
   ): Promise<void> {
     console.log(
@@ -28,6 +29,7 @@ export class UploadController {
 
     // 🔥 Captura o ID real do usuário e o SessionID do Body
     const { usuarioId, sessionId } = req.body;
+    const usuarioIdToken = req.cadastroUpload?.usuarioId;
 
     // Validação de segurança: Sem usuarioId, o vínculo na tabela documentos_cuidadores falha.
     if (!usuarioId || usuarioId === 'undefined') {
@@ -37,6 +39,19 @@ export class UploadController {
       res.status(400).json({
         error:
           'ID do usuário (usuarioId) não fornecido ou inválido. O vínculo no banco é impossível.',
+      });
+      return;
+    }
+
+    if (!usuarioIdToken || usuarioIdToken !== usuarioId) {
+      console.error(
+        '[ERRO-CONTROLLER] Token temporario nao pertence ao usuario informado no upload.',
+      );
+      res.status(403).json({
+        error:
+          'Token temporario nao autoriza upload para este usuario.',
+        message:
+          'Token temporario nao autoriza upload para este usuario.',
       });
       return;
     }

@@ -108,6 +108,69 @@ const StepProfissional = () => {
             </span>
           )}
         </div>
+
+        <div
+          className={Style.inputGroup}
+          style={{ flex: 1 }}
+        >
+          <label>Valor Diaria (R$)</label>
+          <input
+            type="number"
+            min="30"
+            max="10000"
+            step="10"
+            value={profissional.valorDiaria}
+            onChange={(e) =>
+              updateProfissional({
+                valorDiaria: Number(e.target.value),
+              })
+            }
+          />
+          {erros.valorDiaria && (
+            <span className={Style.errorText}>
+              {erros.valorDiaria}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className={Style.inputGroup}>
+        <label>Disponibilidade</label>
+        <input
+          type="text"
+          placeholder="Ex: segunda a sexta, manha e tarde"
+          value={profissional.disponibilidade}
+          onChange={(e) =>
+            updateProfissional({
+              disponibilidade: e.target.value,
+            })
+          }
+        />
+        {erros.disponibilidade && (
+          <span className={Style.errorText}>
+            {erros.disponibilidade}
+          </span>
+        )}
+      </div>
+
+      <div className={Style.inputGroup}>
+        <label>Especialidades</label>
+        <textarea
+          maxLength={500}
+          placeholder="Ex: idosos, mobilidade reduzida, pos-operatorio"
+          value={profissional.especialidades}
+          onChange={(e) =>
+            updateProfissional({
+              especialidades: e.target.value,
+            })
+          }
+          style={{ minHeight: '80px' }}
+        />
+        {erros.especialidades && (
+          <span className={Style.errorText}>
+            {erros.especialidades}
+          </span>
+        )}
       </div>
 
       {/* BIOGRAFIA */}

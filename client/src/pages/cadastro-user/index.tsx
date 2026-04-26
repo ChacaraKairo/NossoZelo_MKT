@@ -152,6 +152,7 @@ const CadastroPage = () => {
           : null,
         cep: cep.replace(/\D/g, ''),
         endereco: `${rua}, ${numero} - ${bairro}`,
+        bairro,
         cidade,
         estado,
         pais: 'Brasil',

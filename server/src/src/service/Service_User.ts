@@ -12,8 +12,52 @@ import path from 'path';
 import ServiceCrud from './Service_Crud';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
+import { sign } from 'jsonwebtoken';
 import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
+
+type CadastroError = Error & { status?: number };
+
+function criarErroCadastro(
+  mensagem: string,
+  status = 400,
+): CadastroError {
+  const erro = new Error(mensagem) as CadastroError;
+  erro.status = status;
+  return erro;
+}
+
+function removerSenha(usuario: Record<string, any>) {
+  const { senha, ...usuarioSemSenha } = usuario;
+  return usuarioSemSenha;
+}
+
+function numeroDecimalOpcional(valor: unknown) {
+  if (valor === undefined || valor === null || valor === '') {
+    return undefined;
+  }
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : undefined;
+}
+
+function anosExperiencia(valor: unknown) {
+  const numero = Number(valor);
+  return Number.isFinite(numero) && numero >= 0
+    ? numero
+    : 0;
+}
+
+function montarDadosProfissionais(dados: any = {}) {
+  return {
+    bio: dados.bio || '',
+    anos_experiencia: anosExperiencia(dados.experiencia),
+    valor_hora: numeroDecimalOpcional(dados.valorHora),
+    valor_diaria: numeroDecimalOpcional(dados.valorDiaria),
+    disponibilidade: dados.disponibilidade || null,
+    especialidades: dados.especialidades || null,
+    documentos: dados.documentos || null,
+  };
+}
 
 class ServiceUser {
   /**
@@ -25,9 +69,9 @@ class ServiceUser {
    */
   static async criarUsuarioComTipo(data: any) {
     console.log(
-      `[LOG-FLUXO] Iniciando criarUsuarioComTipo. Payload de entrada: ${JSON.stringify(
-        data,
-      )}`,
+      `[LOG-FLUXO] Iniciando criarUsuarioComTipo para e-mail: ${
+        data?.usuario?.email || 'N/A'
+      } e tipo: ${data?.usuario?.tipo || 'N/A'}.`,
     );
 
     const {
@@ -72,7 +116,7 @@ class ServiceUser {
           console.error(
             `[ERRO-FLUXO] Falha de validação: A data '${usuario.data_nascimento}' é inválida.`,
           );
-          throw new Error('data_nascimento inválida');
+          throw criarErroCadastro('data_nascimento invalida');
         }
         console.log(
           '[LOG-FLUXO] Data de nascimento validada com sucesso.',
@@ -139,17 +183,19 @@ class ServiceUser {
           console.error(
             '[ERRO-FLUXO] Erro de negócio: Enfermeiro sem COREN ou documento profissional.',
           );
-          throw new Error(
+          throw criarErroCadastro(
             'COREN/Registro obrigatório para enfermeiros.',
           );
         }
 
         await ServiceCrud.create('enfermeiros', {
+          ...montarDadosProfissionais(enfermeiro),
           usuario_id: id,
           coren: docCoren,
-          anos_experiencia: enfermeiro?.experiencia
-            ? Number(enfermeiro.experiencia)
-            : 0,
+          especialidade:
+            enfermeiro?.especialidade ||
+            enfermeiro?.especialidades ||
+            null,
         });
         console.log(
           '[LOG-FLUXO] Dados específicos de enfermeiro persistidos.',
@@ -159,11 +205,12 @@ class ServiceUser {
           '[LOG-FLUXO] Processando perfil do tipo cuidador.',
         );
         await ServiceCrud.create('cuidadores', {
+          ...montarDadosProfissionais(cuidador),
           usuario_id: id,
-          bio: cuidador?.bio || '',
-          anos_experiencia: cuidador?.experiencia
-            ? Number(cuidador.experiencia)
-            : 0,
+          documento_profissional:
+            cuidador?.documento_profissional ||
+            cuidador?.documento_professional ||
+            null,
         });
         console.log(
           '[LOG-FLUXO] Dados específicos de cuidador persistidos.',
@@ -173,11 +220,8 @@ class ServiceUser {
           '[LOG-FLUXO] Processando perfil do tipo acompanhante.',
         );
         await ServiceCrud.create('acompanhantes', {
+          ...montarDadosProfissionais(acompanhante),
           usuario_id: id,
-          bio: acompanhante?.bio || '',
-          anos_experiencia: acompanhante?.experiencia
-            ? Number(acompanhante.experiencia)
-            : 0,
         });
         console.log(
           '[LOG-FLUXO] Dados específicos de acompanhante persistidos.',
@@ -197,7 +241,7 @@ class ServiceUser {
         console.error(
           `[ERRO-FLUXO] Erro de validação: Tipo '${usuario.tipo}' é desconhecido.`,
         );
-        throw new Error(
+        throw criarErroCadastro(
           `Tipo de usuário inválido: ${usuario.tipo}`,
         );
       } else {
@@ -264,8 +308,27 @@ class ServiceUser {
       console.log(
         `[LOG-FLUXO] Finalização bem-sucedida da criação do usuário ID: ${id}`,
       );
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw criarErroCadastro(
+          'Configuracao de seguranca ausente para gerar token temporario de upload.',
+          500,
+        );
+      }
+
+      const uploadToken = sign(
+        {
+          id,
+          tipo: usuario.tipo,
+          purpose: 'cadastro_upload',
+        },
+        jwtSecret,
+        { expiresIn: '30m' },
+      );
+
       return {
-        data: usuarioData,
+        data: removerSenha(usuarioData),
+        uploadToken,
         enfermeiro,
         cuidador,
         acompanhante,
@@ -282,7 +345,10 @@ class ServiceUser {
       let mensagemAmigavel =
         'Não foi possível criar o usuário.';
 
+      let statusAmigavel = error.status || 500;
+
       if (error.code === 'P2002') {
+        statusAmigavel = 409;
         const alvo = error.meta?.target;
         console.log(
           `[LOG-FLUXO] Conflito de dados detectado (Constraint Unique). Campos afetados: ${alvo}`,
@@ -325,7 +391,7 @@ class ServiceUser {
         }
       }
 
-      throw new Error(mensagemAmigavel);
+      throw criarErroCadastro(mensagemAmigavel, statusAmigavel);
     }
   }
 
