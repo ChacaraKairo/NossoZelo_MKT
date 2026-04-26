@@ -12,7 +12,7 @@ import {
 import { getUsuarioDoCookie, logout } from '@/utils/auth';
 
 // Importação do CSS Module
-import styles from './styles/UserDropdown.module.css';
+import styles from '@/styles/components/header/UserDropdown.module.css';
 
 const UserDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,23 +68,18 @@ const UserDropdown = () => {
 
         <div className={styles.iconWrapper}>
           <FaBars
-            style={{
-              opacity: isOpen ? 0 : 1,
-              transform: isOpen
-                ? 'rotate(90deg) scale(0.5)'
-                : 'rotate(0) scale(1)',
-              transition: 'all 0.3s',
-            }}
+            className={`${styles.menuIcon} ${
+              isOpen
+                ? styles.menuIconOpen
+                : styles.menuIconClosed
+            }`}
           />
           <FaTimes
-            style={{
-              position: 'absolute',
-              opacity: isOpen ? 1 : 0,
-              transform: isOpen
-                ? 'rotate(0) scale(1)'
-                : 'rotate(-90deg) scale(0.5)',
-              transition: 'all 0.3s',
-            }}
+            className={`${styles.closeIcon} ${
+              isOpen
+                ? styles.closeIconOpen
+                : styles.closeIconClosed
+            }`}
           />
         </div>
       </button>
@@ -201,8 +196,7 @@ const UserDropdown = () => {
                   <FaSignOutAlt />
                 </div>
                 <span
-                  className={`${styles.itemTitle}`}
-                  style={{ color: '#dc2626' }}
+                  className={`${styles.itemTitle} ${styles.dangerText}`}
                 >
                   Sair da Sessão
                 </span>

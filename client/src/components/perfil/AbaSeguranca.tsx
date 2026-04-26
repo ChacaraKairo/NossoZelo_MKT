@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react';
 import { segurancaService } from '@/service/segurancaService';
 import logger from '@/utils/logger';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
-import styles from './styles/PerfilOperacional.module.css';
+import styles from '@/styles/components/perfil/PerfilOperacional.module.css';
 
 const CONTEXTO = 'AbaSeguranca';
 

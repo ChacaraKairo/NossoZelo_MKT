@@ -9,8 +9,8 @@ import { ptBR } from 'date-fns/locale/pt-BR';
 import 'react-datepicker/dist/react-datepicker.css';
 
 // Importa os nossos ficheiros de estilo
-import Style from './styles/Input.module.css'; // Reutiliza o estilo do input base
-import DatePickerStyle from './styles/DatePicker.module.css'; // Estilos específicos para o calendário
+import Style from '@/styles/components/inputs/Input.module.css'; // Reutiliza o estilo do input base
+import DatePickerStyle from '@/styles/components/inputs/DatePicker.module.css'; // Estilos específicos para o calendário
 
 import { FaCalendarAlt } from 'react-icons/fa';
 

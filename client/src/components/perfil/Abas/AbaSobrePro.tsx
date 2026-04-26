@@ -11,7 +11,7 @@ import {
   FaBriefcase,
 } from 'react-icons/fa';
 import { usePerfilEditor } from '../script/usePerfilEditor';
-import styles from '../styles/AbaSobrePro.module.css';
+import styles from '@/styles/components/perfil/AbaSobrePro.module.css';
 import { PerfilCompleto } from '../types/types';
 
 interface AbaSobreProProps {

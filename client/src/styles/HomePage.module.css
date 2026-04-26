@@ -1,0 +1,33 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f8fafc, #eff6ff);
+}
+
+.main {
+  width: min(100% - 2rem, 80rem);
+  margin: 0 auto;
+  padding: var(--space-10) 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.heroSection {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.cardsSection {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .main {
+    padding: var(--space-8) 0;
+    gap: var(--space-8);
+  }
+}

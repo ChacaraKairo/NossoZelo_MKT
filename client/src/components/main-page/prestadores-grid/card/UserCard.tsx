@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { FaCheckCircle, FaMapMarkerAlt, FaStar } from 'react-icons/fa';
 import { PrestadorCardData } from '@/types/prestador';
 import logger from '@/utils/logger';
-import styles from './styles/UserCard.module.css';
+import styles from '@/styles/components/main-page/prestadores-grid/card/UserCard.module.css';
 
 interface UserCardProps {
   user: PrestadorCardData;

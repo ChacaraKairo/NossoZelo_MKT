@@ -1,6 +1,6 @@
 // file: client/src/components/btn/Button.tsx
 import React from 'react';
-import Style from './styles/Button.module.css';
+import Style from '@/styles/components/btn/Button.module.css';
 
 interface ButtonProps {
   onClick?: () => void;

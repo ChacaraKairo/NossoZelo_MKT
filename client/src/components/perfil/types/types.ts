@@ -35,7 +35,7 @@ export interface Contratacao {
   id: number;
   cliente_id: string;
   prestador_id: string;
-  status?: string | null;
+  status: string | null;
   data?: string | Date | null;
   servico_id?: number | null;
   usuarios_contratacoes_cliente_idTousuarios?: {
@@ -70,6 +70,8 @@ export interface PerfilCompleto {
   agenda?: AgendaItem[];
   avaliacoes_avaliacoes_prestador_idTousuarios?: Avaliacao[];
   contratacoes?: Contratacao[];
+  contratacoes_contratacoes_prestador_idTousuarios?: Contratacao[];
+  contratacoes_contratacoes_cliente_idTousuarios?: Contratacao[];
   avaliacoes_feitas?: Avaliacao[];
 
   // Campos específicos de prestadores

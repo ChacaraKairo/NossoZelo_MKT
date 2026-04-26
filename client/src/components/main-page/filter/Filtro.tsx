@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './styles/Filtro.module.css';
+import styles from '@/styles/components/main-page/filter/Filtro.module.css';
 import { useBuscaStore } from '@/store/useBuscaStore';
 import logger from '@/utils/logger';
 

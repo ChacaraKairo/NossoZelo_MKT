@@ -58,13 +58,13 @@ const StepDocumentos = () => {
             type="file"
             accept={accept}
             onChange={(e) => handleFileChange(e, tipoDoc)}
-            style={{ display: 'none' }}
+            className={Style.hiddenFileInput}
           />
           {file ? (
             <>
               <FaCheckCircle />
               {/* 🔥 Ajuste Sênior: Limita o nome do arquivo para não quebrar o layout no Mobile */}
-              <span style={{ marginLeft: '5px' }}>
+              <span className={Style.fileName}>
                 {file.name.length > 15
                   ? `${file.name.substring(0, 12)}...`
                   : file.name}

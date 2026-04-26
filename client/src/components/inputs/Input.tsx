@@ -1,6 +1,6 @@
 // client/src/components/inputs/Input.tsx
 import React from 'react';
-import Style from './styles/Input.module.css';
+import Style from '@/styles/components/inputs/Input.module.css';
 
 interface InputProps {
   value: string;

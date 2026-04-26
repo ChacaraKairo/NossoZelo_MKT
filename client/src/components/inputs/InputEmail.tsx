@@ -1,6 +1,6 @@
 import React from 'react';
 import { VscMail } from 'react-icons/vsc';
-import Style from './styles/InputEmail.module.css';
+import Style from '@/styles/components/inputs/InputEmail.module.css';
 
 // --- Interface para as props do componente ---
 interface InputEmailProps {

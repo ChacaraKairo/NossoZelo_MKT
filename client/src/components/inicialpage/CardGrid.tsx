@@ -1,6 +1,6 @@
 import Card from './Cards';
 import ImagesCard from './scripts/ImagesCard';
-import Style from './styles/Grid.module.css';
+import Style from '@/styles/components/inicialpage/Grid.module.css';
 
 const CardGrid = () => {
   return (

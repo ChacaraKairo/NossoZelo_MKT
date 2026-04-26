@@ -7,7 +7,7 @@ import {
 import { PerfilUsuario, ServicoPerfil } from '@/types/perfil';
 import logger from '@/utils/logger';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
-import styles from './styles/PerfilOperacional.module.css';
+import styles from '@/styles/components/perfil/PerfilOperacional.module.css';
 
 const CONTEXTO = 'AbaServicosOperacionais';
 

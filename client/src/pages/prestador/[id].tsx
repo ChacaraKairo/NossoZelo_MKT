@@ -11,6 +11,7 @@ import {
   ServicoPerfil,
 } from '@/types/perfil';
 import logger from '@/utils/logger';
+import styles from '@/styles/VitrinePrestadorPage.module.css';
 
 const CONTEXTO = 'PrestadorVitrinePage';
 
@@ -222,8 +223,8 @@ const PrestadorVitrinePage: React.FC = () => {
 
   if (loading) {
     return (
-      <main style={styles.page}>
-        <section style={styles.centerBox}>
+      <main className={styles.page}>
+        <section className={styles.centerBox}>
           <Carregando mensagem="Carregando vitrine do prestador..." />
         </section>
       </main>
@@ -232,7 +233,7 @@ const PrestadorVitrinePage: React.FC = () => {
 
   if (erro) {
     return (
-      <main style={styles.page}>
+      <main className={styles.page}>
         <ErroComRetry
           titulo="Não foi possível carregar a vitrine"
           mensagem="Tente novamente em alguns instantes."
@@ -245,16 +246,16 @@ const PrestadorVitrinePage: React.FC = () => {
 
   if (naoEncontrado || !prestador) {
     return (
-      <main style={styles.page}>
-        <section style={styles.centerBox}>
-          <h1 style={styles.title}>Prestador não encontrado</h1>
-          <p style={styles.muted}>
+      <main className={styles.page}>
+        <section className={styles.centerBox}>
+          <h1 className={styles.title}>Prestador não encontrado</h1>
+          <p className={styles.muted}>
             Não encontramos uma vitrine pública para este prestador.
           </p>
           <button
             type="button"
             onClick={() => router.push('/prestadores')}
-            style={styles.secondaryButton}
+            className={styles.secondaryButton}
           >
             Voltar para prestadores
           </button>
@@ -275,45 +276,45 @@ const PrestadorVitrinePage: React.FC = () => {
     : [];
 
   return (
-    <main style={styles.page}>
-      <section style={styles.hero}>
-        <div style={styles.avatarArea}>
+    <main className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.avatarArea}>
           {prestador.url_foto_perfil ? (
             <img
               src={prestador.url_foto_perfil}
               alt={`Foto de ${prestador.nome}`}
-              style={styles.avatarImage}
+              className={styles.avatarImage}
             />
           ) : (
-            <div style={styles.avatarFallback}>
+            <div className={styles.avatarFallback}>
               {prestador.nome?.charAt(0)?.toUpperCase() || 'P'}
             </div>
           )}
         </div>
 
-        <div style={styles.heroContent}>
-          <p style={styles.kicker}>
+        <div className={styles.heroContent}>
+          <p className={styles.kicker}>
             {formatarTexto(prestador.tipo)}
           </p>
-          <h1 style={styles.title}>{formatarTexto(prestador.nome)}</h1>
-          <p style={styles.muted}>{localizacao}</p>
+          <h1 className={styles.title}>{formatarTexto(prestador.nome)}</h1>
+          <p className={styles.muted}>{localizacao}</p>
 
-          <div style={styles.metrics}>
-            <span style={styles.metric}>
+          <div className={styles.metrics}>
+            <span className={styles.metric}>
               {rating ? `Nota ${rating}` : 'Sem avaliações'}
             </span>
-            <span style={styles.metric}>
+            <span className={styles.metric}>
               {servicos.length} serviço
               {servicos.length === 1 ? '' : 's'}
             </span>
           </div>
         </div>
 
-        <div style={styles.actions}>
+        <div className={styles.actions}>
           <button
             type="button"
             onClick={handleSolicitarContratacao}
-            style={styles.primaryButton}
+            className={styles.primaryButton}
           >
             Solicitar contratação
           </button>
@@ -322,7 +323,7 @@ const PrestadorVitrinePage: React.FC = () => {
             <button
               type="button"
               onClick={handleEntrarEmContato}
-              style={styles.secondaryButton}
+              className={styles.secondaryButton}
             >
               Entrar em contato
             </button>
@@ -331,7 +332,7 @@ const PrestadorVitrinePage: React.FC = () => {
       </section>
 
       {mensagemAcao && (
-        <p role="status" style={styles.notice}>
+        <p role="status" className={styles.notice}>
           {mensagemAcao}
         </p>
       )}
@@ -347,43 +348,43 @@ const PrestadorVitrinePage: React.FC = () => {
         />
       )}
 
-      <section style={styles.grid}>
-        <article style={styles.panel}>
-          <h2 style={styles.sectionTitle}>Sobre o prestador</h2>
-          <p style={styles.bodyText}>{formatarTexto(prestador.bio)}</p>
+      <section className={styles.grid}>
+        <article className={styles.panel}>
+          <h2 className={styles.sectionTitle}>Sobre o prestador</h2>
+          <p className={styles.bodyText}>{formatarTexto(prestador.bio)}</p>
 
-          <dl style={styles.descriptionList}>
+          <dl className={styles.descriptionList}>
             <div>
-              <dt style={styles.label}>Disponibilidade</dt>
-              <dd style={styles.value}>
+              <dt className={styles.label}>Disponibilidade</dt>
+              <dd className={styles.value}>
                 {formatarTexto(prestador.disponibilidade)}
               </dd>
             </div>
             <div>
-              <dt style={styles.label}>Especialidades</dt>
-              <dd style={styles.value}>
+              <dt className={styles.label}>Especialidades</dt>
+              <dd className={styles.value}>
                 {obterEspecialidades(prestador.especialidades)}
               </dd>
             </div>
           </dl>
         </article>
 
-        <article style={styles.panel}>
-          <h2 style={styles.sectionTitle}>Serviços</h2>
+        <article className={styles.panel}>
+          <h2 className={styles.sectionTitle}>Serviços</h2>
           {servicos.length > 0 ? (
-            <div style={styles.list}>
+            <div className={styles.list}>
               {servicos.map((servico: ServicoPerfil) => (
-                <div key={servico.id} style={styles.listItem}>
+                <div key={servico.id} className={styles.listItem}>
                   <div>
-                    <strong style={styles.itemTitle}>
+                    <strong className={styles.itemTitle}>
                       {formatarTexto(servico.nome || servico.tipo)}
                     </strong>
                     {servico.descricao && (
-                      <p style={styles.itemText}>{servico.descricao}</p>
+                      <p className={styles.itemText}>{servico.descricao}</p>
                     )}
                   </div>
                   {formatarMoeda(servico.valor) && (
-                    <span style={styles.price}>
+                    <span className={styles.price}>
                       {formatarMoeda(servico.valor)}
                     </span>
                   )}
@@ -391,26 +392,26 @@ const PrestadorVitrinePage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p style={styles.muted}>
+            <p className={styles.muted}>
               Este prestador ainda não cadastrou serviços públicos.
             </p>
           )}
         </article>
 
-        <article style={styles.panel}>
-          <h2 style={styles.sectionTitle}>Avaliações</h2>
+        <article className={styles.panel}>
+          <h2 className={styles.sectionTitle}>Avaliações</h2>
           {avaliacoes.length > 0 ? (
-            <div style={styles.list}>
+            <div className={styles.list}>
               {avaliacoes.map((avaliacao) => (
-                <div key={avaliacao.id} style={styles.listItem}>
+                <div key={avaliacao.id} className={styles.listItem}>
                   <div>
-                    <strong style={styles.itemTitle}>
+                    <strong className={styles.itemTitle}>
                       Nota {avaliacao.nota ?? 'Não informada'}
                     </strong>
-                    <p style={styles.itemText}>
+                    <p className={styles.itemText}>
                       {avaliacao.comentario || 'Sem comentário.'}
                     </p>
-                    <span style={styles.smallText}>
+                    <span className={styles.smallText}>
                       {formatarData(avaliacao.data_avaliacao)}
                     </span>
                   </div>
@@ -418,7 +419,7 @@ const PrestadorVitrinePage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p style={styles.muted}>
+            <p className={styles.muted}>
               Este prestador ainda não recebeu avaliações.
             </p>
           )}
@@ -427,210 +428,6 @@ const PrestadorVitrinePage: React.FC = () => {
 
     </main>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    width: '100%',
-    minHeight: '100vh',
-    padding: '40px 20px',
-    background: '#f8fafc',
-    color: '#0f172a',
-  },
-  centerBox: {
-    width: '100%',
-    maxWidth: '640px',
-    margin: '80px auto',
-    padding: '32px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    background: '#ffffff',
-    textAlign: 'center',
-  },
-  spinner: {
-    width: '36px',
-    height: '36px',
-    margin: '0 auto 16px',
-    border: '4px solid #ccfbf1',
-    borderTopColor: '#0f766e',
-    borderRadius: '999px',
-  },
-  hero: {
-    width: '100%',
-    maxWidth: '1120px',
-    margin: '0 auto 18px',
-    padding: '28px',
-    display: 'grid',
-    gridTemplateColumns: '120px 1fr auto',
-    gap: '24px',
-    alignItems: 'center',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    background: '#ffffff',
-  },
-  avatarArea: {
-    width: '120px',
-    height: '120px',
-  },
-  avatarImage: {
-    width: '120px',
-    height: '120px',
-    borderRadius: '999px',
-    objectFit: 'cover',
-    border: '3px solid #ccfbf1',
-  },
-  avatarFallback: {
-    width: '120px',
-    height: '120px',
-    borderRadius: '999px',
-    display: 'grid',
-    placeItems: 'center',
-    background: '#ccfbf1',
-    color: '#0f766e',
-    fontSize: '42px',
-    fontWeight: 800,
-  },
-  heroContent: {
-    minWidth: 0,
-  },
-  kicker: {
-    margin: '0 0 6px',
-    color: '#0f766e',
-    fontSize: '13px',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-  },
-  title: {
-    margin: '0 0 8px',
-    fontSize: '30px',
-    lineHeight: 1.15,
-  },
-  muted: {
-    margin: 0,
-    color: '#64748b',
-    lineHeight: 1.6,
-  },
-  metrics: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    marginTop: '14px',
-  },
-  metric: {
-    padding: '6px 10px',
-    borderRadius: '999px',
-    background: '#ecfeff',
-    color: '#155e75',
-    fontSize: '13px',
-    fontWeight: 700,
-  },
-  actions: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  primaryButton: {
-    padding: '11px 16px',
-    border: 0,
-    borderRadius: '8px',
-    background: '#0f766e',
-    color: '#ffffff',
-    fontWeight: 800,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  },
-  secondaryButton: {
-    padding: '11px 16px',
-    border: '1px solid #cbd5e1',
-    borderRadius: '8px',
-    background: '#ffffff',
-    color: '#0f172a',
-    fontWeight: 800,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  },
-  notice: {
-    width: '100%',
-    maxWidth: '1120px',
-    margin: '0 auto 18px',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    background: '#ecfeff',
-    color: '#155e75',
-    fontWeight: 700,
-  },
-  grid: {
-    width: '100%',
-    maxWidth: '1120px',
-    margin: '0 auto',
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '18px',
-  },
-  panel: {
-    padding: '22px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    background: '#ffffff',
-  },
-  sectionTitle: {
-    margin: '0 0 14px',
-    fontSize: '20px',
-  },
-  bodyText: {
-    margin: '0 0 18px',
-    color: '#334155',
-    lineHeight: 1.7,
-  },
-  descriptionList: {
-    display: 'grid',
-    gap: '12px',
-    margin: 0,
-  },
-  label: {
-    marginBottom: '4px',
-    color: '#64748b',
-    fontSize: '12px',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-  },
-  value: {
-    margin: 0,
-    color: '#0f172a',
-  },
-  list: {
-    display: 'grid',
-    gap: '12px',
-  },
-  listItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: '14px',
-    padding: '14px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    background: '#f8fafc',
-  },
-  itemTitle: {
-    display: 'block',
-    color: '#0f172a',
-  },
-  itemText: {
-    margin: '6px 0 0',
-    color: '#475569',
-    lineHeight: 1.5,
-  },
-  smallText: {
-    display: 'block',
-    marginTop: '6px',
-    color: '#64748b',
-    fontSize: '12px',
-  },
-  price: {
-    color: '#0f766e',
-    fontWeight: 900,
-    whiteSpace: 'nowrap',
-  },
 };
 
 export default PrestadorVitrinePage;

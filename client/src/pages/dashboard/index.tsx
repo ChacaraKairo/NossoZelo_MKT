@@ -13,6 +13,7 @@ import { useMeuPerfil } from '@/hooks/useMeuPerfil';
 import { ContratacaoPerfil } from '@/types/perfil';
 import { withAuth } from '@/utils/withAuth';
 import logger from '@/utils/logger';
+import styles from '@/styles/DashboardPage.module.css';
 
 const CONTEXTO = 'DashboardPage';
 
@@ -24,9 +25,9 @@ function CardResumo({
   valor: string | number;
 }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5">
-      <p className="text-xs font-bold uppercase text-slate-400">{titulo}</p>
-      <p className="mt-2 text-2xl font-black text-slate-800">{valor}</p>
+    <div className={styles.summaryCard}>
+      <p className={styles.summaryLabel}>{titulo}</p>
+      <p className={styles.summaryValue}>{valor}</p>
     </div>
   );
 }
@@ -46,16 +47,16 @@ function ListaContratacoes({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={styles.list}>
       {contratacoes.slice(0, 5).map((contratacao) => (
         <article
           key={contratacao.id}
-          className="rounded-xl border border-slate-100 bg-white p-4"
+          className={styles.recentCard}
         >
-          <p className="font-bold text-slate-800">
+          <p className={styles.recentTitle}>
             Contratação #{contratacao.id}
           </p>
-          <p className="text-sm text-slate-500">
+          <p className={styles.recentMeta}>
             Status: {contratacao.status || 'Não informado'}
           </p>
         </article>
@@ -87,9 +88,9 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div>
+      <div className={styles.page}>
         <HeaderMain />
-        <main className="mx-auto max-w-6xl px-5 py-12">
+        <main className={styles.main}>
           <Carregando mensagem="Carregando dashboard..." />
         </main>
         <Footer />
@@ -100,9 +101,9 @@ function DashboardPage() {
   if (error || !perfil) {
     logger.error(CONTEXTO, 'Erros no dashboard', { error });
     return (
-      <div>
+      <div className={styles.page}>
         <HeaderMain />
-        <main className="mx-auto max-w-6xl px-5 py-12">
+        <main className={styles.main}>
           <ErroComRetry
             titulo="Não foi possível carregar o dashboard"
             mensagem="Tente novamente para buscar seus dados atualizados."
@@ -142,22 +143,22 @@ function DashboardPage() {
   }
 
   return (
-    <div>
+    <div className={styles.page}>
       <HeaderMain />
-      <main className="mx-auto max-w-6xl space-y-8 px-5 py-12">
+      <main className={styles.main}>
         <header>
-          <h1 className="text-3xl font-black text-slate-800">Dashboard</h1>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
+          <h1 className={styles.title}>Dashboard</h1>
+          <p className={styles.subtitle}>
             Dados carregados do seu perfil real.
           </p>
         </header>
 
         {isCliente && (
           <>
-            <section className="grid gap-4 md:grid-cols-3">
+            <section className={styles.summaryGrid}>
               <Link
                 href="/prestadores"
-                className="rounded-xl border border-teal-100 bg-teal-50 p-5 font-black text-teal-800"
+                className={styles.quickLink}
               >
                 Buscar prestadores
               </Link>
@@ -168,8 +169,8 @@ function DashboardPage() {
               <CardResumo titulo="Avaliações pendentes" valor="-" />
             </section>
 
-            <section className="space-y-4">
-              <h2 className="text-xl font-black text-slate-800">
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
                 Contratações recentes
               </h2>
               <ListaContratacoes contratacoes={contratacoesCliente} />
@@ -188,16 +189,16 @@ function DashboardPage() {
               }}
             />
 
-            <section className="rounded-xl border border-amber-100 bg-amber-50 p-5">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <section className={styles.pendingAlert}>
+              <div className={styles.pendingContent}>
                 <div>
-                  <h2 className="text-xl font-black text-amber-900">
+                  <h2 className={styles.pendingTitle}>
                     Solicitações pendentes
-                    <span className="ml-2 rounded-full bg-amber-600 px-2 py-0.5 text-sm text-white">
+                    <span className={styles.badge}>
                       {pendentes.length}
                     </span>
                   </h2>
-                  <p className="mt-1 text-sm text-amber-800">
+                  <p className={styles.pendingText}>
                     Telegram/email devem ser disparados no backend após mudança de status da contratação.
                   </p>
                 </div>
@@ -208,14 +209,14 @@ function DashboardPage() {
                       pendentes: pendentes.length,
                     })
                   }
-                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white"
+                  className={styles.pendingLink}
                 >
                   Ver solicitações
                 </Link>
               </div>
             </section>
 
-            <section className="grid gap-4 md:grid-cols-3">
+            <section className={styles.summaryGrid}>
               <CardResumo titulo="Pendentes" valor={pendentes.length} />
               <CardResumo
                 titulo="Contratações"

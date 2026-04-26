@@ -1,6 +1,6 @@
 import EstadoVazio from '@/components/common/EstadoVazio';
 import { ContratacaoPerfil } from '@/types/perfil';
-import styles from './styles/PerfilOperacional.module.css';
+import styles from '@/styles/components/perfil/PerfilOperacional.module.css';
 
 interface AbaHistoricoPerfilProps {
   contratacoes: ContratacaoPerfil[];

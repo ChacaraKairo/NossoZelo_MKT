@@ -5,7 +5,7 @@ import { ServicoPerfil } from '@/types/perfil';
 import { getUsuarioDoCookie } from '@/utils/auth';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
-import styles from './ModalContratarPrestador.module.css';
+import styles from '@/styles/components/prestador/ModalContratarPrestador.module.css';
 
 interface ModalContratarPrestadorProps {
   aberto: boolean;
@@ -112,7 +112,7 @@ export default function ModalContratarPrestador({
     observacao,
     prestadorId,
     servicoId,
-    servicoSelecionado?.valor,
+    servicoSelecionado,
     tipoPrestador,
   ]);
 

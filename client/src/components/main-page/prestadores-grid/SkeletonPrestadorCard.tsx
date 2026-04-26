@@ -1,4 +1,4 @@
-import styles from './PrestadoresGrid.module.css';
+import styles from '@/styles/components/main-page/prestadores-grid/PrestadoresGrid.module.css';
 
 export default function SkeletonPrestadorCard() {
   return (

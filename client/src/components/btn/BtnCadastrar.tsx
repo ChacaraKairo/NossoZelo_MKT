@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './styles/BtnCadastrar.module.css';
+import styles from '@/styles/components/btn/BtnCadastrar.module.css';
 
 const BtnCadastrar = () => {
   return (

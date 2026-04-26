@@ -1,6 +1,6 @@
 import React, { KeyboardEvent, useState } from 'react';
 import { useRouter } from 'next/router';
-import Style from './styles/Card.module.css';
+import Style from '@/styles/components/inicialpage/Card.module.css';
 import { CategoriaCard } from './scripts/ImagesCard';
 import logger from '@/utils/logger';
 

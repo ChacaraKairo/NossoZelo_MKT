@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import Style from './Footer.module.css';
+import Style from '@/styles/components/footer/Footer.module.css';
 import {
   contatosNossoZelo,
   criarLinkEmail,
