@@ -4,12 +4,13 @@
   "description": "Plataforma para conectar cuidadores a clientes, inspirada em marketplaces como iFood e GetNinjas. Inclui áreas para cliente, cuidador e admin. MVP com busca, pagamentos, moderação e monetização via taxas e planos. Tecnologias: Node.js, Prisma, MySQL, React, JWT, OAuth, AWS.",
   "main": "src/main.ts",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/src/scripts/ensure-profile-fields.js && node dist/server.js",
     "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev --files src/server.ts",
     "build": "npx prisma generate && tsc",
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
     "db:backup": "ts-node src/src/scripts/backup-db.ts",
     "db:restore": "ts-node src/src/scripts/restore-db.ts",
+    "db:ensure-profile-fields": "ts-node src/src/scripts/ensure-profile-fields.ts",
     "test": "echo \"No test specified\" && exit 0"
   },
   "repository": {
