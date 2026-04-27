@@ -7,11 +7,12 @@
  * @rota server\src\src\service\Service_Rec_Senha.ts
  */
 
-import { sign } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
+import bcrypt from 'bcrypt';
 
 
 function obterJwtSecret() {
@@ -25,6 +26,35 @@ const BASE_URL =
   process.env.FRONTEND_URL || 'http://localhost:3000';
 
 export class ServiceRecuperacaoSenha {
+  static async redefinirSenha(token: string, novaSenha: string) {
+    if (
+      !novaSenha ||
+      novaSenha.length < 8 ||
+      novaSenha.length > 72 ||
+      !/[a-z]/.test(novaSenha) ||
+      !/[A-Z]/.test(novaSenha) ||
+      !/\d/.test(novaSenha) ||
+      !/[^A-Za-z0-9]/.test(novaSenha)
+    ) {
+      throw new Error(
+        'A nova senha deve ter 8 a 72 caracteres, com letra maiuscula, minuscula, numero e caractere especial.',
+      );
+    }
+
+    const decoded = verify(token, obterJwtSecret()) as { id?: string };
+    if (!decoded.id) {
+      throw new Error('Token de recuperacao invalido.');
+    }
+
+    const senhaCriptografada = await bcrypt.hash(novaSenha, 10);
+    await prisma.usuarios.update({
+      where: { id: decoded.id },
+      data: { senha: senhaCriptografada },
+    });
+
+    return { mensagem: 'Senha redefinida com sucesso.' };
+  }
+
   /**
    * Envia um e-mail de recuperação de senha com link contendo token JWT.
    * @param {string} email - Endereço de e-mail do usuário solicitante.

@@ -60,6 +60,7 @@ const CadastroPage = () => {
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [fotoPerfil, setFotoPerfil] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -174,7 +175,20 @@ const CadastroPage = () => {
     };
 
     try {
-      await cadastrarUsuario(dadosCadastro);
+      const resultadoCadastro = await cadastrarUsuario(dadosCadastro);
+      if (fotoPerfil && resultadoCadastro.uploadToken) {
+        const formData = new FormData();
+        formData.append('foto', fotoPerfil);
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        await fetch(`${apiUrl}/nossozelo/upload/completar-cadastro`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resultadoCadastro.uploadToken}`,
+          },
+          body: formData,
+        });
+      }
       alert('Cadastro realizado com sucesso!');
       router.push('/login-user');
     } catch (err: any) {
@@ -386,6 +400,23 @@ const CadastroPage = () => {
                   </span>
                 )}
               </div>
+
+              <label className={Style.photoUpload}>
+                <span>Foto de perfil</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={loading}
+                  onChange={(event) =>
+                    setFotoPerfil(event.target.files?.[0] || null)
+                  }
+                />
+                <small>
+                  {fotoPerfil
+                    ? fotoPerfil.name
+                    : 'Opcional, mas ajuda outros usuarios a reconhecerem voce.'}
+                </small>
+              </label>
 
               <div className={Style.field}>
                 <Input

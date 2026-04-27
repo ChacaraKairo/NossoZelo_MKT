@@ -127,6 +127,30 @@
   margin-top: 4px;
 }
 
+.photoUpload {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+}
+
+.photoUpload input {
+  width: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.photoUpload small {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 /* Estilização de Gênero (Ajustada para não sobrepor) */
 .genderSelection {
   display: flex;

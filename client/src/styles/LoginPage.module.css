@@ -183,6 +183,18 @@
   width: 100%;
 }
 
+.success {
+  width: 100%;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: var(--color-success-soft);
+  color: var(--color-success-700);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 1rem;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
   .main {
     flex-direction: column;

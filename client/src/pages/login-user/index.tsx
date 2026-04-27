@@ -50,6 +50,12 @@ const LoginPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof router.query.erroSocial === 'string') {
+      setError(router.query.erroSocial);
+    }
+  }, [router.query.erroSocial]);
+
   // Função para lidar com o envio do formulário
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -121,12 +127,16 @@ const LoginPage = () => {
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.google}`}
+                onClick={() => loginService.iniciarLoginSocial('google')}
+                disabled={loading}
               >
                 <FaGoogle /> <span>Entrar com Google</span>
               </button>
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.facebook}`}
+                onClick={() => loginService.iniciarLoginSocial('facebook')}
+                disabled={loading}
               >
                 <FaFacebookF />
               </button>
@@ -164,12 +174,12 @@ const LoginPage = () => {
                   />
                   Lembrar meu e-mail
                 </label>
-                <a
-                  href="#"
+                <Link
+                  href="/esqueci-senha"
                   className={Style.forgotPasswordLink}
                 >
                   Esqueci minha senha
-                </a>
+                </Link>
               </div>
 
               {/* --- Uso do Botão Reutilizável --- */}

@@ -11,6 +11,26 @@ import { Request, Response } from 'express';
 import ServiceRecuperacaoSenha from '../service/Service_Rec_Senha';
 
 export class RecuperacaoSenhaController {
+  static async redefinirSenha(req: Request, res: Response) {
+    const { token, novaSenha } = req.body || {};
+
+    try {
+      if (!token || !novaSenha) {
+        return res.status(400).json({
+          erro: 'Token e nova senha sao obrigatorios.',
+        });
+      }
+
+      const resultado =
+        await ServiceRecuperacaoSenha.redefinirSenha(token, novaSenha);
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res.status(400).json({
+        erro: error.message || 'Erro ao redefinir senha.',
+      });
+    }
+  }
+
   /**
    * Endpoint para disparar o processo de recuperação de senha por e-mail.
    * @param {Request} req - Requisição contendo o campo 'email' no corpo (body).

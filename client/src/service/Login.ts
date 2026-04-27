@@ -61,6 +61,92 @@ function gravarCookieSessao(token: string) {
 }
 
 class LoginService {
+  public persistirSessao(token: string) {
+    gravarCookieSessao(token);
+  }
+
+  public iniciarLoginSocial(provider: 'google' | 'facebook') {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    window.location.href = `${apiUrl}/nossozelo/login/social/${provider}`;
+  }
+
+  public async completarCadastroSocial(data: Record<string, unknown>) {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const response = await fetch(
+      `${apiUrl}/nossozelo/login/social/completar-cadastro`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+    );
+
+    const responseData = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(
+        responseData.error ||
+          responseData.message ||
+          'Nao foi possivel completar o cadastro social.',
+      );
+    }
+
+    if (responseData.token) {
+      gravarCookieSessao(responseData.token);
+    }
+
+    return responseData as LoginResponse;
+  }
+
+  public async solicitarRecuperacaoSenha(email: string) {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const response = await fetch(
+      `${apiUrl}/nossozelo/login/recuperar-senha`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      },
+    );
+
+    const responseData = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(
+        responseData.erro ||
+          responseData.error ||
+          'Nao foi possivel enviar o e-mail de recuperacao.',
+      );
+    }
+
+    return responseData;
+  }
+
+  public async redefinirSenha(token: string, novaSenha: string) {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const response = await fetch(
+      `${apiUrl}/nossozelo/login/redefinir-senha`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, novaSenha }),
+      },
+    );
+
+    const responseData = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(
+        responseData.erro ||
+          responseData.error ||
+          'Nao foi possivel redefinir a senha.',
+      );
+    }
+
+    return responseData;
+  }
+
   public async login(data: LoginRequestBody): Promise<LoginResponse> {
     logger.info(CONTEXTO, 'Iniciando tentativa de login', {
       identificador: data.identificador,

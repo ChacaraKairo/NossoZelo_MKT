@@ -10,6 +10,7 @@
 import { Router } from 'express';
 import { AuthController } from '../controller/Controller_Login';
 import { authMiddleware } from '../middleware/autenticacao';
+import RecuperacaoSenhaController from '../controller/Controlelr_Rec_Senha';
 
 console.log(
   '[LOG-FLUXO] Inicializando LoginRouter e preparando rotas de autenticação.',
@@ -28,6 +29,28 @@ console.log(
  * Recebe identificador (E-mail/CPF) e senha para geração de token JWT.
  */
 LoginRouter.post('/login', AuthController.login);
+LoginRouter.get('/social/google', AuthController.iniciarSocial('google'));
+LoginRouter.get(
+  '/social/google/callback',
+  AuthController.callbackSocial('google'),
+);
+LoginRouter.get('/social/facebook', AuthController.iniciarSocial('facebook'));
+LoginRouter.get(
+  '/social/facebook/callback',
+  AuthController.callbackSocial('facebook'),
+);
+LoginRouter.post(
+  '/social/completar-cadastro',
+  AuthController.completarCadastroSocial,
+);
+LoginRouter.post(
+  '/recuperar-senha',
+  RecuperacaoSenhaController.enviarEmail,
+);
+LoginRouter.post(
+  '/redefinir-senha',
+  RecuperacaoSenhaController.redefinirSenha,
+);
 
 console.log(
   '[LOG-FLUXO] LoginRouter configurado com sucesso e pronto para acoplamento principal.',
