@@ -16,6 +16,12 @@ console.log(
   '[LOG-FLUXO] Inicializando LoginRouter e preparando rotas de autenticação.',
 );
 const LoginRouter = Router();
+const provedoresSociais = ['google', 'facebook'] as const;
+type ProvedorSocial = (typeof provedoresSociais)[number];
+
+function isProvedorSocial(provider: string): provider is ProvedorSocial {
+  return provedoresSociais.includes(provider as ProvedorSocial);
+}
 
 // ==========================================
 // ROTAS DE AUTENTICAÇÃO
@@ -29,15 +35,33 @@ console.log(
  * Recebe identificador (E-mail/CPF) e senha para geração de token JWT.
  */
 LoginRouter.post('/login', AuthController.login);
-LoginRouter.get('/social/google', AuthController.iniciarSocial('google'));
 LoginRouter.get(
-  '/social/google/callback',
-  AuthController.callbackSocial('google'),
+  '/social/:provider',
+  (req, res) => {
+    const provider = String(req.params.provider || '');
+
+    if (!isProvedorSocial(provider)) {
+      return res.status(404).json({
+        error: 'Provedor social nao suportado.',
+      });
+    }
+
+    return AuthController.iniciarSocial(provider)(req, res);
+  },
 );
-LoginRouter.get('/social/facebook', AuthController.iniciarSocial('facebook'));
 LoginRouter.get(
-  '/social/facebook/callback',
-  AuthController.callbackSocial('facebook'),
+  '/social/:provider/callback',
+  (req, res) => {
+    const provider = String(req.params.provider || '');
+
+    if (!isProvedorSocial(provider)) {
+      return res.status(404).json({
+        error: 'Provedor social nao suportado.',
+      });
+    }
+
+    return AuthController.callbackSocial(provider)(req, res);
+  },
 );
 LoginRouter.post(
   '/social/completar-cadastro',

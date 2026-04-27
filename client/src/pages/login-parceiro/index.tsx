@@ -76,12 +76,16 @@ const LoginPage = () => {
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.google}`}
+                onClick={() => loginService.iniciarLoginSocial('google')}
+                disabled={loading}
               >
                 <FaGoogle /> <span>Entrar com Google</span>
               </button>
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.facebook}`}
+                onClick={() => loginService.iniciarLoginSocial('facebook')}
+                disabled={loading}
               >
                 <FaFacebookF />
               </button>
@@ -115,12 +119,12 @@ const LoginPage = () => {
                   />
                   Lembrar-me
                 </label>
-                <a
-                  href="#"
+                <Link
+                  href="/esqueci-senha"
                   className={Style.forgotPasswordLink}
                 >
                   Esqueci minha senha
-                </a>
+                </Link>
               </div>
 
               {/* --- Uso do Botão Reutilizável --- */}
