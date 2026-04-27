@@ -8,6 +8,18 @@ import ServiceUser from './Service_User';
 const TEMPO_SESSAO_LOGIN = '7d';
 const TEMPO_CADASTRO_SOCIAL = '30m';
 type SocialProvider = 'google' | 'facebook';
+type TipoCadastroSocial =
+  | 'cliente'
+  | 'cuidador'
+  | 'enfermeiro'
+  | 'acompanhante';
+
+const TIPOS_CADASTRO_SOCIAL = new Set<TipoCadastroSocial>([
+  'cliente',
+  'cuidador',
+  'enfermeiro',
+  'acompanhante',
+]);
 
 function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
@@ -58,6 +70,101 @@ function criarUrlCallback(provider: SocialProvider) {
 
 function criarSenhaSocial() {
   return `Nz!${nanoid(32)}aA1`;
+}
+
+function normalizarDigitos(valor: unknown) {
+  return String(valor || '').replace(/\D/g, '');
+}
+
+function valorObrigatorio(valor: unknown) {
+  return String(valor || '').trim();
+}
+
+function normalizarDecimal(valor: unknown) {
+  if (valor === undefined || valor === null || valor === '') return valor;
+  return String(valor).replace(',', '.');
+}
+
+function montarPerfilProfissional(data: any, tipo: TipoCadastroSocial) {
+  const dados = data?.[tipo] || data?.perfil || data || {};
+
+  return {
+    bio: valorObrigatorio(dados.bio),
+    experiencia:
+      dados.experiencia ?? dados.anos_experiencia ?? data.anos_experiencia,
+    valorHora: normalizarDecimal(
+      dados.valorHora ?? dados.valor_hora ?? data.valor_hora,
+    ),
+    valorDiaria: normalizarDecimal(
+      dados.valorDiaria ?? dados.valor_diaria ?? data.valor_diaria,
+    ),
+    disponibilidade:
+      dados.disponibilidade ?? data.disponibilidade ?? null,
+    especialidades:
+      dados.especialidades ?? data.especialidades ?? null,
+    documento_profissional:
+      dados.documento_profissional ?? data.documento_profissional ?? null,
+    coren: dados.coren ?? data.coren,
+  };
+}
+
+function validarComplementoCadastroSocial(data: any) {
+  const tipo = String(data?.tipo || 'cliente') as TipoCadastroSocial;
+
+  if (!TIPOS_CADASTRO_SOCIAL.has(tipo)) {
+    throw new Error('Tipo de conta invalido para cadastro social.');
+  }
+
+  const camposObrigatorios = [
+    ['nome', data?.nome],
+    ['telefone', data?.telefone],
+    ['cpf', data?.cpf],
+    ['cep', data?.cep],
+    ['endereco', data?.endereco],
+    ['bairro', data?.bairro],
+    ['cidade', data?.cidade],
+    ['estado', data?.estado],
+  ] as const;
+
+  for (const [campo, valor] of camposObrigatorios) {
+    if (!valorObrigatorio(valor)) {
+      throw new Error(`Campo obrigatorio ausente: ${campo}.`);
+    }
+  }
+
+  if (normalizarDigitos(data.cpf).length !== 11) {
+    throw new Error('CPF invalido.');
+  }
+
+  if (normalizarDigitos(data.telefone).length < 10) {
+    throw new Error('Telefone invalido.');
+  }
+
+  if (normalizarDigitos(data.cep).length !== 8) {
+    throw new Error('CEP invalido.');
+  }
+
+  if (tipo !== 'cliente') {
+    const perfil = montarPerfilProfissional(data, tipo);
+    if (!valorObrigatorio(perfil.bio)) {
+      throw new Error('Bio profissional e obrigatoria.');
+    }
+    if (!valorObrigatorio(perfil.disponibilidade)) {
+      throw new Error('Disponibilidade profissional e obrigatoria.');
+    }
+    if (!valorObrigatorio(perfil.especialidades)) {
+      throw new Error('Especialidades sao obrigatorias.');
+    }
+  }
+
+  if (tipo === 'enfermeiro') {
+    const perfil = montarPerfilProfissional(data, tipo);
+    if (!valorObrigatorio(perfil.coren)) {
+      throw new Error('COREN e obrigatorio para enfermeiros.');
+    }
+  }
+
+  return tipo;
 }
 
 function mascararIdentificador(identificador: string) {
@@ -134,6 +241,10 @@ export class ServiceAuth {
 
   static async completarCadastroSocial(data: any) {
     const { verify } = await import('jsonwebtoken');
+    if (!data?.socialToken) {
+      throw new Error('Token de cadastro social obrigatorio.');
+    }
+
     const decoded = verify(
       String(data?.socialToken || ''),
       obterJwtSecret(),
@@ -148,6 +259,8 @@ export class ServiceAuth {
       throw new Error('Token de cadastro social invalido.');
     }
 
+    const tipo = validarComplementoCadastroSocial(data);
+
     const existente = await prisma.usuarios.findUnique({
       where: { email: decoded.email },
       select: { id: true, nome: true, email: true, tipo: true },
@@ -157,16 +270,29 @@ export class ServiceAuth {
       return { token: criarTokenSessao(existente), user: existente };
     }
 
+    const cpf = normalizarDigitos(data.cpf);
+    const cpfExistente = await prisma.usuarios.findUnique({
+      where: { cpf },
+      select: { id: true },
+    });
+
+    if (cpfExistente) {
+      throw new Error('CPF ja cadastrado.');
+    }
+
+    const perfilProfissional =
+      tipo === 'cliente' ? null : montarPerfilProfissional(data, tipo);
+
     const resultado = await ServiceUser.criarUsuarioComTipo({
       usuario: {
         nome: data.nome || decoded.nome || 'Usuario NossoZelo',
         email: decoded.email,
         senha: criarSenhaSocial(),
-        telefone: data.telefone,
-        cpf: data.cpf,
+        telefone: normalizarDigitos(data.telefone),
+        cpf,
         sexo: data.sexo || 'outro',
         data_nascimento: data.data_nascimento || null,
-        cep: data.cep,
+        cep: normalizarDigitos(data.cep),
         endereco: data.endereco,
         bairro: data.bairro,
         cidade: data.cidade,
@@ -174,9 +300,14 @@ export class ServiceAuth {
         pais: 'Brasil',
         url_foto_perfil:
           data.url_foto_perfil || decoded.url_foto_perfil || '',
-        tipo: data.tipo || 'cliente',
+        tipo,
         email_confirmado: true,
       },
+      ...(tipo === 'cuidador' ? { cuidador: perfilProfissional } : {}),
+      ...(tipo === 'enfermeiro' ? { enfermeiro: perfilProfissional } : {}),
+      ...(tipo === 'acompanhante'
+        ? { acompanhante: perfilProfissional }
+        : {}),
     });
 
     const usuarioCriado = resultado.data;

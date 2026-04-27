@@ -60,6 +60,21 @@ function gravarCookieSessao(token: string) {
   Cookies.set('zelo_token', token, opcoes);
 }
 
+function mascararIdentificador(identificador: string) {
+  const valor = identificador.trim();
+
+  if (valor.includes('@')) {
+    return valor.replace(/^(.{2}).*(@.*)$/, '$1***$2');
+  }
+
+  const digitos = valor.replace(/\D/g, '');
+  if (digitos.length >= 4) {
+    return `***${digitos.slice(-4)}`;
+  }
+
+  return '***';
+}
+
 class LoginService {
   public persistirSessao(token: string) {
     gravarCookieSessao(token);
@@ -68,6 +83,7 @@ class LoginService {
   public iniciarLoginSocial(provider: 'google' | 'facebook') {
     const apiUrl =
       process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    logger.info(CONTEXTO, 'Iniciando login social', { provider });
     window.location.href = `${apiUrl}/nossozelo/login/social/${provider}`;
   }
 
@@ -85,6 +101,9 @@ class LoginService {
 
     const responseData = await response.json().catch(() => ({}));
     if (!response.ok) {
+      logger.warn(CONTEXTO, 'Cadastro social recusado pela API', {
+        status: response.status,
+      });
       throw new Error(
         responseData.error ||
           responseData.message ||
@@ -94,6 +113,7 @@ class LoginService {
 
     if (responseData.token) {
       gravarCookieSessao(responseData.token);
+      logger.info(CONTEXTO, 'Cadastro social concluido com sessao criada');
     }
 
     return responseData as LoginResponse;
@@ -149,7 +169,7 @@ class LoginService {
 
   public async login(data: LoginRequestBody): Promise<LoginResponse> {
     logger.info(CONTEXTO, 'Iniciando tentativa de login', {
-      identificador: data.identificador,
+      identificador: mascararIdentificador(data.identificador),
     });
 
     const apiUrl =
@@ -177,7 +197,7 @@ class LoginService {
       if (!response.ok) {
         if (response.status === 401) {
           logger.warn(CONTEXTO, 'Credenciais incorretas', {
-            identificador: data.identificador,
+            identificador: mascararIdentificador(data.identificador),
           });
           throw new Error(MENSAGEM_CREDENCIAIS_INVALIDAS);
         }
@@ -217,7 +237,7 @@ class LoginService {
       }
 
       logger.info(CONTEXTO, 'Fluxo de login finalizado com sucesso', {
-        identificador: data.identificador,
+        identificador: mascararIdentificador(data.identificador),
       });
       return responseData;
     } catch (error: unknown) {

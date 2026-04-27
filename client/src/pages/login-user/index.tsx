@@ -24,8 +24,17 @@ const LoginPage = () => {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [socialLoading, setSocialLoading] = useState<
+    'google' | 'facebook' | null
+  >(null);
 
   const [lembrarMe, setLembrarMe] = useState(false);
+
+  const iniciarSocial = (provider: 'google' | 'facebook') => {
+    setError(null);
+    setSocialLoading(provider);
+    loginService.iniciarLoginSocial(provider);
+  };
 
   useEffect(() => {
     localStorage.removeItem(CHAVE_LEMBRAR_ME_LEGADA);
@@ -127,18 +136,28 @@ const LoginPage = () => {
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.google}`}
-                onClick={() => loginService.iniciarLoginSocial('google')}
-                disabled={loading}
+                onClick={() => iniciarSocial('google')}
+                disabled={loading || Boolean(socialLoading)}
               >
-                <FaGoogle /> <span>Entrar com Google</span>
+                <FaGoogle />{' '}
+                <span>
+                  {socialLoading === 'google'
+                    ? 'Abrindo Google...'
+                    : 'Entrar com Google'}
+                </span>
               </button>
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.facebook}`}
-                onClick={() => loginService.iniciarLoginSocial('facebook')}
-                disabled={loading}
+                onClick={() => iniciarSocial('facebook')}
+                disabled={loading || Boolean(socialLoading)}
               >
-                <FaFacebookF />
+                <FaFacebookF />{' '}
+                <span>
+                  {socialLoading === 'facebook'
+                    ? 'Abrindo Facebook...'
+                    : 'Entrar com Facebook'}
+                </span>
               </button>
             </div>
 

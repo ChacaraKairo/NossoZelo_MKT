@@ -21,6 +21,15 @@ const LoginPage = () => {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [socialLoading, setSocialLoading] = useState<
+    'google' | 'facebook' | null
+  >(null);
+
+  const iniciarSocial = (provider: 'google' | 'facebook') => {
+    setError(null);
+    setSocialLoading(provider);
+    loginService.iniciarLoginSocial(provider);
+  };
 
   // Função para lidar com o envio do formulário
   const handleSubmit = async (event: React.FormEvent) => {
@@ -76,18 +85,28 @@ const LoginPage = () => {
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.google}`}
-                onClick={() => loginService.iniciarLoginSocial('google')}
-                disabled={loading}
+                onClick={() => iniciarSocial('google')}
+                disabled={loading || Boolean(socialLoading)}
               >
-                <FaGoogle /> <span>Entrar com Google</span>
+                <FaGoogle />{' '}
+                <span>
+                  {socialLoading === 'google'
+                    ? 'Abrindo Google...'
+                    : 'Entrar com Google'}
+                </span>
               </button>
               <button
                 type="button"
                 className={`${Style.socialButton} ${Style.facebook}`}
-                onClick={() => loginService.iniciarLoginSocial('facebook')}
-                disabled={loading}
+                onClick={() => iniciarSocial('facebook')}
+                disabled={loading || Boolean(socialLoading)}
               >
-                <FaFacebookF />
+                <FaFacebookF />{' '}
+                <span>
+                  {socialLoading === 'facebook'
+                    ? 'Abrindo Facebook...'
+                    : 'Entrar com Facebook'}
+                </span>
               </button>
             </div>
 

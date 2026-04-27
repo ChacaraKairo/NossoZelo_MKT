@@ -106,8 +106,6 @@
   color: var(--color-google);
 }
 .socialButton.facebook {
-  flex-grow: 0;
-  width: 45px;
   color: var(--color-facebook);
 }
 
