@@ -125,7 +125,7 @@ async function garantirColuna({
   );
 }
 
-async function executar() {
+export async function ensureProfileFields() {
   logger.info('EnsureProfileFields: verificando colunas de perfil');
 
   for (const coluna of COLUNAS_PERFIL) {
@@ -135,13 +135,15 @@ async function executar() {
   logger.info('EnsureProfileFields: verificacao concluida');
 }
 
-executar()
-  .catch((error) => {
-    logger.error('EnsureProfileFields: falha ao preparar schema', {
-      erro: error instanceof Error ? error.message : String(error),
+if (require.main === module) {
+  ensureProfileFields()
+    .catch((error) => {
+      logger.error('EnsureProfileFields: falha ao preparar schema', {
+        erro: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
     });
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+}

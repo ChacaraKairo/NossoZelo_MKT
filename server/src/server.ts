@@ -14,6 +14,7 @@ import app from './main';
 import axios from 'axios';
 import { exec } from 'child_process';
 import prisma from './src/lib/prisma';
+import { ensureProfileFields } from './src/scripts/ensure-profile-fields';
 
 console.log('[LOG-FLUXO] Iniciando o bootstrap da aplicacao.');
 
@@ -115,26 +116,38 @@ function startKeepAlive(runDatabasePing: boolean) {
 }
 
 /**
- * Inicia o servidor HTTP.
+ * Inicia o servidor HTTP depois de preparar o schema esperado pela API.
  */
-app.listen(parseInt(PORT), HOST, async () => {
-  console.log(
-    `[LOG-FLUXO] Servidor Express disparado em ${HOST}:${PORT}.`,
-  );
-
+async function bootstrap() {
   await testDatabaseConnection();
+  await ensureProfileFields();
 
-  const runAivenKeepAlive = shouldRunAivenKeepAlive();
+  app.listen(parseInt(PORT), HOST, () => {
+    console.log(
+      `[LOG-FLUXO] Servidor Express disparado em ${HOST}:${PORT}.`,
+    );
 
-  if (runAivenKeepAlive) {
-    triggerDatabasePing();
-  }
+    const runAivenKeepAlive = shouldRunAivenKeepAlive();
 
-  if (process.env.NODE_ENV === 'production') {
-    startKeepAlive(runAivenKeepAlive);
-  }
+    if (runAivenKeepAlive) {
+      triggerDatabasePing();
+    }
 
-  console.log(
-    `[LOG-FLUXO] Bootstrap finalizado. Operacional em: ${SERVER_URL}`,
+    if (process.env.NODE_ENV === 'production') {
+      startKeepAlive(runAivenKeepAlive);
+    }
+
+    console.log(
+      `[LOG-FLUXO] Bootstrap finalizado. Operacional em: ${SERVER_URL}`,
+    );
+  });
+}
+
+bootstrap().catch((error: unknown) => {
+  console.error(
+    `[ERRO-FLUXO] Falha critica no bootstrap: ${
+      error instanceof Error ? error.message : String(error)
+    }`,
   );
+  process.exit(1);
 });
