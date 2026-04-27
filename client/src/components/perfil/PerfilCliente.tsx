@@ -10,6 +10,7 @@ import {
   PerfilUsuario,
 } from '@/types/perfil';
 import logger from '@/utils/logger';
+import styles from '@/styles/components/perfil/PerfilConteudo.module.css';
 
 interface PerfilClienteProps {
   perfil: PerfilUsuario;
@@ -51,11 +52,11 @@ function formatarData(valor?: string | Date | null) {
 
 function CampoInfo({ label, valor }: { label: string; valor: unknown }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5">
-      <span className="text-xs font-bold uppercase text-slate-400">
+    <div className={styles.infoCard}>
+      <span className={styles.infoLabel}>
         {label}
       </span>
-      <p className="mt-1 font-semibold text-slate-800">{texto(valor)}</p>
+      <p className={styles.infoValue}>{texto(valor)}</p>
     </div>
   );
 }
@@ -75,7 +76,7 @@ function VisaoGeral({
   ).length;
 
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className={styles.infoGrid}>
       <CampoInfo label="Telefone" valor={usuario.telefone} />
       <CampoInfo label="Pedidos ativos" valor={ativos} />
       <CampoInfo label="Contratações" valor={contratacoes.length} />
@@ -87,7 +88,7 @@ function VisaoGeral({
 function DadosPessoais({ usuario }: { usuario: PerfilUsuario }) {
   logger.debug(CONTEXTO, 'Renderização da aba dados pessoais');
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className={styles.infoGridWide}>
       <CampoInfo label="Nome" valor={usuario.nome} />
       <CampoInfo label="Telefone" valor={usuario.telefone} />
       <CampoInfo label="Cidade" valor={usuario.cidade} />
@@ -117,20 +118,20 @@ function MinhasContratacoes({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={styles.listStack}>
       {contratacoes.map((contratacao) => (
         <article
           key={contratacao.id}
-          className="rounded-xl border border-slate-100 bg-white p-5"
+          className={styles.listCard}
         >
-          <p className="font-bold text-slate-800">
+          <p className={styles.listTitle}>
             {contratacao.usuarios_contratacoes_prestador_idTousuarios
               ?.nome || `Contratação #${contratacao.id}`}
           </p>
-          <p className="text-sm text-slate-500">
+          <p className={styles.listMeta}>
             Status: {texto(contratacao.status)}
           </p>
-          <p className="text-sm text-slate-500">
+          <p className={styles.listMeta}>
             Data: {formatarData(contratacao.data)}
           </p>
         </article>
@@ -158,19 +159,19 @@ function AvaliacoesCliente({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={styles.listStack}>
       {avaliacoes.map((avaliacao) => (
         <article
           key={avaliacao.id}
-          className="rounded-xl border border-slate-100 bg-white p-5"
+          className={styles.listCard}
         >
-          <p className="font-bold text-slate-800">
+          <p className={styles.listTitle}>
             Nota: {texto(avaliacao.nota)}
           </p>
-          <p className="text-sm text-slate-500">
+          <p className={styles.listMeta}>
             {texto(avaliacao.comentario)}
           </p>
-          <p className="text-xs text-slate-400">
+          <p className={styles.listSubtle}>
             {formatarData(avaliacao.data_avaliacao)}
           </p>
         </article>
@@ -257,7 +258,7 @@ export default function PerfilCliente({
   }
 
   return (
-    <section className="space-y-8">
+    <section className={styles.profileSection}>
       <PerfilHeader
         nome={texto(usuario.nome)}
         tipo={texto(usuario.tipo || perfil.perfil_tipo)}
@@ -266,16 +267,16 @@ export default function PerfilCliente({
         estado={usuario.estado}
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className={styles.tabs}>
         {ABAS.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => selecionarAba(item.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-bold ${
+            className={`${styles.tabButton} ${
               aba === item.id && !editando
-                ? 'bg-teal-600 text-white'
-                : 'border border-slate-200 text-slate-600'
+                ? styles.tabButtonActive
+                : ''
             }`}
           >
             {item.label}
@@ -289,7 +290,7 @@ export default function PerfilCliente({
             });
             setEditando(true);
           }}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white"
+          className={styles.editButton}
         >
           Editar perfil
         </button>

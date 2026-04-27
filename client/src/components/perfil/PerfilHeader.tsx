@@ -1,3 +1,5 @@
+import styles from '@/styles/components/perfil/PerfilHeader.module.css';
+
 interface PerfilHeaderProps {
   nome: string;
   tipo: string;
@@ -47,37 +49,37 @@ export default function PerfilHeader({
   const nota = formatarAvaliacao(avaliacaoMedia);
 
   return (
-    <header className="flex flex-col gap-4 border-b border-slate-100 pb-6 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-4">
+    <header className={styles.header}>
+      <div className={styles.identity}>
         {urlFoto ? (
           <img
             src={urlFoto}
             alt={nome}
-            className="h-20 w-20 rounded-full border border-slate-100 object-cover"
+            className={styles.avatar}
           />
         ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-100 bg-teal-50 text-2xl font-black text-teal-700">
+          <div className={styles.avatarFallback}>
             {inicialNome(nome)}
           </div>
         )}
 
-        <div>
-          <h1 className="text-2xl font-black text-slate-800">
+        <div className={styles.copy}>
+          <h1 className={styles.name}>
             {texto(nome)}
           </h1>
-          <p className="text-sm font-semibold capitalize text-slate-500">
+          <p className={styles.type}>
             {texto(tipo)}
           </p>
           {subtitulo && (
-            <p className="text-sm text-slate-400">
+            <p className={styles.subtitle}>
               {subtitulo}
             </p>
           )}
-          <p className="text-sm text-slate-400">
+          <p className={styles.location}>
             {localizacao}
           </p>
           {nota && (
-            <p className="mt-1 text-sm font-bold text-amber-500">
+            <p className={styles.rating}>
               Avaliação média: {nota}
             </p>
           )}

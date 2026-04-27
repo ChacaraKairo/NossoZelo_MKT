@@ -1,84 +1,124 @@
-/* AbaAgendaPro.module.css */
+.section {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
 
-.container {
+.header {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  animation: fadeIn 0.4s ease-out;
-}
-
-.timeline {
-  position: relative;
-  padding-left: 2rem;
-  border-left: 2px solid #E2E8F0;
-  margin-left: 1rem;
-}
-
-.timelineItem {
-  position: relative;
-  margin-bottom: 2rem;
-}
-
-.timelineDot {
-  position: absolute;
-  left: -2.45rem;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 3px solid #F4F7FC;
-}
-
-.dotBlue { background-color: #3B82F6; }
-.dotGreen { background-color: #10B981; }
-
-.dateHeader {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #94A3B8;
-  text-transform: uppercase;
-  margin-bottom: 0.75rem;
-  display: block;
-}
-
-.appointmentCard {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 1.25rem;
-  padding: 1.25rem;
-  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  transition: all 0.2s ease;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-4);
 }
 
-.appointmentCard:hover {
-  border-color: #CBD5E1;
-  transform: translateX(5px);
+.title {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: var(--font-size-xl);
+  font-weight: 900;
 }
 
-.timeInfo {
-  display: flex;
-  flex-direction: column;
+.subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
 }
 
-.timeRange {
-  font-size: 1rem;
+.disabledButton {
+  max-width: 18rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+  font-size: var(--font-size-sm);
   font-weight: 800;
-  color: #1E293B;
+  line-height: 1.35;
+  padding: 0.65rem 0.9rem;
 }
 
-.statusBadge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.25rem 0.6rem;
-  border-radius: 2rem;
+.errorBox {
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  background: var(--color-danger-soft);
+  color: #991b1b;
+  font-weight: 900;
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.card {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+}
+
+.cardBody {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.date {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+}
+
+.timeIcon {
+  color: var(--color-text-subtle);
+  flex: 0 0 auto;
+}
+
+.observation {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}
+
+.badge {
+  width: fit-content;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  padding: 0.35rem 0.7rem;
   text-transform: uppercase;
 }
 
-.badgeSuccess { background: #ECFDF5; color: #059669; }
-.badgeWarning { background: #FFF7ED; color: #D97706; }
+@media (max-width: 720px) {
+  .header,
+  .cardBody {
+    flex-direction: column;
+  }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  .disabledButton {
+    width: 100%;
+    max-width: none;
+  }
 }

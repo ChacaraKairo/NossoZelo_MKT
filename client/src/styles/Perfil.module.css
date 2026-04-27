@@ -1,57 +1,35 @@
-/* client/src/styles/Perfil.module.css */
-
 .container {
   min-height: 100vh;
-  background-color: #f4f7fc; /* Fundo cinza frio profissional */
   width: 100%;
-  overflow-x: hidden; /* Mata a barra de rolagem horizontal */
+  overflow-x: hidden;
+  background-color: var(--color-page);
   box-sizing: border-box;
 }
 
 .mainContent {
-  max-width: 1400px;
+  max-width: var(--container-wide);
   margin: 0 auto;
-  padding: 6rem 1.5rem 3rem 1.5rem;
+  padding: 6rem var(--space-6) var(--space-12);
   box-sizing: border-box;
 }
 
 .dashboardGrid {
   display: grid;
-  grid-template-columns: 1fr; /* Mobile: Uma coluna */
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
   width: 100%;
   box-sizing: border-box;
-}
-
-/* Breakpoint para Desktop: Sistema de 12 colunas */
-@media (min-width: 1024px) {
-  .dashboardGrid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .leftColumn {
-    grid-column: span 3;
-  }
-
-  .centerColumn {
-    grid-column: span 6;
-  }
-
-  .rightColumn {
-    grid-column: span 3;
-  }
 }
 
 .card {
-  background-color: #ffffff;
-  border-radius: 1.25rem;
-  padding: 2rem;
-  border: 1px solid #e2e8f0;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.05),
-    0 8px 10px -6px rgba(0, 0, 0, 0.01);
   width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   box-sizing: border-box;
+  padding: var(--space-8);
 }
 
 .loadingState {
@@ -59,7 +37,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-weight: 800;
   animation: pulseText 1.4s ease-in-out infinite;
 }
@@ -70,45 +48,46 @@
 
 .stack {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 .contentHeader {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f8fafc;
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .contentTitle {
   margin: 0;
-  color: #1e293b;
+  color: var(--color-text-strong);
   font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: 0;
 }
 
 .contentSubtitle {
-  margin: 0.35rem 0 0;
-  color: #94a3b8;
-  font-size: 0.875rem;
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .emptyTitle {
   margin: 0;
-  color: #1e293b;
-  font-size: 1.25rem;
+  color: var(--color-text-strong);
+  font-size: var(--font-size-xl);
   font-weight: 900;
 }
 
 .emptyText {
-  margin: 0.5rem 0 0;
-  color: #64748b;
-  font-size: 0.875rem;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
 }
 
 .highlightName {
-  color: #2563eb;
+  color: var(--color-primary-700);
 }
 
 .tabContent {
@@ -117,40 +96,39 @@
 
 .performanceTip {
   display: none;
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  border-radius: 1.5rem;
-  background: linear-gradient(135deg, #2563eb, #4338ca);
-  box-shadow: 0 18px 35px rgba(37, 99, 235, 0.18);
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--color-primary-700);
+  box-shadow: var(--shadow-md);
 }
 
 .performanceTipTitle {
-  margin: 0 0 0.5rem;
-  color: #ffffff;
-  font-size: 0.875rem;
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-sm);
   font-weight: 800;
 }
 
 .performanceTipText {
   margin: 0;
-  color: #dbeafe;
-  font-size: 0.75rem;
+  color: var(--color-primary-50);
+  font-size: var(--font-size-xs);
   line-height: 1.55;
 }
 
 .cardTitle {
-  color: #64748b;
-  font-size: 0.75rem;
+  display: block;
+  margin-bottom: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 1.5rem;
-  display: block;
 }
 
 .stickySidebar {
   position: sticky;
-  top: 6rem; /* Faz a lateral acompanhar o scroll */
+  top: 6rem;
   height: fit-content;
 }
 
@@ -178,6 +156,22 @@
 }
 
 @media (min-width: 1024px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .leftColumn {
+    grid-column: span 3;
+  }
+
+  .centerColumn {
+    grid-column: span 6;
+  }
+
+  .rightColumn {
+    grid-column: span 3;
+  }
+
   .performanceTip {
     display: block;
   }
@@ -185,11 +179,13 @@
 
 @media (max-width: 768px) {
   .mainContent {
-    padding: 2rem 1rem;
+    padding: var(--space-5) var(--space-4) var(--space-8);
   }
 
+  .card,
   .profileCard {
     min-height: auto;
-    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
   }
 }

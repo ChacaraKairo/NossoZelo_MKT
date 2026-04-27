@@ -3,6 +3,7 @@ import { FaClock } from 'react-icons/fa';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import { AgendaPerfil, PerfilUsuario } from '@/types/perfil';
 import logger from '@/utils/logger';
+import styles from '@/styles/components/perfil/AbaAgendaPro.module.css';
 
 interface AbaAgendaProProps {
   perfil: PerfilUsuario;
@@ -83,8 +84,8 @@ export default function AbaAgendaPro({
     );
 
     return (
-      <div className="rounded-2xl border border-red-100 bg-red-50 px-6 py-8 text-center">
-        <p className="font-bold text-red-700">
+      <div className={styles.errorBox}>
+        <p>
           Não foi possível exibir a agenda.
         </p>
       </div>
@@ -92,13 +93,13 @@ export default function AbaAgendaPro({
   }
 
   return (
-    <section className="space-y-5">
-      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <section className={styles.section}>
+      <header className={styles.header}>
         <div>
-          <h2 className="text-xl font-black text-slate-800">
+          <h2 className={styles.title}>
             Agenda
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className={styles.subtitle}>
             Horários recebidos do seu perfil.
           </p>
         </div>
@@ -107,7 +108,7 @@ export default function AbaAgendaPro({
           disabled
           onClick={handleBloquearHorario}
           title="Bloqueio manual será ativado após integração da agenda."
-          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-400 disabled:cursor-not-allowed disabled:opacity-70"
+          className={styles.disabledButton}
         >
           Bloqueio manual será ativado após integração da agenda.
         </button>
@@ -119,29 +120,29 @@ export default function AbaAgendaPro({
           descricao="Quando houver horários ou contratações na sua agenda, eles aparecerão aqui."
         />
       ) : (
-        <div className="space-y-3">
+        <div className={styles.list}>
           {agenda.map((item) => (
             <article
               key={item.id}
-              className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+              className={styles.card}
             >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className={styles.cardBody}>
                 <div>
-                  <p className="font-bold capitalize text-slate-800">
+                  <p className={styles.date}>
                     {formatarData(item.data)}
                   </p>
-                  <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-600">
-                    <FaClock className="text-slate-300" />
+                  <p className={styles.time}>
+                    <FaClock className={styles.timeIcon} />
                     {horarioCompleto(item)}
                   </p>
                   {obterObservacao(item) && (
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className={styles.observation}>
                       {obterObservacao(item)}
                     </p>
                   )}
                 </div>
 
-                <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase text-slate-600">
+                <span className={styles.badge}>
                   {item.status || 'Status não informado'}
                 </span>
               </div>

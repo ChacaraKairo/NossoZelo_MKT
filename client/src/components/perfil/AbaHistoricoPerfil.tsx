@@ -3,7 +3,7 @@ import EstadoVazio from '@/components/common/EstadoVazio';
 import avaliacaoService from '@/service/avaliacaoService';
 import { ContratacaoPerfil } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
-import styles from './styles/PerfilOperacional.module.css';
+import styles from '@/styles/components/perfil/PerfilOperacional.module.css';
 
 interface AbaHistoricoPerfilProps {
   contratacoes: ContratacaoPerfil[];
@@ -241,7 +241,7 @@ export default function AbaHistoricoPerfil({
               </span>
               {contratacaoJaAvaliada(contratacao) && (
                 <span className={styles.badgeSuccess}>
-                  Nota {contratacao.avaliacao.nota ?? '-'}
+                  Nota {contratacao.avaliacao?.nota ?? '-'}
                 </span>
               )}
             </div>
@@ -256,7 +256,7 @@ export default function AbaHistoricoPerfil({
             {modo === 'cliente' && contratacaoJaAvaliada(contratacao) && (
               <p className={styles.hint}>
                 Avaliacao enviada em{' '}
-                {formatarData(contratacao.avaliacao.data_avaliacao)}.
+                {formatarData(contratacao.avaliacao?.data_avaliacao)}.
               </p>
             )}
 

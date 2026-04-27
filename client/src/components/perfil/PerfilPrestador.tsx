@@ -15,6 +15,7 @@ import {
   ServicoPerfil,
 } from '@/types/perfil';
 import logger from '@/utils/logger';
+import styles from '@/styles/components/perfil/PerfilConteudo.module.css';
 
 interface PerfilPrestadorProps {
   perfil: PerfilUsuario;
@@ -59,11 +60,11 @@ function texto(valor: unknown) {
 
 function CampoInfo({ label, valor }: { label: string; valor: unknown }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5">
-      <span className="text-xs font-bold uppercase text-slate-400">
+    <div className={styles.infoCard}>
+      <span className={styles.infoLabel}>
         {label}
       </span>
-      <p className="mt-1 font-semibold text-slate-800">{texto(valor)}</p>
+      <p className={styles.infoValue}>{texto(valor)}</p>
     </div>
   );
 }
@@ -90,13 +91,13 @@ function VisaoGeral({
   ).length;
 
   return (
-    <div className="space-y-5">
+    <div className={styles.contentStack}>
       <AlertaPerfilIncompleto
         perfil={perfil}
         tipoUsuario={usuario.tipo || perfil.perfil_tipo}
         onCompletarPerfil={onCompletar}
       />
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className={styles.infoGrid}>
         <CampoInfo label="Pedidos pendentes" valor={pendentes} />
         <CampoInfo label="Contratações" valor={contratacoes.length} />
         <CampoInfo label="Avaliações" valor={avaliacoes.length} />
@@ -116,7 +117,7 @@ function DadosProfissionais({ perfil }: { perfil: PerfilUsuario }) {
   const tipo = usuario.tipo || perfil.perfil_tipo;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className={styles.infoGridWide}>
       <CampoInfo label="Telefone" valor={usuario.telefone} />
       <CampoInfo label="Cidade" valor={usuario.cidade} />
       <CampoInfo label="Estado" valor={usuario.estado} />
@@ -263,7 +264,7 @@ export default function PerfilPrestador({
   }
 
   return (
-    <section className="space-y-8">
+    <section className={styles.profileSection}>
       <PerfilHeader
         nome={texto(usuario.nome)}
         tipo={texto(tipoProfissional)}
@@ -273,16 +274,16 @@ export default function PerfilPrestador({
         avaliacaoMedia={usuario.avaliacao_media || perfil.avaliacao_media}
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className={styles.tabs}>
         {ABAS.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => selecionarAba(item.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-bold ${
+            className={`${styles.tabButton} ${
               aba === item.id && !editando
-                ? 'bg-teal-600 text-white'
-                : 'border border-slate-200 text-slate-600'
+                ? styles.tabButtonActive
+                : ''
             }`}
           >
             {item.label}
@@ -291,7 +292,7 @@ export default function PerfilPrestador({
         <button
           type="button"
           onClick={() => setEditando(true)}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white"
+          className={styles.editButton}
         >
           Editar perfil
         </button>
