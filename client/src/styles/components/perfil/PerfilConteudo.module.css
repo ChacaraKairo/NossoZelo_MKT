@@ -16,7 +16,7 @@
 
 .tabButton,
 .editButton {
-  min-height: 2.5rem;
+  min-height: 44px;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
@@ -146,6 +146,7 @@
     flex-wrap: nowrap;
     padding: var(--space-2);
     scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tabButton,
@@ -161,5 +162,23 @@
   .infoGrid,
   .infoGridWide {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileSection {
+    gap: var(--space-4);
+  }
+
+  .tabs {
+    margin-inline: calc(var(--space-4) * -1);
+    border-inline: 0;
+    border-radius: 0;
+    padding-inline: var(--space-4);
+  }
+
+  .infoCard,
+  .listCard {
+    padding: var(--space-4);
   }
 }

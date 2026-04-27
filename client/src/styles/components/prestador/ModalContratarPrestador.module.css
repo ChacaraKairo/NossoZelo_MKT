@@ -70,7 +70,7 @@
 .secondaryButton,
 .primaryButton {
   border-radius: 8px;
-  min-height: 42px;
+  min-height: 44px;
   padding: 10px 14px;
   font-size: 0.9rem;
   font-weight: 900;
@@ -299,5 +299,38 @@
   .servicePreview,
   .helperRow {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .overlay {
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .inlinePanel {
+    border-radius: var(--radius-lg);
+  }
+
+  .header,
+  .form {
+    padding-inline: 16px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .servicePreview {
+    padding: 14px;
+  }
+
+  .price {
+    width: fit-content;
   }
 }

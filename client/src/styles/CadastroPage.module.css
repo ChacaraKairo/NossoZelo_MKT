@@ -3,12 +3,13 @@
 .loginPage {
   display: flex;
   min-height: 100vh;
+  overflow-x: hidden;
   background: linear-gradient(
     135deg,
     #c4e9e6 0%,
     #ffffff 100%
   );
-  font-family: 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* --- Seção de Branding (Esquerda) --- */
@@ -60,6 +61,7 @@
   border-radius: 35px;
   width: 100%;
   max-width: 580px; /* Um pouco mais largo para os inputs respirarem */
+  min-width: 0;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
@@ -186,6 +188,7 @@
   justify-content: center;
   gap: 6px;
   cursor: pointer;
+  min-height: 44px;
   transition: all 0.2s ease-in-out;
   color: #607d8b;
   font-size: 0.85rem;
@@ -223,5 +226,70 @@
   } /* No mobile, eles podem quebrar linha */
   .inputRow {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .infoSection {
+    padding: var(--space-8) var(--space-4) var(--space-4);
+  }
+
+  .brandWrapper {
+    justify-content: center;
+    margin-bottom: var(--space-4);
+  }
+
+  .brandName {
+    font-size: clamp(2.1rem, 11vw, 3rem);
+    letter-spacing: 0;
+  }
+
+  .welcomeText {
+    font-size: 1rem;
+  }
+
+  .formSection {
+    padding: var(--space-4);
+  }
+
+  .formCard {
+    padding: var(--space-6);
+    border-radius: var(--radius-2xl);
+  }
+
+  .form h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .infoSection {
+    padding-inline: var(--space-3);
+  }
+
+  .formSection {
+    padding: var(--space-3);
+  }
+
+  .formCard {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+
+  .loginForm {
+    gap: var(--space-4);
+  }
+
+  .genderOptions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .genderOption {
+    white-space: normal;
+  }
+
+  .photoUpload {
+    padding: var(--space-4);
   }
 }

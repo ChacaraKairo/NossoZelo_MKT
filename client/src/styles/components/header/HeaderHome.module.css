@@ -68,7 +68,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
+  min-height: 44px;
   border-radius: 999px;
   padding: 0 18px;
   font-size: 0.94rem;
@@ -142,7 +142,7 @@
 
 @media (max-width: 560px) {
   .inner {
-    width: min(100% - 24px, 1280px);
+    width: min(100% - 16px, 1280px);
   }
 
   .logoWrapper {
@@ -155,12 +155,27 @@
 
   .primaryLink,
   .secondaryLink {
-    min-height: 38px;
+    min-height: 44px;
     padding: 0 12px;
     font-size: 0.86rem;
   }
 
   .greeting {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .inner {
+    gap: 10px;
+  }
+
+  .nav {
+    gap: 6px;
+  }
+
+  .navLink {
+    padding: 10px 12px;
+    white-space: nowrap;
   }
 }

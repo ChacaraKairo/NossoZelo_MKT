@@ -6,7 +6,7 @@
 }
 
 .main {
-  width: min(100% - 2rem, 80rem);
+  width: min(100% - clamp(1rem, 5vw, 2rem), 80rem);
   margin: 0 auto;
   padding: var(--space-10) 0;
   display: flex;
@@ -29,5 +29,12 @@
   .main {
     padding: var(--space-8) 0;
     gap: var(--space-8);
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: var(--space-6) 0 var(--space-8);
+    gap: var(--space-6);
   }
 }

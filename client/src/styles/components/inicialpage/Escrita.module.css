@@ -9,4 +9,14 @@
   text-shadow: 2px 2px 4px #5dccbf;
   padding: 10px 0px;
   margin-top: 100px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .escrita {
+    margin-top: 48px;
+    font-size: clamp(2.25rem, 12vw, 3.25rem);
+    line-height: 1.05;
+  }
 }

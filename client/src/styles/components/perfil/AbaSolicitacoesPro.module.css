@@ -248,7 +248,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 2.5rem;
+  min-height: 44px;
   border-radius: 0.75rem;
   padding: 0.65rem 1rem;
   font-size: 0.85rem;
@@ -259,6 +259,29 @@
     border-color 0.2s ease,
     color 0.2s ease,
     opacity 0.2s ease;
+}
+
+@media (max-width: 480px) {
+  .container {
+    gap: 1rem;
+  }
+
+  .requestCard {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .clientBlock {
+    align-items: flex-start;
+  }
+
+  .metaItem {
+    padding: 0.75rem;
+  }
+
+  .counter {
+    white-space: normal;
+  }
 }
 
 .actionButton:disabled {

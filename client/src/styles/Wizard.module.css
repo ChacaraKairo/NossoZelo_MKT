@@ -10,12 +10,14 @@
   padding: 24px;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   color: #334155;
+  overflow-x: hidden;
 }
 
 .wizardContainer {
   background: #ffffff;
   width: 100%;
   max-width: 840px;
+  min-width: 0;
   min-height: 600px;
   border-radius: 20px;
   box-shadow:
@@ -206,6 +208,8 @@
 .inputGroup input,
 .inputGroup select,
 .inputGroup textarea {
+  width: 100%;
+  max-width: 100%;
   padding: 12px 15px;
   border: 1.5px solid #dee2e6;
   border-radius: 12px;
@@ -301,6 +305,7 @@
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
+  min-height: 44px;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
 }
@@ -330,6 +335,7 @@
   border: 2px dashed #dee2e6;
   border-radius: 15px;
   margin-bottom: 15px;
+  gap: 16px;
 }
 
 .uploadInfo h4 {
@@ -353,6 +359,10 @@
   font-weight: 600;
   cursor: pointer;
   font-size: 0.85rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hiddenFileInput {
@@ -383,6 +393,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
 }
 
 .btnNext,
@@ -396,7 +407,9 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  min-height: 44px;
   transition:
     transform 0.2s,
     background 0.2s;
@@ -436,6 +449,7 @@
 
   .wizardFooter {
     padding: 20px;
+    gap: 12px;
   }
 
   /* No celular, os campos em linha quebram para colunas para não espremer */
@@ -448,5 +462,62 @@
   .genderOptions {
     flex-direction: column;
     gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wizardHeader,
+  .progressWrapper,
+  .stepContent,
+  .wizardFooter {
+    padding-inline: var(--space-4);
+  }
+
+  .wizardHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .wizardHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .progressWrapper {
+    padding-block: var(--space-4);
+  }
+
+  .stepContent {
+    padding-block: var(--space-5);
+    max-height: none;
+  }
+
+  .stepForm {
+    gap: var(--space-5);
+  }
+
+  .inputRow {
+    gap: var(--space-5);
+  }
+
+  .uploadBox {
+    align-items: stretch;
+    flex-direction: column;
+    padding: var(--space-4);
+  }
+
+  .uploadLabel {
+    width: 100%;
+  }
+
+  .wizardFooter {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .btnBack,
+  .btnNext,
+  .btnSubmit {
+    width: 100%;
   }
 }

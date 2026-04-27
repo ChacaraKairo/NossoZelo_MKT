@@ -9,7 +9,13 @@
 
 @media (max-width: 640px) {
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
+  }
+}
+
+@media (max-width: 380px) {
+  .grid {
+    gap: 14px;
   }
 }

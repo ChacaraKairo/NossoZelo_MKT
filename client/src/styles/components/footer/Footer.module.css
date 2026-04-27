@@ -7,6 +7,7 @@
 
 .container {
   max-width: 1100px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -93,6 +94,7 @@
 .contactItem span {
   font-size: 0.9rem;
   color: #444;
+  overflow-wrap: anywhere;
 }
 
 /* Divisor e Copyright */
@@ -147,11 +149,36 @@
 
 /* Responsividade */
 @media (max-width: 768px) {
+  .footer {
+    padding: 36px 16px 24px;
+  }
+
   .mainGrid {
     flex-direction: column;
     text-align: center;
+    gap: 24px;
   }
   .contactItem {
     justify-content: center;
+  }
+
+  .logoText {
+    font-size: clamp(2.1rem, 14vw, 3rem);
+  }
+
+  .slogan,
+  .subText {
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .socialWrapper {
+    flex-wrap: wrap;
+  }
+
+  .navColumn h3,
+  .contactColumn h3 {
+    font-size: 1.2rem;
   }
 }

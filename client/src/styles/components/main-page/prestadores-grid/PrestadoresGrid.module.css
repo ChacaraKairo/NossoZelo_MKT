@@ -30,6 +30,7 @@
   font-size: var(--font-size-sm);
   font-weight: 800;
   cursor: pointer;
+  min-height: 44px;
 }
 
 .grid {
@@ -99,7 +100,7 @@
 }
 
 .skeletonButton {
-  height: 42px;
+  height: 44px;
   border-radius: 8px;
 }
 
@@ -114,7 +115,25 @@
 
 @media (max-width: 640px) {
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
+  }
+
+  .distanceButton {
+    width: 100%;
+  }
+
+  .skeletonActions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .wrapper {
+    gap: 16px;
+  }
+
+  .grid {
+    gap: 14px;
   }
 }

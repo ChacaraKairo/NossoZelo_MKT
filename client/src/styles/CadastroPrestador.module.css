@@ -10,13 +10,15 @@
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
-  font-family: 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
 }
 
 .wizardContainer {
   background: #ffffff;
   width: 100%;
   max-width: 750px;
+  min-width: 0;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -51,6 +53,7 @@
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -138,6 +141,7 @@
 /* CORREÇÃO DO CONFLITO AQUI: Removido o .inputGroup input */
 .inputGroup select,
 .inputGroup textarea {
+  width: 100%;
   padding: 12px 14px;
   border: 1.5px solid #cfd8dc;
   border-radius: 8px;
@@ -196,6 +200,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
+  min-height: 44px;
   transition: all 0.2s ease-in-out;
   outline: none;
   font-family: inherit;
@@ -250,6 +255,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 16px 20px;
   border: 1.5px solid #e0e0e0;
   border-radius: 12px;
@@ -295,6 +301,7 @@
   font-size: 0.9rem;
   transition: all 0.2s ease-in-out;
   white-space: nowrap;
+  min-height: 44px;
 }
 
 .uploadLabel:hover {
@@ -334,6 +341,7 @@
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
+  min-height: 44px;
   transition: background 0.2s;
 }
 
@@ -358,7 +366,9 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  min-height: 44px;
   transition: background 0.2s ease-in-out;
 }
 
@@ -426,5 +436,37 @@
     margin-top: 2px;
     font-weight: 500;
     display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .wizardPage {
+    padding: 0;
+  }
+
+  .wizardContainer {
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .wizardHeader,
+  .progressWrapper,
+  .stepContent,
+  .wizardFooter {
+    padding-inline: var(--space-4);
+  }
+
+  .wizardHeader,
+  .wizardFooter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .btnDraft,
+  .btnBack,
+  .btnNext,
+  .btnSubmit {
+    width: 100%;
   }
 }

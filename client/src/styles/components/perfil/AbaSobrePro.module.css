@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
+  min-width: 0;
   animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)
     forwards;
 }
@@ -44,6 +45,7 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 1rem 1.25rem;
+  min-width: 0;
   background-color: #ffffff;
   border: 1px solid #f8fafc;
   border-radius: 0.75rem;
@@ -132,6 +134,7 @@
 
 .inputEdit {
   width: 100%;
+  min-height: 44px;
   padding: 0.4rem 0.6rem;
   border: 1px solid #3b82f6;
   border-radius: 0.5rem;
@@ -155,4 +158,27 @@
   border-radius: 0.4rem;
   font-size: 0.7rem;
   font-weight: bold;
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .abaContainer {
+    gap: 1.5rem;
+  }
+
+  .sectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .dataItem,
+  .bioBox {
+    padding: 1rem;
+    border-radius: 0.9rem;
+  }
+
+  .saveActions {
+    flex-direction: column;
+  }
 }

@@ -91,3 +91,23 @@
     flex-basis: 4rem;
   }
 }
+
+@media (max-width: 480px) {
+  .identity {
+    gap: var(--space-3);
+  }
+
+  .avatar,
+  .avatarFallback {
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-basis: 3.5rem;
+  }
+
+  .type,
+  .subtitle,
+  .location,
+  .rating {
+    font-size: var(--font-size-xs);
+  }
+}

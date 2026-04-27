@@ -109,6 +109,7 @@
   color: #64748b;
   font-size: 0.9rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .metaRow {
@@ -157,7 +158,7 @@
 .secondaryButton {
   border: 0;
   border-radius: 8px;
-  min-height: 42px;
+  min-height: 44px;
   padding: 10px 12px;
   font-size: 0.9rem;
   font-weight: 900;
@@ -193,5 +194,25 @@
 
   .actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .content {
+    padding: 15px;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rating {
+    width: fit-content;
+  }
+
+  .verifiedBadge {
+    max-width: calc(100% - 24px);
+    white-space: normal;
   }
 }

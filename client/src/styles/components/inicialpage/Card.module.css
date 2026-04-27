@@ -56,6 +56,7 @@
   color: #102a43;
   font-size: 1.25rem;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .content p {
@@ -63,6 +64,7 @@
   color: #526d82;
   font-size: 0.95rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .content span {
@@ -79,5 +81,16 @@
 @media (max-width: 640px) {
   .card {
     min-height: auto;
+    border-radius: 12px;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .content span {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 }

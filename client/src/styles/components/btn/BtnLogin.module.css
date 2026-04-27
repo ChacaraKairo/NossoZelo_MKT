@@ -1,6 +1,7 @@
 .loginButton {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   background-color: #75e7d9; /* Azul */
   color: white;
   border: none;
@@ -9,6 +10,7 @@
   font-weight: 600;
   border-radius: 30px;
   cursor: pointer;
+  min-height: 44px;
   transition: background-color 0.3s ease,
     transform 0.2s ease;
   user-select: none;
@@ -32,7 +34,7 @@
 /* 🔥 MAGIA RESPONSIVA: Reduz o botão e o ícone no telemóvel */
 @media (max-width: 768px) {
   .loginButton {
-    padding: 8px 16px;
+    padding: 10px 16px;
     font-size: 0.9rem;
   }
 

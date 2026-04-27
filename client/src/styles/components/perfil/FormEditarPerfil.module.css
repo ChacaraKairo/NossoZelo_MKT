@@ -149,7 +149,7 @@
 
 .primaryButton,
 .secondaryButton {
-  min-height: 2.6rem;
+  min-height: 44px;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: var(--font-size-sm);
@@ -160,6 +160,26 @@
     border-color 0.15s ease,
     opacity 0.15s ease,
     transform 0.15s ease;
+}
+
+@media (max-width: 480px) {
+  .form {
+    padding: var(--space-4);
+  }
+
+  .title {
+    font-size: 1.15rem;
+  }
+
+  .input {
+    min-height: 44px;
+  }
+
+  .statusError,
+  .statusSuccess,
+  .statusInfo {
+    padding: var(--space-3);
+  }
 }
 
 .primaryButton {
