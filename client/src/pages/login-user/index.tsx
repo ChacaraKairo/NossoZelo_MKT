@@ -15,6 +15,8 @@ import logger from '@/utils/logger';
 const CHAVE_IDENTIFICADOR_LEMBRADO =
   'nossozelo_identificador_lembrado';
 const CHAVE_LEMBRAR_ME_LEGADA = 'nossozelo_lembrar_me';
+const FACEBOOK_LOGIN_ATIVO =
+  process.env.NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN === 'true';
 
 const LoginPage = () => {
   const router = useRouter();
@@ -146,19 +148,21 @@ const LoginPage = () => {
                     : 'Entrar com Google'}
                 </span>
               </button>
-              <button
-                type="button"
-                className={`${Style.socialButton} ${Style.facebook}`}
-                onClick={() => iniciarSocial('facebook')}
-                disabled={loading || Boolean(socialLoading)}
-              >
-                <FaFacebookF />{' '}
-                <span>
-                  {socialLoading === 'facebook'
-                    ? 'Abrindo Facebook...'
-                    : 'Entrar com Facebook'}
-                </span>
-              </button>
+              {FACEBOOK_LOGIN_ATIVO && (
+                <button
+                  type="button"
+                  className={`${Style.socialButton} ${Style.facebook}`}
+                  onClick={() => iniciarSocial('facebook')}
+                  disabled={loading || Boolean(socialLoading)}
+                >
+                  <FaFacebookF />{' '}
+                  <span>
+                    {socialLoading === 'facebook'
+                      ? 'Abrindo Facebook...'
+                      : 'Entrar com Facebook'}
+                  </span>
+                </button>
+              )}
             </div>
 
             <div className={Style.divider}>ou</div>

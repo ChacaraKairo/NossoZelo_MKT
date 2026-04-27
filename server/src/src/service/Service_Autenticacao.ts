@@ -65,6 +65,15 @@ function criarTokenSessao(user: {
 }
 
 function criarUrlCallback(provider: SocialProvider) {
+  const redirectUriConfigurada =
+    provider === 'google'
+      ? process.env.GOOGLE_REDIRECT_URI
+      : process.env.FACEBOOK_REDIRECT_URI;
+
+  if (redirectUriConfigurada) {
+    return redirectUriConfigurada;
+  }
+
   return `${obterBackendUrl()}/nossozelo/login/social/${provider}/callback`;
 }
 
