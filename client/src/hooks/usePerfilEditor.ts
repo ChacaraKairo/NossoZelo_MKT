@@ -37,33 +37,29 @@ const CAMPOS_EDITAVEIS = new Set([
   'estado',
   'bairro',
   'endereco',
-  'url_foto_perfil',
-  'bio',
-  'coren',
-  'anos_experiencia',
-  'valor_hora',
-  'valor_diaria',
-  'disponibilidade',
-  'especialidades',
 ]);
 
 function extrairCamposEditaveis(
   perfil: PerfilUsuario,
 ): FormPerfil {
-  const origem = {
-    ...perfil.dados_usuario,
-    ...perfil.dados_profissionais,
-    ...perfil,
-  } as unknown as Record<string, unknown>;
-
   const form: FormPerfil = {};
+  const origens = [
+    perfil.dados_usuario,
+    perfil.dados_profissionais,
+    perfil,
+  ] as Array<Record<string, unknown> | null | undefined>;
 
-  for (const [campo, valor] of Object.entries(origem)) {
-    if (
-      CAMPOS_EDITAVEIS.has(campo) &&
-      !CAMPOS_PROTEGIDOS.has(campo)
-    ) {
-      form[campo] = valor as ValorCampo;
+  for (const origem of origens) {
+    if (!origem) continue;
+
+    for (const [campo, valor] of Object.entries(origem)) {
+      if (
+        CAMPOS_EDITAVEIS.has(campo) &&
+        !CAMPOS_PROTEGIDOS.has(campo) &&
+        valor !== undefined
+      ) {
+        form[campo] = valor as ValorCampo;
+      }
     }
   }
 

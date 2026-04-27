@@ -3,6 +3,7 @@ import { usePerfilEditor } from '@/hooks/usePerfilEditor';
 import { PerfilUsuario, TipoUsuario } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
+import styles from '@/styles/components/perfil/FormEditarPerfil.module.css';
 
 interface FormEditarPerfilProps {
   perfil: PerfilUsuario;
@@ -10,6 +11,18 @@ interface FormEditarPerfilProps {
   onCancel: () => void;
   onSave: (perfil: PerfilUsuario) => void;
 }
+
+type CampoTextoProps = {
+  label: string;
+  campo: string;
+  valor: unknown;
+  placeholder?: string;
+  onChange: (campo: string, valor: string) => void;
+  erro?: string;
+  aviso?: string;
+  wide?: boolean;
+  type?: string;
+};
 
 const CONTEXTO = 'FormEditarPerfil';
 
@@ -27,65 +40,21 @@ function CampoTexto({
   onChange,
   erro,
   aviso,
+  wide = false,
   type = 'text',
-}: {
-  label: string;
-  campo: string;
-  valor: unknown;
-  placeholder?: string;
-  onChange: (campo: string, valor: string) => void;
-  erro?: string;
-  aviso?: string;
-  type?: string;
-}) {
+}: CampoTextoProps) {
   return (
-    <label className="block">
-      <span className="text-xs font-bold uppercase text-slate-500">
-        {label}
-      </span>
+    <label className={`${styles.field} ${wide ? styles.fieldWide : ''}`}>
+      <span className={styles.label}>{label}</span>
       <input
         type={type}
-        className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 ${
-          erro ? 'border-red-300' : 'border-slate-200'
-        }`}
+        className={`${styles.input} ${erro ? styles.inputInvalid : ''}`}
         value={valorCampo(valor)}
         placeholder={placeholder}
         onChange={(event) => onChange(campo, event.target.value)}
       />
-      {erro && (
-        <p className="mt-1 text-xs font-semibold text-red-600">{erro}</p>
-      )}
-      {!erro && aviso && (
-        <p className="mt-1 text-xs font-semibold text-amber-600">{aviso}</p>
-      )}
-    </label>
-  );
-}
-
-function CampoArea({
-  label,
-  campo,
-  valor,
-  placeholder,
-  onChange,
-}: {
-  label: string;
-  campo: string;
-  valor: unknown;
-  placeholder?: string;
-  onChange: (campo: string, valor: string) => void;
-}) {
-  return (
-    <label className="block md:col-span-2">
-      <span className="text-xs font-bold uppercase text-slate-500">
-        {label}
-      </span>
-      <textarea
-        className="mt-2 min-h-[110px] w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-teal-500"
-        value={valorCampo(valor)}
-        placeholder={placeholder}
-        onChange={(event) => onChange(campo, event.target.value)}
-      />
+      {erro && <p className={styles.helperError}>{erro}</p>}
+      {!erro && aviso && <p className={styles.helperWarning}>{aviso}</p>}
     </label>
   );
 }
@@ -104,6 +73,8 @@ export default function FormEditarPerfil({
   const [avisosValidacao, setAvisosValidacao] = useState<
     Record<string, string>
   >({});
+  const [feedbackLocal, setFeedbackLocal] = useState<string | null>(null);
+
   const tipo = useMemo(
     () =>
       tipoUsuario ||
@@ -115,22 +86,21 @@ export default function FormEditarPerfil({
   const isPrestador = ['cuidador', 'enfermeiro', 'acompanhante'].includes(
     String(tipo),
   );
-  const isEnfermeiro = tipo === 'enfermeiro';
 
   useEffect(() => {
-    logger.info(CONTEXTO, 'Abertura do formulário', {
+    logger.info(CONTEXTO, 'Abertura do formulario', {
       tipoUsuario: tipo,
     });
     iniciarEdicao(perfil);
   }, [iniciarEdicao, perfil, tipo]);
 
   const alterarCampo = (campo: string, valor: string) => {
-    logger.debug(CONTEXTO, 'Alteração de campo', { campo });
+    logger.debug(CONTEXTO, 'Alteracao de campo', { campo });
     editor.alterarCampo(campo, valor);
   };
 
   const validar = () => {
-    logger.info(CONTEXTO, 'Validação iniciada', { tipoUsuario: tipo });
+    logger.info(CONTEXTO, 'Validacao iniciada', { tipoUsuario: tipo });
 
     const erros: Record<string, string> = {};
     const avisos: Record<string, string> = {};
@@ -138,48 +108,41 @@ export default function FormEditarPerfil({
     const telefone = valorCampo(editor.form.telefone).trim();
     const cidade = valorCampo(editor.form.cidade).trim();
     const estado = valorCampo(editor.form.estado).trim();
-    const valorHora = valorCampo(editor.form.valor_hora).trim();
-    const valorDiaria = valorCampo(editor.form.valor_diaria).trim();
-    const anosExperiencia = valorCampo(editor.form.anos_experiencia).trim();
+    const bairro = valorCampo(editor.form.bairro).trim();
+    const endereco = valorCampo(editor.form.endereco).trim();
 
-    if (!nome) erros.nome = 'Nome é obrigatório.';
+    if (!nome) erros.nome = 'Nome e obrigatorio.';
     if (telefone && telefone.replace(/\D/g, '').length < 8) {
-      erros.telefone = 'Informe um telefone com pelo menos 8 números.';
+      erros.telefone = 'Informe um telefone com pelo menos 8 numeros.';
     }
-    if (!cidade) avisos.cidade = 'Cidade é recomendada.';
-    if (!estado) avisos.estado = 'Estado é recomendado.';
-    if (valorHora && Number(valorHora) <= 0) {
-      erros.valor_hora = 'Valor hora deve ser positivo.';
+    if (!cidade) avisos.cidade = 'Cidade e recomendada.';
+    if (!estado) {
+      avisos.estado = 'Estado e recomendado.';
+    } else if (estado.length > 2) {
+      avisos.estado = 'Use a UF para manter o endereco padronizado.';
     }
-    if (valorDiaria && Number(valorDiaria) <= 0) {
-      erros.valor_diaria = 'Valor diária deve ser positivo.';
-    }
-    if (anosExperiencia && Number(anosExperiencia) < 0) {
-      erros.anos_experiencia =
-        'Anos de experiência deve ser maior ou igual a zero.';
-    }
-    if (isEnfermeiro && isPrestador && !valorCampo(editor.form.coren).trim()) {
-      erros.coren = 'COREN é obrigatório para enfermeiros.';
-    }
+    if (!bairro) avisos.bairro = 'Bairro ajuda clientes e prestadores.';
+    if (!endereco) avisos.endereco = 'Endereco completo ajuda na agenda.';
 
     setErrosValidacao(erros);
     setAvisosValidacao(avisos);
 
     if (Object.keys(erros).length > 0) {
-      logger.warn(CONTEXTO, 'Campos inválidos', { erros });
+      logger.warn(CONTEXTO, 'Campos invalidos', { erros });
       return false;
     }
 
-    logger.info(CONTEXTO, 'Formulário válido', { avisos });
+    logger.info(CONTEXTO, 'Formulario valido', { avisos });
     return true;
   };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    setFeedbackLocal(null);
 
     if (!validar()) return;
 
-    logger.info(CONTEXTO, 'Envio do formulário', {
+    logger.info(CONTEXTO, 'Envio do formulario', {
       tipoUsuario: tipo,
     });
 
@@ -187,17 +150,20 @@ export default function FormEditarPerfil({
       const perfilAtualizado = await editor.salvarAlteracoes();
 
       if (perfilAtualizado) {
-        onSave(perfilAtualizado);
+        setFeedbackLocal('Alteracoes salvas. Atualizando a tela...');
+        window.setTimeout(() => {
+          onSave(perfilAtualizado);
+        }, 900);
       }
     } catch (error: unknown) {
-      logger.error(CONTEXTO, 'Erro no envio do formulário', {
+      logger.error(CONTEXTO, 'Erro no envio do formulario', {
         mensagem: extrairMensagemErro(error),
       });
     }
   };
 
   const handleCancel = () => {
-    logger.info(CONTEXTO, 'Cancelamento do formulário', {
+    logger.info(CONTEXTO, 'Cancelamento do formulario', {
       tipoUsuario: tipo,
     });
     editor.cancelarEdicao();
@@ -205,18 +171,19 @@ export default function FormEditarPerfil({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-xl border border-teal-100 bg-teal-50/40 p-5"
-    >
-      <div className="mb-5">
-        <h2 className="text-lg font-black text-slate-800">Editar perfil</h2>
-        <p className="text-sm text-slate-500">
-          Atualize apenas os dados que deseja alterar.
-        </p>
-      </div>
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <header className={styles.header}>
+        <div>
+          <span className={styles.eyebrow}>Dados principais</span>
+          <h2 className={styles.title}>Editar perfil</h2>
+          <p className={styles.subtitle}>
+            Atualize nome, contato e endereco. Servicos, agenda, valores
+            e descricoes profissionais ficam nas abas proprias.
+          </p>
+        </div>
+      </header>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={styles.grid}>
         <CampoTexto
           label="Nome"
           campo="nome"
@@ -245,7 +212,7 @@ export default function FormEditarPerfil({
           label="Estado"
           campo="estado"
           valor={editor.form.estado}
-          placeholder="UF ou estado"
+          placeholder="UF"
           aviso={avisosValidacao.estado}
           onChange={alterarCampo}
         />
@@ -254,111 +221,51 @@ export default function FormEditarPerfil({
           campo="bairro"
           valor={editor.form.bairro}
           placeholder="Informe seu bairro"
+          aviso={avisosValidacao.bairro}
           onChange={alterarCampo}
         />
         <CampoTexto
-          label="Endereço"
+          label="Endereco"
           campo="endereco"
           valor={editor.form.endereco}
-          placeholder="Informe seu endereço"
+          placeholder="Rua, numero e complemento"
+          aviso={avisosValidacao.endereco}
+          wide
           onChange={alterarCampo}
         />
-        <CampoTexto
-          label="URL da foto de perfil"
-          campo="url_foto_perfil"
-          valor={editor.form.url_foto_perfil}
-          placeholder="Cole a URL da sua foto"
-          onChange={alterarCampo}
-        />
-
-        {isPrestador && (
-          <>
-            <CampoArea
-              label="Bio"
-              campo="bio"
-              valor={editor.form.bio}
-              placeholder="Conte sobre sua experiência profissional"
-              onChange={alterarCampo}
-            />
-            <CampoTexto
-              label="Anos de experiência"
-              campo="anos_experiencia"
-              valor={editor.form.anos_experiencia}
-              placeholder="Informe a quantidade de anos"
-              type="number"
-              erro={errosValidacao.anos_experiencia}
-              onChange={alterarCampo}
-            />
-            <CampoTexto
-              label="Valor hora"
-              campo="valor_hora"
-              valor={editor.form.valor_hora}
-              placeholder="Informe o valor por hora"
-              type="number"
-              erro={errosValidacao.valor_hora}
-              onChange={alterarCampo}
-            />
-            <CampoTexto
-              label="Valor diária"
-              campo="valor_diaria"
-              valor={editor.form.valor_diaria}
-              placeholder="Informe o valor da diária"
-              type="number"
-              erro={errosValidacao.valor_diaria}
-              onChange={alterarCampo}
-            />
-            <CampoTexto
-              label="Disponibilidade"
-              campo="disponibilidade"
-              valor={editor.form.disponibilidade}
-              placeholder="Informe sua disponibilidade"
-              onChange={alterarCampo}
-            />
-            <CampoTexto
-              label="Especialidades"
-              campo="especialidades"
-              valor={editor.form.especialidades}
-              placeholder="Separe especialidades por vírgula"
-              onChange={alterarCampo}
-            />
-          </>
-        )}
-
-        {isEnfermeiro && (
-          <CampoTexto
-            label="COREN"
-            campo="coren"
-            valor={editor.form.coren}
-            placeholder="Informe seu COREN"
-            erro={errosValidacao.coren}
-            onChange={alterarCampo}
-          />
-        )}
       </div>
 
-      {editor.erro && (
-        <p className="mt-4 text-sm font-semibold text-red-600">
-          {editor.erro}
-        </p>
-      )}
-      {editor.sucesso && (
-        <p className="mt-4 text-sm font-semibold text-teal-700">
-          {editor.sucesso}
+      {isPrestador && (
+        <p className={styles.statusInfo}>
+          Bio, experiencia, valores, disponibilidade e especialidades nao
+          ficam neste formulario para evitar alteracoes acidentais. Use as
+          abas de servicos e dados profissionais quando precisar revisar
+          essas informacoes.
         </p>
       )}
 
-      <div className="mt-5 flex gap-3">
+      {editor.erro && (
+        <p className={styles.statusError}>{editor.erro}</p>
+      )}
+      {(editor.sucesso || feedbackLocal) && (
+        <p className={styles.statusSuccess}>
+          {feedbackLocal || editor.sucesso}
+        </p>
+      )}
+
+      <div className={styles.actions}>
         <button
           type="submit"
           disabled={editor.salvando}
-          className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+          className={styles.primaryButton}
         >
-          {editor.salvando ? 'Salvando...' : 'Salvar alterações'}
+          {editor.salvando ? 'Salvando...' : 'Salvar alteracoes'}
         </button>
         <button
           type="button"
           onClick={handleCancel}
-          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-500"
+          disabled={editor.salvando}
+          className={styles.secondaryButton}
         >
           Cancelar
         </button>

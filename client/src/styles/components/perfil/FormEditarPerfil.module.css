@@ -1,0 +1,216 @@
+.form {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, rgba(236, 254, 255, 0.75), transparent 16rem),
+    var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-4);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-primary-700);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.subtitle {
+  max-width: 44rem;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.label {
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 0.78rem 0.9rem;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.12);
+  outline: none;
+}
+
+.inputInvalid {
+  border-color: #fca5a5;
+}
+
+.helperError,
+.helperWarning {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.helperError {
+  color: #b91c1c;
+}
+
+.helperWarning {
+  color: var(--color-warning-700);
+}
+
+.statusError,
+.statusSuccess,
+.statusInfo {
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  line-height: 1.5;
+  padding: var(--space-3) var(--space-4);
+}
+
+.statusError {
+  border: 1px solid #fecaca;
+  background: var(--color-danger-soft);
+  color: #991b1b;
+}
+
+.statusSuccess {
+  border: 1px solid #bbf7d0;
+  background: var(--color-success-soft);
+  color: var(--color-success-700);
+}
+
+.statusInfo {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-5);
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 2.6rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  padding: 0.7rem 1rem;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.primaryButton {
+  border: 1px solid var(--color-primary-700);
+  background: var(--color-primary-700);
+  color: var(--color-text-inverse);
+}
+
+.primaryButton:hover,
+.primaryButton:focus-visible {
+  background: var(--color-primary-800);
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.secondaryButton:hover,
+.secondaryButton:focus-visible {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+@media (max-width: 720px) {
+  .form {
+    gap: var(--space-5);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions,
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+}

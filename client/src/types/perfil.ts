@@ -132,12 +132,4 @@ export type AtualizarPerfilPayload = Partial<{
   estado: string;
   bairro: string;
   endereco: string;
-  url_foto_perfil: string;
-  bio: string;
-  coren: string;
-  anos_experiencia: number;
-  valor_hora: number;
-  valor_diaria: number;
-  disponibilidade: string;
-  especialidades: string[] | string;
 }>;
