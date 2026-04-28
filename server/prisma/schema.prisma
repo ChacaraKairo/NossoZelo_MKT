@@ -45,13 +45,25 @@ model agenda_recorrente {
 
 // ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que qualquer prestador possa assinar um plano
 model assinaturas {
-  id           Int        @id @default(autoincrement())
-  prestador_id String     @db.VarChar(20)
-  plano_id     Int
-  data_inicio  DateTime?  @default(now()) @db.Timestamp(0)
-  data_fim     DateTime?  @db.Timestamp(0)
-  usuarios     usuarios   @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  planos       planos     @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
+  id                      Int                 @id @default(autoincrement())
+  prestador_id            String              @db.VarChar(20)
+  plano_id                Int
+  data_inicio             DateTime?           @default(now()) @db.Timestamp(0)
+  data_fim                DateTime?           @db.Timestamp(0)
+  status                  assinaturas_status  @default(pendente)
+  gateway                 String              @default("mock") @db.VarChar(30)
+  gateway_customer_id     String?             @db.VarChar(120)
+  gateway_subscription_id String?             @db.VarChar(120)
+  gateway_status          String?             @db.VarChar(60)
+  data_ultimo_pagamento   DateTime?           @db.Timestamp(0)
+  data_proximo_vencimento DateTime?           @db.Timestamp(0)
+  periodo_tolerancia_ate  DateTime?           @db.Timestamp(0)
+  confirmacao_expira_em   DateTime?           @db.Timestamp(0)
+  cancelada_em            DateTime?           @db.Timestamp(0)
+  criado_em               DateTime            @default(now()) @db.Timestamp(0)
+  atualizado_em           DateTime            @updatedAt @db.Timestamp(0)
+  usuarios                usuarios            @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planos                  planos              @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
 
   @@index([prestador_id], map: "prestador_id")
   @@index([plano_id], map: "plano_id")
@@ -293,6 +305,7 @@ model usuarios {
   pais                                             String?              @default("Brasil") @db.VarChar(50)
   url_foto_perfil                                  String?              @db.VarChar(255)
   tipo                                             usuarios_tipo
+  status_cadastro                                  usuarios_status_cadastro @default(ativo)
   email_confirmado                                 Boolean              @default(false)
   criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
   avaliacao_media                                  Decimal?             @default(0.00) @db.Decimal(3, 2)
@@ -300,6 +313,7 @@ model usuarios {
   // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
   // ✅ ATUALIZAÇÃO: Relação com documentos genérica para todos os prestadores
   documentos_prestadores                           documentos_cuidadores[] 
+  confirmacoes_email                               confirmacoes_email[]
 
   // Relacionamentos que você já possui
   admins                                           admins?
@@ -435,6 +449,40 @@ enum usuarios_tipo {
   enfermeiro
   acompanhante
   admin
+}
+
+model confirmacoes_email {
+  id         Int      @id @default(autoincrement())
+  usuario_id String   @db.VarChar(20)
+  token      String   @unique @db.VarChar(255)
+  expiracao  DateTime @db.Timestamp(0)
+  usado      Boolean  @default(false)
+  criado_em  DateTime @default(now()) @db.Timestamp(0)
+
+  usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@index([token])
+}
+
+enum usuarios_status_cadastro {
+  ativo
+  pendente_pagamento
+  aguardando_confirmacao_pagamento
+  inadimplente
+  bloqueado
+  cancelado
+}
+
+enum assinaturas_status {
+  pendente
+  aguardando_confirmacao
+  ativa
+  atrasada
+  bloqueada
+  cancelada
+  falhou
+  expirada
 }
 
 enum dados_bancarios_tipo_conta {

@@ -5,6 +5,7 @@ export interface UsuarioDecodificado {
   nome: string;
   email?: string;
   tipo: string;
+  email_confirmado?: boolean;
   exp?: number;
 }
 

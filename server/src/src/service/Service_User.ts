@@ -15,6 +15,7 @@ import bcrypt from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
+import ServiceConfirmacaoEmail from './Service_ConfirmacaoEmail';
 
 type CadastroError = Error & { status?: number };
 
@@ -81,6 +82,7 @@ class ServiceUser {
       acompanhante,
       admin,
     } = data;
+    const emailConfirmadoInicial = data.emailConfirmadoInicial === true;
 
     let id = '';
 
@@ -128,6 +130,7 @@ class ServiceUser {
         ...usuario,
         id,
         senha: senhaCriptografada,
+        email_confirmado: emailConfirmadoInicial,
         data_nascimento: dataNascimentoObj,
       };
 
@@ -251,58 +254,46 @@ class ServiceUser {
       }
 
       // 4. ENVIO DE E-MAIL (Background)
+      let avisoConfirmacaoEmail: string | null = null;
       try {
-        console.log(
-          `[LOG-FLUXO] Iniciando processo de envio de e-mail de boas-vindas para: ${usuario.email}`,
-        );
-        const emailService = new EmailService();
-        const templatePath = path.join(
-          __dirname,
-          '../../HTML/emails/cadastro.html',
-        );
-
-        if (fs.existsSync(templatePath)) {
-          console.log(
-            `[LOG-FLUXO] Template de e-mail localizado em: ${templatePath}`,
-          );
-          let html = fs.readFileSync(templatePath, 'utf-8');
-
-          html = html
-            .replace('{{nome}}', usuario.nome)
-            .replace(
-              '{{link}}',
-              'https://devmarkt.com.br/login',
-            );
-
-          emailService
-            .send(
-              usuario.email,
-              'Bem-vindo ao Nosso Zelo!',
-              html,
-            )
-            .then(() =>
-              console.log(
-                `[LOG-FLUXO] E-mail enviado com sucesso para: ${usuario.email}`,
-              ),
-            )
-            .catch((err) =>
-              console.error(
-                `[ERRO-FLUXO] Falha assíncrona no envio de e-mail: ${err.message}`,
-              ),
-            );
-
-          console.log(
-            '[LOG-FLUXO] Solicitação de envio de e-mail encaminhada ao serviço de correio.',
-          );
+        if (!usuarioData.email_confirmado) {
+          await ServiceConfirmacaoEmail.enviarEmailConfirmacao(id);
         } else {
-          console.warn(
-            `[LOG-FLUXO] Aviso: Arquivo de template de e-mail não encontrado em ${templatePath}`,
+          const emailService = new EmailService();
+          const templatePath = path.join(
+            __dirname,
+            '../../HTML/emails/cadastro.html',
           );
+
+          if (fs.existsSync(templatePath)) {
+            let html = fs.readFileSync(templatePath, 'utf-8');
+
+            html = html
+              .replace('{{nome}}', usuario.nome)
+              .replace(
+                '{{link}}',
+                'https://devmarkt.com.br/login',
+              );
+
+            emailService
+              .send(
+                usuario.email,
+                'Bem-vindo ao Nosso Zelo!',
+                html,
+              )
+              .catch((err) =>
+                console.error(
+                  `[ERRO-FLUXO] Falha assíncrona no envio de e-mail: ${err.message}`,
+                ),
+              );
+          }
         }
       } catch (emailErr: any) {
         console.error(
           `[ERRO-FLUXO] Erro crítico na preparação do e-mail: ${emailErr.message}`,
         );
+        avisoConfirmacaoEmail =
+          'Conta criada, mas nao foi possivel enviar o e-mail de confirmacao. Voce pode reenviar pelo perfil.';
       }
 
       console.log(
@@ -333,6 +324,7 @@ class ServiceUser {
         cuidador,
         acompanhante,
         admin,
+        aviso_confirmacao_email: avisoConfirmacaoEmail,
       };
     } catch (error: any) {
       console.error(

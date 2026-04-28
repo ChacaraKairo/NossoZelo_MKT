@@ -44,6 +44,18 @@ class ServiceAvaliacao {
         throw erroNegocio('A nota deve estar entre 1 e 5.', 400);
       }
 
+      const cliente = await prisma.usuarios.findUnique({
+        where: { id: data.cliente_id },
+        select: { email_confirmado: true },
+      });
+
+      if (!cliente?.email_confirmado) {
+        throw erroNegocio(
+          'Confirme seu e-mail para avaliar serviços.',
+          403,
+        );
+      }
+
       const contratacao =
         await prisma.contratacoes.findUnique({
           where: { id: contratacaoId },

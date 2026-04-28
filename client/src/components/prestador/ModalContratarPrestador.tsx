@@ -126,6 +126,9 @@ export default function ModalContratarPrestador({
     if (!usuario?.id) {
       erros.usuario =
         'Voce precisa estar logado como cliente para enviar uma proposta.';
+    } else if (usuario.email_confirmado === false) {
+      erros.usuario =
+        'Confirme seu e-mail para solicitar servicos.';
     }
 
     if (!data) {

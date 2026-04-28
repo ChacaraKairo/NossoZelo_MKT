@@ -71,6 +71,10 @@ export function authMiddleware(
       nome: decoded.nome,
       email: decoded.email,
       tipo: decoded.tipo,
+      email_confirmado:
+        typeof decoded.email_confirmado === 'boolean'
+          ? decoded.email_confirmado
+          : undefined,
       iat: decoded.iat,
       exp: decoded.exp,
     };

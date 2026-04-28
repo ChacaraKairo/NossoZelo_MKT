@@ -5,6 +5,7 @@ export type UsuarioAutenticado = {
   nome?: string;
   email?: string;
   tipo: string;
+  email_confirmado?: boolean;
   iat?: number;
   exp?: number;
 };

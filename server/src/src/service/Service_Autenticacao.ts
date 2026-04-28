@@ -51,6 +51,7 @@ function criarTokenSessao(user: {
   nome: string;
   email: string;
   tipo: string;
+  email_confirmado?: boolean;
 }) {
   return sign(
     {
@@ -58,6 +59,7 @@ function criarTokenSessao(user: {
       nome: user.nome,
       email: user.email,
       tipo: user.tipo,
+      email_confirmado: user.email_confirmado,
     },
     obterJwtSecret(),
     { expiresIn: TEMPO_SESSAO_LOGIN },
@@ -225,7 +227,13 @@ export class ServiceAuth {
 
     const usuario = await prisma.usuarios.findUnique({
       where: { email: perfil.email },
-      select: { id: true, nome: true, email: true, tipo: true },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        email_confirmado: true,
+      },
     });
 
     if (usuario) {
@@ -272,7 +280,13 @@ export class ServiceAuth {
 
     const existente = await prisma.usuarios.findUnique({
       where: { email: decoded.email },
-      select: { id: true, nome: true, email: true, tipo: true },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        email_confirmado: true,
+      },
     });
 
     if (existente) {
@@ -293,6 +307,7 @@ export class ServiceAuth {
       tipo === 'cliente' ? null : montarPerfilProfissional(data, tipo);
 
     const resultado = await ServiceUser.criarUsuarioComTipo({
+      emailConfirmadoInicial: true,
       usuario: {
         nome: data.nome || decoded.nome || 'Usuario NossoZelo',
         email: decoded.email,
@@ -326,12 +341,14 @@ export class ServiceAuth {
         nome: usuarioCriado.nome,
         email: usuarioCriado.email,
         tipo: usuarioCriado.tipo,
+        email_confirmado: usuarioCriado.email_confirmado,
       }),
       user: {
         id: usuarioCriado.id,
         nome: usuarioCriado.nome,
         email: usuarioCriado.email,
         tipo: usuarioCriado.tipo,
+        email_confirmado: usuarioCriado.email_confirmado,
       },
     };
   }
@@ -437,6 +454,7 @@ export class ServiceAuth {
           email: true,
           tipo: true,
           senha: true,
+          email_confirmado: true,
         },
       });
 
@@ -472,6 +490,7 @@ export class ServiceAuth {
           nome: user.nome,
           email: user.email,
           tipo: user.tipo,
+          email_confirmado: user.email_confirmado,
         },
       };
     } catch (error: any) {

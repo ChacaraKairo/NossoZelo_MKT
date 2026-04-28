@@ -403,6 +403,14 @@ export class GeolocalizacaoService {
           : null;
 
       const conditions = [];
+      conditions.push(Prisma.sql`u.email_confirmado = true`);
+      conditions.push(Prisma.sql`u.status_cadastro = 'ativo'`);
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1
+        FROM assinaturas ass
+        WHERE ass.prestador_id = u.id
+          AND ass.status = 'ativa'
+      )`);
 
       // Filtro de Tipo
       if (tipoFiltro) {

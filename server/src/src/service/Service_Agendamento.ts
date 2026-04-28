@@ -10,6 +10,7 @@ import {
   STATUS_CONTRATACAO,
   TIPOS_PRESTADOR,
 } from '../constants/dominio';
+import ServiceAssinatura from './Service_Assinatura';
 
 type UsuarioAutenticado = {
   id: string;
@@ -282,6 +283,18 @@ class ServiceAgendamento {
       );
     }
 
+    const cliente = await prisma.usuarios.findUnique({
+      where: { id: usuario.id },
+      select: { id: true, email_confirmado: true },
+    });
+
+    if (!cliente?.email_confirmado) {
+      throw erroNegocio(
+        'Confirme seu e-mail para solicitar serviços.',
+        403,
+      );
+    }
+
     if (!data.prestador_id) {
       throw erroNegocio('Informe o prestador desejado.');
     }
@@ -299,6 +312,7 @@ class ServiceAgendamento {
         nome: true,
         email: true,
         tipo: true,
+        email_confirmado: true,
       },
     });
 
@@ -308,6 +322,23 @@ class ServiceAgendamento {
 
     if (!TIPOS_PRESTADOR.includes(prestador.tipo as any)) {
       throw erroNegocio('Usuario informado nao e um prestador.', 400);
+    }
+
+    if (!prestador.email_confirmado) {
+      throw erroNegocio(
+        'Este prestador ainda nao confirmou o e-mail.',
+        403,
+      );
+    }
+
+    const podeReceberPedidos =
+      await ServiceAssinatura.prestadorPodeReceberPedidos(prestador.id);
+
+    if (!podeReceberPedidos) {
+      throw erroNegocio(
+        'Este prestador nao esta disponivel para receber pedidos no momento.',
+        403,
+      );
     }
 
     const servicoId = Number(data.servico_id);

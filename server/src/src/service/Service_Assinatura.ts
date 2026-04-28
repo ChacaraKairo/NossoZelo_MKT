@@ -1,0 +1,401 @@
+import { assinaturas_status, Prisma, usuarios_status_cadastro } from '@prisma/client';
+import {
+  DIAS_TOLERANCIA_ASSINATURA,
+  GATEWAY_PAGAMENTO,
+  HORAS_CONFIRMACAO_PAGAMENTO,
+  STATUS_ASSINATURA,
+  STATUS_CADASTRO_USUARIO,
+} from '../constants/financeiro';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
+import { obterPagamentoGateway } from '../gateways/pagamento';
+import { CriarAssinaturaResultado } from '../gateways/pagamento/PagamentoGateway';
+import prisma from '../lib/prisma';
+
+type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
+  gatewaySubscriptionId?: string;
+  gatewayCustomerId?: string;
+  planoId?: number;
+};
+
+function erroNegocio(mensagem: string, status = 400) {
+  const error = new Error(mensagem) as Error & { status?: number };
+  error.status = status;
+  return error;
+}
+
+function adicionarDias(data: Date, dias: number) {
+  const novaData = new Date(data);
+  novaData.setDate(novaData.getDate() + dias);
+  return novaData;
+}
+
+function statusCadastroPorAssinatura(
+  status: assinaturas_status,
+): usuarios_status_cadastro {
+  if (status === STATUS_ASSINATURA.ativa) {
+    return STATUS_CADASTRO_USUARIO.ativo;
+  }
+
+  if (status === STATUS_ASSINATURA.aguardando_confirmacao) {
+    return STATUS_CADASTRO_USUARIO.aguardando_confirmacao_pagamento;
+  }
+
+  if (status === STATUS_ASSINATURA.bloqueada) {
+    return STATUS_CADASTRO_USUARIO.bloqueado;
+  }
+
+  if (status === STATUS_ASSINATURA.cancelada) {
+    return STATUS_CADASTRO_USUARIO.cancelado;
+  }
+
+  if (
+    status === STATUS_ASSINATURA.falhou ||
+    status === STATUS_ASSINATURA.expirada ||
+    status === STATUS_ASSINATURA.atrasada
+  ) {
+    return STATUS_CADASTRO_USUARIO.inadimplente;
+  }
+
+  return STATUS_CADASTRO_USUARIO.pendente_pagamento;
+}
+
+function motivoPerfilInativo(status?: assinaturas_status | null) {
+  if (status === STATUS_ASSINATURA.aguardando_confirmacao) {
+    return 'pagamento_aguardando_confirmacao';
+  }
+  if (status === STATUS_ASSINATURA.falhou) return 'assinatura_falhou';
+  if (status === STATUS_ASSINATURA.expirada) return 'assinatura_expirada';
+  if (status === STATUS_ASSINATURA.bloqueada) return 'assinatura_bloqueada';
+  if (status === STATUS_ASSINATURA.cancelada) return 'assinatura_cancelada';
+  return 'pagamento_pendente';
+}
+
+export class ServiceAssinatura {
+  static calcularConfirmacaoExpiraEm() {
+    const data = new Date();
+    data.setHours(data.getHours() + HORAS_CONFIRMACAO_PAGAMENTO);
+    return data;
+  }
+
+  static async obterAssinaturaAtual(prestadorId: string) {
+    return prisma.assinaturas.findFirst({
+      where: { prestador_id: prestadorId },
+      orderBy: [{ criado_em: 'desc' }, { id: 'desc' }],
+    });
+  }
+
+  static async obterStatusAssinaturaPrestador(prestadorId: string) {
+    const [usuario, assinaturaAtual] = await Promise.all([
+      prisma.usuarios.findUnique({
+        where: { id: prestadorId },
+        select: {
+          id: true,
+          tipo: true,
+          email_confirmado: true,
+          status_cadastro: true,
+        },
+      }),
+      this.obterAssinaturaAtual(prestadorId),
+    ]);
+
+    if (!usuario) {
+      throw erroNegocio('Prestador nao encontrado.', 404);
+    }
+
+    if (!TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
+      throw erroNegocio('Usuario informado nao e um prestador.', 400);
+    }
+
+    const assinaturaStatus =
+      assinaturaAtual?.status ?? STATUS_ASSINATURA.pendente;
+    const perfilProfissionalAtivo =
+      usuario.email_confirmado &&
+      usuario.status_cadastro === STATUS_CADASTRO_USUARIO.ativo &&
+      assinaturaStatus === STATUS_ASSINATURA.ativa;
+
+    return {
+      prestador_id: prestadorId,
+      status_cadastro: usuario.status_cadastro,
+      assinatura_atual: assinaturaAtual,
+      assinatura_status: assinaturaStatus,
+      assinatura_confirmacao_expira_em:
+        assinaturaAtual?.confirmacao_expira_em ?? null,
+      perfil_profissional_ativo: perfilProfissionalAtivo,
+      pode_aparecer_na_busca: perfilProfissionalAtivo,
+      pode_receber_pedidos: perfilProfissionalAtivo,
+      motivo_perfil_inativo: perfilProfissionalAtivo
+        ? null
+        : usuario.email_confirmado
+          ? motivoPerfilInativo(assinaturaAtual?.status)
+          : 'email_nao_confirmado',
+    };
+  }
+
+  static async prestadorPodeAparecerNaBusca(prestadorId: string) {
+    const status =
+      await this.obterStatusAssinaturaPrestador(prestadorId);
+    return status.pode_aparecer_na_busca;
+  }
+
+  static async prestadorPodeReceberPedidos(prestadorId: string) {
+    const status =
+      await this.obterStatusAssinaturaPrestador(prestadorId);
+    return status.pode_receber_pedidos;
+  }
+
+  static async prestadorPodeUsarPerfilProfissional(prestadorId: string) {
+    const status =
+      await this.obterStatusAssinaturaPrestador(prestadorId);
+    return status.perfil_profissional_ativo;
+  }
+
+  static async criarAssinaturaAguardandoConfirmacao(
+    prestadorId: string,
+    planoId: number,
+  ) {
+    const confirmacaoExpiraEm = this.calcularConfirmacaoExpiraEm();
+
+    const assinatura = await prisma.assinaturas.create({
+      data: {
+        prestador_id: prestadorId,
+        plano_id: planoId,
+        status: STATUS_ASSINATURA.aguardando_confirmacao,
+        gateway: GATEWAY_PAGAMENTO.mock,
+        confirmacao_expira_em: confirmacaoExpiraEm,
+      },
+    });
+
+    await prisma.usuarios.update({
+      where: { id: prestadorId },
+      data: {
+        status_cadastro:
+          STATUS_CADASTRO_USUARIO.aguardando_confirmacao_pagamento,
+      },
+    });
+
+    return assinatura;
+  }
+
+  static async iniciarOuRegularizarAssinaturaMock(
+    prestadorId: string,
+    planoId: number,
+  ) {
+    const [usuario, plano] = await Promise.all([
+      prisma.usuarios.findUnique({
+        where: { id: prestadorId },
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          cpf: true,
+          telefone: true,
+          tipo: true,
+          email_confirmado: true,
+        },
+      }),
+      prisma.planos.findUnique({ where: { id: planoId } }),
+    ]);
+
+    if (!usuario) throw erroNegocio('Prestador nao encontrado.', 404);
+    if (!TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
+      throw erroNegocio('Cliente nao pode iniciar assinatura.', 403);
+    }
+    if (!usuario.email_confirmado) {
+      throw erroNegocio(
+        'Confirme seu e-mail antes de iniciar a assinatura.',
+        403,
+      );
+    }
+    if (!plano) throw erroNegocio('Plano nao encontrado.', 404);
+
+    const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
+    const gateway = obterPagamentoGateway();
+    const clienteGateway = await gateway.criarCliente({
+      nome: usuario.nome,
+      email: usuario.email,
+      cpfCnpj: usuario.cpf,
+      telefone: usuario.telefone,
+    });
+
+    const resultado = await gateway.criarAssinaturaMensal({
+      prestadorId,
+      planoId,
+      valor: Number(plano.valor),
+      nome: usuario.nome,
+      email: usuario.email,
+      cpfCnpj: usuario.cpf,
+      telefone: usuario.telefone,
+      gatewayCustomerId: clienteGateway.gatewayCustomerId,
+    });
+
+    if (resultado.status === 'aprovado') {
+      const assinatura = await this.ativarAssinatura(prestadorId, {
+        ...resultado,
+        planoId,
+      });
+      return { gateway_resultado: resultado, assinatura };
+    }
+
+    if (resultado.status === 'recusado') {
+      const assinatura = await this.marcarAssinaturaFalhou(
+        prestadorId,
+        resultado.mensagem || 'Pagamento recusado.',
+        planoId,
+      );
+      return { gateway_resultado: resultado, assinatura };
+    }
+
+    const confirmacaoExpiraEm =
+      resultado.confirmacaoExpiraEm || this.calcularConfirmacaoExpiraEm();
+
+    const dadosAssinatura = {
+      prestador_id: prestadorId,
+      plano_id: planoId,
+      status: STATUS_ASSINATURA.aguardando_confirmacao,
+      gateway: resultado.gateway,
+      gateway_customer_id: resultado.gatewayCustomerId,
+      gateway_subscription_id: resultado.gatewaySubscriptionId,
+      gateway_status: resultado.status,
+      confirmacao_expira_em: confirmacaoExpiraEm,
+    };
+
+    const assinatura = await prisma.$transaction(async (tx) => {
+      const novaAssinatura = assinaturaAtual
+        ? await tx.assinaturas.update({
+            where: { id: assinaturaAtual.id },
+            data: dadosAssinatura,
+          })
+        : await tx.assinaturas.create({ data: dadosAssinatura });
+
+      await tx.usuarios.update({
+        where: { id: prestadorId },
+        data: {
+          status_cadastro:
+            STATUS_CADASTRO_USUARIO.aguardando_confirmacao_pagamento,
+        },
+      });
+
+      return novaAssinatura;
+    });
+
+    return { gateway_resultado: resultado, assinatura };
+  }
+
+  static async ativarAssinatura(
+    prestadorId: string,
+    dadosGateway: DadosGatewayAtivacao,
+  ) {
+    const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
+    const agora = new Date();
+    const dataProximoVencimento = adicionarDias(agora, 30);
+
+    const dados: Prisma.assinaturasUncheckedCreateInput = {
+      prestador_id: prestadorId,
+      plano_id: dadosGateway.planoId || assinaturaAtual?.plano_id || 1,
+      status: STATUS_ASSINATURA.ativa,
+      gateway: dadosGateway.gateway || GATEWAY_PAGAMENTO.mock,
+      gateway_customer_id: dadosGateway.gatewayCustomerId,
+      gateway_subscription_id: dadosGateway.gatewaySubscriptionId,
+      gateway_status: dadosGateway.status || 'aprovado',
+      data_ultimo_pagamento: agora,
+      data_proximo_vencimento: dataProximoVencimento,
+      periodo_tolerancia_ate: adicionarDias(
+        dataProximoVencimento,
+        DIAS_TOLERANCIA_ASSINATURA,
+      ),
+      confirmacao_expira_em: null,
+    };
+
+    return prisma.$transaction(async (tx) => {
+      const assinatura = assinaturaAtual
+        ? await tx.assinaturas.update({
+            where: { id: assinaturaAtual.id },
+            data: dados,
+          })
+        : await tx.assinaturas.create({ data: dados });
+
+      await tx.usuarios.update({
+        where: { id: prestadorId },
+        data: { status_cadastro: STATUS_CADASTRO_USUARIO.ativo },
+      });
+
+      return assinatura;
+    });
+  }
+
+  static async marcarAssinaturaFalhou(
+    prestadorId: string,
+    motivo: string,
+    planoId?: number,
+  ) {
+    const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
+    const dados = {
+      status: STATUS_ASSINATURA.falhou,
+      gateway_status: motivo,
+      confirmacao_expira_em: null,
+    };
+
+    return prisma.$transaction(async (tx) => {
+      const assinatura = assinaturaAtual
+        ? await tx.assinaturas.update({
+            where: { id: assinaturaAtual.id },
+            data: dados,
+          })
+        : await tx.assinaturas.create({
+            data: {
+              prestador_id: prestadorId,
+              plano_id: planoId || 1,
+              gateway: GATEWAY_PAGAMENTO.mock,
+              ...dados,
+            },
+          });
+
+      await tx.usuarios.update({
+        where: { id: prestadorId },
+        data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
+      });
+
+      return assinatura;
+    });
+  }
+
+  static async expirarAssinaturasSemConfirmacao() {
+    const agora = new Date();
+    const pendentes = await prisma.assinaturas.findMany({
+      where: {
+        status: STATUS_ASSINATURA.aguardando_confirmacao,
+        confirmacao_expira_em: { lt: agora },
+      },
+      select: { id: true, prestador_id: true },
+    });
+
+    if (!pendentes.length) {
+      return { expiradas: 0 };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.assinaturas.updateMany({
+        where: { id: { in: pendentes.map((item) => item.id) } },
+        data: {
+          status: STATUS_ASSINATURA.expirada,
+          gateway_status: 'confirmacao_expirada',
+        },
+      });
+
+      await tx.usuarios.updateMany({
+        where: {
+          id: { in: pendentes.map((item) => item.prestador_id) },
+        },
+        data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
+      });
+    });
+
+    return { expiradas: pendentes.length };
+  }
+
+  static statusCadastroPorAssinatura(status: assinaturas_status) {
+    return statusCadastroPorAssinatura(status);
+  }
+}
+
+export default ServiceAssinatura;

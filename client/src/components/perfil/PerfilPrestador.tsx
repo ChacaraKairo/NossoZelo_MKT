@@ -69,6 +69,52 @@ function CampoInfo({ label, valor }: { label: string; valor: unknown }) {
   );
 }
 
+const MOTIVOS_PERFIL_INATIVO: Record<string, string> = {
+  email_nao_confirmado:
+    'Seu perfil nao aparece nas buscas enquanto o e-mail nao for confirmado.',
+  pagamento_aguardando_confirmacao:
+    'Pagamento iniciado. A confirmacao pode levar ate 72 horas.',
+  pagamento_pendente:
+    'Assinatura mensal pendente. Regularize para ativar seu perfil profissional.',
+  assinatura_falhou:
+    'Pagamento nao confirmado. Regularize a assinatura para reativar seu perfil.',
+  assinatura_expirada:
+    'Prazo de confirmacao expirado. Inicie a regularizacao novamente.',
+  assinatura_bloqueada:
+    'Assinatura bloqueada. Regularize para voltar a receber pedidos.',
+  assinatura_cancelada:
+    'Assinatura cancelada. Regularize para reativar seu perfil profissional.',
+};
+
+function AlertaAssinaturaInativa({
+  perfil,
+  onRegularizar,
+}: {
+  perfil: PerfilUsuario;
+  onRegularizar: () => void;
+}) {
+  if (perfil.perfil_profissional_ativo !== false) return null;
+
+  const motivo =
+    MOTIVOS_PERFIL_INATIVO[perfil.motivo_perfil_inativo || ''] ||
+    MOTIVOS_PERFIL_INATIVO.pagamento_pendente;
+
+  return (
+    <div className={styles.subscriptionAlert}>
+      <div>
+        <strong>Perfil profissional inativo</strong>
+        <p>
+          Sua conta continua acessivel, mas voce nao aparece nas buscas e nao
+          recebe pedidos no momento. {motivo}
+        </p>
+      </div>
+      <button type="button" onClick={onRegularizar}>
+        Regularizar assinatura
+      </button>
+    </div>
+  );
+}
+
 function VisaoGeral({
   perfil,
   onCompletar,
@@ -260,11 +306,21 @@ export default function PerfilPrestador({
   } else if (aba === 'seguranca') {
     conteudo = <AbaSeguranca />;
   } else {
-    conteudo = <AbaFinanceiroPro />;
+    conteudo = (
+      <AbaFinanceiroPro
+        perfil={perfil}
+        onAssinaturaAtualizada={onRecarregarPerfil}
+      />
+    );
   }
 
   return (
     <section className={styles.profileSection}>
+      <AlertaAssinaturaInativa
+        perfil={perfil}
+        onRegularizar={() => selecionarAba('financeiro')}
+      />
+
       <PerfilHeader
         nome={texto(usuario.nome)}
         tipo={texto(tipoProfissional)}
@@ -283,6 +339,11 @@ export default function PerfilPrestador({
             className={`${styles.tabButton} ${
               aba === item.id && !editando
                 ? styles.tabButtonActive
+                : ''
+            } ${
+              item.id === 'financeiro' &&
+              perfil.perfil_profissional_ativo === false
+                ? styles.tabButtonWarning
                 : ''
             }`}
           >

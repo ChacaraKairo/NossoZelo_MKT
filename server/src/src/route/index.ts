@@ -17,6 +17,8 @@ import UploadRouter from './Route_Upload';
 import PerfilRouter from './Route_Perfil';
 import AvaliacaoRouter from './Route_Avaliacao';
 import ServicoRouter from './Route_Servico';
+import AssinaturaRouter from './Route_Assinatura';
+import ConfirmacaoEmailRouter from './Route_ConfirmacaoEmail';
 
 console.log(
   '[LOG-FLUXO] Inicializando roteador central (index) e iniciando acoplamento de módulos.',
@@ -98,6 +100,10 @@ console.log(
  * Rota para gerenciamento real dos serviços oferecidos por prestadores.
  */
 router.use('/servicos', ServicoRouter);
+
+router.use('/assinaturas', AssinaturaRouter);
+
+router.use('/email', ConfirmacaoEmailRouter);
 
 console.log(
   '[LOG-FLUXO] Roteamento central configurado com sucesso. Árvore de endpoints operacional.',

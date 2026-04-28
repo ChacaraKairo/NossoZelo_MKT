@@ -12,6 +12,7 @@ import {
 import { compare, hash } from 'bcrypt';
 import prisma from '../lib/prisma';
 import { STATUS_PRIVACY_GATE_CLIENTE } from '../constants/dominio';
+import ServiceAssinatura from './Service_Assinatura';
 
 async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {
   if (!contratacoes.length) return contratacoes;
@@ -208,6 +209,12 @@ export class ServicePerfil {
         return {
           perfil_tipo: perfilTipo,
           dados_usuario: dadosUsuario,
+          status_cadastro: dadosUsuario.status_cadastro,
+          email_confirmado: dadosUsuario.email_confirmado,
+          perfil_profissional_ativo: null,
+          motivo_perfil_inativo: dadosUsuario.email_confirmado
+            ? null
+            : 'email_nao_confirmado',
           contratacoes:
             contratacoesClienteComAvaliacoes,
           avaliacoes_feitas:
@@ -227,6 +234,9 @@ export class ServicePerfil {
         `[LOG-FLUXO] Sucesso: Dados recuperados (Serviços: ${perfilEnriquecido.servicos.length})`,
       );
 
+      const statusAssinatura =
+        await ServiceAssinatura.obterStatusAssinaturaPrestador(usuarioId);
+
       return {
         perfil_tipo: perfilTipo,
         dados_usuario: dadosUsuario,
@@ -238,6 +248,16 @@ export class ServicePerfil {
         contratacoes:
           contratacoesPrestadorComAvaliacoes,
         avaliacao_media: perfilEnriquecido.avaliacao_media,
+        status_cadastro: statusAssinatura.status_cadastro,
+        email_confirmado: dadosUsuario.email_confirmado,
+        assinatura_atual: statusAssinatura.assinatura_atual,
+        assinatura_status: statusAssinatura.assinatura_status,
+        assinatura_confirmacao_expira_em:
+          statusAssinatura.assinatura_confirmacao_expira_em,
+        perfil_profissional_ativo:
+          statusAssinatura.perfil_profissional_ativo,
+        motivo_perfil_inativo:
+          statusAssinatura.motivo_perfil_inativo,
       };
     } catch (error: any) {
       console.error(
