@@ -26,6 +26,11 @@ export interface RespostaAssinaturaMock {
   assinatura: AssinaturaAtual;
 }
 
+export interface RespostaCancelarAssinatura {
+  message: string;
+  assinatura: AssinaturaAtual;
+}
+
 export const assinaturaService = {
   obterMinhaAssinatura: async () => {
     const response =
@@ -52,6 +57,13 @@ export const assinaturaService = {
     const response = await api.post<RespostaAssinaturaMock>(
       '/assinaturas/regularizar-mock',
       { planoId },
+    );
+    return response.data;
+  },
+
+  cancelarAssinaturaMock: async () => {
+    const response = await api.post<RespostaCancelarAssinatura>(
+      '/assinaturas/cancelar-mock',
     );
     return response.data;
   },

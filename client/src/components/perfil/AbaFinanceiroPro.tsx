@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { assinaturaService } from '@/service/assinaturaService';
 import { PerfilUsuario } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
+import styles from '@/styles/components/perfil/AbaFinanceiroPro.module.css';
 
 interface AbaFinanceiroProProps {
   perfil: PerfilUsuario;
@@ -33,18 +34,42 @@ function formatarData(valor?: string | Date | null) {
   }).format(data);
 }
 
+function classeStatus(status: string) {
+  if (status === 'ativa') return styles.statusActive;
+  if (status === 'aguardando_confirmacao' || status === 'pendente') {
+    return styles.statusWarning;
+  }
+  if (
+    status === 'falhou' ||
+    status === 'expirada' ||
+    status === 'bloqueada' ||
+    status === 'cancelada'
+  ) {
+    return styles.statusDanger;
+  }
+
+  return '';
+}
+
 export default function AbaFinanceiroPro({
   perfil,
   onAssinaturaAtualizada,
 }: AbaFinanceiroProProps) {
-  const [planoId, setPlanoId] = useState(1);
-  const [carregando, setCarregando] = useState(false);
+  const [planoId, setPlanoId] = useState(
+    perfil.assinatura_atual?.plano_id || 1,
+  );
+  const [carregandoAcao, setCarregandoAcao] = useState<
+    'regularizar' | 'cancelar' | null
+  >(null);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
   const assinatura = perfil.assinatura_atual;
   const status = perfil.assinatura_status || assinatura?.status || 'pendente';
   const aguardandoConfirmacao = status === 'aguardando_confirmacao';
+  const assinaturaCancelavel = Boolean(
+    assinatura && !['cancelada', 'expirada'].includes(status),
+  );
   const dataLimite = useMemo(
     () =>
       perfil.assinatura_confirmacao_expira_em ||
@@ -55,7 +80,7 @@ export default function AbaFinanceiroPro({
 
   const regularizar = async () => {
     try {
-      setCarregando(true);
+      setCarregandoAcao('regularizar');
       setErro(null);
       setMensagem(null);
       const resultado =
@@ -68,45 +93,72 @@ export default function AbaFinanceiroPro({
     } catch (error) {
       setErro(extrairMensagemErro(error));
     } finally {
-      setCarregando(false);
+      setCarregandoAcao(null);
     }
   };
 
+  const cancelar = async () => {
+    const confirmou = window.confirm(
+      'Cancelar sua assinatura? Seu perfil profissional ficará inativo para buscas e pedidos.',
+    );
+    if (!confirmou) return;
+
+    try {
+      setCarregandoAcao('cancelar');
+      setErro(null);
+      setMensagem(null);
+      const resultado = await assinaturaService.cancelarAssinaturaMock();
+      setMensagem(resultado.message || 'Assinatura cancelada.');
+      onAssinaturaAtualizada?.();
+    } catch (error) {
+      setErro(extrairMensagemErro(error));
+    } finally {
+      setCarregandoAcao(null);
+    }
+  };
+
+  const carregando = carregandoAcao !== null;
+
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <section className={styles.section}>
+      <header className={styles.header}>
         <div>
-          <h2 className="text-xl font-black text-slate-900">Financeiro</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Assinatura mensal do perfil profissional.
+          <h2 className={styles.title}>Financeiro</h2>
+          <p className={styles.subtitle}>
+            Gerencie a assinatura mensal que libera seu perfil profissional nas
+            buscas e nos pedidos.
           </p>
         </div>
-        <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-700">
+        <span className={`${styles.statusBadge} ${classeStatus(status)}`}>
           {STATUS_LABEL[status] || status}
         </span>
-      </div>
+      </header>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 p-4">
-          <span className="text-xs font-black uppercase text-slate-500">
-            Perfil profissional
-          </span>
-          <p className="mt-1 text-base font-black text-slate-900">
+      <div className={styles.grid}>
+        <article className={styles.card}>
+          <span className={styles.label}>Perfil profissional</span>
+          <p className={styles.value}>
             {perfil.perfil_profissional_ativo ? 'Ativo' : 'Inativo'}
           </p>
-        </div>
-        <div className="rounded-lg border border-slate-200 p-4">
-          <span className="text-xs font-black uppercase text-slate-500">
-            Limite de confirmacao
-          </span>
-          <p className="mt-1 text-base font-black text-slate-900">
-            {formatarData(dataLimite)}
+        </article>
+        <article className={styles.card}>
+          <span className={styles.label}>Limite de confirmacao</span>
+          <p className={styles.value}>{formatarData(dataLimite)}</p>
+        </article>
+        <article className={styles.card}>
+          <span className={styles.label}>Proximo vencimento</span>
+          <p className={styles.value}>
+            {formatarData(assinatura?.data_proximo_vencimento)}
           </p>
-        </div>
+        </article>
+        <article className={styles.card}>
+          <span className={styles.label}>Gateway</span>
+          <p className={styles.value}>{assinatura?.gateway || 'mock'}</p>
+        </article>
       </div>
 
       {aguardandoConfirmacao && (
-        <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className={styles.notice}>
           Pagamento iniciado. A confirmacao pode levar ate 72 horas. Durante
           esse periodo, a conta segue acessivel, mas o perfil profissional fica
           inativo para buscas e pedidos.
@@ -114,46 +166,54 @@ export default function AbaFinanceiroPro({
       )}
 
       {!perfil.perfil_profissional_ativo && !aguardandoConfirmacao && (
-        <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className={styles.notice}>
           Regularize a assinatura para voltar a aparecer nas buscas e receber
           pedidos.
         </div>
       )}
 
-      {erro && (
-        <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
-          {erro}
-        </div>
-      )}
+      {erro && <div className={styles.error}>{erro}</div>}
+      {mensagem && <div className={styles.success}>{mensagem}</div>}
 
-      {mensagem && (
-        <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
-          {mensagem}
-        </div>
-      )}
+      <div className={styles.form}>
+        <div className={styles.formRow}>
+          <label className={styles.field}>
+            <span className={styles.label}>Plano</span>
+            <input
+              className={styles.input}
+              type="number"
+              min={1}
+              value={planoId}
+              onChange={(event) => setPlanoId(Number(event.target.value))}
+              disabled={carregando}
+            />
+          </label>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="grid gap-1">
-          <span className="text-xs font-black uppercase text-slate-500">
-            Plano
-          </span>
-          <input
-            className="h-11 w-32 rounded-md border border-slate-300 px-3 font-bold text-slate-900"
-            type="number"
-            min={1}
-            value={planoId}
-            onChange={(event) => setPlanoId(Number(event.target.value))}
-            disabled={carregando}
-          />
-        </label>
-        <button
-          type="button"
-          className="h-11 rounded-md bg-slate-900 px-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"
-          onClick={regularizar}
-          disabled={carregando || !Number.isInteger(planoId) || planoId <= 0}
-        >
-          {carregando ? 'Processando...' : 'Regularizar assinatura'}
-        </button>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={regularizar}
+              disabled={
+                carregando || !Number.isInteger(planoId) || planoId <= 0
+              }
+            >
+              {carregandoAcao === 'regularizar'
+                ? 'Processando...'
+                : 'Regularizar assinatura'}
+            </button>
+            <button
+              type="button"
+              className={styles.dangerButton}
+              onClick={cancelar}
+              disabled={carregando || !assinaturaCancelavel}
+            >
+              {carregandoAcao === 'cancelar'
+                ? 'Cancelando...'
+                : 'Cancelar assinatura'}
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -102,6 +102,26 @@ class ControllerAssinatura {
     }
   }
 
+  async cancelarMock(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      const assinatura =
+        await ServiceAssinatura.cancelarAssinaturaPrestador(req.user.id);
+
+      return res.status(200).json({
+        message: 'Assinatura cancelada com sucesso.',
+        assinatura,
+      });
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
   async expirarPendentes(req: AuthRequest, res: Response) {
     try {
       if (!req.user?.id) {

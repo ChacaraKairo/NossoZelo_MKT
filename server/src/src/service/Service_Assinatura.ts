@@ -29,6 +29,29 @@ function adicionarDias(data: Date, dias: number) {
   return novaData;
 }
 
+async function obterOuCriarPlanoMock(planoId: number) {
+  const planoInformado = await prisma.planos.findUnique({
+    where: { id: planoId },
+  });
+
+  if (planoInformado) return planoInformado;
+
+  const primeiroPlano = await prisma.planos.findFirst({
+    orderBy: { id: 'asc' },
+  });
+
+  if (primeiroPlano) return primeiroPlano;
+
+  return prisma.planos.create({
+    data: {
+      nome: 'Assinatura Profissional Mensal',
+      valor: 0,
+      beneficios:
+        'Plano mock para ativacao interna de prestadores em ambiente de desenvolvimento.',
+    },
+  });
+}
+
 function statusCadastroPorAssinatura(
   status: assinaturas_status,
 ): usuarios_status_cadastro {
@@ -193,7 +216,7 @@ export class ServiceAssinatura {
           email_confirmado: true,
         },
       }),
-      prisma.planos.findUnique({ where: { id: planoId } }),
+      obterOuCriarPlanoMock(planoId),
     ]);
 
     if (!usuario) throw erroNegocio('Prestador nao encontrado.', 404);
@@ -206,7 +229,6 @@ export class ServiceAssinatura {
         403,
       );
     }
-    if (!plano) throw erroNegocio('Plano nao encontrado.', 404);
 
     const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
     const gateway = obterPagamentoGateway();
@@ -231,7 +253,7 @@ export class ServiceAssinatura {
     if (resultado.status === 'aprovado') {
       const assinatura = await this.ativarAssinatura(prestadorId, {
         ...resultado,
-        planoId,
+      planoId,
       });
       return { gateway_resultado: resultado, assinatura };
     }
@@ -353,6 +375,44 @@ export class ServiceAssinatura {
       await tx.usuarios.update({
         where: { id: prestadorId },
         data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
+      });
+
+      return assinatura;
+    });
+  }
+
+  static async cancelarAssinaturaPrestador(prestadorId: string) {
+    const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
+
+    if (!assinaturaAtual) {
+      throw erroNegocio('Assinatura nao encontrada.', 404);
+    }
+
+    const gateway = obterPagamentoGateway();
+    let gatewayStatus = 'cancelada_localmente';
+
+    if (assinaturaAtual.gateway_subscription_id) {
+      const resultadoGateway = await gateway.cancelarAssinatura(
+        assinaturaAtual.gateway_subscription_id,
+      );
+      gatewayStatus =
+        resultadoGateway.mensagem || resultadoGateway.status || gatewayStatus;
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const assinatura = await tx.assinaturas.update({
+        where: { id: assinaturaAtual.id },
+        data: {
+          status: STATUS_ASSINATURA.cancelada,
+          gateway_status: gatewayStatus,
+          cancelada_em: new Date(),
+          confirmacao_expira_em: null,
+        },
+      });
+
+      await tx.usuarios.update({
+        where: { id: prestadorId },
+        data: { status_cadastro: STATUS_CADASTRO_USUARIO.cancelado },
       });
 
       return assinatura;

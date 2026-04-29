@@ -33,6 +33,13 @@ AssinaturaRouter.post(
 );
 
 AssinaturaRouter.post(
+  '/cancelar-mock',
+  authMiddleware,
+  permitirTipos(tiposPrestador),
+  ControllerAssinatura.cancelarMock as any,
+);
+
+AssinaturaRouter.post(
   '/expirar-pendentes',
   authMiddleware,
   ControllerAssinatura.expirarPendentes as any,
