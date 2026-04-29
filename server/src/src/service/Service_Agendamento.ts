@@ -268,19 +268,24 @@ async function buscarContratacaoCompleta(id: number) {
 }
 
 class ServiceAgendamento {
+  private static async validarPrestadorOperacional(prestadorId: string) {
+    const podeReceberPedidos =
+      await ServiceAssinatura.prestadorPodeReceberPedidos(prestadorId);
+
+    if (!podeReceberPedidos) {
+      throw erroNegocio(
+        'Seu perfil profissional esta inativo. Regularize a assinatura para usar esta funcionalidade.',
+        403,
+      );
+    }
+  }
+
   static async criarAgendamento(
     data: CriarAgendamentoInput,
     usuario: UsuarioAutenticado,
   ) {
     if (!usuario?.id) {
       throw erroNegocio('Cliente nao identificado na sessao.', 401);
-    }
-
-    if (usuario.tipo !== 'cliente') {
-      throw erroNegocio(
-        'Apenas clientes podem solicitar agendamentos.',
-        403,
-      );
     }
 
     const cliente = await prisma.usuarios.findUnique({
@@ -515,6 +520,8 @@ class ServiceAgendamento {
         );
       }
 
+      await this.validarPrestadorOperacional(usuario.id);
+
       if (contratacaoAtual.status !== STATUS_CONTRATACAO.pendente) {
         throw erroNegocio(
           'Somente contratacoes pendentes podem ser aceitas ou negadas.',
@@ -567,6 +574,8 @@ class ServiceAgendamento {
         403,
       );
     }
+
+    await this.validarPrestadorOperacional(usuario.id);
 
     return prisma.contratacoes.create({
       data: {
