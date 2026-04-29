@@ -129,7 +129,7 @@ model cuidadores {
   conta_bancaria         String?                  @db.VarChar(50)
   cuidador_especialidade cuidador_especialidade[]
   usuarios               usuarios                 @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cuidadores_ibfk_1")
-  
+
 }
 
 model denuncias {
@@ -147,7 +147,7 @@ model documentos_cuidadores {
   usuario_id  String   @db.VarChar(20) // Renomeado para clareza
   tipo        String   @db.VarChar(100)
   url_arquivo String   @db.VarChar(255)
-  
+
   // 🔥 CORREÇÃO: Relacionamento agora aponta para 'usuarios'
   usuarios    usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "documentos_prestadores_ibfk_1")
 
@@ -309,7 +309,7 @@ model usuarios {
   email_confirmado                                 Boolean              @default(false)
   criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
   avaliacao_media                                  Decimal?             @default(0.00) @db.Decimal(3, 2)
-  
+
   // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
   // ✅ ATUALIZAÇÃO: Relação com documentos genérica para todos os prestadores
   documentos_prestadores                           documentos_cuidadores[]
