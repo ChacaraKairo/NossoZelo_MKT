@@ -27,12 +27,7 @@ class ServiceAvaliacao {
    * @returns {Promise<any>} - O registro da avaliação persistido.
    * @throws {Error} - Lança erro em caso de falha na persistência ou no recálculo da média.
    */
-  static async registrarAvaliacao(data: any) {
-    console.log(
-      `[LOG-FLUXO] Iniciando registrarAvaliacao para a Contratação ID: ${data.contratacao_id}`,
-    );
-
-    try {
+  static async registrarAvaliacao(data: any) {    try {
       const contratacaoId = Number(data.contratacao_id);
       const nota = Number(data.nota);
 
@@ -88,17 +83,7 @@ class ServiceAvaliacao {
 
       if (avaliacaoExistente) {
         throw erroNegocio('Esta contratacao ja possui avaliacao.', 409);
-      }
-
-      /**
-       * 1. PERSISTÊNCIA DA AVALIAÇÃO
-       * Realiza o cast explícito para Number para evitar conflitos de tipo com o driver MySQL.
-       */
-      console.log(
-        `[LOG-FLUXO] Inserindo nota ${data.nota} para o prestador ${data.prestador_id} na tabela 'avaliacoes'.`,
-      );
-
-      const novaAvaliacao = await prisma.avaliacoes.create({
+      }      const novaAvaliacao = await prisma.avaliacoes.create({
         data: {
           contratacao_id: contratacaoId,
           cliente_id: data.cliente_id,
@@ -107,34 +92,10 @@ class ServiceAvaliacao {
           nota,
           comentario: data.comentario,
         },
-      });
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Avaliação ${novaAvaliacao.id} persistida. Iniciando gatilho de reputação.`,
-      );
-
-      /**
-       * 2. ATUALIZAÇÃO ATÔMICA DA MÉDIA
-       * Reaproveita a lógica centralizada no ServicePerfil para manter a consistência da vitrine.
-       */
-      console.log(
-        `[LOG-FLUXO] Solicitando recálculo de média ao ServicePerfil para o ID: ${data.prestador_id}`,
-      );
-
-      await ServicePerfil.atualizarMediaAvaliacao(
+      });  await ServicePerfil.atualizarMediaAvaliacao(
         data.prestador_id,
-      );
-
-      console.log(
-        '[LOG-FLUXO] Fluxo de registro de avaliação e atualização de média concluído.',
-      );
-
-      return novaAvaliacao;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha crítica ao registrar avaliação para a contratação ${data.contratacao_id}: ${error.message}`,
-      );
-      throw error;
+      );      return novaAvaliacao;
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -146,12 +107,7 @@ class ServiceAvaliacao {
    */
   static async obterAvaliacoesPorPrestador(
     prestadorId: string,
-  ) {
-    console.log(
-      `[LOG-FLUXO] Iniciando obterAvaliacoesPorPrestador para o Prestador ID: ${prestadorId}`,
-    );
-
-    try {
+  ) {    try {
       const avaliacoes = await prisma.avaliacoes.findMany({
         where: { prestador_id: prestadorId },
         include: {
@@ -164,18 +120,8 @@ class ServiceAvaliacao {
           },
         },
         orderBy: { data_avaliacao: 'desc' },
-      });
-
-      console.log(
-        `[LOG-FLUXO] Busca de avaliações concluída. Total encontrado: ${avaliacoes.length}`,
-      );
-
-      return avaliacoes;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao recuperar avaliações para o prestador ${prestadorId}: ${error.message}`,
-      );
-      throw new Error(
+      });      return avaliacoes;
+    } catch (error: any) {      throw new Error(
         `Erro ao procurar avaliações: ${error.message}`,
       );
     }

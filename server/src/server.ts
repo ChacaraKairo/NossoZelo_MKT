@@ -14,11 +14,7 @@ import app from './main';
 import axios from 'axios';
 import { exec } from 'child_process';
 import prisma from './src/lib/prisma';
-import { ensureProfileFields } from './src/scripts/ensure-profile-fields';
-
-console.log('[LOG-FLUXO] Iniciando o bootstrap da aplicacao.');
-
-const PORT = process.env.PORT || '4000';
+import { ensureProfileFields } from './src/scripts/ensure-profile-fields';const PORT = process.env.PORT || '4000';
 const HOST = process.env.HOST || '0.0.0.0';
 const SERVER_URL =
   process.env.RENDER_EXTERNAL_URL ||
@@ -51,37 +47,18 @@ function shouldRunAivenKeepAlive() {
  */
 function triggerDatabasePing() {
   exec('npm run db:keep-alive', (error, stdout) => {
-    if (error) {
-      console.error(
-        `[ERRO-AIVEN] Falha ao pulsar o banco: ${error.message}`,
-      );
-      return;
+    if (error) {      return;
     }
 
-    if (stdout) {
-      console.log(`[LOG-AIVEN] ${stdout.trim()}`);
-    }
+    if (stdout) {    }
   });
 }
 
 /**
  * Funcao responsavel por validar a conectividade com o banco de dados.
  */
-async function testDatabaseConnection() {
-  console.log(
-    '[LOG-FLUXO] Validando conectividade com o banco de dados...',
-  );
-
-  try {
-    await prisma.$connect();
-    console.log(
-      '[LOG-FLUXO] Sucesso: Conexao com o banco de dados estabelecida.',
-    );
-  } catch (error: any) {
-    console.error(
-      `[ERRO-FLUXO] Falha critica no banco de dados: ${error.message || error}`,
-    );
-    process.exit(1);
+async function testDatabaseConnection() {  try {
+    await prisma.$connect();  } catch (error: any) {    process.exit(1);
   }
 }
 
@@ -89,27 +66,13 @@ async function testDatabaseConnection() {
  * Rotina Keep-Alive: impede o sleep do Render e, quando habilitado,
  * o desligamento da Aiven por inatividade.
  */
-function startKeepAlive(runDatabasePing: boolean) {
-  console.log(
-    `[LOG-FLUXO] Configurando rotina Keep-Alive para: ${SERVER_URL}`,
-  );
-
-  setInterval(
+function startKeepAlive(runDatabasePing: boolean) {  setInterval(
     async () => {
       try {
-        await axios.get(SERVER_URL);
-        console.log(
-          '[LOG-FLUXO] Keep-Alive: Servidor Render acordado.',
-        );
-
-        if (runDatabasePing) {
+        await axios.get(SERVER_URL);        if (runDatabasePing) {
           triggerDatabasePing();
         }
-      } catch {
-        console.warn(
-          '[LOG-FLUXO] Keep-Alive: Falha no ping autonomo.',
-        );
-      }
+      } catch {      }
     },
     10 * 60 * 1000,
   );
@@ -122,12 +85,7 @@ async function bootstrap() {
   await testDatabaseConnection();
   await ensureProfileFields();
 
-  app.listen(parseInt(PORT), HOST, () => {
-    console.log(
-      `[LOG-FLUXO] Servidor Express disparado em ${HOST}:${PORT}.`,
-    );
-
-    const runAivenKeepAlive = shouldRunAivenKeepAlive();
+  app.listen(parseInt(PORT), HOST, () => {    const runAivenKeepAlive = shouldRunAivenKeepAlive();
 
     if (runAivenKeepAlive) {
       triggerDatabasePing();
@@ -135,19 +93,8 @@ async function bootstrap() {
 
     if (process.env.NODE_ENV === 'production') {
       startKeepAlive(runAivenKeepAlive);
-    }
-
-    console.log(
-      `[LOG-FLUXO] Bootstrap finalizado. Operacional em: ${SERVER_URL}`,
-    );
-  });
+    }  });
 }
 
-bootstrap().catch((error: unknown) => {
-  console.error(
-    `[ERRO-FLUXO] Falha critica no bootstrap: ${
-      error instanceof Error ? error.message : String(error)
-    }`,
-  );
-  process.exit(1);
+bootstrap().catch((error: unknown) => {  process.exit(1);
 });

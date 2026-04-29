@@ -10,27 +10,13 @@
 import { Router } from 'express';
 import { AuthController } from '../controller/Controller_Login';
 import { authMiddleware } from '../middleware/autenticacao';
-import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenha';
-
-console.log(
-  '[LOG-FLUXO] Inicializando LoginRouter e preparando rotas de autenticação.',
-);
-const LoginRouter = Router();
+import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenha';const LoginRouter = Router();
 const provedoresSociais = ['google', 'facebook'] as const;
 type ProvedorSocial = (typeof provedoresSociais)[number];
 
 function isProvedorSocial(provider: string): provider is ProvedorSocial {
   return provedoresSociais.includes(provider as ProvedorSocial);
-}
-
-// ==========================================
-// ROTAS DE AUTENTICAÇÃO
-// ==========================================
-
-console.log(
-  '[LOG-FLUXO] Mapeando Rota: POST /login -> AuthController.login (Pública)',
-);
-/**
+}/**
  * Rota pública para autenticação de usuários.
  * Recebe identificador (E-mail/CPF) e senha para geração de token JWT.
  */
@@ -78,10 +64,4 @@ LoginRouter.get(
 LoginRouter.post(
   '/redefinir-senha',
   RecuperacaoSenhaController.redefinirSenha,
-);
-
-console.log(
-  '[LOG-FLUXO] LoginRouter configurado com sucesso e pronto para acoplamento principal.',
-);
-
-export default LoginRouter;
+);export default LoginRouter;

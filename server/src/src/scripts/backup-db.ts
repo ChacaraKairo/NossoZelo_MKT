@@ -82,9 +82,7 @@ async function executarBackup() {
     });
   });
 
-  logger.info('BackupDB: backup concluído', { arquivo });
-  console.log(arquivo);
-}
+  logger.info('BackupDB: backup concluído', { arquivo });}
 
 executarBackup().catch((error) => {
   logger.error('BackupDB: falha ao gerar backup', {

@@ -75,16 +75,7 @@ export const useFinalizarCadastro = () => {
     const sessionId = crypto
       .randomUUID()
       .replace(/-/g, '')
-      .substring(0, 15);
-
-    console.log(
-      '%c [DEBUG-NOSSOZELO] Iniciando pacote de Upload',
-      'color: #007bff; font-weight: bold;',
-    );
-    console.log('-> ID do Usuário (MySQL):', usuarioId);
-    console.log('-> ID da Sessão (S3):', sessionId);
-
-    const formData = new FormData();
+      .substring(0, 15);const formData = new FormData();
     formData.append('usuarioId', usuarioId);
     formData.append('sessionId', sessionId);
 
@@ -127,19 +118,8 @@ export const useFinalizarCadastro = () => {
             resJson.message ||
             'Falha no upload/vínculo dos documentos.',
         );
-      }
-
-      console.log(
-        '%c [SUCESSO] Upload e Vínculo concluídos!',
-        'color: #28a745; font-weight: bold;',
-      );
-      return resJson;
-    } catch (error: any) {
-      console.error(
-        '[ERRO-CONEXAO-UPLOAD]:',
-        error.message,
-      );
-      throw error;
+      }      return resJson;
+    } catch (error: any) {      throw error;
     }
   };
 
@@ -170,9 +150,7 @@ export const useFinalizarCadastro = () => {
       alert('Cadastro realizado com sucesso!');
       limparRascunho();
       router.push('/login-parceiro');
-    } catch (error: any) {
-      console.error('[ERRO-FINALIZAR]:', error.message);
-      alert(error.message);
+    } catch (error: any) {      alert(error.message);
     } finally {
       setLoading(false);
     }

@@ -150,13 +150,7 @@ async function enviarEmailSeguro(
     const emailService = new EmailService();
     await emailService.send(to, subject, html);
     return true;
-  } catch (error) {
-    console.error('[AGENDAMENTO_EMAIL] Falha ao enviar e-mail', {
-      to,
-      subject,
-      error,
-    });
-    return false;
+  } catch (error) {    return false;
   }
 }
 

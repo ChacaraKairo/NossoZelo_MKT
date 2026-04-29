@@ -113,9 +113,7 @@ const CadastroPage = () => {
           } else {
             setError('CEP não encontrado.');
           }
-        } catch (err) {
-          console.error('Erro ao buscar CEP:', err);
-        }
+        } catch (err) {        }
       }
     };
     buscarCep();

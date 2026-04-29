@@ -55,9 +55,7 @@ export class BuscaService {
       if (!response.ok)
         throw new Error('Erro ao buscar prestadores.');
       return await response.json();
-    } catch (error) {
-      console.error('Erro na busca de prestadores:', error);
-      throw error;
+    } catch (error) {      throw error;
     }
   }
 }

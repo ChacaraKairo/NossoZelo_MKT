@@ -140,12 +140,7 @@ export class StorageService {
           },
         });
       }
-    } catch (error: any) {
-      console.error(
-        `[ERRO-DB-SERVICE] Falha ao registrar ${tipoDoc}:`,
-        error.message,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 }
