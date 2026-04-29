@@ -254,7 +254,7 @@ model planos {
 model recuperacao_senhas {
   id         Int       @id @default(autoincrement())
   usuario_id String    @db.VarChar(20)
-  token      String    @db.VarChar(255)
+  token      String    @unique @db.VarChar(255)
   expiracao  DateTime  @db.Timestamp(0)
   usado      Boolean?  @default(false)
   criado_em  DateTime? @default(now()) @db.Timestamp(0)

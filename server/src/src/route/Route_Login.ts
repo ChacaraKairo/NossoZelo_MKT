@@ -10,7 +10,7 @@
 import { Router } from 'express';
 import { AuthController } from '../controller/Controller_Login';
 import { authMiddleware } from '../middleware/autenticacao';
-import RecuperacaoSenhaController from '../controller/Controlelr_Rec_Senha';
+import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenha';
 
 console.log(
   '[LOG-FLUXO] Inicializando LoginRouter e preparando rotas de autenticação.',
@@ -70,6 +70,10 @@ LoginRouter.post(
 LoginRouter.post(
   '/recuperar-senha',
   RecuperacaoSenhaController.enviarEmail,
+);
+LoginRouter.get(
+  '/recuperar-senha/validar-token',
+  RecuperacaoSenhaController.validarToken,
 );
 LoginRouter.post(
   '/redefinir-senha',
