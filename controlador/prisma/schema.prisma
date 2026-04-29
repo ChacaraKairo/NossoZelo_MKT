@@ -33,7 +33,7 @@ model agenda {
 // ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que Enfermeiros e Acompanhantes também possam ter agenda fixa
 model agenda_recorrente {
   id           Int                           @id @default(autoincrement())
-  prestador_id String                        @db.VarChar(20) 
+  prestador_id String                        @db.VarChar(20)
   dia_semana   agenda_recorrente_dia_semana?
   hora_inicio  DateTime                      @db.Time(0)
   hora_fim     DateTime                      @db.Time(0)
@@ -312,7 +312,7 @@ model usuarios {
   
   // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
   // ✅ ATUALIZAÇÃO: Relação com documentos genérica para todos os prestadores
-  documentos_prestadores                           documentos_cuidadores[] 
+  documentos_prestadores                           documentos_cuidadores[]
   confirmacoes_email                               confirmacoes_email[]
 
   // Relacionamentos que você já possui
