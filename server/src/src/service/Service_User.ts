@@ -16,6 +16,7 @@ import { sign } from 'jsonwebtoken';
 import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
 import ServiceConfirmacaoEmail from './Service_ConfirmacaoEmail';
+import { STATUS_CADASTRO_USUARIO } from '../constants/financeiro';
 
 type CadastroError = Error & { status?: number };
 
@@ -60,6 +61,18 @@ function montarDadosProfissionais(dados: any = {}) {
   };
 }
 
+function ehTipoPrestador(tipo?: string) {
+  return ['cuidador', 'enfermeiro', 'acompanhante'].includes(tipo || '');
+}
+
+function statusCadastroInicial(tipo?: string) {
+  if (ehTipoPrestador(tipo)) {
+    return STATUS_CADASTRO_USUARIO.pendente_pagamento;
+  }
+
+  return STATUS_CADASTRO_USUARIO.ativo;
+}
+
 class ServiceUser {
   /**
    * Cria um usuário completo, incluindo geolocalização, perfil específico e envio de e-mail.
@@ -98,6 +111,9 @@ class ServiceUser {
         id,
         senha: senhaCriptografada,
         email_confirmado: emailConfirmadoInicial,
+        status_cadastro: ehTipoPrestador(usuario.tipo)
+          ? STATUS_CADASTRO_USUARIO.pendente_pagamento
+          : usuario.status_cadastro || statusCadastroInicial(usuario.tipo),
         data_nascimento: dataNascimentoObj,
       };      await ServiceCrud.create('usuarios', usuarioData);      // 2. GEOLOCALIZAÇÃO (Resiliente a falhas)
       try {        const geolocalizacao =

@@ -373,6 +373,15 @@ export class ServicePerfil {
       if (!perfil)
         throw new Error('Prestador não encontrado');
 
+      const perfilProfissionalAtivo =
+        await ServiceAssinatura.prestadorPodeUsarPerfilProfissional(
+          prestadorId,
+        );
+
+      if (!perfilProfissionalAtivo) {
+        throw new Error('Prestador indisponivel');
+      }
+
       const {
         senha,
         cpf,
@@ -410,13 +419,11 @@ export class ServicePerfil {
         especialidades:
           dadosProfissionais?.especialidades ?? null,
         contatos: {
-          email,
-          telefone,
           cidade: perfil.cidade,
           estado: perfil.estado,
         },
         rating: Number(perfil.avaliacao_media) || 0,
-        pode_ver_contato: Boolean(email || telefone),
+        pode_ver_contato: false,
       };
     } catch (error: any) {      throw error;
     }
