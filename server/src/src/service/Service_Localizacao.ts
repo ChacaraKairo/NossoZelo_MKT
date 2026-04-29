@@ -632,6 +632,14 @@ export class GeolocalizacaoService {
         FROM usuarios u
         JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         AND ${this.getSqlDistancia(
           loc.latitude,
           loc.longitude,
@@ -679,6 +687,14 @@ export class GeolocalizacaoService {
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.id != ${usuarioId} AND u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         ORDER BY distancia ASC
         LIMIT 20;
       `;
@@ -738,6 +754,14 @@ export class GeolocalizacaoService {
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.id != ${usuarioId} AND u.tipo = ${tipo}
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         ORDER BY distancia ASC
         LIMIT 20;
       `;
@@ -786,6 +810,14 @@ export class GeolocalizacaoService {
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.nome LIKE ${nomeBusca} AND u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         HAVING distancia <= ${raioKm}
         ORDER BY distancia ASC
         LIMIT 20;
