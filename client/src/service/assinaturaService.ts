@@ -21,9 +21,25 @@ export const assinaturaService = {
     return response.data;
   },
 
+  iniciarAssinatura: async (planoId: number) => {
+    const response = await api.post<RespostaAssinaturaMock>(
+      '/assinaturas/iniciar',
+      { planoId },
+    );
+    return response.data;
+  },
+
   iniciarAssinaturaMock: async (planoId: number) => {
     const response = await api.post<RespostaAssinaturaMock>(
       '/assinaturas/iniciar-mock',
+      { planoId },
+    );
+    return response.data;
+  },
+
+  regularizarAssinatura: async (planoId: number) => {
+    const response = await api.post<RespostaAssinaturaMock>(
+      '/assinaturas/regularizar',
       { planoId },
     );
     return response.data;
@@ -33,6 +49,16 @@ export const assinaturaService = {
     const response = await api.post<RespostaAssinaturaMock>(
       '/assinaturas/regularizar-mock',
       { planoId },
+    );
+    return response.data;
+  },
+
+  regularizarAssinaturaComCartao: async (
+    payload: CartaoAssinaturaPayload,
+  ) => {
+    const response = await api.post<RespostaAssinaturaMock>(
+      '/assinaturas/regularizar',
+      payload,
     );
     return response.data;
   },
@@ -53,6 +79,13 @@ export const assinaturaService = {
     const response = await api.post<RespostaTrocarCartaoMock>(
       '/assinaturas/trocar-cartao-mock',
       payload,
+    );
+    return response.data;
+  },
+
+  cancelarAssinatura: async () => {
+    const response = await api.post<RespostaCancelarAssinatura>(
+      '/assinaturas/cancelar',
     );
     return response.data;
   },

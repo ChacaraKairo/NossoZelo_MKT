@@ -1,4 +1,5 @@
 import { GATEWAY_PAGAMENTO } from '../../constants/financeiro';
+import { AsaasPagamentoGateway } from './AsaasPagamentoGateway';
 import { MockPagamentoGateway } from './MockPagamentoGateway';
 import { PagamentoGateway } from './PagamentoGateway';
 
@@ -10,7 +11,7 @@ export function obterPagamentoGateway(): PagamentoGateway {
   }
 
   if (gateway === GATEWAY_PAGAMENTO.asaas) {
-    throw new Error('Gateway Asaas ainda não implementado nesta etapa.');
+    return new AsaasPagamentoGateway();
   }
 
   throw new Error(`Gateway de pagamento invalido: ${gateway}`);

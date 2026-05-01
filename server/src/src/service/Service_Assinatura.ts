@@ -361,6 +361,8 @@ export class ServiceAssinatura {
       cpfCnpj: usuario.cpf,
       telefone: usuario.telefone,
       gatewayCustomerId: clienteGateway.gatewayCustomerId,
+      metodoPagamento: dadosPagamento?.metodoPagamento,
+      cartaoToken: dadosPagamento?.cartaoToken,
     });
 
     if (resultado.status === 'aprovado') {
@@ -623,11 +625,91 @@ export class ServiceAssinatura {
         where: {
           id: { in: pendentes.map((item) => item.prestador_id) },
         },
-        data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
+        data: {
+          status_cadastro: STATUS_CADASTRO_USUARIO.pendente_pagamento,
+        },
       });
     });
 
     return { expiradas: pendentes.length };
+  }
+
+  static async verificarAssinaturasVencidas() {
+    const agora = new Date();
+    const vencidas = await prisma.assinaturas.findMany({
+      where: {
+        status: STATUS_ASSINATURA.ativa,
+        data_proximo_vencimento: { lt: agora },
+      },
+      select: { id: true, prestador_id: true },
+    });
+
+    const idsVencidas = vencidas.map((item) => item.id);
+    const bloqueadas = await prisma.assinaturas.findMany({
+      where: {
+        OR: [
+          { status: STATUS_ASSINATURA.atrasada },
+          idsVencidas.length ? { id: { in: idsVencidas } } : undefined,
+        ].filter(Boolean) as Prisma.assinaturasWhereInput[],
+        periodo_tolerancia_ate: { lt: agora },
+      },
+      select: { id: true, prestador_id: true },
+    });
+
+    const idsBloqueadas = bloqueadas.map((item) => item.id);
+    const idsApenasAtrasadas = idsVencidas.filter(
+      (id) => !idsBloqueadas.includes(id),
+    );
+
+    await prisma.$transaction(async (tx) => {
+      if (idsApenasAtrasadas.length) {
+        await tx.assinaturas.updateMany({
+          where: { id: { in: idsApenasAtrasadas } },
+          data: {
+            status: STATUS_ASSINATURA.atrasada,
+            gateway_status: 'vencimento_local_detectado',
+          },
+        });
+
+        await tx.usuarios.updateMany({
+          where: {
+            id: {
+              in: vencidas
+                .filter((item) => idsApenasAtrasadas.includes(item.id))
+                .map((item) => item.prestador_id),
+            },
+          },
+          data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
+        });
+      }
+
+      if (idsBloqueadas.length) {
+        await tx.assinaturas.updateMany({
+          where: { id: { in: idsBloqueadas } },
+          data: {
+            status: STATUS_ASSINATURA.bloqueada,
+            gateway_status: 'tolerancia_expirada',
+          },
+        });
+
+        await tx.usuarios.updateMany({
+          where: {
+            id: { in: bloqueadas.map((item) => item.prestador_id) },
+          },
+          data: { status_cadastro: STATUS_CADASTRO_USUARIO.bloqueado },
+        });
+      }
+    });
+
+    const expiracao = await this.expirarAssinaturasSemConfirmacao();
+    const resultado = {
+      atrasadas: idsApenasAtrasadas.length,
+      bloqueadas: idsBloqueadas.length,
+      expiradas: expiracao.expiradas,
+    };
+
+    logger.info('Verificacao local de assinaturas concluida', resultado);
+    return resultado;
   }
 
   static validarTokenWebhookAsaas(token?: string) {

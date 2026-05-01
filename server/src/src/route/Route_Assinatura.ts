@@ -24,10 +24,24 @@ AssinaturaRouter.get(
 );
 
 AssinaturaRouter.post(
+  '/iniciar',
+  authMiddleware,
+  permitirTipos(tiposPrestador),
+  ControllerAssinatura.iniciarMock as any,
+);
+
+AssinaturaRouter.post(
   '/iniciar-mock',
   authMiddleware,
   permitirTipos(tiposPrestador),
   ControllerAssinatura.iniciarMock as any,
+);
+
+AssinaturaRouter.post(
+  '/regularizar',
+  authMiddleware,
+  permitirTipos(tiposPrestador),
+  ControllerAssinatura.regularizarMock as any,
 );
 
 AssinaturaRouter.post(
@@ -42,6 +56,13 @@ AssinaturaRouter.post(
   authMiddleware,
   permitirTipos(tiposPrestador),
   ControllerAssinatura.trocarCartaoMock as any,
+);
+
+AssinaturaRouter.post(
+  '/cancelar',
+  authMiddleware,
+  permitirTipos(tiposPrestador),
+  ControllerAssinatura.cancelarMock as any,
 );
 
 AssinaturaRouter.post(

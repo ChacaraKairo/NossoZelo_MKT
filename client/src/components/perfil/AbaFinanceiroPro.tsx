@@ -111,7 +111,7 @@ export default function AbaFinanceiroPro({
       setCarregandoAcao('cancelar');
       setErro(null);
       setMensagem(null);
-      const resultado = await assinaturaService.cancelarAssinaturaMock();
+      const resultado = await assinaturaService.cancelarAssinatura();
       setMensagem(resultado.message || 'Assinatura cancelada.');
       onAssinaturaAtualizada?.();
     } catch (error) {

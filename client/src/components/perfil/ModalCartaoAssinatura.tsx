@@ -170,7 +170,7 @@ export default function ModalCartaoAssinatura({
       const resultado =
         modo === 'trocar_cartao'
           ? await assinaturaService.trocarCartaoAssinaturaMock(payload)
-          : await assinaturaService.regularizarAssinaturaComCartaoMock(payload);
+          : await assinaturaService.regularizarAssinaturaComCartao(payload);
       const mensagem =
         'message' in resultado
           ? resultado.message

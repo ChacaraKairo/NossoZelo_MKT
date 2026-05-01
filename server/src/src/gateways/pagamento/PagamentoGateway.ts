@@ -29,6 +29,9 @@ export type CriarAssinaturaMensalInput = {
   cpfCnpj: string;
   telefone?: string | null;
   gatewayCustomerId?: string | null;
+  metodoPagamento?: 'credito' | 'debito';
+  cartaoToken?: string;
+  remoteIp?: string;
 };
 
 export type CriarAssinaturaResultado = {
