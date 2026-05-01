@@ -14,6 +14,7 @@ import app from './main';
 import axios from 'axios';
 import prisma from './src/lib/prisma';
 import logger from './src/lib/logger';
+import { ensureProfileFields } from './src/scripts/ensure-profile-fields';
 
 const PORT = process.env.PORT || '4000';
 const HOST = process.env.HOST || '0.0.0.0';
@@ -104,6 +105,7 @@ function startKeepAlive(runDatabasePing: boolean) {
  */
 async function bootstrap() {
   await testDatabaseConnection();
+  await ensureProfileFields();
 
   app.listen(parseInt(PORT), HOST, () => {
     const runAivenKeepAlive = shouldRunAivenKeepAlive();
