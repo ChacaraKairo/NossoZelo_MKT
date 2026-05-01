@@ -11,6 +11,25 @@ function erroNegocio(mensagem: string, status = 400) {
   return error;
 }
 
+function erroServicoEmail(error: unknown) {
+  const mensagem =
+    error instanceof Error ? error.message : 'Falha desconhecida no SMTP.';
+  const falhaConexao =
+    mensagem.toLowerCase().includes('timeout') ||
+    mensagem.toLowerCase().includes('connection') ||
+    mensagem.toLowerCase().includes('etimedout') ||
+    mensagem.toLowerCase().includes('econnrefused');
+
+  if (falhaConexao) {
+    return erroNegocio(
+      'Servico de e-mail indisponivel no momento. Verifique a configuracao SMTP e tente novamente.',
+      503,
+    );
+  }
+
+  return error;
+}
+
 function frontendUrl() {
   return process.env.FRONTEND_URL || 'http://localhost:3000';
 }
@@ -84,12 +103,20 @@ export class ServiceConfirmacaoEmail {
       confirmacao.token,
     )}`;
 
-    const emailService = new EmailService();
-    await emailService.send(
-      usuario.email,
-      'Confirme seu e-mail no NossoZelo',
-      htmlConfirmacao(usuario.nome, link),
-    );
+    try {
+      const emailService = new EmailService();
+      await emailService.send(
+        usuario.email,
+        'Confirme seu e-mail no NossoZelo',
+        htmlConfirmacao(usuario.nome, link),
+      );
+    } catch (error) {
+      await prisma.confirmacoes_email.update({
+        where: { id: confirmacao.id },
+        data: { usado: true },
+      });
+      throw erroServicoEmail(error);
+    }
 
     return {
       enviado: true,
@@ -172,7 +199,7 @@ export class ServiceConfirmacaoEmail {
     }
 
     const ultimaConfirmacao = await prisma.confirmacoes_email.findFirst({
-      where: { usuario_id: usuarioId },
+      where: { usuario_id: usuarioId, usado: false },
       orderBy: { criado_em: 'desc' },
       select: { criado_em: true },
     });

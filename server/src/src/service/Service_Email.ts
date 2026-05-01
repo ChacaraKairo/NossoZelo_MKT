@@ -34,6 +34,25 @@ function obterConfigEmail() {
   };
 }
 
+function normalizarErroEmail(error: unknown) {
+  const mensagem =
+    error instanceof Error ? error.message : 'Falha desconhecida no SMTP.';
+  const falhaConexao =
+    mensagem.toLowerCase().includes('timeout') ||
+    mensagem.toLowerCase().includes('connection') ||
+    mensagem.toLowerCase().includes('etimedout') ||
+    mensagem.toLowerCase().includes('econnrefused');
+
+  if (!falhaConexao) return error;
+
+  const erro = new Error(
+    'Servico de e-mail indisponivel no momento. Verifique EMAIL_HOST, EMAIL_PORT, EMAIL_USER e EMAIL_PASS.',
+  ) as Error & { status?: number; cause?: unknown };
+  erro.status = 503;
+  erro.cause = error;
+  return erro;
+}
+
 export class EmailService {
   private transporter: Transporter;
 
@@ -44,6 +63,10 @@ export class EmailService {
       host: config.host,
       port: config.port,
       secure: config.secure,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+      requireTLS: !config.secure,
       auth: {
         user: config.user,
         pass: config.pass,
@@ -56,14 +79,18 @@ export class EmailService {
     subject: string,
     html: string,
   ): Promise<void> {
-    await this.transporter.sendMail({
-      from:
-        process.env.EMAIL_FROM ||
-        `"Nosso Zelo" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
+    try {
+      await this.transporter.sendMail({
+        from:
+          process.env.EMAIL_FROM ||
+          `"Nosso Zelo" <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html,
+      });
+    } catch (error) {
+      throw normalizarErroEmail(error);
+    }
   }
 }
 
