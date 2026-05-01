@@ -12,6 +12,11 @@ export type AdminSession = {
   tipo: "admin";
 };
 
+export function adminEhMestre(admin: AdminSession | null | undefined) {
+  const emailMestre = process.env.MASTER_ADMIN_EMAIL || "master@master.master";
+  return admin?.email.toLowerCase() === emailMestre.toLowerCase();
+}
+
 export async function autenticarAdmin(login: string, senha: string) {
   const usuario = await prisma.usuarios.findFirst({
     where: {
