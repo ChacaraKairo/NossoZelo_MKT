@@ -1,3 +1,4 @@
+import { AdminActionButton } from "@/components/AdminActionButton";
 import { StatCard } from "@/components/StatCard";
 import { obterResumoDashboard } from "@/lib/queries";
 import styles from "@/styles/admin.module.css";
@@ -25,6 +26,12 @@ export default async function DashboardPage() {
           <h1>Dashboard</h1>
           <p>Visao operacional do NossoZelo.</p>
         </div>
+        <AdminActionButton
+          confirmMessage="Sincronizar agora assinaturas, pagamentos e status dos prestadores?"
+          endpoint="/api/assinaturas/sincronizar"
+          label="Sincronizar assinaturas"
+          variant="primary"
+        />
       </div>
 
       <section className={styles.grid}>
