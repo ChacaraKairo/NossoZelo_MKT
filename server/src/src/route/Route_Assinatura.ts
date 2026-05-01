@@ -6,6 +6,11 @@ import { permitirTipos } from '../middleware/permitirTipos';
 const AssinaturaRouter = Router();
 const tiposPrestador = ['cuidador', 'enfermeiro', 'acompanhante'];
 
+AssinaturaRouter.post(
+  '/webhook/asaas',
+  ControllerAssinatura.webhookAsaas as any,
+);
+
 AssinaturaRouter.get(
   '/minha',
   authMiddleware,

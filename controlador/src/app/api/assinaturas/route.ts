@@ -3,7 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { exigirAdminApi } from "@/lib/auth";
 import { respostaErro } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
-import { limitePagina, normalizarBusca, paginaAtual } from "@/lib/sanitize";
+import { usuarioAdminResumoSelect } from "@/lib/queries";
+import { limitePagina, mascararDocumento, mascararEmail, mascararTelefone, normalizarBusca, paginaAtual } from "@/lib/sanitize";
 
 export async function GET(request: NextRequest) {
   const { response } = await exigirAdminApi();
@@ -33,11 +34,24 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { criado_em: "desc" },
-        include: { usuarios: true, planos: true }
+        include: { usuarios: { select: usuarioAdminResumoSelect }, planos: true }
       })
     ]);
 
-    return NextResponse.json({ total, page, limit, assinaturas });
+    return NextResponse.json({
+      total,
+      page,
+      limit,
+      assinaturas: assinaturas.map((assinatura) => ({
+        ...assinatura,
+        usuarios: {
+          ...assinatura.usuarios,
+          email: mascararEmail(assinatura.usuarios.email),
+          cpf: mascararDocumento(assinatura.usuarios.cpf),
+          telefone: mascararTelefone(assinatura.usuarios.telefone)
+        }
+      }))
+    });
   } catch (error) {
     return respostaErro(error);
   }

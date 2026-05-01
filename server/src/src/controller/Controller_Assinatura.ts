@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import ServiceAssinatura from '../service/Service_Assinatura';
 import { AuthRequest } from '../types/auth';
 
@@ -20,6 +20,24 @@ function planoIdDoBody(body: any) {
 }
 
 class ControllerAssinatura {
+  async webhookAsaas(req: Request, res: Response) {
+    try {
+      const tokenHeader = req.headers['asaas-access-token'];
+      const token = Array.isArray(tokenHeader) ? tokenHeader[0] : tokenHeader;
+      const resultado = await ServiceAssinatura.processarWebhookAsaas({
+        token,
+        payload: req.body,
+      });
+
+      const statusHttp = resultado.processado ? 200 : 202;
+      return res.status(statusHttp).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
   async minha(req: AuthRequest, res: Response) {
     try {
       if (!req.user?.id) {

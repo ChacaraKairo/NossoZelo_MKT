@@ -4,6 +4,20 @@ import { limitePagina, normalizarBusca, paginaAtual } from "@/lib/sanitize";
 
 export const tiposPrestador = ["cuidador", "enfermeiro", "acompanhante"] as const;
 
+export const usuarioAdminResumoSelect = {
+  id: true,
+  nome: true,
+  email: true,
+  telefone: true,
+  cpf: true,
+  tipo: true,
+  status_cadastro: true,
+  email_confirmado: true,
+  cidade: true,
+  estado: true,
+  criado_em: true
+} satisfies Prisma.usuariosSelect;
+
 export async function obterResumoDashboard() {
   const [
     totalUsuarios,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigirAdminApi } from "@/lib/auth";
+import { statusCadastroPorAssinatura } from "@/lib/financeiro";
 import { registrarLogAdministrativo } from "@/lib/adminLog";
 import { respostaErro } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
@@ -25,13 +26,22 @@ export async function POST(request: Request, { params }: Params) {
 
     if (!assinatura) return NextResponse.json({ error: "Prestador sem assinatura." }, { status: 404 });
 
-    const atualizada = await prisma.assinaturas.update({
-      where: { id: assinatura.id },
-      data: {
-        status: input.status,
-        gateway_status: `manual_${input.status}`,
-        cancelada_em: input.status === "cancelada" ? new Date() : assinatura.cancelada_em
-      }
+    const atualizada = await prisma.$transaction(async (tx) => {
+      const assinaturaAtualizada = await tx.assinaturas.update({
+        where: { id: assinatura.id },
+        data: {
+          status: input.status,
+          gateway_status: `manual_${input.status}`,
+          cancelada_em: input.status === "cancelada" ? new Date() : assinatura.cancelada_em
+        }
+      });
+
+      await tx.usuarios.update({
+        where: { id: assinaturaAtualizada.prestador_id },
+        data: { status_cadastro: statusCadastroPorAssinatura(input.status) }
+      });
+
+      return assinaturaAtualizada;
     });
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "assinaturas" });
     return NextResponse.json({ message: "Assinatura atualizada.", assinatura: atualizada });

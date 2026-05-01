@@ -9,12 +9,40 @@ import {
 import { TIPOS_PRESTADOR } from '../constants/dominio';
 import { obterPagamentoGateway } from '../gateways/pagamento';
 import { CriarAssinaturaResultado } from '../gateways/pagamento/PagamentoGateway';
+import logger from '../lib/logger';
 import prisma from '../lib/prisma';
 
 type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
   gatewaySubscriptionId?: string;
   gatewayCustomerId?: string;
   planoId?: number;
+};
+
+type WebhookAsaasInput = {
+  token?: string;
+  payload: unknown;
+};
+
+type AsaasWebhookPayload = {
+  event?: string;
+  payment?: {
+    id?: string;
+    customer?: string;
+    subscription?: string;
+    status?: string;
+    paymentDate?: string;
+    clientPaymentDate?: string;
+    confirmedDate?: string;
+    dueDate?: string;
+    invoiceUrl?: string;
+  };
+  subscription?: {
+    id?: string;
+    customer?: string;
+    status?: string;
+    nextDueDate?: string;
+    dateCreated?: string;
+  };
 };
 
 function erroNegocio(mensagem: string, status = 400) {
@@ -91,6 +119,26 @@ function motivoPerfilInativo(status?: assinaturas_status | null) {
   if (status === STATUS_ASSINATURA.bloqueada) return 'assinatura_bloqueada';
   if (status === STATUS_ASSINATURA.cancelada) return 'assinatura_cancelada';
   return 'pagamento_pendente';
+}
+
+function payloadAsaas(payload: unknown): AsaasWebhookPayload {
+  if (!payload || typeof payload !== 'object') {
+    throw erroNegocio('Payload do webhook Asaas invalido.', 400);
+  }
+
+  return payload as AsaasWebhookPayload;
+}
+
+function dataAsaas(valor?: string | null) {
+  if (!valor) return undefined;
+
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return undefined;
+  return data;
+}
+
+function limitarGatewayStatus(valor: string) {
+  return valor.slice(0, 60);
 }
 
 export class ServiceAssinatura {
@@ -451,6 +499,228 @@ export class ServiceAssinatura {
     });
 
     return { expiradas: pendentes.length };
+  }
+
+  static validarTokenWebhookAsaas(token?: string) {
+    const tokenEsperado = process.env.ASAAS_WEBHOOK_TOKEN?.trim();
+
+    if (!tokenEsperado) {
+      throw erroNegocio('Token do webhook Asaas nao configurado.', 500);
+    }
+
+    if (!token || token !== tokenEsperado) {
+      throw erroNegocio('Token do webhook Asaas invalido.', 401);
+    }
+  }
+
+  static statusAssinaturaPorEventoAsaas(
+    event?: string,
+    paymentStatus?: string,
+    subscriptionStatus?: string,
+  ): assinaturas_status | null {
+    const evento = event?.toUpperCase();
+    const statusPagamento = paymentStatus?.toUpperCase();
+    const statusAssinatura = subscriptionStatus?.toUpperCase();
+
+    if (
+      evento === 'PAYMENT_RECEIVED' ||
+      evento === 'PAYMENT_CONFIRMED' ||
+      evento === 'PAYMENT_RECEIVED_IN_CASH' ||
+      statusPagamento === 'RECEIVED' ||
+      statusPagamento === 'CONFIRMED'
+    ) {
+      return STATUS_ASSINATURA.ativa;
+    }
+
+    if (evento === 'PAYMENT_OVERDUE' || statusPagamento === 'OVERDUE') {
+      return STATUS_ASSINATURA.atrasada;
+    }
+
+    if (
+      evento === 'PAYMENT_REFUNDED' ||
+      evento === 'PAYMENT_REFUND_DENIED' ||
+      evento === 'PAYMENT_CHARGEBACK_REQUESTED' ||
+      evento === 'PAYMENT_CHARGEBACK_DISPUTE' ||
+      evento === 'PAYMENT_CHARGEBACK_DONE' ||
+      statusPagamento === 'REFUNDED' ||
+      statusPagamento === 'REFUND_REQUESTED' ||
+      statusPagamento === 'CHARGEBACK_REQUESTED' ||
+      statusPagamento === 'CHARGEBACK_DISPUTE' ||
+      statusPagamento === 'AWAITING_CHARGEBACK_REVERSAL'
+    ) {
+      return STATUS_ASSINATURA.falhou;
+    }
+
+    if (
+      evento === 'PAYMENT_DELETED' ||
+      evento === 'SUBSCRIPTION_DELETED' ||
+      evento === 'SUBSCRIPTION_INACTIVATED' ||
+      evento === 'SUBSCRIPTION_CANCELLED' ||
+      statusAssinatura === 'INACTIVE' ||
+      statusAssinatura === 'CANCELLED' ||
+      statusAssinatura === 'DELETED'
+    ) {
+      return STATUS_ASSINATURA.cancelada;
+    }
+
+    if (
+      evento === 'PAYMENT_CREATED' ||
+      evento === 'PAYMENT_UPDATED' ||
+      evento === 'PAYMENT_AWAITING_RISK_ANALYSIS' ||
+      statusPagamento === 'PENDING'
+    ) {
+      return STATUS_ASSINATURA.aguardando_confirmacao;
+    }
+
+    return null;
+  }
+
+  static async processarWebhookAsaas(input: WebhookAsaasInput) {
+    this.validarTokenWebhookAsaas(input.token);
+
+    const payload = payloadAsaas(input.payload);
+    const event = payload.event || 'EVENTO_DESCONHECIDO';
+    const payment = payload.payment;
+    const subscription = payload.subscription;
+    const gatewaySubscriptionId = payment?.subscription || subscription?.id;
+    const gatewayCustomerId = payment?.customer || subscription?.customer;
+    const statusAssinatura = this.statusAssinaturaPorEventoAsaas(
+      event,
+      payment?.status,
+      subscription?.status,
+    );
+
+    if (!gatewaySubscriptionId) {
+      logger.warn('Webhook Asaas ignorado: assinatura ausente', { event });
+      return {
+        processado: false,
+        motivo: 'assinatura_gateway_ausente',
+        event,
+      };
+    }
+
+    if (!statusAssinatura) {
+      logger.info('Webhook Asaas recebido sem acao local', {
+        event,
+        gatewaySubscriptionId,
+      });
+      return {
+        processado: false,
+        motivo: 'evento_sem_mapeamento',
+        event,
+        gateway_subscription_id: gatewaySubscriptionId,
+      };
+    }
+
+    const assinaturaAtual = await prisma.assinaturas.findFirst({
+      where: { gateway_subscription_id: gatewaySubscriptionId },
+      orderBy: [{ criado_em: 'desc' }, { id: 'desc' }],
+    });
+
+    if (!assinaturaAtual) {
+      logger.warn('Webhook Asaas ignorado: assinatura local nao encontrada', {
+        event,
+        gatewaySubscriptionId,
+      });
+      return {
+        processado: false,
+        motivo: 'assinatura_local_nao_encontrada',
+        event,
+        gateway_subscription_id: gatewaySubscriptionId,
+      };
+    }
+
+    const agora = new Date();
+    const dataPagamento =
+      dataAsaas(payment?.paymentDate) ||
+      dataAsaas(payment?.clientPaymentDate) ||
+      dataAsaas(payment?.confirmedDate) ||
+      agora;
+    const dataVencimento =
+      dataAsaas(subscription?.nextDueDate) ||
+      dataAsaas(payment?.dueDate) ||
+      adicionarDias(dataPagamento, 30);
+    const dados: Prisma.assinaturasUncheckedUpdateInput = {
+      status: statusAssinatura,
+      gateway: GATEWAY_PAGAMENTO.asaas,
+      gateway_customer_id:
+        gatewayCustomerId || assinaturaAtual.gateway_customer_id,
+      gateway_status: limitarGatewayStatus(
+        `${event}:${payment?.status || subscription?.status || statusAssinatura}`,
+      ),
+    };
+
+    if (statusAssinatura === STATUS_ASSINATURA.ativa) {
+      dados.data_ultimo_pagamento = dataPagamento;
+      dados.data_proximo_vencimento = dataVencimento;
+      dados.periodo_tolerancia_ate = adicionarDias(
+        dataVencimento,
+        DIAS_TOLERANCIA_ASSINATURA,
+      );
+      dados.confirmacao_expira_em = null;
+      dados.cancelada_em = null;
+    }
+
+    if (statusAssinatura === STATUS_ASSINATURA.atrasada) {
+      dados.data_proximo_vencimento = dataVencimento;
+      dados.periodo_tolerancia_ate = adicionarDias(
+        dataVencimento,
+        DIAS_TOLERANCIA_ASSINATURA,
+      );
+      dados.confirmacao_expira_em = null;
+    }
+
+    if (statusAssinatura === STATUS_ASSINATURA.aguardando_confirmacao) {
+      dados.confirmacao_expira_em =
+        assinaturaAtual.confirmacao_expira_em ||
+        this.calcularConfirmacaoExpiraEm();
+    }
+
+    if (statusAssinatura === STATUS_ASSINATURA.cancelada) {
+      dados.cancelada_em = agora;
+      dados.confirmacao_expira_em = null;
+    }
+
+    if (statusAssinatura === STATUS_ASSINATURA.falhou) {
+      dados.confirmacao_expira_em = null;
+    }
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      const assinatura = await tx.assinaturas.update({
+        where: { id: assinaturaAtual.id },
+        data: dados,
+      });
+
+      await tx.usuarios.update({
+        where: { id: assinatura.prestador_id },
+        data: {
+          status_cadastro: statusCadastroPorAssinatura(statusAssinatura),
+        },
+      });
+
+      await tx.logs_acao.create({
+        data: {
+          usuario_id: assinatura.prestador_id,
+          tabela_afetada: 'assinaturas',
+          acao: 'UPDATE',
+        },
+      });
+
+      return assinatura;
+    });
+
+    logger.info('Webhook Asaas processado', {
+      event,
+      gatewaySubscriptionId,
+      assinaturaId: resultado.id,
+      status: resultado.status,
+    });
+
+    return {
+      processado: true,
+      event,
+      assinatura: resultado,
+    };
   }
 
   static statusCadastroPorAssinatura(status: assinaturas_status) {
