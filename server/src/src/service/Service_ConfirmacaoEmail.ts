@@ -12,6 +12,13 @@ function erroNegocio(mensagem: string, status = 400) {
 }
 
 function erroServicoEmail(error: unknown) {
+  if (
+    error instanceof Error &&
+    typeof (error as Error & { status?: number }).status === 'number'
+  ) {
+    return error;
+  }
+
   const mensagem =
     error instanceof Error ? error.message : 'Falha desconhecida no SMTP.';
   const falhaConexao =
