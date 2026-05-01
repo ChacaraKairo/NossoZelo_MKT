@@ -38,6 +38,13 @@ AssinaturaRouter.post(
 );
 
 AssinaturaRouter.post(
+  '/trocar-cartao-mock',
+  authMiddleware,
+  permitirTipos(tiposPrestador),
+  ControllerAssinatura.trocarCartaoMock as any,
+);
+
+AssinaturaRouter.post(
   '/cancelar-mock',
   authMiddleware,
   permitirTipos(tiposPrestador),

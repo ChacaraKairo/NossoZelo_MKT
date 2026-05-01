@@ -19,6 +19,18 @@ function planoIdDoBody(body: any) {
   return planoId;
 }
 
+function dadosPagamentoDoBody(body: any) {
+  if (!body?.cartaoToken && !body?.cartaoResumo && !body?.metodoPagamento) {
+    return undefined;
+  }
+
+  return {
+    metodoPagamento: body?.metodoPagamento,
+    cartaoToken: body?.cartaoToken,
+    cartaoResumo: body?.cartaoResumo,
+  };
+}
+
 class ControllerAssinatura {
   async webhookAsaas(req: Request, res: Response) {
     try {
@@ -89,6 +101,7 @@ class ControllerAssinatura {
         await ServiceAssinatura.iniciarOuRegularizarAssinaturaMock(
           req.user.id,
           planoId,
+          dadosPagamentoDoBody(req.body),
         );
 
       return res.status(201).json(resultado);
@@ -110,6 +123,7 @@ class ControllerAssinatura {
         await ServiceAssinatura.iniciarOuRegularizarAssinaturaMock(
           req.user.id,
           planoId,
+          dadosPagamentoDoBody(req.body),
         );
 
       return res.status(200).json(resultado);
@@ -133,6 +147,27 @@ class ControllerAssinatura {
         message: 'Assinatura cancelada com sucesso.',
         assinatura,
       });
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async trocarCartaoMock(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      planoIdDoBody(req.body);
+      const resultado =
+        await ServiceAssinatura.trocarCartaoAssinaturaMock(
+          req.user.id,
+          dadosPagamentoDoBody(req.body) || {},
+        );
+
+      return res.status(200).json(resultado);
     } catch (error: any) {
       return res
         .status(statusErro(error))

@@ -18,6 +18,23 @@ type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
   planoId?: number;
 };
 
+type MetodoPagamentoMock = 'credito' | 'debito';
+
+type CartaoResumoMock = {
+  nomeTitular: string;
+  cpfTitular: string;
+  numeroFinal: string;
+  validadeMes: string;
+  validadeAno: string;
+  bandeira?: string;
+};
+
+export type DadosPagamentoAssinaturaMock = {
+  metodoPagamento?: MetodoPagamentoMock;
+  cartaoToken?: string;
+  cartaoResumo?: CartaoResumoMock;
+};
+
 type WebhookAsaasInput = {
   token?: string;
   payload: unknown;
@@ -141,6 +158,52 @@ function limitarGatewayStatus(valor: string) {
   return valor.slice(0, 60);
 }
 
+function validarDadosPagamentoMock(
+  dadosPagamento?: DadosPagamentoAssinaturaMock,
+) {
+  if (!dadosPagamento) return null;
+
+  if (dadosPagamento.metodoPagamento) {
+    const metodoValido =
+      dadosPagamento.metodoPagamento === 'credito' ||
+      dadosPagamento.metodoPagamento === 'debito';
+    if (!metodoValido) {
+      throw erroNegocio('Metodo de pagamento invalido.', 400);
+    }
+  }
+
+  if (!dadosPagamento.cartaoToken) {
+    throw erroNegocio('Token mock do cartao e obrigatorio.', 400);
+  }
+
+  const resumo = dadosPagamento.cartaoResumo;
+  if (!resumo) {
+    throw erroNegocio('Resumo do cartao e obrigatorio.', 400);
+  }
+
+  if (!resumo.nomeTitular?.trim()) {
+    throw erroNegocio('Nome do titular e obrigatorio.', 400);
+  }
+
+  if (!/^\d{4}$/.test(resumo.numeroFinal)) {
+    throw erroNegocio('Final do cartao invalido.', 400);
+  }
+
+  if (!/^\d{2}$/.test(resumo.validadeMes)) {
+    throw erroNegocio('Mes de validade invalido.', 400);
+  }
+
+  if (!/^\d{2,4}$/.test(resumo.validadeAno)) {
+    throw erroNegocio('Ano de validade invalido.', 400);
+  }
+
+  return {
+    recebido: true,
+    metodoPagamento: dadosPagamento.metodoPagamento,
+    cartaoResumo: resumo,
+  };
+}
+
 export class ServiceAssinatura {
   static calcularConfirmacaoExpiraEm() {
     const data = new Date();
@@ -250,7 +313,9 @@ export class ServiceAssinatura {
   static async iniciarOuRegularizarAssinaturaMock(
     prestadorId: string,
     planoId: number,
+    dadosPagamento?: DadosPagamentoAssinaturaMock,
   ) {
+    const pagamentoMock = validarDadosPagamentoMock(dadosPagamento);
     const [usuario, plano] = await Promise.all([
       prisma.usuarios.findUnique({
         where: { id: prestadorId },
@@ -303,7 +368,16 @@ export class ServiceAssinatura {
         ...resultado,
       planoId,
       });
-      return { gateway_resultado: resultado, assinatura };
+      return {
+        gateway_resultado: {
+          ...resultado,
+          mensagem: pagamentoMock
+            ? 'Assinatura ativada com sucesso.'
+            : resultado.mensagem,
+        },
+        assinatura,
+        ...(pagamentoMock ? { pagamento_mock: pagamentoMock } : {}),
+      };
     }
 
     if (resultado.status === 'recusado') {
@@ -312,7 +386,11 @@ export class ServiceAssinatura {
         resultado.mensagem || 'Pagamento recusado.',
         planoId,
       );
-      return { gateway_resultado: resultado, assinatura };
+      return {
+        gateway_resultado: resultado,
+        assinatura,
+        ...(pagamentoMock ? { pagamento_mock: pagamentoMock } : {}),
+      };
     }
 
     const confirmacaoExpiraEm =
@@ -325,7 +403,11 @@ export class ServiceAssinatura {
       gateway: resultado.gateway,
       gateway_customer_id: resultado.gatewayCustomerId,
       gateway_subscription_id: resultado.gatewaySubscriptionId,
-      gateway_status: resultado.status,
+      gateway_status: pagamentoMock
+        ? limitarGatewayStatus(
+            `pagamento_mock_${dadosPagamento?.metodoPagamento || 'cartao'}`,
+          )
+        : resultado.status,
       confirmacao_expira_em: confirmacaoExpiraEm,
     };
 
@@ -348,7 +430,54 @@ export class ServiceAssinatura {
       return novaAssinatura;
     });
 
-    return { gateway_resultado: resultado, assinatura };
+    return {
+      gateway_resultado: {
+        ...resultado,
+        mensagem: pagamentoMock
+          ? 'Pagamento enviado para analise. A confirmacao pode levar ate 72 horas.'
+          : resultado.mensagem,
+      },
+      assinatura,
+      ...(pagamentoMock ? { pagamento_mock: pagamentoMock } : {}),
+    };
+  }
+
+  static async trocarCartaoAssinaturaMock(
+    prestadorId: string,
+    dadosPagamento: DadosPagamentoAssinaturaMock,
+  ) {
+    const pagamentoMock = validarDadosPagamentoMock(dadosPagamento);
+
+    if (!pagamentoMock) {
+      throw erroNegocio('Dados de pagamento sao obrigatorios.', 400);
+    }
+
+    const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
+    if (!assinaturaAtual) {
+      throw erroNegocio('Assinatura nao encontrada.', 404);
+    }
+
+    if (assinaturaAtual.status !== STATUS_ASSINATURA.ativa) {
+      throw erroNegocio(
+        'Assinatura nao esta ativa. Regularize a assinatura antes de trocar o cartao.',
+        409,
+      );
+    }
+
+    const assinatura = await prisma.assinaturas.update({
+      where: { id: assinaturaAtual.id },
+      data: {
+        gateway_status: limitarGatewayStatus(
+          `cartao_mock_atualizado_${dadosPagamento.metodoPagamento || 'cartao'}`,
+        ),
+      },
+    });
+
+    return {
+      message: 'Dados do cartao atualizados com sucesso.',
+      assinatura,
+      pagamento_mock: pagamentoMock,
+    };
   }
 
   static async ativarAssinatura(

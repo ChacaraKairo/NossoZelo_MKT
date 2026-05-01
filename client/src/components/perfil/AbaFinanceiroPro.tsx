@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import ModalCartaoAssinatura from '@/components/perfil/ModalCartaoAssinatura';
 import { assinaturaService } from '@/service/assinaturaService';
 import { PerfilUsuario } from '@/types/perfil';
+import { ModoModalCartaoAssinatura } from '@/types/assinatura';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import styles from '@/styles/components/perfil/AbaFinanceiroPro.module.css';
 
@@ -59,14 +61,18 @@ export default function AbaFinanceiroPro({
     perfil.assinatura_atual?.plano_id || 1,
   );
   const [carregandoAcao, setCarregandoAcao] = useState<
-    'regularizar' | 'cancelar' | null
+    'cancelar' | null
   >(null);
+  const [modalCartaoAberto, setModalCartaoAberto] = useState(false);
+  const [modoModalCartao, setModoModalCartao] =
+    useState<ModoModalCartaoAssinatura>('regularizar');
   const [erro, setErro] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
   const assinatura = perfil.assinatura_atual;
   const status = perfil.assinatura_status || assinatura?.status || 'pendente';
   const aguardandoConfirmacao = status === 'aguardando_confirmacao';
+  const assinaturaAtiva = status === 'ativa';
   const assinaturaCancelavel = Boolean(
     assinatura && !['cancelada', 'expirada'].includes(status),
   );
@@ -78,23 +84,21 @@ export default function AbaFinanceiroPro({
     [assinatura?.confirmacao_expira_em, perfil.assinatura_confirmacao_expira_em],
   );
 
-  const regularizar = async () => {
-    try {
-      setCarregandoAcao('regularizar');
-      setErro(null);
-      setMensagem(null);
-      const resultado =
-        await assinaturaService.regularizarAssinaturaMock(planoId);
-      setMensagem(
-        resultado.gateway_resultado.mensagem ||
-          'Solicitacao de assinatura enviada.',
-      );
-      onAssinaturaAtualizada?.();
-    } catch (error) {
-      setErro(extrairMensagemErro(error));
-    } finally {
-      setCarregandoAcao(null);
-    }
+  const abrirModalCartao = (modo: ModoModalCartaoAssinatura) => {
+    setErro(null);
+    setMensagem(null);
+    setModoModalCartao(modo);
+    setModalCartaoAberto(true);
+  };
+
+  const fecharModalCartao = () => {
+    setModalCartaoAberto(false);
+  };
+
+  const sucessoModalCartao = (mensagemSucesso: string) => {
+    setMensagem(mensagemSucesso);
+    setModalCartaoAberto(false);
+    onAssinaturaAtualizada?.();
   };
 
   const cancelar = async () => {
@@ -118,6 +122,12 @@ export default function AbaFinanceiroPro({
   };
 
   const carregando = carregandoAcao !== null;
+  const acaoPrincipal: {
+    label: string;
+    modo: ModoModalCartaoAssinatura;
+  } = assinaturaAtiva
+    ? { label: 'Trocar cartao', modo: 'trocar_cartao' }
+    : { label: 'Regularizar assinatura', modo: 'regularizar' };
 
   return (
     <section className={styles.section}>
@@ -159,9 +169,15 @@ export default function AbaFinanceiroPro({
 
       {aguardandoConfirmacao && (
         <div className={styles.notice}>
-          Pagamento iniciado. A confirmacao pode levar ate 72 horas. Durante
-          esse periodo, a conta segue acessivel, mas o perfil profissional fica
-          inativo para buscas e pedidos.
+          Pagamento em analise. A confirmacao pode levar ate 72 horas. Enquanto
+          isso, seu perfil nao aparece nas buscas e voce nao recebe pedidos.
+        </div>
+      )}
+
+      {assinaturaAtiva && (
+        <div className={styles.success}>
+          Sua assinatura esta ativa. Perfil profissional liberado para buscas e
+          pedidos.
         </div>
       )}
 
@@ -193,15 +209,25 @@ export default function AbaFinanceiroPro({
             <button
               type="button"
               className={styles.primaryButton}
-              onClick={regularizar}
+              onClick={() => abrirModalCartao(acaoPrincipal.modo)}
               disabled={
                 carregando || !Number.isInteger(planoId) || planoId <= 0
               }
             >
-              {carregandoAcao === 'regularizar'
-                ? 'Processando...'
-                : 'Regularizar assinatura'}
+              {acaoPrincipal.label}
             </button>
+            {aguardandoConfirmacao && (
+              <button
+                type="button"
+                className={styles.ghostButton}
+                onClick={() => abrirModalCartao('regularizar')}
+                disabled={
+                  carregando || !Number.isInteger(planoId) || planoId <= 0
+                }
+              >
+                Tentar novamente com outro cartao
+              </button>
+            )}
             <button
               type="button"
               className={styles.dangerButton}
@@ -215,6 +241,14 @@ export default function AbaFinanceiroPro({
           </div>
         </div>
       </div>
+      <ModalCartaoAssinatura
+        aberto={modalCartaoAberto}
+        modo={modoModalCartao}
+        planoId={planoId}
+        statusAssinatura={status}
+        onFechar={fecharModalCartao}
+        onSucesso={sucessoModalCartao}
+      />
     </section>
   );
 }
