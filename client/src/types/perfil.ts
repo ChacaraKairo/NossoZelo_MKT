@@ -18,6 +18,24 @@ export interface PerfilBase {
   tipo: TipoUsuario;
   avaliacao_media?: number | string | null;
   perfil_tipo?: TipoUsuario;
+  status_cadastro?: string | null;
+  email_confirmado?: boolean | null;
+}
+
+export interface AssinaturaAtual {
+  id: number;
+  prestador_id: string;
+  plano_id: number;
+  status: string;
+  gateway?: string | null;
+  gateway_customer_id?: string | null;
+  gateway_subscription_id?: string | null;
+  gateway_status?: string | null;
+  data_ultimo_pagamento?: string | Date | null;
+  data_proximo_vencimento?: string | Date | null;
+  periodo_tolerancia_ate?: string | Date | null;
+  confirmacao_expira_em?: string | Date | null;
+  cancelada_em?: string | Date | null;
 }
 
 export interface ServicoPerfil {
@@ -91,6 +109,11 @@ export interface PerfilUsuario extends PerfilBase {
   valor_diaria?: number | string | null;
   disponibilidade?: string | null;
   especialidades?: string[] | string | null;
+  assinatura_atual?: AssinaturaAtual | null;
+  assinatura_status?: string | null;
+  assinatura_confirmacao_expira_em?: string | Date | null;
+  perfil_profissional_ativo?: boolean | null;
+  motivo_perfil_inativo?: string | null;
 }
 
 export interface PerfilPrestadorPublico

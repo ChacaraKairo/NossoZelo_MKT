@@ -86,6 +86,64 @@
   line-height: 1.6;
 }
 
+.emailAlert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  border: 1px solid #f59e0b;
+  border-radius: var(--radius-lg);
+  background: #fffbeb;
+  color: #78350f;
+  padding: var(--space-5);
+}
+
+.emailAlert strong {
+  display: block;
+  font-weight: 900;
+}
+
+.emailAlert p {
+  margin: var(--space-1) 0 0;
+  line-height: 1.5;
+}
+
+.emailAlert button,
+.emailAction,
+.emailActionSecondary {
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  font-weight: 900;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+}
+
+.emailAlert button,
+.emailAction {
+  border: 0;
+  background: #b45309;
+  color: #fff;
+  cursor: pointer;
+}
+
+.emailAlert button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.emailActionSecondary {
+  border: 1px solid var(--color-border);
+  color: var(--color-text-strong);
+}
+
+.emailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
 .highlightName {
   color: var(--color-primary-700);
 }

@@ -21,9 +21,7 @@ export const usePerfilEditor = (
     }
   }, [perfilInicial]);
 
-  const iniciarEdicao = (campo: string) => {
-    console.log(`[LOG-FLUXO] Editando campo: ${campo}`);
-    setEditandoId(campo);
+  const iniciarEdicao = (campo: string) => {    setEditandoId(campo);
     setTempData({ ...perfilInicial }); // Reset para o valor original do banco
   };
 
@@ -33,10 +31,7 @@ export const usePerfilEditor = (
 
   const salvarEdicao = async (campo: string) => {
     try {
-      const valor = tempData[campo];
-      console.log(`[LOG-FLUXO] Salvando ${campo}:`, valor);
-
-      // 1. Chama o service (Back-end)
+      const valor = tempData[campo];      // 1. Chama o service (Back-end)
       const perfilAtualizado =
         await perfilService.atualizarDadosPerfil({
           [campo]: valor,
@@ -49,16 +44,7 @@ export const usePerfilEditor = (
         ...perfilAtualizado,
       }));
 
-      setEditandoId(null);
-      console.log(
-        `[LOG-FLUXO] Atualização concluída com sucesso.`,
-      );
-    } catch (err: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao salvar no hook:`,
-        err.message,
-      );
-      alert(
+      setEditandoId(null);    } catch (err: any) {      alert(
         'Não foi possível salvar a alteração. Verifique sua conexão.',
       );
     }

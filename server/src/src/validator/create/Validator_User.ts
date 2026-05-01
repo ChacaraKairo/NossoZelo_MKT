@@ -231,12 +231,7 @@ function validarCamposProfissionais(
 export function validarCreateUsuarioDto(input: any): {
   valid: boolean;
   erros: ErrosValidacao;
-} {
-  console.log(
-    '[LOG-FLUXO] Iniciando validarCreateUsuarioDto. Analisando estrutura do payload.',
-  );
-
-  const erros: ErrosValidacao = {};
+} {  const erros: ErrosValidacao = {};
   const usuario = input.usuario ?? input;
   const tipo = usuario?.tipo;
 
@@ -391,13 +386,7 @@ export function validarCreateUsuarioDto(input: any): {
 
   const isValid = Object.keys(erros).length === 0;
 
-  if (isValid) {
-    console.log('[LOG-FLUXO] DTO validado com sucesso.');
-  } else {
-    console.warn(
-      `[LOG-FLUXO] Validacao do DTO finalizada com ${Object.keys(erros).length} erro(s).`,
-    );
-  }
+  if (isValid) {  } else {  }
 
   return {
     valid: isValid,

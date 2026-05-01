@@ -30,27 +30,10 @@ class CrudController {
   static async listarEntidades(
     req: Request,
     res: Response,
-  ) {
-    console.log(
-      '[LOG-FLUXO] Iniciando listarEntidades no CrudController.',
-    );
-    try {
-      console.log(
-        '[LOG-FLUXO] Solicitando mapeamento de tabelas ao ServiceCrud.listar_entidades.',
-      );
-      const entidades =
-        await ServiceCrud.listar_entidades();
-
-      console.log(
-        `[LOG-FLUXO] Mapeamento concluído. Retornando ${entidades.length} entidades.`,
-      );
-      res.json(entidades);
+  ) {    try {      const entidades =
+        await ServiceCrud.listar_entidades();      res.json(entidades);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Falha ao listar entidades no controller: ${msg}`,
-      );
-      res.status(500).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(500).json({ error: msg });
     }
   }
 
@@ -60,27 +43,9 @@ class CrudController {
    * @param {Response} res - Resposta HTTP.
    */
   static async listarTodos(req: Request, res: Response) {
-    const { entity } = req.params;
-    console.log(
-      `[LOG-FLUXO] Iniciando listarTodos para a entidade: ${entity}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Invocando ServiceCrud.findAll para: ${entity}`,
-      );
-      const registros = await ServiceCrud.findAll(entity);
-
-      console.log(
-        `[LOG-FLUXO] Busca massiva finalizada. Encontrados ${registros.length} itens em ${entity}.`,
-      );
-      res.json(registros);
+    const { entity } = req.params;    try {      const registros = await ServiceCrud.findAll(entity);      res.json(registros);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Erro na listagem global da entidade ${entity}: ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 
@@ -90,40 +55,18 @@ class CrudController {
    * @param {Response} res - Resposta HTTP.
    */
   static async buscarPorId(req: Request, res: Response) {
-    const { entity, id } = req.params;
-    console.log(
-      `[LOG-FLUXO] Iniciando buscarPorId. Entidade: ${entity}, ID: ${id}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Executando ServiceCrud.findById para o registro alvo.`,
-      );
-      const registro = await ServiceCrud.findById(
+    const { entity, id } = req.params;    try {      const registro = await ServiceCrud.findById(
         entity,
         id,
       );
 
       // Ramificação condicional: Verificação de existência
-      if (!registro) {
-        console.warn(
-          `[LOG-FLUXO] Aviso: Registro ${id} não localizado na entidade ${entity}.`,
-        );
-        return res
+      if (!registro) {        return res
           .status(404)
           .json({ error: 'Registro não encontrado' });
-      }
-
-      console.log(
-        `[LOG-FLUXO] Registro ${id} localizado com sucesso em ${entity}.`,
-      );
-      res.json(registro);
+      }      res.json(registro);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Falha na busca por ID (${id}) em ${entity}: ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 
@@ -133,31 +76,13 @@ class CrudController {
    * @param {Response} res - Resposta HTTP.
    */
   static async buscarPorCampo(req: Request, res: Response) {
-    const { entity, field, value } = req.params;
-    console.log(
-      `[LOG-FLUXO] Iniciando buscarPorCampo. Entidade: ${entity}, Filtro: [${field}=${value}]`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Solicitando filtragem dinâmica ao ServiceCrud.findByField.`,
-      );
-      const registros = await ServiceCrud.findByField(
+    const { entity, field, value } = req.params;    try {      const registros = await ServiceCrud.findByField(
         entity,
         field,
         value,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Filtragem concluída. Registros retornados: ${registros.length}.`,
-      );
-      res.json(registros);
+      );      res.json(registros);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Erro ao filtrar por campo na entidade ${entity}: ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 
@@ -168,34 +93,12 @@ class CrudController {
    */
   static async criarRegistro(req: Request, res: Response) {
     const { entity } = req.params;
-    const data = req.body;
-    console.log(
-      `[LOG-FLUXO] Iniciando criarRegistro em ${entity}. Payload: ${JSON.stringify(
-        data,
-      )}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Invocando ServiceCrud.create para persistência.`,
-      );
-      const registroCriado = await ServiceCrud.create(
+    const data = req.body;    try {      const registroCriado = await ServiceCrud.create(
         entity,
         data,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Novo registro criado em ${entity}. ID: ${
-          registroCriado.id || 'Gerado'
-        }`,
-      );
-      res.status(201).json(registroCriado);
+      );      res.status(201).json(registroCriado);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Falha na criação de registro em ${entity}: ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 
@@ -206,40 +109,17 @@ class CrudController {
    */
   static async criarMultiplos(req: Request, res: Response) {
     const { entity } = req.params;
-    const data = req.body;
-    console.log(
-      `[LOG-FLUXO] Iniciando criarMultiplos em ${entity}.`,
-    );
-
-    try {
+    const data = req.body;    try {
       // Ramificação condicional: Validação de estrutura de dados (Array)
-      if (!Array.isArray(data)) {
-        console.error(
-          `[ERRO-FLUXO] Rejeitado: O corpo da requisição para criarMultiplos não é um array.`,
-        );
-        return res.status(400).json({
+      if (!Array.isArray(data)) {        return res.status(400).json({
           error: 'O corpo da requisição deve ser um array',
         });
-      }
-
-      console.log(
-        `[LOG-FLUXO] Processando lote de ${data.length} registros para a entidade ${entity}.`,
-      );
-      const resultado = await ServiceCrud.createMany(
+      }      const resultado = await ServiceCrud.createMany(
         entity,
         data,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Batch insert finalizado. Registros afetados: ${resultado.count}.`,
-      );
-      res.status(201).json(resultado);
+      );      res.status(201).json(resultado);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Falha no processamento em lote para ${entity}: ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 
@@ -253,31 +133,13 @@ class CrudController {
     res: Response,
   ) {
     const { entity, id } = req.params;
-    const data = req.body;
-    console.log(
-      `[LOG-FLUXO] Iniciando atualizarRegistro. Entidade: ${entity}, ID: ${id}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Enviando PATCH para ServiceCrud.update.`,
-      );
-      const registroAtualizado = await ServiceCrud.update(
+    const data = req.body;    try {      const registroAtualizado = await ServiceCrud.update(
         entity,
         id,
         data,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Registro ${id} em ${entity} foi atualizado.`,
-      );
-      res.json(registroAtualizado);
+      );      res.json(registroAtualizado);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Falha na atualização do registro ${id} (${entity}): ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 
@@ -290,27 +152,9 @@ class CrudController {
     req: Request,
     res: Response,
   ) {
-    const { entity, id } = req.params;
-    console.log(
-      `[LOG-FLUXO] Iniciando deletarRegistro. Entidade: ${entity}, ID: ${id}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Solicitando exclusão definitiva ao ServiceCrud.delete.`,
-      );
-      await ServiceCrud.delete(entity, id);
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Registro ${id} removido da entidade ${entity}.`,
-      );
-      res.status(204).send();
+    const { entity, id } = req.params;    try {      await ServiceCrud.delete(entity, id);      res.status(204).send();
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      console.error(
-        `[ERRO-FLUXO] Erro crítico ao deletar registro ${id} em ${entity}: ${msg}`,
-      );
-      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
     }
   }
 }

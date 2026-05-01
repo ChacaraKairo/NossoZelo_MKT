@@ -17,12 +17,7 @@ export class UploadController {
   static async fazerUpload(
     req: CadastroUploadRequest,
     res: Response,
-  ): Promise<void> {
-    console.log(
-      `[LOG-FLUXO] Iniciando Controller de Upload.`,
-    );
-
-    // 1. Recuperação de arquivos e metadados
+  ): Promise<void> {    // 1. Recuperação de arquivos e metadados
     const arquivos = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
@@ -32,22 +27,14 @@ export class UploadController {
     const usuarioIdToken = req.cadastroUpload?.usuarioId;
 
     // Validação de segurança: Sem usuarioId, o vínculo na tabela documentos_cuidadores falha.
-    if (!usuarioId || usuarioId === 'undefined') {
-      console.error(
-        '[ERRO-CONTROLLER] Tentativa de upload sem usuarioId válido.',
-      );
-      res.status(400).json({
+    if (!usuarioId || usuarioId === 'undefined') {      res.status(400).json({
         error:
           'ID do usuário (usuarioId) não fornecido ou inválido. O vínculo no banco é impossível.',
       });
       return;
     }
 
-    if (!usuarioIdToken || usuarioIdToken !== usuarioId) {
-      console.error(
-        '[ERRO-CONTROLLER] Token temporario nao pertence ao usuario informado no upload.',
-      );
-      res.status(403).json({
+    if (!usuarioIdToken || usuarioIdToken !== usuarioId) {      res.status(403).json({
         error:
           'Token temporario nao autoriza upload para este usuario.',
         message:
@@ -76,13 +63,7 @@ export class UploadController {
       const promises = Object.keys(arquivos).map(
         async (campo) => {
           const arquivo = arquivos[campo][0];
-          const isPrivado = campo !== 'foto'; // Apenas o campo 'foto' vai para o bucket público.
-
-          console.log(
-            `[LOG-UPLOAD] Orquestrando processamento para o campo: ${campo} (Privado: ${isPrivado})`,
-          );
-
-          /**
+          const isPrivado = campo !== 'foto';          /**
            * Delega para o StorageService a responsabilidade de:
            * 1. Converter Imagem para JPG (Sharp)
            * 2. Renomear com {usuarioId}_{campo}_{random}
@@ -103,23 +84,12 @@ export class UploadController {
       );
 
       // Aguarda todos os processos terminarem para dar a resposta única ao frontend.
-      await Promise.all(promises);
-
-      console.log(
-        `[LOG-SUCESSO] Todos os vínculos realizados para o usuário: ${usuarioId}`,
-      );
-
-      res.status(200).json({
+      await Promise.all(promises);      res.status(200).json({
         message:
           'Todos os documentos foram processados, convertidos e vinculados com sucesso.',
         data: resultados,
       });
-    } catch (error: any) {
-      console.error(
-        `[ERRO-CONTROLLER] Falha crítica na orquestração: ${error.message}`,
-      );
-
-      res.status(500).json({
+    } catch (error: any) {      res.status(500).json({
         error:
           'Erro interno ao processar e vincular arquivos.',
         details: error.message,

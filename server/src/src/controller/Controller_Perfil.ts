@@ -84,12 +84,7 @@ class ControllerPerfil {
   /**
    * Recupera o perfil completo do usuÃ¡rio autenticado (Dashboard).
    */
-  async obterMeuPerfil(req: AuthRequest, res: Response) {
-    console.log(
-      `[LOG-FLUXO] Controller: Iniciando obterMeuPerfil.`,
-    );
-
-    try {
+  async obterMeuPerfil(req: AuthRequest, res: Response) {    try {
       const usuarioId = req.user?.id;
 
       if (!usuarioId) {
@@ -106,22 +101,13 @@ class ControllerPerfil {
         );
 
       return res.status(200).json(perfil);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro em obterMeuPerfil: ${error.message}`,
-      );
-      return res
+    } catch (error: any) {      return res
         .status(statusErroPerfil(error))
         .json({ error: error.message });
     }
   }
 
-  async obterResumoPerfil(req: AuthRequest, res: Response) {
-    console.log(
-      `[LOG-FLUXO] Controller: Iniciando obterResumoPerfil.`,
-    );
-
-    try {
+  async obterResumoPerfil(req: AuthRequest, res: Response) {    try {
       const usuarioId = req.user?.id;
 
       if (!usuarioId) {
@@ -135,11 +121,7 @@ class ControllerPerfil {
         await ServicePerfil.obterResumoPerfil(usuarioId);
 
       return res.status(200).json(resumo);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro em obterResumoPerfil: ${error.message}`,
-      );
-      return res
+    } catch (error: any) {      return res
         .status(statusErroPerfil(error))
         .json({ error: error.message });
     }
@@ -151,11 +133,7 @@ class ControllerPerfil {
   async atualizarDadosPerfil(
     req: AuthRequest,
     res: Response,
-  ) {
-    console.log(
-      `[LOG-FLUXO] Controller: Iniciando atualizarDadosPerfil.`,
-    );
-    try {
+  ) {    try {
       const usuarioId = req.user?.id;
       const tipo = req.user?.tipo;
       if (!usuarioId || !tipo) {
@@ -188,11 +166,7 @@ class ControllerPerfil {
           dadosLimpos,
         );
       return res.status(200).json(perfilAtualizado);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro em atualizarDadosPerfil: ${error.message}`,
-      );
-      return res
+    } catch (error: any) {      return res
         .status(statusErroPerfil(error))
         .json({ error: error.message });
     }
@@ -207,11 +181,7 @@ class ControllerPerfil {
       const vitrine =
         await ServicePerfil.obterVitrinePrestador(id);
       return res.status(200).json(vitrine);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro em vitrinePrestador: ${error.message}`,
-      );
-      return res
+    } catch (error: any) {      return res
         .status(404)
         .json({ error: 'Prestador nÃ£o encontrado' });
     }
@@ -246,13 +216,7 @@ class ControllerPerfil {
           error:
             'Apenas prestadores podem acessar dados de clientes.',
         });
-      }
-
-      console.log(
-        `[LOG-FLUXO] Buscando dados do cliente ${clienteId} para o prestador ${prestadorId}`,
-      );
-
-      // Aguarda o retorno do Service
+      }      // Aguarda o retorno do Service
       const dados =
         await ServicePerfil.obterDadosClienteParaPrestador(
           clienteId,
@@ -264,21 +228,8 @@ class ControllerPerfil {
         return res
           .status(404)
           .json({ error: 'Dados nÃ£o localizados.' });
-      }
-
-      // Log de telemetria atualizado para evitar erro de compilaÃ§Ã£o
-      console.log(
-        `[LOG-FLUXO] Resposta enviada. Contato Liberado: ${
-          (dados as any).contato_liberado ? 'SIM' : 'NÃƒO'
-        }`,
-      );
-
-      return res.status(200).json(dados);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro em dadosClienteParaPrestador: ${error.message}`,
-      );
-      return res
+      }      return res.status(200).json(dados);
+    } catch (error: any) {      return res
         .status(statusErroPerfil(error))
         .json({ error: error.message });
     }

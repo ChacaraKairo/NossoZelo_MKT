@@ -18,20 +18,9 @@ class ControllerAvaliacao {
    * @returns {Promise<Response>} - Retorna o resultado da operação de avaliação.
    */
   static async registrar(req: AuthRequest, res: Response) {
-    const clienteId = req.user?.id;
-    console.log(
-      `[LOG-FLUXO] Controller: Iniciando processamento de nova avaliação enviada pelo Cliente: ${
-        clienteId || 'N/A'
-      }`,
-    );
-
-    try {
+    const clienteId = req.user?.id;    try {
       // Ramificação condicional: Verificação de integridade da sessão (Fail Fast)
-      if (!clienteId) {
-        console.error(
-          '[ERRO-FLUXO] Falha de autorização: Tentativa de registro de avaliação sem cliente identificado na sessão.',
-        );
-        return res.status(401).json({
+      if (!clienteId) {        return res.status(401).json({
           error: 'Cliente não identificado na sessão.',
         });
       }
@@ -43,30 +32,11 @@ class ControllerAvaliacao {
       const payload = {
         ...req.body,
         cliente_id: clienteId,
-      };
-
-      console.log(
-        `[LOG-FLUXO] Delegando lógica de negócio e recálculo de média para ServiceAvaliacao.registrarAvaliacao.`,
-      );
-
-      // Invocação do serviço especializado
+      };      // Invocação do serviço especializado
       const resultado =
-        await ServiceAvaliacao.registrarAvaliacao(payload);
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Avaliação ID ${resultado.id} processada com sucesso. A média do prestador foi atualizada.`,
-      );
-
-      // Retorno de sucesso (Created)
+        await ServiceAvaliacao.registrarAvaliacao(payload);      // Retorno de sucesso (Created)
       return res.status(201).json(resultado);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Exceção capturada no fluxo de avaliação: ${
-          error.message || error
-        }`,
-      );
-
-      return res
+    } catch (error: any) {      return res
         .status(error.status || 400)
         .json({ error: error.message });
     }

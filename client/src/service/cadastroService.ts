@@ -84,12 +84,7 @@ export class CadastroApiError extends Error {
  */
 export const cadastrarUsuario = async (
   dados: CadastroPayload,
-): Promise<any> => {
-  console.log(
-    `[LOG-FLUXO] Iniciando cadastrarUsuario para: ${dados.usuario.email}.`,
-  );
-
-  try {
+): Promise<any> => {  try {
     const api_url =
       process.env.NEXT_PUBLIC_API_URL ||
       'http://localhost:4000';
@@ -127,28 +122,13 @@ export const cadastrarUsuario = async (
     const uploadToken =
       resultado.data?.uploadToken ||
       resultado.uploadToken ||
-      resultado.upload_token;
-
-    console.log(
-      `[LOG-FLUXO] Sucesso: ID extraído para upload: ${idFinal || 'NÃO ENCONTRADO'}`,
-    );
-
-    if (!idFinal) {
-      console.warn(
-        '[AVISO-ESTRUTURA] Backend não enviou ID reconhecido:',
-        resultado,
-      );
-    }
+      resultado.upload_token;    if (!idFinal) {    }
 
     return {
       ...resultado,
       id: idFinal, // Injeta na raiz para o Hook useFinalizarCadastro consumir
       uploadToken,
     };
-  } catch (error: any) {
-    console.error(
-      `[ERRO-FLUXO] Erro crítico: ${error.message}`,
-    );
-    throw error;
+  } catch (error: any) {    throw error;
   }
 };

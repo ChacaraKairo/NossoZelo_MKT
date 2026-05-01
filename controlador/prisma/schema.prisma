@@ -1,0 +1,526 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model admins {
+  usuario_id      String    @id @db.VarChar(20)
+  cargo           String?   @default("Administrador do sistema") @db.VarChar(100)
+  permissao_total Boolean?  @default(true)
+  criado_em       DateTime? @default(now()) @db.Timestamp(0)
+  usuarios        usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "admins_ibfk_1")
+}
+
+model agenda {
+  id                Int                   @id @default(autoincrement())
+  prestador_id      String                @db.VarChar(20)
+  tipo_prestador    agenda_tipo_prestador
+  data              DateTime              @db.Date
+  hora_inicio       DateTime              @db.Time(0)
+  hora_fim          DateTime              @db.Time(0)
+  observacoes       String?               @db.Text
+  servico_realizado Boolean?              @default(false)
+  status            agenda_status?        @default(disponivel)
+  usuarios          usuarios              @relation(fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "agenda_ibfk_1")
+
+  @@index([prestador_id], map: "prestador_id")
+}
+
+// ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que Enfermeiros e Acompanhantes também possam ter agenda fixa
+model agenda_recorrente {
+  id           Int                           @id @default(autoincrement())
+  prestador_id String                        @db.VarChar(20)
+  dia_semana   agenda_recorrente_dia_semana?
+  hora_inicio  DateTime                      @db.Time(0)
+  hora_fim     DateTime                      @db.Time(0)
+  ativo        Boolean?                      @default(true)
+  usuarios     usuarios                      @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([prestador_id], map: "prestador_id")
+}
+
+// ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que qualquer prestador possa assinar um plano
+model assinaturas {
+  id                      Int                 @id @default(autoincrement())
+  prestador_id            String              @db.VarChar(20)
+  plano_id                Int
+  data_inicio             DateTime?           @default(now()) @db.Timestamp(0)
+  data_fim                DateTime?           @db.Timestamp(0)
+  status                  assinaturas_status  @default(pendente)
+  gateway                 String              @default("mock") @db.VarChar(30)
+  gateway_customer_id     String?             @db.VarChar(120)
+  gateway_subscription_id String?             @db.VarChar(120)
+  gateway_status          String?             @db.VarChar(60)
+  data_ultimo_pagamento   DateTime?           @db.Timestamp(0)
+  data_proximo_vencimento DateTime?           @db.Timestamp(0)
+  periodo_tolerancia_ate  DateTime?           @db.Timestamp(0)
+  confirmacao_expira_em   DateTime?           @db.Timestamp(0)
+  cancelada_em            DateTime?           @db.Timestamp(0)
+  criado_em               DateTime            @default(now()) @db.Timestamp(0)
+  atualizado_em           DateTime            @updatedAt @db.Timestamp(0)
+  usuarios                usuarios            @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planos                  planos              @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
+
+  @@index([prestador_id], map: "prestador_id")
+  @@index([plano_id], map: "plano_id")
+}
+
+model avaliacoes {
+  id                                           Int                       @id @default(autoincrement())
+  contratacao_id                               Int                       @unique
+  cliente_id                                   String                    @db.VarChar(20)
+  prestador_id                                 String                    @db.VarChar(20)
+  tipo_prestador                               avaliacoes_tipo_prestador
+  nota                                         Int?
+  comentario                                   String?                   @db.Text
+  data_avaliacao                               DateTime?                 @default(now()) @db.Timestamp(0)
+  usuarios_avaliacoes_cliente_idTousuarios     usuarios                  @relation("avaliacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_1")
+  usuarios_avaliacoes_prestador_idTousuarios   usuarios                  @relation("avaliacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_2")
+
+  @@index([cliente_id], map: "cliente_id")
+  @@index([prestador_id], map: "prestador_id")
+}
+
+model contratacoes {
+  id                                           Int                         @id @default(autoincrement())
+  cliente_id                                   String                      @db.VarChar(20)
+  prestador_id                                 String                      @db.VarChar(20)
+  tipo_prestador                               contratacoes_tipo_prestador
+  data                                         DateTime                    @db.Date
+  hora_inicio                                  DateTime                    @db.Time(0)
+  hora_fim                                     DateTime                    @db.Time(0)
+  preco                                        Decimal                     @db.Decimal(10, 2)
+  status                                       contratacoes_status?        @default(pendente)
+  observacoes                                  String?                     @db.Text
+  usuarios_contratacoes_cliente_idTousuarios   usuarios                    @relation("contratacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contratacoes_ibfk_1")
+  usuarios_contratacoes_prestador_idTousuarios usuarios                    @relation("contratacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contratacoes_ibfk_2")
+  pagamentos                                   pagamentos[]
+
+  @@index([cliente_id], map: "cliente_id")
+  @@index([prestador_id], map: "prestador_id")
+}
+
+model cuidador_especialidade {
+  id               Int            @id @default(autoincrement())
+  cuidador_id      String         @db.VarChar(20)
+  especialidade_id Int
+  cuidadores       cuidadores     @relation(fields: [cuidador_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "cuidador_especialidade_ibfk_1")
+  especialidades   especialidades @relation(fields: [especialidade_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cuidador_especialidade_ibfk_2")
+
+  @@index([cuidador_id], map: "cuidador_id")
+  @@index([especialidade_id], map: "especialidade_id")
+}
+
+model cuidadores {
+  usuario_id             String                   @id @db.VarChar(20)
+  bio                    String?                  @db.Text
+  anos_experiencia       Int?
+  valor_hora             Decimal?                 @db.Decimal(10, 2)
+  valor_diaria           Decimal?                 @db.Decimal(10, 2)
+  disponibilidade        String?                  @db.VarChar(255)
+  especialidades         String?                  @db.Text
+  avaliacao_media        Decimal?                 @default(0.00) @db.Decimal(3, 2)
+  documentos             String?                  @db.VarChar(255) // ✅ ATUALIZAÇÃO: Adicionado para Link S3
+  documento_profissional String?                  @db.VarChar(50)
+  conta_bancaria         String?                  @db.VarChar(50)
+  cuidador_especialidade cuidador_especialidade[]
+  usuarios               usuarios                 @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cuidadores_ibfk_1")
+
+}
+
+model denuncias {
+  id         Int               @id @default(autoincrement())
+  usuario_id String            @db.VarChar(20)
+  descricao  String            @db.Text
+  status     denuncias_status? @default(pendente)
+  usuarios   usuarios          @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "denuncias_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model documentos_cuidadores {
+  id          Int      @id @default(autoincrement())
+  usuario_id  String   @db.VarChar(20) // Renomeado para clareza
+  tipo        String   @db.VarChar(100)
+  url_arquivo String   @db.VarChar(255)
+
+  // 🔥 CORREÇÃO: Relacionamento agora aponta para 'usuarios'
+  usuarios    usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "documentos_prestadores_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id_idx")
+}
+
+model enfermeiros {
+  usuario_id       String   @id @db.VarChar(20)
+  coren            String   @unique(map: "coren") @db.VarChar(20)
+  bio              String?  @db.Text                                  // ✅ ATUALIZAÇÃO: Adicionado
+  especialidade    String?  @db.VarChar(100)
+  especialidades   String?  @db.Text
+  anos_experiencia Int?
+  valor_hora       Decimal? @db.Decimal(10, 2)
+  valor_diaria     Decimal? @db.Decimal(10, 2)
+  disponibilidade  String?  @db.VarChar(255)
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)          // ✅ ATUALIZAÇÃO: Adicionado
+  documentos       String?  @db.VarChar(255)                          // ✅ ATUALIZAÇÃO: Adicionado
+  usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "enfermeiros_ibfk_1")
+}
+
+model acompanhantes {
+  usuario_id       String   @id @db.VarChar(20)
+  bio              String?  @db.Text
+  anos_experiencia Int?
+  valor_hora       Decimal? @db.Decimal(10, 2)
+  valor_diaria     Decimal? @db.Decimal(10, 2)
+  disponibilidade  String?  @db.VarChar(255)
+  especialidades   String?  @db.Text
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)          // ✅ ATUALIZAÇÃO: Adicionado
+  documentos       String?  @db.VarChar(255)                          // ✅ ATUALIZAÇÃO: Adicionado
+  usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "acompanhantes_ibfk_1")
+}
+
+model especialidades {
+  id                     Int                      @id @default(autoincrement())
+  nome                   String                   @db.VarChar(100)
+  descricao              String?                  @db.Text
+  cuidador_especialidade cuidador_especialidade[]
+}
+
+model faturas {
+  id             Int       @id @default(autoincrement())
+  usuario_id     String    @db.VarChar(20)
+  descricao      String?   @db.Text
+  valor          Decimal?  @db.Decimal(10, 2)
+  vencimento     DateTime? @db.Date
+  pago           Boolean?  @default(false)
+  data_pagamento DateTime? @db.Timestamp(0)
+  usuarios       usuarios  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "faturas_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model logs_acao {
+  id             Int             @id @default(autoincrement())
+  usuario_id     String?         @db.VarChar(20)
+  tabela_afetada String?         @db.VarChar(100)
+  acao           logs_acao_acao?
+  data           DateTime?       @default(now()) @db.Timestamp(0)
+  usuarios       usuarios?       @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "logs_acao_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model logs_acesso {
+  id         Int       @id @default(autoincrement())
+  usuario_id String    @db.VarChar(20)
+  data_hora  DateTime? @default(now()) @db.Timestamp(0)
+  ip         String?   @db.VarChar(45)
+  usuarios   usuarios  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "logs_acesso_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model metodos_pagamento {
+  id         Int          @id @default(autoincrement())
+  nome       String       @db.VarChar(50)
+  pagamentos pagamentos[]
+}
+
+model pagamentos {
+  id                  Int                @id @default(autoincrement())
+  servico_id          Int
+  metodo_pagamento_id Int
+  valor               Decimal            @db.Decimal(10, 2)
+  status              pagamentos_status? @default(pendente)
+  data_pagamento      DateTime?          @default(now()) @db.Timestamp(0)
+  contratacoes        contratacoes       @relation(fields: [servico_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "pagamentos_ibfk_1")
+  metodos_pagamento   metodos_pagamento  @relation(fields: [metodo_pagamento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "pagamentos_ibfk_2")
+
+  @@index([metodo_pagamento_id], map: "metodo_pagamento_id")
+  @@index([servico_id], map: "servico_id")
+}
+
+model planos {
+  id          Int           @id @default(autoincrement())
+  nome        String        @db.VarChar(100)
+  valor       Decimal       @db.Decimal(10, 2)
+  beneficios  String?       @db.Text
+  assinaturas assinaturas[]
+}
+
+model recuperacao_senhas {
+  id         Int       @id @default(autoincrement())
+  usuario_id String    @db.VarChar(20)
+  token      String    @unique @db.VarChar(255)
+  expiracao  DateTime  @db.Timestamp(0)
+  usado      Boolean?  @default(false)
+  criado_em  DateTime? @default(now()) @db.Timestamp(0)
+  usuarios   usuarios  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recuperacao_senhas_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model relatorios {
+  id             Int             @id @default(autoincrement())
+  admin_id       String          @db.VarChar(20)
+  tipo           relatorios_tipo
+  periodo_inicio DateTime?       @db.Date
+  periodo_fim    DateTime?       @db.Date
+  gerado_em      DateTime?       @default(now()) @db.Timestamp(0)
+  usuarios       usuarios        @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relatorios_ibfk_1")
+
+  @@index([admin_id], map: "admin_id")
+}
+
+model servicos {
+  id             Int                     @id @default(autoincrement())
+  prestador_id   String                  @db.VarChar(20)
+  tipo_prestador servicos_tipo_prestador
+  nome           String                  @db.VarChar(100)
+  descricao      String                  @db.Text
+  valor          Decimal                 @db.Decimal(10, 2)
+  tipo_cobranca  servicos_tipo_cobranca
+  usuarios       usuarios                @relation(fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "servicos_ibfk_1")
+
+  @@index([prestador_id], map: "prestador_id")
+}
+
+model usuarios {
+  id                                               String               @id @db.VarChar(20)
+  nome                                             String               @db.VarChar(100)
+  email                                            String               @unique(map: "email") @db.VarChar(100)
+  senha                                            String               @db.VarChar(255)
+  telefone                                         String?              @db.VarChar(20)
+  cpf                                              String               @unique(map: "cpf") @db.VarChar(14)
+  sexo                                             usuarios_sexo?       @default(outro)
+  data_nascimento                                  DateTime?            @db.Date
+  cep                                              String               @db.VarChar(10)
+  endereco                                         String?              @db.VarChar(255)
+  bairro                                           String?              @db.VarChar(100)
+  cidade                                           String?              @db.VarChar(100)
+  estado                                           String?              @db.VarChar(50)
+  pais                                             String?              @default("Brasil") @db.VarChar(50)
+  url_foto_perfil                                  String?              @db.VarChar(255)
+  tipo                                             usuarios_tipo
+  status_cadastro                                  usuarios_status_cadastro @default(ativo)
+  email_confirmado                                 Boolean              @default(false)
+  criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
+  avaliacao_media                                  Decimal?             @default(0.00) @db.Decimal(3, 2)
+
+  // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
+  // ✅ ATUALIZAÇÃO: Relação com documentos genérica para todos os prestadores
+  documentos_prestadores                           documentos_cuidadores[]
+  confirmacoes_email                               confirmacoes_email[]
+
+  // Relacionamentos que você já possui
+  admins                                           admins?
+  agenda                                           agenda[]
+  agenda_recorrente                                agenda_recorrente[]
+  assinaturas                                      assinaturas[]
+  avaliacoes_avaliacoes_cliente_idTousuarios       avaliacoes[]            @relation("avaliacoes_cliente_idTousuarios")
+  avaliacoes_avaliacoes_prestador_idTousuarios     avaliacoes[]            @relation("avaliacoes_prestador_idTousuarios")
+  cartoes                                          cartoes[]
+  contratacoes_contratacoes_cliente_idTousuarios   contratacoes[]          @relation("contratacoes_cliente_idTousuarios")
+  contratacoes_contratacoes_prestador_idTousuarios contratacoes[]          @relation("contratacoes_prestador_idTousuarios")
+  cuidadores                                       cuidadores?
+  enfermeiros                                      enfermeiros?
+  acompanhantes                                    acompanhantes?
+  dados_bancarios                                  dados_bancarios?
+  denuncias                                        denuncias[]
+  faturas                                          faturas[]
+  localizacoes                                     localizacoes?
+  logs_acao                                        logs_acao[]
+  logs_acesso                                      logs_acesso[]
+  recuperacao_senhas                               recuperacao_senhas[]
+  relatorios                                       relatorios[]
+  servicos                                         servicos[]
+}
+
+
+model cartoes {
+  id               Int          @id @default(autoincrement())
+  usuario_id       String       @db.VarChar(20)
+  nome_titular     String?      @db.VarChar(100)
+  numero_mascarado String?      @db.VarChar(20)
+  validade_mes     Int?
+  validade_ano     Int?
+  bandeira         String?      @db.VarChar(50)
+  tipo             cartoes_tipo @default(credito)
+  token_gateway    String?      @db.VarChar(255)
+  ativo            Boolean?     @default(true)
+  usuarios         usuarios     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cartoes_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model dados_bancarios {
+  usuario_id    String                      @id @db.VarChar(20)
+  banco         String                      @db.VarChar(100)
+  agencia       String                      @db.VarChar(20)
+  conta         String                      @db.VarChar(30)
+  tipo_conta    dados_bancarios_tipo_conta? @default(corrente)
+  nome_titular  String                      @db.VarChar(100)
+  cpf_titular   String                      @db.VarChar(14)
+  criado_em     DateTime?                   @default(now()) @db.Timestamp(0)
+  atualizado_em DateTime?                   @default(now()) @db.Timestamp(0)
+  usuarios      usuarios                    @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dados_bancarios_ibfk_1")
+}
+
+model localizacoes {
+  usuario_id String   @id @db.VarChar(20)
+  latitude   Decimal? @db.Decimal(9, 6)
+  longitude  Decimal? @db.Decimal(9, 6)
+  usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_localizacoes_usuario")
+}
+// ✅ TABELA DE MANUTENÇÃO: Evita que o banco da Aiven desligue por inatividade
+model aiven_keep_alive {
+  id        Int      @id @default(1)
+  last_ping DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("_aiven_keep_alive")
+}
+
+// ==========================================
+// ✅ ENUMS
+// ==========================================
+
+enum agenda_recorrente_dia_semana {
+  domingo
+  segunda
+  ter_a   @map("terça")
+  quarta
+  quinta
+  sexta
+  s_bado  @map("sábado")
+}
+
+enum relatorios_tipo {
+  financeiro
+  usuarios
+  avaliacoes
+  servicos
+}
+
+enum avaliacoes_tipo_prestador {
+  cuidador
+  enfermeiro
+  acompanhante // ✅ ATUALIZAÇÃO: Adicionado
+}
+
+enum denuncias_status {
+  pendente
+  resolvido
+}
+
+enum logs_acao_acao {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+enum pagamentos_status {
+  pendente
+  pago
+  falhou
+}
+
+enum agenda_status {
+  disponivel
+  ocupado
+  indisponivel
+}
+
+enum servicos_tipo_cobranca {
+  hora
+  dia
+}
+
+enum cartoes_tipo {
+  credito
+  debito
+}
+
+enum usuarios_tipo {
+  cliente
+  cuidador
+  enfermeiro
+  acompanhante
+  admin
+}
+
+model confirmacoes_email {
+  id         Int      @id @default(autoincrement())
+  usuario_id String   @db.VarChar(20)
+  token      String   @unique @db.VarChar(255)
+  expiracao  DateTime @db.Timestamp(0)
+  usado      Boolean  @default(false)
+  criado_em  DateTime @default(now()) @db.Timestamp(0)
+
+  usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@index([token])
+}
+
+enum usuarios_status_cadastro {
+  ativo
+  pendente_pagamento
+  aguardando_confirmacao_pagamento
+  inadimplente
+  bloqueado
+  cancelado
+}
+
+enum assinaturas_status {
+  pendente
+  aguardando_confirmacao
+  ativa
+  atrasada
+  bloqueada
+  cancelada
+  falhou
+  expirada
+}
+
+enum dados_bancarios_tipo_conta {
+  corrente
+  poupanca
+  salario
+  investimento
+}
+
+enum usuarios_sexo {
+  masculino
+  feminino
+  outro
+}
+
+enum agenda_tipo_prestador {
+  cuidador
+  enfermeiro
+  acompanhante
+}
+
+enum servicos_tipo_prestador {
+  cuidador
+  enfermeiro
+  acompanhante
+}
+
+enum contratacoes_tipo_prestador {
+  cuidador
+  enfermeiro
+  acompanhante
+}
+
+enum contratacoes_status {
+  pendente
+  confirmado
+  concluido
+  paga
+  cancelado
+  manual
+}

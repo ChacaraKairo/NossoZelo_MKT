@@ -17,90 +17,36 @@ import UploadRouter from './Route_Upload';
 import PerfilRouter from './Route_Perfil';
 import AvaliacaoRouter from './Route_Avaliacao';
 import ServicoRouter from './Route_Servico';
-
-console.log(
-  '[LOG-FLUXO] Inicializando roteador central (index) e iniciando acoplamento de módulos.',
-);
-const router = Router();
-
-// ==========================================
-// REGISTRO DE MÓDULOS DE ROTA
-// ==========================================
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /create-users -> UserRouter',
-);
-/**
+import AssinaturaRouter from './Route_Assinatura';
+import ConfirmacaoEmailRouter from './Route_ConfirmacaoEmail';const router = Router();/**
  * Rota para criação e gerenciamento básico de usuários.
  */
-router.use('/create-users', UserRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /crud -> CrudRouter',
-);
-/**
+router.use('/create-users', UserRouter);/**
  * Rota para operações CRUD genéricas em múltiplas entidades.
  */
-router.use('/crud', CrudRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /login -> LoginRouter',
-);
-/**
+router.use('/crud', CrudRouter);/**
  * Rota para processos de autenticação e identidade.
  */
-router.use('/login', LoginRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /geolocalizacao -> LocalizacaoRouter',
-);
-/**
+router.use('/login', LoginRouter);/**
  * Rota para serviços geográficos, busca de CEP e proximidade.
  */
-router.use('/geolocalizacao', LocalizacaoRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /agendamentos -> AgendamentoRouter',
-);
-/**
+router.use('/geolocalizacao', LocalizacaoRouter);/**
  * Rota para gestão de contratações e agendas de serviços.
  */
-router.use('/agendamentos', AgendamentoRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /upload -> UploadRouter',
-);
-/**
+router.use('/agendamentos', AgendamentoRouter);/**
  * Rota para gerenciamento de upload de arquivos e documentos.
  */
-router.use('/upload', UploadRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /perfil -> PerfilRouter',
-);
-/**
+router.use('/upload', UploadRouter);/**
  * Rota para gerenciamento e vitrine de perfis.
  */
-router.use('/perfil', PerfilRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /avaliacoes -> AvaliacaoRouter',
-);
-/**
+router.use('/perfil', PerfilRouter);/**
  * Rota para sistema de avaliações cruzadas e gestão de reputação.
  */
-router.use('/avaliacoes', AvaliacaoRouter);
-
-console.log(
-  '[LOG-FLUXO] Acoplando módulo: /servicos -> ServicoRouter',
-);
-/**
+router.use('/avaliacoes', AvaliacaoRouter);/**
  * Rota para gerenciamento real dos serviços oferecidos por prestadores.
  */
 router.use('/servicos', ServicoRouter);
 
-console.log(
-  '[LOG-FLUXO] Roteamento central configurado com sucesso. Árvore de endpoints operacional.',
-);
+router.use('/assinaturas', AssinaturaRouter);
 
-export default router;
+router.use('/email', ConfirmacaoEmailRouter);export default router;

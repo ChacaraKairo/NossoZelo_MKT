@@ -1,0 +1,201 @@
+import { Request, Response } from 'express';
+import ServiceAssinatura from '../service/Service_Assinatura';
+import { AuthRequest } from '../types/auth';
+
+function statusErro(error: any) {
+  return typeof error?.status === 'number' ? error.status : 500;
+}
+
+function planoIdDoBody(body: any) {
+  const planoId = Number(body?.planoId ?? body?.plano_id);
+  if (!Number.isInteger(planoId) || planoId <= 0) {
+    const error = new Error('Informe um plano valido.') as Error & {
+      status?: number;
+    };
+    error.status = 400;
+    throw error;
+  }
+
+  return planoId;
+}
+
+function dadosPagamentoDoBody(body: any) {
+  if (!body?.cartaoToken && !body?.cartaoResumo && !body?.metodoPagamento) {
+    return undefined;
+  }
+
+  return {
+    metodoPagamento: body?.metodoPagamento,
+    cartaoToken: body?.cartaoToken,
+    cartaoResumo: body?.cartaoResumo,
+  };
+}
+
+class ControllerAssinatura {
+  async webhookAsaas(req: Request, res: Response) {
+    try {
+      const tokenHeader = req.headers['asaas-access-token'];
+      const token = Array.isArray(tokenHeader) ? tokenHeader[0] : tokenHeader;
+      const resultado = await ServiceAssinatura.processarWebhookAsaas({
+        token,
+        payload: req.body,
+      });
+
+      const statusHttp = resultado.processado ? 200 : 202;
+      return res.status(statusHttp).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async minha(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      const status =
+        await ServiceAssinatura.obterStatusAssinaturaPrestador(req.user.id);
+      return res.status(200).json(status);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async status(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      if (req.user.tipo !== 'admin' && req.user.id !== req.params.prestadorId) {
+        return res
+          .status(403)
+          .json({ error: 'Acesso negado para consultar esta assinatura.' });
+      }
+
+      const status =
+        await ServiceAssinatura.obterStatusAssinaturaPrestador(
+          req.params.prestadorId,
+        );
+      return res.status(200).json(status);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async iniciarMock(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      const planoId = planoIdDoBody(req.body);
+      const resultado =
+        await ServiceAssinatura.iniciarOuRegularizarAssinaturaMock(
+          req.user.id,
+          planoId,
+          dadosPagamentoDoBody(req.body),
+        );
+
+      return res.status(201).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async regularizarMock(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      const planoId = planoIdDoBody(req.body);
+      const resultado =
+        await ServiceAssinatura.iniciarOuRegularizarAssinaturaMock(
+          req.user.id,
+          planoId,
+          dadosPagamentoDoBody(req.body),
+        );
+
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async cancelarMock(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      const assinatura =
+        await ServiceAssinatura.cancelarAssinaturaPrestador(req.user.id);
+
+      return res.status(200).json({
+        message: 'Assinatura cancelada com sucesso.',
+        assinatura,
+      });
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async trocarCartaoMock(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      planoIdDoBody(req.body);
+      const resultado =
+        await ServiceAssinatura.trocarCartaoAssinaturaMock(
+          req.user.id,
+          dadosPagamentoDoBody(req.body) || {},
+        );
+
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async expirarPendentes(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      if (req.user.tipo !== 'admin') {
+        return res
+          .status(403)
+          .json({ error: 'Apenas administradores podem expirar pendentes.' });
+      }
+
+      const resultado =
+        await ServiceAssinatura.expirarAssinaturasSemConfirmacao();
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+}
+
+export default new ControllerAssinatura();

@@ -13,12 +13,14 @@ export interface LoginResponse {
     nome: string;
     email: string;
     tipo: string;
+    email_confirmado?: boolean;
   };
   usuario?: {
     id: string;
     nome: string;
     email: string;
     tipo: string;
+    email_confirmado?: boolean;
   };
   message?: string;
 }

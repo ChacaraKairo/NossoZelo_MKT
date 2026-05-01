@@ -198,7 +198,7 @@ const LoginPage = () => {
                   Lembrar meu e-mail
                 </label>
                 <Link
-                  href="/esqueci-senha"
+                  href="/recuperar-senha"
                   className={Style.forgotPasswordLink}
                 >
                   Esqueci minha senha

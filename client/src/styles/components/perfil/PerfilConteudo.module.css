@@ -54,6 +54,53 @@
   color: var(--color-text-inverse);
 }
 
+.tabButtonWarning {
+  border-color: #f59e0b;
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.tabButtonActive.tabButtonWarning {
+  background: #b45309;
+  color: #fff;
+  border-color: #b45309;
+}
+
+.subscriptionAlert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border: 1px solid #f59e0b;
+  border-radius: var(--radius-lg);
+  background: #fffbeb;
+  color: #78350f;
+  padding: var(--space-5);
+}
+
+.subscriptionAlert strong {
+  display: block;
+  font-size: var(--font-size-md);
+  font-weight: 900;
+}
+
+.subscriptionAlert p {
+  margin: var(--space-1) 0 0;
+  line-height: 1.5;
+}
+
+.subscriptionAlert button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: #b45309;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+}
+
 .editButton {
   margin-left: auto;
   background: var(--color-text-strong);

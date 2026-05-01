@@ -12,6 +12,7 @@ import {
 import { compare, hash } from 'bcrypt';
 import prisma from '../lib/prisma';
 import { STATUS_PRIVACY_GATE_CLIENTE } from '../constants/dominio';
+import ServiceAssinatura from './Service_Assinatura';
 
 async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {
   if (!contratacoes.length) return contratacoes;
@@ -101,12 +102,7 @@ export class ServicePerfil {
   /**
    * Recupera o perfil completo do usuário logado com as relações mapeadas pelo Prisma.
    */
-  static async obterMeuPerfilCompleto(usuarioId: string) {
-    console.log(
-      `[LOG-FLUXO] Iniciando busca agregada para o UsuarioID: ${usuarioId}`,
-    );
-
-    try {
+  static async obterMeuPerfilCompleto(usuarioId: string) {    try {
       const perfilEnriquecido =
         await prisma.usuarios.findUnique({
           where: { id: usuarioId },
@@ -208,6 +204,12 @@ export class ServicePerfil {
         return {
           perfil_tipo: perfilTipo,
           dados_usuario: dadosUsuario,
+          status_cadastro: dadosUsuario.status_cadastro,
+          email_confirmado: dadosUsuario.email_confirmado,
+          perfil_profissional_ativo: null,
+          motivo_perfil_inativo: dadosUsuario.email_confirmado
+            ? null
+            : 'email_nao_confirmado',
           contratacoes:
             contratacoesClienteComAvaliacoes,
           avaliacoes_feitas:
@@ -220,12 +222,8 @@ export class ServicePerfil {
           ? cuidadores
           : perfilTipo === 'enfermeiro'
             ? enfermeiros
-            : acompanhantes;
-
-      // Log de sucesso usando os arrays inclusos
-      console.log(
-        `[LOG-FLUXO] Sucesso: Dados recuperados (Serviços: ${perfilEnriquecido.servicos.length})`,
-      );
+            : acompanhantes;      const statusAssinatura =
+        await ServiceAssinatura.obterStatusAssinaturaPrestador(usuarioId);
 
       return {
         perfil_tipo: perfilTipo,
@@ -238,21 +236,22 @@ export class ServicePerfil {
         contratacoes:
           contratacoesPrestadorComAvaliacoes,
         avaliacao_media: perfilEnriquecido.avaliacao_media,
+        status_cadastro: statusAssinatura.status_cadastro,
+        email_confirmado: dadosUsuario.email_confirmado,
+        assinatura_atual: statusAssinatura.assinatura_atual,
+        assinatura_status: statusAssinatura.assinatura_status,
+        assinatura_confirmacao_expira_em:
+          statusAssinatura.assinatura_confirmacao_expira_em,
+        perfil_profissional_ativo:
+          statusAssinatura.perfil_profissional_ativo,
+        motivo_perfil_inativo:
+          statusAssinatura.motivo_perfil_inativo,
       };
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao obter dados do usuário ${usuarioId}: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
-  static async obterResumoPerfil(usuarioId: string) {
-    console.log(
-      `[LOG-FLUXO] Buscando resumo do perfil para o UsuarioID: ${usuarioId}`,
-    );
-
-    try {
+  static async obterResumoPerfil(usuarioId: string) {    try {
       const usuario = await prisma.usuarios.findUnique({
         where: { id: usuarioId },
         select: {
@@ -340,11 +339,7 @@ export class ServicePerfil {
         perfil_completo:
           dadosBasicosCompletos && perfilProfissionalExiste,
       };
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao obter resumo do perfil ${usuarioId}: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -377,6 +372,15 @@ export class ServicePerfil {
 
       if (!perfil)
         throw new Error('Prestador não encontrado');
+
+      const perfilProfissionalAtivo =
+        await ServiceAssinatura.prestadorPodeUsarPerfilProfissional(
+          prestadorId,
+        );
+
+      if (!perfilProfissionalAtivo) {
+        throw new Error('Prestador indisponivel');
+      }
 
       const {
         senha,
@@ -415,30 +419,20 @@ export class ServicePerfil {
         especialidades:
           dadosProfissionais?.especialidades ?? null,
         contatos: {
-          email,
-          telefone,
           cidade: perfil.cidade,
           estado: perfil.estado,
         },
         rating: Number(perfil.avaliacao_media) || 0,
-        pode_ver_contato: Boolean(email || telefone),
+        pode_ver_contato: false,
       };
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha na vitrine: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
   static async atualizarDadosPerfil(
     usuarioId: string,
     dadosParciais: any,
-  ) {
-    console.log(
-      `[LOG-FLUXO] Atualizando dados do usuário ID: ${usuarioId}`,
-    );
-    try {
+  ) {    try {
       const perfilAtualizado = await prisma.usuarios.update(
         {
           where: { id: usuarioId },
@@ -448,23 +442,14 @@ export class ServicePerfil {
 
       const { senha, ...dadosSeguros } = perfilAtualizado;
       return dadosSeguros;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao atualizar perfil: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
   static async obterDadosClienteParaPrestador(
     clienteId: string,
     prestadorId: string,
-  ) {
-    console.log(
-      `[LOG-FLUXO] Privacy Gate: validando acesso do prestador ${prestadorId} aos dados do cliente ${clienteId}.`,
-    );
-
-    const statusPermitidos: contratacoes_status[] = [
+  ) {    const statusPermitidos: contratacoes_status[] = [
       ...STATUS_PRIVACY_GATE_CLIENTE,
     ];
 
@@ -487,11 +472,7 @@ export class ServicePerfil {
           },
         });
 
-      if (!contratacaoValida) {
-        console.warn(
-          `[LOG-FLUXO] Privacy Gate: nenhuma contrataÃ§Ã£o vÃ¡lida encontrada entre cliente ${clienteId} e prestador ${prestadorId}.`,
-        );
-        return null;
+      if (!contratacaoValida) {        return null;
       }
 
       const cliente = await prisma.usuarios.findUnique({
@@ -509,11 +490,7 @@ export class ServicePerfil {
         },
       });
 
-      if (!cliente) {
-        console.warn(
-          `[LOG-FLUXO] Privacy Gate: cliente ${clienteId} nÃ£o encontrado apÃ³s validaÃ§Ã£o de contrataÃ§Ã£o.`,
-        );
-        return null;
+      if (!cliente) {        return null;
       }
 
       return {
@@ -530,20 +507,11 @@ export class ServicePerfil {
         contratacao_id: contratacaoValida.id,
         status_contratacao: contratacaoValida.status,
       };
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Privacy Gate: falha ao validar acesso aos dados do cliente: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
-  static async atualizarMediaAvaliacao(usuarioId: string) {
-    console.log(
-      `[LOG-FLUXO] Recalculando média para o ID: ${usuarioId}`,
-    );
-
-    try {
+  static async atualizarMediaAvaliacao(usuarioId: string) {    try {
       // Busca todas as notas recebidas por este prestador
       const avaliacoes = await prisma.avaliacoes.findMany({
         where: { prestador_id: usuarioId },
@@ -564,11 +532,7 @@ export class ServicePerfil {
       });
 
       return media;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao atualizar média: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -581,12 +545,7 @@ export class ServicePerfil {
     usuarioId: string,
     tipo: string,
     dados: any,
-  ) {
-    console.log(
-      `[LOG-FLUXO] ServicePerfil: Iniciando atualização multi-tabela para o ID ${usuarioId}`,
-    );
-
-    // 1. Dicionário de campos pertencentes à tabela mãe (usuarios)
+  ) {    // 1. Dicionário de campos pertencentes à tabela mãe (usuarios)
     const camposBloqueados = new Set([
       'id',
       'email',
@@ -780,12 +739,7 @@ export class ServicePerfil {
 
       // 6. Retorna o perfil fresquinho, já usando o seu método de obter completo
       return await this.obterMeuPerfilCompleto(usuarioId);
-    } catch (error: any) {
-      console.error(
-        '[ERRO-FLUXO] Falha na transação de atualização de perfil:',
-        error.message,
-      );
-      throw new Error(
+    } catch (error: any) {      throw new Error(
         'Falha ao sincronizar dados com o banco. Verifique os formatos enviados.',
       );
     }

@@ -76,11 +76,7 @@ export class GeolocalizacaoService {
    * @param {number} lon - Longitude de origem.
    * @returns {any} - Fragmento SQL compatível com Prisma.sql.
    */
-  private static getSqlDistancia(lat: number, lon: number) {
-    console.log(
-      `[LOG-FLUXO] Gerando fragmento SQL de distância para Lat: ${lat}, Lon: ${lon}`,
-    );
-    return Prisma.sql`
+  private static getSqlDistancia(lat: number, lon: number) {    return Prisma.sql`
       (${this.EARTH_RADIUS_KM} * ACOS(
         COS(RADIANS(${lat})) *
         COS(RADIANS(l.latitude)) *
@@ -99,40 +95,18 @@ export class GeolocalizacaoService {
    */
   private static async obterLocalizacaoUsuario(
     usuarioId: string,
-  ): Promise<Coordenadas> {
-    console.log(
-      `[LOG-FLUXO] Iniciando obterLocalizacaoUsuario para o ID: ${usuarioId}`,
-    );
-
-    try {
-      console.log(
-        `[LOG-FLUXO] Consultando tabela 'localizacoes' para o usuário: ${usuarioId}`,
-      );
-      const loc = await prisma.localizacoes.findUnique({
+  ): Promise<Coordenadas> {    try {      const loc = await prisma.localizacoes.findUnique({
         where: { usuario_id: usuarioId },
       });
 
-      if (!loc) {
-        console.error(
-          `[ERRO-FLUXO] Localização não encontrada para o usuário: ${usuarioId}.`,
-        );
-        throw new Error(
+      if (!loc) {        throw new Error(
           'Localização do usuário não encontrada.',
         );
-      }
-
-      console.log(
-        `[LOG-FLUXO] Localização recuperada: Lat ${loc.latitude}, Lon ${loc.longitude}`,
-      );
-      return {
+      }      return {
         latitude: Number(loc.latitude),
         longitude: Number(loc.longitude),
       };
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao obter localização do usuário ${usuarioId}. Detalhes Técnicos: ${error.message}`,
-      );
-      throw error;
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -147,74 +121,23 @@ export class GeolocalizacaoService {
   public static async buscarCoordenadasPorCep(
     cep: string,
   ): Promise<Coordenadas> {
-    const cepLimpo = cep.replace(/\D/g, '');
-    console.log(
-      `[LOG-FLUXO] Iniciando busca de coordenadas para o CEP: ${cepLimpo}`,
-    );
-
-    try {
-      console.log(
-        '[LOG-FLUXO] Tentativa 1: Busca direta via Nominatim (OpenStreetMap).',
-      );
-      const coordenadasDiretas =
+    const cepLimpo = cep.replace(/\D/g, '');    try {      const coordenadasDiretas =
         await this.buscarPorCepNoNominatim(cepLimpo);
 
-      if (coordenadasDiretas) {
-        console.log(
-          '[LOG-FLUXO] Coordenadas encontradas na primeira tentativa (Nominatim).',
-        );
-        return coordenadasDiretas;
-      }
-
-      console.log(
-        '[LOG-FLUXO] Tentativa 1 falhou. Tentativa 2: Buscando endereço via ViaCEP para enriquecimento.',
-      );
-      const endereco = await this.buscarEnderecoViaCep(
+      if (coordenadasDiretas) {        return coordenadasDiretas;
+      }      const endereco = await this.buscarEnderecoViaCep(
         cepLimpo,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Endereço recuperado do ViaCEP: ${endereco.logradouro}, ${endereco.localidade}`,
-      );
-
-      console.log(
-        '[LOG-FLUXO] Tentando geocodificar o endereço retornado pelo ViaCEP...',
-      );
-      const coordenadasEndereco =
+      );  const coordenadasEndereco =
         await this.buscarPorEndereco(endereco);
 
-      if (coordenadasEndereco) {
-        console.log(
-          '[LOG-FLUXO] Coordenadas encontradas via geocodificação de endereço.',
-        );
-        return coordenadasEndereco;
-      }
-
-      console.log(
-        '[LOG-FLUXO] Tentativa 2 falhou. Tentativa 3: Busca genérica por Cidade/Estado.',
-      );
-      const cidadeEstado = `${endereco.localidade}, ${endereco.uf}, Brasil`;
+      if (coordenadasEndereco) {        return coordenadasEndereco;
+      }      const cidadeEstado = `${endereco.localidade}, ${endereco.uf}, Brasil`;
       const coordenadasCidade =
         await this.buscarPorEndereco(cidadeEstado);
 
-      if (coordenadasCidade) {
-        console.log(
-          '[LOG-FLUXO] Coordenadas aproximadas encontradas via Cidade/Estado.',
-        );
-        return coordenadasCidade;
-      }
-
-      console.error(
-        '[ERRO-FLUXO] Todas as tentativas de geocodificação falharam para o CEP informado.',
-      );
-      throw new Error('Coordenadas não encontradas.');
-    } catch (erro: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha crítica no fluxo de geocodificação do CEP ${cepLimpo}. Detalhes: ${
-          erro.message || erro
-        }`,
-      );
-      throw new Error(
+      if (coordenadasCidade) {        return coordenadasCidade;
+      }      throw new Error('Coordenadas não encontradas.');
+    } catch (erro: any) {      throw new Error(
         `Erro ao buscar coordenadas: ${erro}`,
       );
     }
@@ -227,36 +150,18 @@ export class GeolocalizacaoService {
   private static async buscarPorCepNoNominatim(
     cep: string,
   ): Promise<Coordenadas | null> {
-    const url = `https://nominatim.openstreetmap.org/search?postalcode=${cep}&country=Brazil&format=json`;
-    console.log(
-      `[LOG-FLUXO] Chamada externa Nominatim (CEP): ${url}`,
-    );
-
-    try {
+    const url = `https://nominatim.openstreetmap.org/search?postalcode=${cep}&country=Brazil&format=json`;    try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
       });
       const dados = await resposta.json();
 
-      if (dados && dados.length > 0) {
-        console.log(
-          `[LOG-FLUXO] Nominatim retornou dados para o CEP ${cep}.`,
-        );
-        return {
+      if (dados && dados.length > 0) {        return {
           latitude: parseFloat(dados[0].lat),
           longitude: parseFloat(dados[0].lon),
         };
-      }
-
-      console.log(
-        `[LOG-FLUXO] Nominatim não retornou resultados para o CEP ${cep}.`,
-      );
-      return null;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro na API Nominatim (Busca CEP): ${error.message}`,
-      );
-      return null;
+      }      return null;
+    } catch (error: any) {      return null;
     }
   }
 
@@ -267,31 +172,13 @@ export class GeolocalizacaoService {
   private static async buscarEnderecoViaCep(
     cep: string,
   ): Promise<any> {
-    const url = `https://viacep.com.br/ws/${cep}/json/`;
-    console.log(
-      `[LOG-FLUXO] Chamada externa ViaCEP: ${url}`,
-    );
-
-    try {
+    const url = `https://viacep.com.br/ws/${cep}/json/`;    try {
       const resposta = await fetch(url);
       const dados = await resposta.json();
 
-      if (dados.erro) {
-        console.error(
-          `[ERRO-FLUXO] ViaCEP retornou erro para o CEP: ${cep}.`,
-        );
-        throw new Error('CEP não encontrado.');
-      }
-
-      console.log(
-        `[LOG-FLUXO] Dados do CEP ${cep} recuperados do ViaCEP.`,
-      );
-      return dados;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha na comunicação com ViaCEP: ${error.message}`,
-      );
-      throw error;
+      if (dados.erro) {        throw new Error('CEP não encontrado.');
+      }      return dados;
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -309,36 +196,18 @@ export class GeolocalizacaoService {
 
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query,
-    )}&format=json`;
-    console.log(
-      `[LOG-FLUXO] Chamada externa Nominatim (Endereço): ${url}`,
-    );
-
-    try {
+    )}&format=json`;    try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
       });
       const dados = await resposta.json();
 
-      if (dados && dados.length > 0) {
-        console.log(
-          `[LOG-FLUXO] Nominatim localizou coordenadas para o endereço.`,
-        );
-        return {
+      if (dados && dados.length > 0) {        return {
           latitude: parseFloat(dados[0].lat),
           longitude: parseFloat(dados[0].lon),
         };
-      }
-
-      console.log(
-        '[LOG-FLUXO] Nominatim não retornou resultados para o endereço especificado.',
-      );
-      return null;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro na API Nominatim (Busca Endereço): ${error.message}`,
-      );
-      return null;
+      }      return null;
+    } catch (error: any) {      return null;
     }
   }
 
@@ -372,14 +241,7 @@ export class GeolocalizacaoService {
     raioKm?: number;
     precoMax?: number;
     limit?: number;
-  }): Promise<any[]> {
-    console.log(
-      `[LOG-FLUXO] Iniciando buscarPrestadores. Filtros recebidos: ${JSON.stringify(
-        params,
-      )}`,
-    );
-
-    const {
+  }): Promise<any[]> {    const {
       idUsuario,
       nome,
       localizacao,
@@ -403,38 +265,30 @@ export class GeolocalizacaoService {
           : null;
 
       const conditions = [];
+      conditions.push(Prisma.sql`u.email_confirmado = true`);
+      conditions.push(Prisma.sql`u.status_cadastro = 'ativo'`);
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1
+        FROM assinaturas ass
+        WHERE ass.prestador_id = u.id
+          AND ass.status = 'ativa'
+      )`);
 
       // Filtro de Tipo
-      if (tipoFiltro) {
-        console.log(
-          `[LOG-FLUXO] Aplicando filtro de tipo específico: ${tipoFiltro}`,
-        );
-        conditions.push(Prisma.sql`u.tipo = ${tipoFiltro}`);
-      } else {
-        console.log(
-          '[LOG-FLUXO] Filtro de tipo genérico aplicado para todos os prestadores.',
-        );
-        conditions.push(
+      if (tipoFiltro) {        conditions.push(Prisma.sql`u.tipo = ${tipoFiltro}`);
+      } else {        conditions.push(
           Prisma.sql`u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')`,
         );
       }
 
       // Filtro de Nome
-      if (nome) {
-        console.log(
-          `[LOG-FLUXO] Aplicando filtro de busca por nome: ${nome}`,
-        );
-        conditions.push(
+      if (nome) {        conditions.push(
           Prisma.sql`u.nome LIKE ${'%' + nome + '%'}`,
         );
       }
 
       // Filtro de Preço
-      if (precoMax) {
-        console.log(
-          `[LOG-FLUXO] Aplicando filtro de teto orçamentário: ${precoMax}`,
-        );
-        conditions.push(
+      if (precoMax) {        conditions.push(
           Prisma.sql`EXISTS (SELECT 1 FROM servicos s WHERE s.prestador_id = u.id AND s.valor <= ${Number(
             precoMax,
           )})`,
@@ -458,11 +312,7 @@ export class GeolocalizacaoService {
       if (localizacao) {
         const ufInformada = obterUfPorTexto(localizacao);
 
-        if (ufInformada) {
-          console.log(
-            `[LOG-FLUXO] Localização interpretada como estado brasileiro: ${ufInformada}.`,
-          );
-          conditions.push(Prisma.sql`u.estado = ${ufInformada}`);
+        if (ufInformada) {          conditions.push(Prisma.sql`u.estado = ${ufInformada}`);
         } else {
           const coordenadasLocalizacao =
             await this.buscarCoordenadasPorTexto(localizacao);
@@ -480,11 +330,7 @@ export class GeolocalizacaoService {
       }
 
       // Lógica de Cálculo de Raio Dinâmico
-      if (!origemBusca && idUsuario && raioKm) {
-        console.log(
-          `[LOG-FLUXO] Requisitado filtro por raio (${raioKm}km) baseado na localização do usuário logado: ${idUsuario}`,
-        );
-        try {
+      if (!origemBusca && idUsuario && raioKm) {        try {
           const loc = await this.obterLocalizacaoUsuario(
             idUsuario,
           );
@@ -495,15 +341,7 @@ export class GeolocalizacaoService {
           havingClause = Prisma.sql`HAVING distancia <= ${Number(
             raioKm,
           )}`;
-          orderClause = Prisma.sql`ORDER BY distancia ASC`;
-          console.log(
-            '[LOG-FLUXO] Parâmetros de distância espacial injetados com sucesso na query SQL.',
-          );
-        } catch (error) {
-          console.warn(
-            `[LOG-FLUXO] Aviso: Cálculo de raio ignorado. Usuário ${idUsuario} não possui geolocalização definida.`,
-          );
-        }
+          orderClause = Prisma.sql`ORDER BY distancia ASC`;        } catch (error) {        }
       }
 
       if (origemBusca) {
@@ -575,24 +413,8 @@ export class GeolocalizacaoService {
         ${havingClause}
         ${orderClause}
         LIMIT ${Number(limit)};
-      `;
-
-      console.log(
-        '[LOG-FLUXO] Despachando consulta SQL bruta (queryRaw) ao servidor de banco de dados.',
-      );
-      const resultados = await prisma.$queryRaw(query);
-
-      console.log(
-        `[LOG-FLUXO] Busca de prestadores concluída. Registros retornados: ${
-          Array.isArray(resultados) ? resultados.length : 0
-        }`,
-      );
-      return resultados as any[];
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha fatal na execução de buscarPrestadores: ${error.message}`,
-      );
-      throw error;
+      `;      const resultados = await prisma.$queryRaw(query);      return resultados as any[];
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -606,39 +428,28 @@ export class GeolocalizacaoService {
   public static async buscarUsuariosPorRaioPorUsuarioId(
     usuarioId: string,
     raioKm: number,
-  ): Promise<string[]> {
-    console.log(
-      `[LOG-FLUXO] Iniciando buscarUsuariosPorRaioPorUsuarioId. Usuário: ${usuarioId}, Raio: ${raioKm}km`,
-    );
-
-    try {
+  ): Promise<string[]> {    try {
       const loc = await this.obterLocalizacaoUsuario(
         usuarioId,
-      );
-      console.log(
-        '[LOG-FLUXO] Localização base para raio recuperada. Executando query espacial.',
-      );
-
-      const usuarios = await prisma.$queryRaw<any[]>`
+      );      const usuarios = await prisma.$queryRaw<any[]>`
         SELECT u.id
         FROM usuarios u
         JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         AND ${this.getSqlDistancia(
           loc.latitude,
           loc.longitude,
         )} <= ${raioKm};
-      `;
-
-      console.log(
-        `[LOG-FLUXO] Finalizado: ${usuarios.length} usuários encontrados no raio de ${raioKm}km.`,
-      );
-      return usuarios.map((u: any) => u.id);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha na busca por raio para o usuário ${usuarioId}: ${error.message}`,
-      );
-      throw error;
+      `;      return usuarios.map((u: any) => u.id);
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -648,20 +459,10 @@ export class GeolocalizacaoService {
    */
   public static async buscar20UsuariosMaisProximos(
     usuarioId: string,
-  ): Promise<string[]> {
-    console.log(
-      `[LOG-FLUXO] Iniciando buscar20UsuariosMaisProximos para o ID: ${usuarioId}`,
-    );
-
-    try {
+  ): Promise<string[]> {    try {
       const loc = await this.obterLocalizacaoUsuario(
         usuarioId,
-      );
-
-      console.log(
-        '[LOG-FLUXO] Calculando matriz de distância para os 20 prestadores mais próximos.',
-      );
-      const usuariosProximos = await prisma.$queryRaw<
+      );      const usuariosProximos = await prisma.$queryRaw<
         any[]
       >`
         SELECT u.id, ${this.getSqlDistancia(
@@ -671,19 +472,18 @@ export class GeolocalizacaoService {
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.id != ${usuarioId} AND u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         ORDER BY distancia ASC
         LIMIT 20;
-      `;
-
-      console.log(
-        `[LOG-FLUXO] Sucesso: Recuperados os 20 vizinhos mais próximos de ${usuarioId}.`,
-      );
-      return usuariosProximos.map((u: any) => u.id);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha ao processar ranking de proximidade: ${error.message}`,
-      );
-      throw error;
+      `;      return usuariosProximos.map((u: any) => u.id);
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -695,32 +495,18 @@ export class GeolocalizacaoService {
   public static async buscar20UsuariosMaisProximosPorTipo(
     usuarioId: string,
     tipo: string,
-  ): Promise<string[]> {
-    console.log(
-      `[LOG-FLUXO] Iniciando buscar20UsuariosMaisProximosPorTipo. Usuário: ${usuarioId}, Tipo: ${tipo}`,
-    );
-
-    try {
+  ): Promise<string[]> {    try {
       const tiposPermitidos = [
         'cuidador',
         'enfermeiro',
         'acompanhante',
       ];
-      if (!tiposPermitidos.includes(tipo)) {
-        console.error(
-          `[ERRO-FLUXO] Violação de parâmetro: Tipo '${tipo}' é inválido para busca.`,
-        );
-        throw new Error('Tipo inválido.');
+      if (!tiposPermitidos.includes(tipo)) {        throw new Error('Tipo inválido.');
       }
 
       const loc = await this.obterLocalizacaoUsuario(
         usuarioId,
-      );
-
-      console.log(
-        `[LOG-FLUXO] Executando query filtrada por tipo: ${tipo} e ordenada por distância.`,
-      );
-      const usuariosProximos = await prisma.$queryRaw<
+      );      const usuariosProximos = await prisma.$queryRaw<
         any[]
       >`
         SELECT u.id, ${this.getSqlDistancia(
@@ -730,19 +516,18 @@ export class GeolocalizacaoService {
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.id != ${usuarioId} AND u.tipo = ${tipo}
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         ORDER BY distancia ASC
         LIMIT 20;
-      `;
-
-      console.log(
-        `[LOG-FLUXO] Busca por tipo concluída. Encontrados: ${usuariosProximos.length} prestadores do tipo ${tipo}.`,
-      );
-      return usuariosProximos.map((u: any) => u.id);
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Erro na busca por tipo e proximidade espacial: ${error.message}`,
-      );
-      throw error;
+      `;      return usuariosProximos.map((u: any) => u.id);
+    } catch (error: any) {      throw error;
     }
   }
 
@@ -756,21 +541,11 @@ export class GeolocalizacaoService {
     usuarioId: string,
     nome: string,
     raioKm: number = 50,
-  ): Promise<any[]> {
-    console.log(
-      `[LOG-FLUXO] Iniciando buscarPorNomeERaio. Nome: ${nome}, Raio: ${raioKm}km, Origem: ${usuarioId}`,
-    );
-
-    try {
+  ): Promise<any[]> {    try {
       const loc = await this.obterLocalizacaoUsuario(
         usuarioId,
       );
-      const nomeBusca = `%${nome}%`;
-
-      console.log(
-        '[LOG-FLUXO] Executando query combinada (LIKE + Haversine).',
-      );
-      const resultados = await prisma.$queryRaw<any[]>`
+      const nomeBusca = `%${nome}%`;      const resultados = await prisma.$queryRaw<any[]>`
         SELECT u.id, u.nome, u.tipo, ${this.getSqlDistancia(
           loc.latitude,
           loc.longitude,
@@ -778,20 +553,19 @@ export class GeolocalizacaoService {
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
         WHERE u.nome LIKE ${nomeBusca} AND u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        AND u.email_confirmado = true
+        AND u.status_cadastro = 'ativo'
+        AND EXISTS (
+          SELECT 1
+          FROM assinaturas ass
+          WHERE ass.prestador_id = u.id
+            AND ass.status = 'ativa'
+        )
         HAVING distancia <= ${raioKm}
         ORDER BY distancia ASC
         LIMIT 20;
-      `;
-
-      console.log(
-        `[LOG-FLUXO] Busca nominal espacial concluída. Total: ${resultados.length} resultados.`,
-      );
-      return resultados;
-    } catch (error: any) {
-      console.error(
-        `[ERRO-FLUXO] Falha na operação buscarPorNomeERaio: ${error.message}`,
-      );
-      throw error;
+      `;      return resultados;
+    } catch (error: any) {      throw error;
     }
   }
 }

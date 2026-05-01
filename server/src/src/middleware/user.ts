@@ -21,59 +21,21 @@ export function validarUsuario(
   req: Request,
   res: Response,
   next: NextFunction,
-) {
-  console.log(
-    `[LOG-FLUXO] Middleware validarUsuario: Iniciando interceptação de payload para o identificador: ${
-      req.body?.usuario?.email || req.body?.email || 'N/A'
-    }`,
-  );
-
-  try {
-    console.log(
-      '[LOG-FLUXO] Invocando validarCreateUsuarioDto para análise lógica dos campos.',
-    );
-
-    // Execução da validação lógica mantendo nomes de variáveis originais
+) {  try {    // Execução da validação lógica mantendo nomes de variáveis originais
     const { valid, erros } = validarCreateUsuarioDto(
       req.body,
     );
 
     // Ramificação condicional: Verificação de integridade (Fail Fast)
-    if (!valid) {
-      console.warn(
-        `[LOG-FLUXO] Bloqueio em Middleware: O payload enviado contém ${
-          Object.keys(erros).length
-        } inconsistência(s).`,
-      );
-
-      console.error(
-        `[ERRO-FLUXO] Detalhes da rejeição no middleware: ${JSON.stringify(
-          erros,
-        )}`,
-      );
-
-      return res.status(400).json({
+    if (!valid) {  return res.status(400).json({
         error: 'Erro de validacao',
         message: 'Erro de validacao',
         mensagem: 'Erro de validação',
         erros,
       });
-    }
-
-    console.log(
-      '[LOG-FLUXO] Validação bem-sucedida. Liberando requisição para a camada de Controller.',
-    );
-
-    // Prossegue para o próximo middleware/controller
+    }    // Prossegue para o próximo middleware/controller
     next();
-  } catch (error: any) {
-    console.error(
-      `[ERRO-FLUXO] Exceção inesperada durante a interceptação de validação: ${
-        error.message || error
-      }`,
-    );
-
-    return res.status(500).json({
+  } catch (error: any) {    return res.status(500).json({
       error: 'Erro interno no processo de validacao.',
       message: 'Erro interno no processo de validacao.',
       mensagem: 'Erro interno no processo de validação.',

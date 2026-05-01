@@ -10,6 +10,7 @@ import {
   STATUS_CONTRATACAO,
   TIPOS_PRESTADOR,
 } from '../constants/dominio';
+import ServiceAssinatura from './Service_Assinatura';
 
 type UsuarioAutenticado = {
   id: string;
@@ -149,13 +150,7 @@ async function enviarEmailSeguro(
     const emailService = new EmailService();
     await emailService.send(to, subject, html);
     return true;
-  } catch (error) {
-    console.error('[AGENDAMENTO_EMAIL] Falha ao enviar e-mail', {
-      to,
-      subject,
-      error,
-    });
-    return false;
+  } catch (error) {    return false;
   }
 }
 
@@ -267,6 +262,18 @@ async function buscarContratacaoCompleta(id: number) {
 }
 
 class ServiceAgendamento {
+  private static async validarPrestadorOperacional(prestadorId: string) {
+    const podeReceberPedidos =
+      await ServiceAssinatura.prestadorPodeReceberPedidos(prestadorId);
+
+    if (!podeReceberPedidos) {
+      throw erroNegocio(
+        'Seu perfil profissional esta inativo. Regularize a assinatura para usar esta funcionalidade.',
+        403,
+      );
+    }
+  }
+
   static async criarAgendamento(
     data: CriarAgendamentoInput,
     usuario: UsuarioAutenticado,
@@ -275,9 +282,14 @@ class ServiceAgendamento {
       throw erroNegocio('Cliente nao identificado na sessao.', 401);
     }
 
-    if (usuario.tipo !== 'cliente') {
+    const cliente = await prisma.usuarios.findUnique({
+      where: { id: usuario.id },
+      select: { id: true, email_confirmado: true },
+    });
+
+    if (!cliente?.email_confirmado) {
       throw erroNegocio(
-        'Apenas clientes podem solicitar agendamentos.',
+        'Confirme seu e-mail para solicitar serviços.',
         403,
       );
     }
@@ -299,6 +311,7 @@ class ServiceAgendamento {
         nome: true,
         email: true,
         tipo: true,
+        email_confirmado: true,
       },
     });
 
@@ -308,6 +321,23 @@ class ServiceAgendamento {
 
     if (!TIPOS_PRESTADOR.includes(prestador.tipo as any)) {
       throw erroNegocio('Usuario informado nao e um prestador.', 400);
+    }
+
+    if (!prestador.email_confirmado) {
+      throw erroNegocio(
+        'Este prestador ainda nao confirmou o e-mail.',
+        403,
+      );
+    }
+
+    const podeReceberPedidos =
+      await ServiceAssinatura.prestadorPodeReceberPedidos(prestador.id);
+
+    if (!podeReceberPedidos) {
+      throw erroNegocio(
+        'Este prestador nao esta disponivel para receber pedidos no momento.',
+        403,
+      );
     }
 
     const servicoId = Number(data.servico_id);
@@ -484,6 +514,8 @@ class ServiceAgendamento {
         );
       }
 
+      await this.validarPrestadorOperacional(usuario.id);
+
       if (contratacaoAtual.status !== STATUS_CONTRATACAO.pendente) {
         throw erroNegocio(
           'Somente contratacoes pendentes podem ser aceitas ou negadas.',
@@ -536,6 +568,8 @@ class ServiceAgendamento {
         403,
       );
     }
+
+    await this.validarPrestadorOperacional(usuario.id);
 
     return prisma.contratacoes.create({
       data: {
