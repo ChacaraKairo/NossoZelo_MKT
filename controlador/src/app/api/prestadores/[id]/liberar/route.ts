@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { exigirAdminApi } from "@/lib/auth";
 import { registrarLogAdministrativo } from "@/lib/adminLog";
 import { respostaErro } from "@/lib/http";
+import { liberarUsuarioOperacional } from "@/lib/liberacaoUsuario";
 import { prisma } from "@/lib/prisma";
 import { tiposPrestador } from "@/lib/queries";
 
@@ -20,13 +21,19 @@ export async function POST(_request: Request, { params }: Params) {
 
     if (!usuario) return NextResponse.json({ error: "Prestador nao encontrado." }, { status: 404 });
 
-    const prestador = await prisma.usuarios.update({
-      where: { id },
-      data: { status_cadastro: "ativo" },
-      select: { id: true, status_cadastro: true }
-    });
+    const resultado = await prisma.$transaction((tx) => liberarUsuarioOperacional(tx, id));
+
+    if (!resultado) {
+      return NextResponse.json({ error: "Prestador nao encontrado." }, { status: 404 });
+    }
+
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "usuarios" });
-    return NextResponse.json({ message: "Prestador liberado.", prestador });
+    await registrarLogAdministrativo({ adminId: admin.id, tabela: "assinaturas" });
+    return NextResponse.json({
+      message: "Prestador liberado, e-mail confirmado e assinatura ativada.",
+      prestador: resultado.usuario,
+      assinatura: resultado.assinatura
+    });
   } catch (error) {
     return respostaErro(error);
   }

@@ -21,32 +21,50 @@ export function AdminActionButton({
 }: AdminActionButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ tipo: "sucesso" | "erro"; texto: string } | null>(null);
   const variantClass =
     variant === "primary" ? styles.buttonPrimary : variant === "danger" ? styles.buttonDanger : "";
 
   async function executar() {
     if (!window.confirm(confirmMessage)) return;
     setLoading(true);
+    setFeedback({ tipo: "sucesso", texto: "Processando acao..." });
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 
-    setLoading(false);
-    if (!response.ok) {
       const data = await response.json().catch(() => null);
-      window.alert(data?.error ?? "Nao foi possivel concluir a acao.");
-      return;
-    }
+      if (!response.ok) {
+        setFeedback({ tipo: "erro", texto: data?.error ?? "Nao foi possivel concluir a acao." });
+        return;
+      }
 
-    router.refresh();
+      setFeedback({ tipo: "sucesso", texto: data?.message ?? "Acao concluida com sucesso." });
+      setTimeout(() => router.refresh(), 650);
+    } catch {
+      setFeedback({ tipo: "erro", texto: "Falha de conexao ao executar a acao." });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <button className={`${styles.button} ${variantClass}`} disabled={loading} onClick={executar} type="button">
-      {loading ? "Processando..." : label}
-    </button>
+    <div className={styles.actionStack}>
+      <button className={`${styles.button} ${variantClass}`} disabled={loading} onClick={executar} type="button">
+        {loading ? "Processando..." : label}
+      </button>
+      {feedback ? (
+        <span
+          aria-live="polite"
+          className={feedback.tipo === "sucesso" ? styles.inlineSuccess : styles.inlineError}
+        >
+          {feedback.texto}
+        </span>
+      ) : null}
+    </div>
   );
 }

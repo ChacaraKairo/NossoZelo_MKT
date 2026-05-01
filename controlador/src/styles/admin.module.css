@@ -275,6 +275,59 @@
   cursor: not-allowed;
 }
 
+.actionStack {
+  display: grid;
+  gap: 6px;
+  align-items: start;
+}
+
+.inlineSuccess,
+.inlineError {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.inlineSuccess {
+  color: var(--success);
+}
+
+.inlineError {
+  color: var(--danger);
+}
+
+.formBand {
+  padding: 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+  display: grid;
+  gap: 14px;
+}
+
+.formBand > div {
+  display: grid;
+  gap: 4px;
+}
+
+.formBand span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.adminCreateForm {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.adminCreateForm .button,
+.adminCreateForm .inlineSuccess,
+.adminCreateForm .inlineError {
+  min-height: 40px;
+}
+
 .detailGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
@@ -401,5 +454,9 @@
   .input {
     min-width: 0;
     width: 100%;
+  }
+
+  .adminCreateForm {
+    grid-template-columns: 1fr;
   }
 }

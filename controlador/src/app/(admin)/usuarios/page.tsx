@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { AdminCreateForm } from "@/components/AdminCreateForm";
 import { BadgeStatus } from "@/components/BadgeStatus";
 import { DataTable } from "@/components/DataTable";
 import { EmptyState } from "@/components/EmptyState";
 import { FilterSelect } from "@/components/FilterSelect";
 import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
+import { adminEhMestre, obterSessaoAdmin } from "@/lib/auth";
 import { listarUsuarios } from "@/lib/queries";
 import { mascararDocumento, mascararEmail, mascararTelefone } from "@/lib/sanitize";
 import styles from "@/styles/admin.module.css";
@@ -16,7 +18,12 @@ type UsuariosPageProps = {
 export default async function UsuariosPage({ searchParams }: UsuariosPageProps) {
   const params = await searchParams;
   const urlParams = new URLSearchParams(params as Record<string, string>);
-  const { usuarios, page, limit, total } = await listarUsuarios(urlParams);
+  const [sessao, resultado] = await Promise.all([
+    obterSessaoAdmin(),
+    listarUsuarios(urlParams)
+  ]);
+  const { usuarios, page, limit, total } = resultado;
+  const podeCriarAdmin = adminEhMestre(sessao);
 
   return (
     <>
@@ -71,6 +78,15 @@ export default async function UsuariosPage({ searchParams }: UsuariosPageProps) 
             </button>
           </form>
         </div>
+        {podeCriarAdmin ? (
+          <div className={styles.formBand}>
+            <div>
+              <strong>Novo administrador</strong>
+              <span>Somente o usuario mestre pode criar acessos administrativos.</span>
+            </div>
+            <AdminCreateForm />
+          </div>
+        ) : null}
 
         {usuarios.length === 0 ? (
           <EmptyState />
