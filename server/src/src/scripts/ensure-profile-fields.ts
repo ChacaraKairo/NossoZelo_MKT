@@ -188,6 +188,48 @@ async function colunaExiste(tabela: string, coluna: string) {
   return Number(resultado[0]?.total || 0) > 0;
 }
 
+async function tabelaExiste(tabela: string) {
+  const resultado = await prisma.$queryRaw<Array<{ total: bigint }>>`
+    SELECT COUNT(*) AS total
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = ${tabela}
+  `;
+
+  return Number(resultado[0]?.total || 0) > 0;
+}
+
+async function garantirTabelaConfirmacoesEmail() {
+  if (await tabelaExiste('confirmacoes_email')) {
+    logger.info('EnsureProfileFields: tabela ja existe', {
+      tabela: 'confirmacoes_email',
+    });
+    return;
+  }
+
+  logger.warn('EnsureProfileFields: criando tabela ausente', {
+    tabela: 'confirmacoes_email',
+  });
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE \`confirmacoes_email\` (
+      \`id\` INTEGER NOT NULL AUTO_INCREMENT,
+      \`usuario_id\` VARCHAR(20) NOT NULL,
+      \`token\` VARCHAR(255) NOT NULL,
+      \`expiracao\` TIMESTAMP(0) NOT NULL,
+      \`usado\` BOOLEAN NOT NULL DEFAULT false,
+      \`criado_em\` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+      UNIQUE INDEX \`confirmacoes_email_token_key\`(\`token\`),
+      INDEX \`confirmacoes_email_usuario_id_idx\`(\`usuario_id\`),
+      INDEX \`confirmacoes_email_token_idx\`(\`token\`),
+      PRIMARY KEY (\`id\`),
+      CONSTRAINT \`confirmacoes_email_usuario_id_fkey\`
+        FOREIGN KEY (\`usuario_id\`) REFERENCES \`usuarios\`(\`id\`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+    ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+}
+
 async function garantirColuna({
   tabela,
   coluna,
@@ -269,6 +311,8 @@ async function sincronizarStatusCadastroPrestadores() {
 
 export async function ensureProfileFields() {
   logger.info('EnsureProfileFields: verificando colunas de schema');
+
+  await garantirTabelaConfirmacoesEmail();
 
   for (const coluna of COLUNAS_SCHEMA) {
     await garantirColuna(coluna);
