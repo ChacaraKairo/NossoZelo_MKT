@@ -14,8 +14,8 @@ async function obterPlanoPadrao(tx: Prisma.TransactionClient) {
   return tx.planos.create({
     data: {
       nome: "Assinatura Profissional Mensal",
-      valor: 0,
-      beneficios: "Plano mock para ativacao administrativa de prestadores."
+      valor: 0.01,
+      beneficios: "Plano para ativacao administrativa de prestadores."
     }
   });
 }
@@ -58,7 +58,7 @@ export async function liberarUsuarioOperacional(tx: Prisma.TransactionClient, us
   const dadosAssinatura = {
     plano_id: assinaturaAtual?.plano_id ?? plano.id,
     status: "ativa" as const,
-    gateway: assinaturaAtual?.gateway ?? "mock",
+    gateway: assinaturaAtual?.gateway ?? "asaas",
     gateway_status: "manual_liberada_admin",
     data_ultimo_pagamento: agora,
     data_proximo_vencimento: proximoVencimento,

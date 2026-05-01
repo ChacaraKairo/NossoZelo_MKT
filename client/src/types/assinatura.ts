@@ -2,7 +2,7 @@ import { AssinaturaAtual } from '@/types/perfil';
 
 export type MetodoPagamentoAssinatura = 'credito' | 'debito';
 
-export type ModoModalCartaoAssinatura = 'regularizar' | 'trocar_cartao';
+export type ModoModalCartaoAssinatura = 'regularizar';
 
 export interface CartaoResumoAssinatura {
   nomeTitular: string;
@@ -16,7 +16,7 @@ export interface CartaoResumoAssinatura {
 export interface CartaoAssinaturaPayload {
   planoId: number;
   metodoPagamento: MetodoPagamentoAssinatura;
-  cartaoToken: string;
+  cartaoToken?: string;
   cartaoResumo: CartaoResumoAssinatura;
 }
 
@@ -32,31 +32,21 @@ export interface StatusAssinaturaPrestador {
   motivo_perfil_inativo?: string | null;
 }
 
-export interface RespostaAssinaturaMock {
+export interface RespostaAssinatura {
   gateway_resultado: {
     sucesso: boolean;
     status: 'aprovado' | 'pendente' | 'recusado' | 'erro';
-    gateway: 'mock' | 'asaas';
+    gateway: 'asaas';
     gatewaySubscriptionId?: string;
     gatewayCustomerId?: string;
     mensagem?: string;
     confirmacaoExpiraEm?: string | Date;
   };
   assinatura: AssinaturaAtual;
-  pagamento_mock?: {
+  pagamento?: {
     recebido: boolean;
     metodoPagamento?: MetodoPagamentoAssinatura;
     cartaoResumo?: CartaoResumoAssinatura;
-  };
-}
-
-export interface RespostaTrocarCartaoMock {
-  message: string;
-  assinatura: AssinaturaAtual;
-  pagamento_mock: {
-    recebido: boolean;
-    metodoPagamento: MetodoPagamentoAssinatura;
-    cartaoResumo: CartaoResumoAssinatura;
   };
 }
 

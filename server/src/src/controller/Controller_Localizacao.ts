@@ -9,6 +9,7 @@
 
 import { Request, Response } from 'express';
 import { GeolocalizacaoService } from '../service/Service_Localizacao';
+import logger from '../lib/logger';
 
 function normalizarParaJson(valor: unknown): unknown {
   if (typeof valor === 'bigint') {
@@ -62,7 +63,13 @@ export class GeolocalizacaoController {
         await GeolocalizacaoService.buscarCoordenadasPorCep(
           cep,
         );      return res.status(200).json(coordenadas);
-    } catch (erro: any) {      return res.status(500).json({
+    } catch (erro: any) {
+      logger.error('GeolocalizacaoController: falha ao buscar coordenadas', {
+        cep,
+        erro,
+      });
+
+      return res.status(500).json({
         erro: 'Erro ao buscar coordenadas.',
         detalhes: (erro as Error).message,
       });
@@ -109,7 +116,13 @@ export class GeolocalizacaoController {
             : undefined,
           limit: limit ? parseInt(limit as string) : 20,
         });      return res.status(200).json(normalizarParaJson(prestadores));
-    } catch (erro: any) {      return res.status(500).json({
+    } catch (erro: any) {
+      logger.error('GeolocalizacaoController: falha ao filtrar prestadores', {
+        query: req.query,
+        erro,
+      });
+
+      return res.status(500).json({
         erro: 'Erro ao filtrar prestadores.',
         detalhes: (erro as Error).message,
       });
@@ -141,7 +154,14 @@ export class GeolocalizacaoController {
           nome as string,
           raio,
         );      return res.status(200).json(resultados);
-    } catch (erro: any) {      return res.status(500).json({
+    } catch (erro: any) {
+      logger.error('GeolocalizacaoController: falha na busca por nome e raio', {
+        params: req.params,
+        query: req.query,
+        erro,
+      });
+
+      return res.status(500).json({
         erro: 'Erro na busca por nome e raio.',
         detalhes: (erro as Error).message,
       });
@@ -169,7 +189,13 @@ export class GeolocalizacaoController {
         );      return res
         .status(200)
         .json({ usuarios: usuariosIds });
-    } catch (erro: any) {      return res.status(500).json({
+    } catch (erro: any) {
+      logger.error('GeolocalizacaoController: falha ao buscar proximos', {
+        body: req.body,
+        erro,
+      });
+
+      return res.status(500).json({
         erro: 'Erro ao buscar próximos.',
         detalhes: (erro as Error).message,
       });
@@ -196,7 +222,13 @@ export class GeolocalizacaoController {
         );      return res
         .status(200)
         .json({ usuarios: usuariosIds });
-    } catch (erro: any) {      return res.status(500).json({
+    } catch (erro: any) {
+      logger.error('GeolocalizacaoController: falha ao buscar mais proximos', {
+        params: req.params,
+        erro,
+      });
+
+      return res.status(500).json({
         erro: 'Erro ao buscar mais próximos.',
         detalhes: (erro as Error).message,
       });
@@ -224,7 +256,13 @@ export class GeolocalizacaoController {
         );      return res
         .status(200)
         .json({ usuarios: usuariosIds });
-    } catch (erro: any) {      return res.status(500).json({
+    } catch (erro: any) {
+      logger.error('GeolocalizacaoController: falha ao buscar por tipo', {
+        params: req.params,
+        erro,
+      });
+
+      return res.status(500).json({
         erro: 'Erro ao buscar por tipo.',
         detalhes: (erro as Error).message,
       });

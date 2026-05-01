@@ -27,7 +27,6 @@ export const HORAS_CONFIRMACAO_PAGAMENTO = 72;
 export const DIAS_TOLERANCIA_ASSINATURA = 15;
 
 export const GATEWAY_PAGAMENTO = {
-  mock: 'mock',
   asaas: 'asaas',
 } as const;
 

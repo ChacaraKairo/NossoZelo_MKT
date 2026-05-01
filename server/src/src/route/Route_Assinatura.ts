@@ -27,49 +27,21 @@ AssinaturaRouter.post(
   '/iniciar',
   authMiddleware,
   permitirTipos(tiposPrestador),
-  ControllerAssinatura.iniciarMock as any,
-);
-
-AssinaturaRouter.post(
-  '/iniciar-mock',
-  authMiddleware,
-  permitirTipos(tiposPrestador),
-  ControllerAssinatura.iniciarMock as any,
+  ControllerAssinatura.iniciar as any,
 );
 
 AssinaturaRouter.post(
   '/regularizar',
   authMiddleware,
   permitirTipos(tiposPrestador),
-  ControllerAssinatura.regularizarMock as any,
-);
-
-AssinaturaRouter.post(
-  '/regularizar-mock',
-  authMiddleware,
-  permitirTipos(tiposPrestador),
-  ControllerAssinatura.regularizarMock as any,
-);
-
-AssinaturaRouter.post(
-  '/trocar-cartao-mock',
-  authMiddleware,
-  permitirTipos(tiposPrestador),
-  ControllerAssinatura.trocarCartaoMock as any,
+  ControllerAssinatura.regularizar as any,
 );
 
 AssinaturaRouter.post(
   '/cancelar',
   authMiddleware,
   permitirTipos(tiposPrestador),
-  ControllerAssinatura.cancelarMock as any,
-);
-
-AssinaturaRouter.post(
-  '/cancelar-mock',
-  authMiddleware,
-  permitirTipos(tiposPrestador),
-  ControllerAssinatura.cancelarMock as any,
+  ControllerAssinatura.cancelar as any,
 );
 
 AssinaturaRouter.post(

@@ -80,7 +80,6 @@ function anoCompleto(ano: string) {
 
 export default function ModalCartaoAssinatura({
   aberto,
-  modo,
   planoId,
   statusAssinatura,
   onFechar,
@@ -100,12 +99,9 @@ export default function ModalCartaoAssinatura({
     }
   }, [aberto]);
 
-  const titulo = modo === 'trocar_cartao'
-    ? 'Trocar cartao da assinatura'
-    : 'Regularizar assinatura';
-  const descricao = modo === 'trocar_cartao'
-    ? 'Atualize o metodo de pagamento usado nas proximas cobrancas.'
-    : 'Envie os dados para simulacao mock de pagamento. A confirmacao pode levar ate 72 horas.';
+  const titulo = 'Regularizar assinatura';
+  const descricao =
+    'Envie os dados para criar a assinatura no Asaas. A confirmacao pode levar ate 72 horas.';
   const bandeira = useMemo(
     () => estimarBandeira(form.numeroCartao),
     [form.numeroCartao],
@@ -141,7 +137,6 @@ export default function ModalCartaoAssinatura({
     return {
       planoId,
       metodoPagamento: form.metodoPagamento,
-      cartaoToken: `mock_card_token_${Date.now()}`,
       cartaoResumo: {
         nomeTitular: form.nomeTitular.trim(),
         cpfTitular: apenasDigitos(form.cpfTitular),
@@ -168,14 +163,10 @@ export default function ModalCartaoAssinatura({
       setSucesso(null);
       const payload = montarPayload();
       const resultado =
-        modo === 'trocar_cartao'
-          ? await assinaturaService.trocarCartaoAssinaturaMock(payload)
-          : await assinaturaService.regularizarAssinaturaComCartao(payload);
+        await assinaturaService.regularizarAssinaturaComCartao(payload);
       const mensagem =
-        'message' in resultado
-          ? resultado.message
-          : resultado.gateway_resultado.mensagem ||
-            'Solicitacao enviada com sucesso.';
+        resultado.gateway_resultado.mensagem ||
+        'Solicitacao enviada com sucesso.';
 
       setSucesso(mensagem);
       setForm(estadoInicial);
@@ -212,7 +203,7 @@ export default function ModalCartaoAssinatura({
         </header>
 
         <div className={styles.securityNote}>
-          Ambiente mock: o numero completo e o CVV nao sao enviados ao backend.
+          O numero completo e o CVV nao sao enviados ao backend.
           Status atual: {statusAssinatura}.
         </div>
 

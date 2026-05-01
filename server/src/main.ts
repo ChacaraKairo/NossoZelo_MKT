@@ -1,5 +1,6 @@
 ﻿import express from 'express';
 import morgan from 'morgan';
+import fs from 'fs';
 import path from 'path';
 import routes from './src/route/index';
 import cors from 'cors';
@@ -65,6 +66,14 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    name: APP_NAME,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const htmlPath = path.join(__dirname, 'HTML');
 app.use(express.static(htmlPath));
 
@@ -72,7 +81,19 @@ const uploadsPath = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
 app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'HTML', 'index.html'));
+  const indexPath = path.join(__dirname, 'HTML', 'index.html');
+
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+
+  return res.status(200).json({
+    status: 'healthy',
+    name: APP_NAME,
+    message: 'API do Nosso Zelo esta operacional',
+    health: '/api/health',
+    version: APP_VERSION,
+  });
 });
 
 app.use('/nossozelo', routes);

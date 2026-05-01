@@ -122,13 +122,6 @@ export default function AbaFinanceiroPro({
   };
 
   const carregando = carregandoAcao !== null;
-  const acaoPrincipal: {
-    label: string;
-    modo: ModoModalCartaoAssinatura;
-  } = assinaturaAtiva
-    ? { label: 'Trocar cartao', modo: 'trocar_cartao' }
-    : { label: 'Regularizar assinatura', modo: 'regularizar' };
-
   return (
     <section className={styles.section}>
       <header className={styles.header}>
@@ -163,7 +156,7 @@ export default function AbaFinanceiroPro({
         </article>
         <article className={styles.card}>
           <span className={styles.label}>Gateway</span>
-          <p className={styles.value}>{assinatura?.gateway || 'mock'}</p>
+          <p className={styles.value}>{assinatura?.gateway || 'asaas'}</p>
         </article>
       </div>
 
@@ -206,16 +199,18 @@ export default function AbaFinanceiroPro({
           </label>
 
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={() => abrirModalCartao(acaoPrincipal.modo)}
-              disabled={
-                carregando || !Number.isInteger(planoId) || planoId <= 0
-              }
-            >
-              {acaoPrincipal.label}
-            </button>
+            {!assinaturaAtiva && (
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => abrirModalCartao('regularizar')}
+                disabled={
+                  carregando || !Number.isInteger(planoId) || planoId <= 0
+                }
+              >
+                Regularizar assinatura
+              </button>
+            )}
             {aguardandoConfirmacao && (
               <button
                 type="button"
@@ -225,7 +220,7 @@ export default function AbaFinanceiroPro({
                   carregando || !Number.isInteger(planoId) || planoId <= 0
                 }
               >
-                Tentar novamente com outro cartao
+                Tentar novamente
               </button>
             )}
             <button

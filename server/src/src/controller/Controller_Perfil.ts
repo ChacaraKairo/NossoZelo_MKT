@@ -1,5 +1,6 @@
 ﻿import { Request, Response } from 'express';
 import { ServicePerfil } from '../service/Service_Perfil';
+import logger from '../lib/logger';
 
 import { AuthRequest } from '../types/auth';
 
@@ -33,9 +34,20 @@ function statusErroPerfil(error: any) {
     return error.status;
   }
 
+  if (
+    typeof error?.code === 'string' &&
+    /^P\d{4}$/.test(error.code)
+  ) {
+    return error.code === 'P2025' ? 404 : 500;
+  }
+
+  if (String(error?.name || '').includes('Prisma')) {
+    return 500;
+  }
+
   const mensagem = String(error?.message || '').toLowerCase();
 
-  if (error?.code === 'P2025' || mensagem.includes('nÃ£o encontrado')) {
+  if (mensagem.includes('nÃ£o encontrado')) {
     return 404;
   }
 
@@ -101,8 +113,16 @@ class ControllerPerfil {
         );
 
       return res.status(200).json(perfil);
-    } catch (error: any) {      return res
-        .status(statusErroPerfil(error))
+    } catch (error: any) {
+      const status = statusErroPerfil(error);
+      logger.error('ControllerPerfil: falha ao obter meu perfil', {
+        usuarioId: req.user?.id,
+        status,
+        error,
+      });
+
+      return res
+        .status(status)
         .json({ error: error.message });
     }
   }
@@ -121,8 +141,16 @@ class ControllerPerfil {
         await ServicePerfil.obterResumoPerfil(usuarioId);
 
       return res.status(200).json(resumo);
-    } catch (error: any) {      return res
-        .status(statusErroPerfil(error))
+    } catch (error: any) {
+      const status = statusErroPerfil(error);
+      logger.error('ControllerPerfil: falha ao obter resumo do perfil', {
+        usuarioId: req.user?.id,
+        status,
+        error,
+      });
+
+      return res
+        .status(status)
         .json({ error: error.message });
     }
   }

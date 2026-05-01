@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev --files src/server.ts",
-    "build": "npx prisma generate && tsc",
+    "build": "npx prisma generate && tsc && node scripts/copy-static-assets.js",
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
     "db:backup": "ts-node src/src/scripts/backup-db.ts",
     "db:restore": "ts-node src/src/scripts/restore-db.ts",

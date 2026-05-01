@@ -90,7 +90,7 @@ class ControllerAssinatura {
     }
   }
 
-  async iniciarMock(req: AuthRequest, res: Response) {
+  async iniciar(req: AuthRequest, res: Response) {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ error: 'Usuario nao autenticado.' });
@@ -98,7 +98,7 @@ class ControllerAssinatura {
 
       const planoId = planoIdDoBody(req.body);
       const resultado =
-        await ServiceAssinatura.iniciarOuRegularizarAssinaturaMock(
+        await ServiceAssinatura.iniciarOuRegularizarAssinatura(
           req.user.id,
           planoId,
           dadosPagamentoDoBody(req.body),
@@ -112,7 +112,7 @@ class ControllerAssinatura {
     }
   }
 
-  async regularizarMock(req: AuthRequest, res: Response) {
+  async regularizar(req: AuthRequest, res: Response) {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ error: 'Usuario nao autenticado.' });
@@ -120,7 +120,7 @@ class ControllerAssinatura {
 
       const planoId = planoIdDoBody(req.body);
       const resultado =
-        await ServiceAssinatura.iniciarOuRegularizarAssinaturaMock(
+        await ServiceAssinatura.iniciarOuRegularizarAssinatura(
           req.user.id,
           planoId,
           dadosPagamentoDoBody(req.body),
@@ -134,7 +134,7 @@ class ControllerAssinatura {
     }
   }
 
-  async cancelarMock(req: AuthRequest, res: Response) {
+  async cancelar(req: AuthRequest, res: Response) {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ error: 'Usuario nao autenticado.' });
@@ -147,27 +147,6 @@ class ControllerAssinatura {
         message: 'Assinatura cancelada com sucesso.',
         assinatura,
       });
-    } catch (error: any) {
-      return res
-        .status(statusErro(error))
-        .json({ error: error.message });
-    }
-  }
-
-  async trocarCartaoMock(req: AuthRequest, res: Response) {
-    try {
-      if (!req.user?.id) {
-        return res.status(401).json({ error: 'Usuario nao autenticado.' });
-      }
-
-      planoIdDoBody(req.body);
-      const resultado =
-        await ServiceAssinatura.trocarCartaoAssinaturaMock(
-          req.user.id,
-          dadosPagamentoDoBody(req.body) || {},
-        );
-
-      return res.status(200).json(resultado);
     } catch (error: any) {
       return res
         .status(statusErro(error))

@@ -1,9 +1,8 @@
 import api from '@/service/api';
 import {
   CartaoAssinaturaPayload,
-  RespostaAssinaturaMock,
+  RespostaAssinatura,
   RespostaCancelarAssinatura,
-  RespostaTrocarCartaoMock,
   StatusAssinaturaPrestador,
 } from '@/types/assinatura';
 
@@ -22,32 +21,16 @@ export const assinaturaService = {
   },
 
   iniciarAssinatura: async (planoId: number) => {
-    const response = await api.post<RespostaAssinaturaMock>(
+    const response = await api.post<RespostaAssinatura>(
       '/assinaturas/iniciar',
       { planoId },
     );
     return response.data;
   },
 
-  iniciarAssinaturaMock: async (planoId: number) => {
-    const response = await api.post<RespostaAssinaturaMock>(
-      '/assinaturas/iniciar-mock',
-      { planoId },
-    );
-    return response.data;
-  },
-
   regularizarAssinatura: async (planoId: number) => {
-    const response = await api.post<RespostaAssinaturaMock>(
+    const response = await api.post<RespostaAssinatura>(
       '/assinaturas/regularizar',
-      { planoId },
-    );
-    return response.data;
-  },
-
-  regularizarAssinaturaMock: async (planoId: number) => {
-    const response = await api.post<RespostaAssinaturaMock>(
-      '/assinaturas/regularizar-mock',
       { planoId },
     );
     return response.data;
@@ -56,28 +39,8 @@ export const assinaturaService = {
   regularizarAssinaturaComCartao: async (
     payload: CartaoAssinaturaPayload,
   ) => {
-    const response = await api.post<RespostaAssinaturaMock>(
+    const response = await api.post<RespostaAssinatura>(
       '/assinaturas/regularizar',
-      payload,
-    );
-    return response.data;
-  },
-
-  regularizarAssinaturaComCartaoMock: async (
-    payload: CartaoAssinaturaPayload,
-  ) => {
-    const response = await api.post<RespostaAssinaturaMock>(
-      '/assinaturas/regularizar-mock',
-      payload,
-    );
-    return response.data;
-  },
-
-  trocarCartaoAssinaturaMock: async (
-    payload: CartaoAssinaturaPayload,
-  ) => {
-    const response = await api.post<RespostaTrocarCartaoMock>(
-      '/assinaturas/trocar-cartao-mock',
       payload,
     );
     return response.data;
@@ -86,13 +49,6 @@ export const assinaturaService = {
   cancelarAssinatura: async () => {
     const response = await api.post<RespostaCancelarAssinatura>(
       '/assinaturas/cancelar',
-    );
-    return response.data;
-  },
-
-  cancelarAssinaturaMock: async () => {
-    const response = await api.post<RespostaCancelarAssinatura>(
-      '/assinaturas/cancelar-mock',
     );
     return response.data;
   },

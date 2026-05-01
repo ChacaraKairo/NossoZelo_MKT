@@ -12,16 +12,16 @@ dotenv.config();
 
 import app from './main';
 import axios from 'axios';
-import { exec } from 'child_process';
 import prisma from './src/lib/prisma';
 import logger from './src/lib/logger';
 
 const PORT = process.env.PORT || '4000';
 const HOST = process.env.HOST || '0.0.0.0';
-const SERVER_URL =
+const BASE_URL =
   process.env.RENDER_EXTERNAL_URL ||
   process.env.API_URL ||
-  `http://localhost:${PORT}/api/health`;
+  `http://localhost:${PORT}`;
+const HEALTH_URL = `${BASE_URL.replace(/\/$/, '')}/api/health`;
 
 if (!process.env.JWT_SECRET) {
   throw new Error(
@@ -47,17 +47,19 @@ function shouldRunAivenKeepAlive() {
 /**
  * Executa o script de manutencao do banco de dados Aiven.
  */
-function triggerDatabasePing() {
-  exec('npm run db:keep-alive', (error, stdout) => {
-    if (error) {
-      logger.warn('Keep-alive do banco falhou', { error: error.message });
-      return;
-    }
-
-    if (stdout) {
-      logger.debug('Keep-alive do banco executado', { stdout });
-    }
-  });
+async function triggerDatabasePing() {
+  try {
+    await prisma.aiven_keep_alive.upsert({
+      where: { id: 1 },
+      update: { last_ping: new Date() },
+      create: { id: 1, last_ping: new Date() },
+    });
+    logger.debug('Keep-alive do banco executado');
+  } catch (error) {
+    logger.warn('Keep-alive do banco falhou', {
+      error: error instanceof Error ? error.message : error,
+    });
+  }
 }
 
 /**
@@ -83,9 +85,9 @@ function startKeepAlive(runDatabasePing: boolean) {
   setInterval(
     async () => {
       try {
-        await axios.get(SERVER_URL);
+        await axios.get(HEALTH_URL);
         if (runDatabasePing) {
-          triggerDatabasePing();
+          await triggerDatabasePing();
         }
       } catch (error) {
         logger.debug('Keep-alive HTTP falhou', {
@@ -108,7 +110,7 @@ async function bootstrap() {
     logger.info('Servidor NossoZelo iniciado', { host: HOST, port: PORT });
 
     if (runAivenKeepAlive) {
-      triggerDatabasePing();
+      void triggerDatabasePing();
     }
 
     if (process.env.NODE_ENV === 'production') {
