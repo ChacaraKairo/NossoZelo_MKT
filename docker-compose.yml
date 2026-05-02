@@ -1,92 +1,53 @@
 services:
-  # docker-compose up --build
-  db:
+  mysql:
     image: mysql:8.4
-    container_name: nossozelo_db
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: nossozelo123
-      MYSQL_DATABASE: db
+      MYSQL_DATABASE: nossozelo
+      MYSQL_USER: nossozelo
+      MYSQL_PASSWORD: nossozelo
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - '3306:3306'
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
-    networks:
-      - nossozelo_network
 
   backend:
-    build: ./server
-    container_name: nossozelo_backend
-    restart: always
-    command: sh -c "npx prisma db push && npm run dev"
-    ports:
-      - '4000:4000'
+    build:
+      context: ./server
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
-      DATABASE_URL: mysql://root:nossozelo123@db:3306/db
-      ENABLE_AIVEN_KEEP_ALIVE: 'false'
       NODE_ENV: development
       PORT: 4000
-      API_URL: http://localhost:4000
-      ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
-      JWT_SECRET: dev-local-jwt-secret-change-before-production-123456
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-      - ./uploads:/app/uploads
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - nossozelo_network
+      HOST: 0.0.0.0
+      DATABASE_URL: mysql://nossozelo:nossozelo@mysql:3306/nossozelo
+      JWT_SECRET: troque-por-uma-chave-com-pelo-menos-32-caracteres
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_PUBLIC_URL: http://localhost:4000
+      ALLOWED_ORIGINS: http://localhost:3000
+      PAYMENT_GATEWAY: disabled
+      ENABLE_ADMIN_CRUD: "false"
+    ports:
+      - "4000:4000"
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/server.js"
 
   frontend:
-    build: ./client
-    container_name: nossozelo_frontend
-    restart: always
-    ports:
-      - '3000:3000'
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-      - /app/.next
+    build:
+      context: ./client
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     depends_on:
       - backend
-    networks:
-      - nossozelo_network
-
-  controlador:
-    build: ./controlador
-    container_name: nossozelo_controlador
-    restart: always
-    ports:
-      - '3001:3001'
     environment:
-      DATABASE_URL: mysql://root:nossozelo123@db:3306/db
       NEXT_PUBLIC_API_URL: http://localhost:4000
-      JWT_SECRET: dev-local-admin-secret-change-before-production-123456
-    volumes:
-      - ./controlador:/app
-      - /app/node_modules
-      - /app/.next
-    depends_on:
-      db:
-        condition: service_healthy
-      backend:
-        condition: service_started
-    networks:
-      - nossozelo_network
-
-networks:
-  nossozelo_network:
-    driver: bridge
+    ports:
+      - "3000:3000"
 
 volumes:
   mysql_data:

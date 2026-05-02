@@ -18,6 +18,8 @@ import { GeolocalizacaoService } from './Service_Localizacao';
 import ServiceConfirmacaoEmail from './Service_ConfirmacaoEmail';
 import { STATUS_CADASTRO_USUARIO } from '../constants/financeiro';
 import { senhaForte } from '../validator/create/Validator_User';
+import prisma from '../lib/prisma';
+import { UsuarioAutenticado } from '../types/auth';
 
 type CadastroError = Error & { status?: number };
 
@@ -64,6 +66,23 @@ function montarDadosProfissionais(dados: any = {}) {
 
 function ehTipoPrestador(tipo?: string) {
   return ['cuidador', 'enfermeiro', 'acompanhante'].includes(tipo || '');
+}
+
+function sanitizarAtualizacaoUsuario(
+  usuario: Record<string, any>,
+  ator?: UsuarioAutenticado,
+) {
+  const dados = { ...usuario };
+  delete dados.senha;
+
+  if (ator?.tipo !== 'admin') {
+    delete dados.tipo;
+    delete dados.status_cadastro;
+    delete dados.email_confirmado;
+    delete dados.cpf;
+  }
+
+  return dados;
 }
 
 function statusCadastroInicial(tipo?: string) {
@@ -303,14 +322,19 @@ class ServiceUser {
    * @param {any} data - Objeto contendo chaves 'usuario' e/ou 'perfil' para atualização.
    * @returns {Promise<any>} - Retorna o perfil completo e atualizado.
    */
-  static async atualizarUsuario(id: string, data: any) {    try {
+  static async atualizarUsuario(
+    id: string,
+    data: any,
+    ator?: UsuarioAutenticado,
+  ) {    try {
       const { usuario, perfil } = data;
 
       // Proteção de segurança: Senhas devem ser tratadas pelo método especializado atualizarSenha
-      if (usuario?.senha) {        delete usuario.senha;
-      }
+      const usuarioSeguro = usuario
+        ? sanitizarAtualizacaoUsuario(usuario, ator)
+        : null;
 
-      if (usuario) {        await ServiceCrud.update('usuarios', id, usuario);      }      const usuarioAtual = await ServiceCrud.findById(
+      if (usuarioSeguro && Object.keys(usuarioSeguro).length > 0) {        await ServiceCrud.update('usuarios', id, usuarioSeguro);      }      const usuarioAtual = await ServiceCrud.findById(
         'usuarios',
         id,
       );
@@ -351,7 +375,33 @@ class ServiceUser {
   static async atualizarSenha(
     id: string,
     novaSenha: string,
+    senhaAtual?: string,
+    exigirSenhaAtual = true,
   ) {    try {
+      if (exigirSenhaAtual) {
+        if (!senhaAtual) {
+          throw new Error('Senha atual e obrigatoria.');
+        }
+
+        const usuario = await prisma.usuarios.findUnique({
+          where: { id },
+          select: { senha: true },
+        });
+
+        if (!usuario) {
+          throw new Error('Usuario nao encontrado.');
+        }
+
+        const senhaAtualValida = await bcrypt.compare(
+          senhaAtual,
+          usuario.senha,
+        );
+
+        if (!senhaAtualValida) {
+          throw new Error('Senha atual invalida.');
+        }
+      }
+
       if (!senhaForte(novaSenha)) {        throw new Error(
           'Senha deve ter 8 a 72 caracteres, com letra maiuscula, minuscula, numero e caractere especial.',
         );

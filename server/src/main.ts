@@ -23,8 +23,40 @@ function validarAmbiente() {
     throw new Error('JWT_SECRET ausente ou fraco. Use pelo menos 32 caracteres.');
   }
 
-  if (isProduction && !process.env.ALLOWED_ORIGINS) {
-    throw new Error('ALLOWED_ORIGINS e obrigatorio em producao.');
+  const obrigatoriasProducao = [
+    'DATABASE_URL',
+    'ALLOWED_ORIGINS',
+    'FRONTEND_URL',
+    'BACKEND_PUBLIC_URL',
+  ];
+
+  if (isProduction) {
+    const ausentes = obrigatoriasProducao.filter((name) => !process.env[name]);
+    if (ausentes.length > 0) {
+      throw new Error(
+        `Variaveis obrigatorias ausentes em producao: ${ausentes.join(', ')}.`,
+      );
+    }
+  }
+
+  if (process.env.PAYMENT_GATEWAY === 'asaas' && !process.env.ASAAS_API_KEY) {
+    throw new Error('ASAAS_API_KEY e obrigatorio quando PAYMENT_GATEWAY=asaas.');
+  }
+
+  if (process.env.ENABLE_UPLOADS === 'true') {
+    const awsVars = [
+      'AWS_REGION',
+      'AWS_ACCESS_KEY_ID',
+      'AWS_SECRET_ACCESS_KEY',
+      'AWS_PUBLIC_BUCKET_NAME',
+      'AWS_PRIVATE_BUCKET_NAME',
+    ];
+    const ausentes = awsVars.filter((name) => !process.env[name]);
+    if (ausentes.length > 0) {
+      throw new Error(
+        `Variaveis AWS obrigatorias ausentes: ${ausentes.join(', ')}.`,
+      );
+    }
   }
 }
 

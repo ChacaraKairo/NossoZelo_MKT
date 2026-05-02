@@ -9,6 +9,7 @@
 
 import { Request, Response } from 'express';
 import ServiceUser from '../service/Service_User';
+import { AuthRequest } from '../types/auth';
 
 class UserController {
   /**
@@ -91,7 +92,11 @@ class UserController {
     res: Response,
   ): Promise<void> {
     const { id } = req.params;    try {      const usuarioAtualizado =
-        await ServiceUser.atualizarUsuario(id, req.body);      res.status(200).json(usuarioAtualizado);
+        await ServiceUser.atualizarUsuario(
+          id,
+          req.body,
+          (req as AuthRequest).user,
+        );      res.status(200).json(usuarioAtualizado);
     } catch (error: any) {      res.status(400).json({ message: error.message });
     }
   }
@@ -106,7 +111,16 @@ class UserController {
     res: Response,
   ): Promise<void> {
     const { id } = req.params;
-    const { novaSenha } = req.body;    try {      await ServiceUser.atualizarSenha(id, novaSenha);      res
+    const { novaSenha, senhaAtual } = req.body;
+    const usuarioAutenticado = (req as AuthRequest).user;
+    const exigeSenhaAtual = usuarioAutenticado?.tipo !== 'admin';
+
+    try {      await ServiceUser.atualizarSenha(
+        id,
+        novaSenha,
+        senhaAtual,
+        exigeSenhaAtual,
+      );      res
         .status(200)
         .json({ message: 'Senha atualizada com sucesso!' });
     } catch (error: any) {      res.status(400).json({ message: error.message });

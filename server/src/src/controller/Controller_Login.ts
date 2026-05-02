@@ -14,7 +14,11 @@ import {
 const OAUTH_STATE_COOKIE = 'nossozelo_oauth_state';
 
 function erroAutenticacao(mensagem: string) {
-  return mensagem.toLowerCase().includes('usuário ou senha inválidos');
+  const normalizada = mensagem
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return normalizada.includes('usuario ou senha invalid');
 }
 
 export class AuthController {

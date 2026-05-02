@@ -5,6 +5,19 @@ import { permitirTipos } from '../middleware/permitirTipos';
 
 const CrudRouter = Router();
 
+CrudRouter.use((req, res, next) => {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.ENABLE_ADMIN_CRUD !== 'true'
+  ) {
+    return res.status(404).json({
+      error: 'CRUD administrativo desabilitado neste ambiente.',
+    });
+  }
+
+  return next();
+});
+
 CrudRouter.use(authMiddleware, permitirTipos(['admin']));
 
 CrudRouter.get('/entities', CrudController.listarEntidades);

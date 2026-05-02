@@ -1,24 +1,35 @@
-# Seguranca
+# Segurança
 
-## Correcoes aplicadas
+## Sessão
 
-- CRUD generico protegido por JWT e perfil `admin`.
-- CRUD generico limitado por allowlist; entidades sensiveis ficam bloqueadas mesmo para admin.
-- Rotas de usuario protegidas por dono do recurso ou admin.
-- JWT de sessao movido para cookie HttpOnly.
-- Login social nao envia JWT de sessao por query string.
-- `helmet()` aplicado no Express.
-- CORS com `credentials: true`; `ALLOWED_ORIGINS` e obrigatorio em producao.
-- `JWT_SECRET` fraco ou ausente bloqueia startup.
-- Upload rejeita SVG, nomes suspeitos, extensao/MIME inconsistentes e magic bytes invalidos.
+- Sessão principal via cookie HttpOnly `zelo_token`.
+- `secure=true` em produção.
+- `sameSite=lax` por padrão local; use `COOKIE_SAMESITE=none` quando frontend e backend estiverem em domínios diferentes com HTTPS.
+- JWT no JSON foi removido do login tradicional.
 
-## Entidades bloqueadas no CRUD generico
+## Autorização
 
-`usuarios`, `admins`, `recuperacao_senhas`, `confirmacoes_email`, `logs_acesso`, `logs_acao`, `cartoes`, `dados_bancarios`, `documentos_cuidadores`, `assinaturas`, `pagamentos`, `eventos_assinatura`.
+- Rotas de usuário exigem autenticação e regra dono ou admin.
+- CRUD genérico exige usuário autenticado do tipo `admin`.
+- Entidades sensíveis como `usuarios`, `recuperacao_senhas`, `cartoes`, `dados_bancarios`, `documentos_cuidadores`, logs e eventos financeiros são bloqueadas no CRUD genérico.
+- Em produção, o CRUD administrativo só responde se `ENABLE_ADMIN_CRUD=true`.
 
-## Riscos restantes
+## Headers E CORS
 
-- Bearer Authorization ainda e aceito temporariamente para compatibilidade.
-- Falta integracao de antivirus/quarentena em documentos privados.
-- Algumas telas ainda usam leitura sincrona antiga de usuario apenas para UX; a autorizacao real deve permanecer no backend.
-- Cookies HttpOnly exigem HTTPS e dominios consistentes em producao.
+- `helmet` está ativo no Express.
+- CORS usa `ALLOWED_ORIGINS` e `credentials=true`; wildcard não deve ser usado com credenciais.
+
+## Logs
+
+O logger mascara campos sensíveis por chave, incluindo senha, token, CPF, cookies, autorização, dados bancários e chaves de API. Novos logs não devem registrar payloads completos de login, upload, pagamento ou webhooks.
+
+## Upload
+
+- Validação por MIME, extensão e assinatura binária permanece no middleware.
+- Documentos privados retornam chave interna, não URL pública.
+- Variáveis AWS são validadas antes de upload.
+- Pendente: antivírus/quarentena e política formal de retenção.
+
+## Rate Limit
+
+O rate limit atual é em memória. Em produção multi-instância, substituir por Redis/Upstash/ElastiCache para evitar bypass por instância.

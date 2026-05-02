@@ -1,4 +1,5 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { existsSync, readFileSync } from 'fs';
 import { sign } from 'jsonwebtoken';
 import path from 'path';
@@ -67,6 +68,7 @@ const mocks = vi.hoisted(() => {
       iniciarLoginSocial: vi.fn(),
       concluirCallbackSocial: vi.fn(),
       completarCadastroSocial: vi.fn(),
+      obterUsuarioAutenticado: vi.fn(),
     },
     confirmacaoEmailService: {
       confirmarEmail: vi.fn(),
@@ -109,6 +111,9 @@ import ServiceAssinatura from '../service/Service_Assinatura';
 import ServiceOnboarding from '../service/Service_Onboarding';
 import CrudRouter from '../route/Route_Crud';
 import UserRouter from '../route/Route_User';
+import LoginRouter from '../route/Route_Login';
+import AgendamentoRouter from '../route/Route_Agendamento';
+import AssinaturaRouter from '../route/Route_Assinatura';
 
 function appComRotasPublicas() {
   const app = express();
@@ -121,9 +126,14 @@ function appComRotasPublicas() {
 
 function appComRotasProtegidas() {
   const app = express();
+  app.use(cookieParser());
   app.use(express.json());
   app.use('/crud', CrudRouter);
   app.use('/create-users', UserRouter);
+  app.use('/login', LoginRouter);
+  app.use('/agendamentos', AgendamentoRouter);
+  app.use('/assinaturas', AssinaturaRouter);
+  app.get('/api/health', (_req, res) => res.status(200).json({ status: 'healthy' }));
   return app;
 }
 
@@ -188,6 +198,17 @@ describe('fluxos criticos do produto', () => {
     expect(response.status).toBe(403);
   });
 
+  it('admin autenticado acessa rota administrativa permitida', async () => {
+    mocks.prisma.$queryRaw.mockResolvedValue([{ TABLE_NAME: 'planos' }]);
+
+    const response = await request(appComRotasProtegidas())
+      .get('/crud/entities')
+      .set('Authorization', `Bearer ${tokenTeste({ tipo: 'admin' })}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([{ TABLE_NAME: 'planos' }]);
+  });
+
   it('bloqueia busca de usuario anonima', async () => {
     const response = await request(appComRotasProtegidas()).get(
       '/create-users/usuario/u1',
@@ -218,9 +239,63 @@ describe('fluxos criticos do produto', () => {
     expect(response.status).toBe(200);
     expect(response.body.token).toBeUndefined();
     expect(response.headers['set-cookie']?.join(';')).toContain(
-      'nossozelo_session=jwt',
+      'zelo_token=jwt',
     );
     expect(response.body.user.senha).toBeUndefined();
+  });
+
+  it('login com payload incompleto retorna 400', async () => {
+    const response = await request(appComRotasPublicas())
+      .post('/login')
+      .send({ identificador: 'user@test.com' });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('login invalido retorna 401', async () => {
+    mocks.authService.login.mockRejectedValue(
+      new Error('Usuario ou senha invalidos.'),
+    );
+
+    const response = await request(appComRotasPublicas())
+      .post('/login')
+      .send({ identificador: 'user@test.com', senha: 'errada' });
+
+    expect(response.status).toBe(401);
+  });
+
+  it('health check responde status operacional', async () => {
+    const response = await request(appComRotasProtegidas()).get('/api/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('healthy');
+  });
+
+  it('/login/me sem sessao retorna 401', async () => {
+    const response = await request(appComRotasProtegidas()).get('/login/me');
+
+    expect(response.status).toBe(401);
+  });
+
+  it('logout limpa cookie de sessao', async () => {
+    const response = await request(appComRotasProtegidas()).post('/login/logout');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['set-cookie']?.join(';')).toContain('zelo_token=');
+  });
+
+  it('criar agendamento sem login retorna 401', async () => {
+    const response = await request(appComRotasProtegidas())
+      .post('/agendamentos')
+      .send({ prestador_id: 'p1' });
+
+    expect(response.status).toBe(401);
+  });
+
+  it('listar planos de assinatura sem login retorna 401', async () => {
+    const response = await request(appComRotasProtegidas()).get('/assinaturas/planos');
+
+    expect(response.status).toBe(401);
   });
 
   it('confirma e-mail por token', async () => {

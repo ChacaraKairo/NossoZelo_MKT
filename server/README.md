@@ -22,7 +22,7 @@ npm run build
 - `helmet()` habilitado.
 - CORS com allowlist e `credentials: true`.
 - `JWT_SECRET` forte obrigatorio no startup.
-- Login cria cookie HttpOnly `nossozelo_session`.
+- Login cria cookie HttpOnly `zelo_token`.
 - `/login/me` retorna a sessao autenticada sem expor senha.
 - `/login/logout` limpa a sessao.
 - `/crud` exige admin e usa allowlist de entidades.
@@ -31,4 +31,4 @@ npm run build
 
 ## Variaveis principais
 
-Consulte `.env.example` e `docs/setup-local.md`.
+Consulte `.env.example` e `../docs/PRODUCAO.md`.
