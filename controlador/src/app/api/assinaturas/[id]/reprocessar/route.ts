@@ -20,7 +20,9 @@ function hashPayload(valor: unknown) {
 
 function statusLocalPorStatusAsaas(status?: string | null) {
   const normalizado = String(status || "").toUpperCase();
-  if (normalizado === "ACTIVE") return "ativa" as const;
+  // ACTIVE no Asaas significa assinatura criada no gateway; no NossoZelo
+  // a ativacao continua dependendo de PAYMENT_RECEIVED/CONFIRMED.
+  if (normalizado === "ACTIVE") return null;
   if (["INACTIVE", "CANCELLED", "DELETED"].includes(normalizado)) return "cancelada" as const;
   return null;
 }

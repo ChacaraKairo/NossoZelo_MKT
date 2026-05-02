@@ -30,7 +30,6 @@ model agenda {
   @@index([prestador_id], map: "prestador_id")
 }
 
-// ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que Enfermeiros e Acompanhantes também possam ter agenda fixa
 model agenda_recorrente {
   id           Int                           @id @default(autoincrement())
   prestador_id String                        @db.VarChar(20)
@@ -43,7 +42,6 @@ model agenda_recorrente {
   @@index([prestador_id], map: "prestador_id")
 }
 
-// ✅ ATUALIZAÇÃO: Relacionado a 'usuarios' para que qualquer prestador possa assinar um plano
 model assinaturas {
   id                      Int                 @id @default(autoincrement())
   prestador_id            String              @db.VarChar(20)
@@ -178,7 +176,7 @@ model cuidadores {
   disponibilidade        String?                  @db.VarChar(255)
   especialidades         String?                  @db.Text
   avaliacao_media        Decimal?                 @default(0.00) @db.Decimal(3, 2)
-  documentos             String?                  @db.VarChar(255) // ✅ ATUALIZAÇÃO: Adicionado para Link S3
+  documentos             String?                  @db.VarChar(255)
   documento_profissional String?                  @db.VarChar(50)
   conta_bancaria         String?                  @db.VarChar(50)
   cuidador_especialidade cuidador_especialidade[]
@@ -198,11 +196,10 @@ model denuncias {
 
 model documentos_cuidadores {
   id          Int      @id @default(autoincrement())
-  usuario_id  String   @db.VarChar(20) // Renomeado para clareza
+  usuario_id  String   @db.VarChar(20)
   tipo        String   @db.VarChar(100)
   url_arquivo String   @db.VarChar(255)
 
-  // 🔥 CORREÇÃO: Relacionamento agora aponta para 'usuarios'
   usuarios    usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "documentos_prestadores_ibfk_1")
 
   @@index([usuario_id], map: "usuario_id_idx")
@@ -211,15 +208,15 @@ model documentos_cuidadores {
 model enfermeiros {
   usuario_id       String   @id @db.VarChar(20)
   coren            String   @unique(map: "coren") @db.VarChar(20)
-  bio              String?  @db.Text                                  // ✅ ATUALIZAÇÃO: Adicionado
+  bio              String?  @db.Text
   especialidade    String?  @db.VarChar(100)
   especialidades   String?  @db.Text
   anos_experiencia Int?
   valor_hora       Decimal? @db.Decimal(10, 2)
   valor_diaria     Decimal? @db.Decimal(10, 2)
   disponibilidade  String?  @db.VarChar(255)
-  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)          // ✅ ATUALIZAÇÃO: Adicionado
-  documentos       String?  @db.VarChar(255)                          // ✅ ATUALIZAÇÃO: Adicionado
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)
+  documentos       String?  @db.VarChar(255)
   usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "enfermeiros_ibfk_1")
 }
 
@@ -231,8 +228,8 @@ model acompanhantes {
   valor_diaria     Decimal? @db.Decimal(10, 2)
   disponibilidade  String?  @db.VarChar(255)
   especialidades   String?  @db.Text
-  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)          // ✅ ATUALIZAÇÃO: Adicionado
-  documentos       String?  @db.VarChar(255)                          // ✅ ATUALIZAÇÃO: Adicionado
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)
+  documentos       String?  @db.VarChar(255)
   usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "acompanhantes_ibfk_1")
 }
 
@@ -369,12 +366,9 @@ model usuarios {
   criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
   avaliacao_media                                  Decimal?             @default(0.00) @db.Decimal(3, 2)
 
-  // ✅ ATUALIZAÇÃO: Relacionamentos ajustados
-  // ✅ ATUALIZAÇÃO: Relação com documentos genérica para todos os prestadores
   documentos_prestadores                           documentos_cuidadores[]
   confirmacoes_email                               confirmacoes_email[]
 
-  // Relacionamentos que você já possui
   admins                                           admins?
   agenda                                           agenda[]
   agenda_recorrente                                agenda_recorrente[]
@@ -435,7 +429,6 @@ model localizacoes {
   longitude  Decimal? @db.Decimal(9, 6)
   usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_localizacoes_usuario")
 }
-// ✅ TABELA DE MANUTENÇÃO: Evita que o banco da Aiven desligue por inatividade
 model aiven_keep_alive {
   id        Int      @id @default(1)
   last_ping DateTime @default(now()) @db.Timestamp(0)
@@ -443,18 +436,15 @@ model aiven_keep_alive {
   @@map("_aiven_keep_alive")
 }
 
-// ==========================================
-// ✅ ENUMS
-// ==========================================
 
 enum agenda_recorrente_dia_semana {
   domingo
   segunda
-  ter_a   @map("terça")
+  ter_a   @map("terÃ§a")
   quarta
   quinta
   sexta
-  s_bado  @map("sábado")
+  s_bado  @map("sÃ¡bado")
 }
 
 enum relatorios_tipo {
@@ -467,7 +457,7 @@ enum relatorios_tipo {
 enum avaliacoes_tipo_prestador {
   cuidador
   enfermeiro
-  acompanhante // ✅ ATUALIZAÇÃO: Adicionado
+  acompanhante
 }
 
 enum denuncias_status {
