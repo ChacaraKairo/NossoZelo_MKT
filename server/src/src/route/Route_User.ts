@@ -1,35 +1,22 @@
-/**
- * @author Kairo Chácara
- * @version 1.0
- * @date 15/04/2026
- * @description Definição das rotas da entidade Usuário, centralizando os endpoints de
- * cadastro unificado, gerenciamento de perfil, atualização de credenciais e exclusão de registros.
- * @rota server\src\src\route\Route_User
- */
-
 import { Router } from 'express';
 import UserController from '../controller/Controller_User';
 import { validarUsuario } from '../middleware/user';
-import { rateLimit } from '../middleware/rateLimit';const UserRouter = Router();
+import { rateLimit } from '../middleware/rateLimit';
+import { authMiddleware } from '../middleware/autenticacao';
+import { autorizarUsuarioAlvo } from '../middleware/autorizarUsuarioAlvo';
+
+const UserRouter = Router();
+
 const cadastroRateLimit = rateLimit({
   nome: 'cadastro_usuario',
   janelaMs: 15 * 60 * 1000,
   max: 8,
 });
-/**
- * Esta única rota agora substitui as antigas /cuidador, /enfermeiro e /admin.
- * O UserController.criarUsuario lê o "req.body.usuario.tipo" e roteia automaticamente.
- */
-UserRouter.post('/usuario', cadastroRateLimit, validarUsuario, UserController.criarUsuario);UserRouter.get(
-  '/usuario/:id',
-  UserController.buscarUsuarioCompleto,
-);UserRouter.put(
-  '/usuario/:id',
-  UserController.atualizarUsuario,
-);UserRouter.put(
-  '/usuario/:id/senha',
-  UserController.atualizarSenha,
-);UserRouter.delete(
-  '/usuario/:id',
-  UserController.deletarUsuario,
-);export default UserRouter;
+
+UserRouter.post('/usuario', cadastroRateLimit, validarUsuario, UserController.criarUsuario);
+UserRouter.get('/usuario/:id', authMiddleware, autorizarUsuarioAlvo, UserController.buscarUsuarioCompleto);
+UserRouter.put('/usuario/:id', authMiddleware, autorizarUsuarioAlvo, UserController.atualizarUsuario);
+UserRouter.put('/usuario/:id/senha', authMiddleware, autorizarUsuarioAlvo, UserController.atualizarSenha);
+UserRouter.delete('/usuario/:id', authMiddleware, autorizarUsuarioAlvo, UserController.deletarUsuario);
+
+export default UserRouter;

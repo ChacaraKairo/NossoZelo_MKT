@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import HeaderHome from '@/components/header/HeaderHome';
 import Carregando from '@/components/common/Carregando';
 import ModalPagamentoAssinatura from '@/components/perfil/ModalPagamentoAssinatura';
@@ -31,6 +32,7 @@ function boolTexto(valor: boolean) {
 }
 
 export default function OnboardingPrestadorPage() {
+  const router = useRouter();
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [planos, setPlanos] = useState<PlanoAssinatura[]>([]);
   const [planoId, setPlanoId] = useState<number | null>(null);
@@ -38,6 +40,7 @@ export default function OnboardingPrestadorPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
+  const [tokenProcessado, setTokenProcessado] = useState<string | null>(null);
 
   const etapaAtual = status?.etapaAtual || 'confirmar_email';
   const deveListarPlanos =
@@ -45,7 +48,7 @@ export default function OnboardingPrestadorPage() {
     etapaAtual === 'pagar_assinatura' ||
     etapaAtual === 'inadimplente';
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       setErro(null);
       const statusAtual = await onboardingService.obterStatusOnboarding();
@@ -61,11 +64,56 @@ export default function OnboardingPrestadorPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    carregar();
-  }, []);
+    if (!router.isReady) return;
+
+    let cancelado = false;
+
+    async function iniciarPagina() {
+      const tokenConfirmacao =
+        typeof router.query.confirmar_email === 'string'
+          ? router.query.confirmar_email
+          : '';
+
+      setLoading(true);
+
+      if (tokenConfirmacao && tokenConfirmacao !== tokenProcessado) {
+        try {
+          setErro(null);
+          setMensagem('Confirmando seu e-mail...');
+          const resposta = await emailConfirmacaoService.confirmarEmail(tokenConfirmacao);
+
+          if (cancelado) return;
+
+          setTokenProcessado(tokenConfirmacao);
+          setMensagem(
+            resposta.proximo_passo ||
+              resposta.message ||
+              'E-mail confirmado. Entre na sua conta para continuar a ativacao do perfil profissional.',
+          );
+          router.replace('/onboarding/prestador', undefined, { shallow: true });
+        } catch (error) {
+          if (!cancelado) {
+            setErro(extrairMensagemErro(error));
+            setLoading(false);
+          }
+          return;
+        }
+      }
+
+      if (!cancelado) {
+        await carregar();
+      }
+    }
+
+    iniciarPagina();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [carregar, router, router.isReady, router.query.confirmar_email, tokenProcessado]);
 
   const indiceAtual = useMemo(() => {
     const indice = etapas.findIndex(([id]) => id === etapaAtual);
@@ -124,7 +172,15 @@ export default function OnboardingPrestadorPage() {
             {erro && <div className={styles.error}>{erro}</div>}
             {mensagem && <div className={styles.success}>{mensagem}</div>}
 
-            {etapaAtual === 'confirmar_email' && (
+            {!status && !erro && (
+              <div className={styles.actions}>
+                <Link className={styles.button} href="/login-user">
+                  Entrar e continuar
+                </Link>
+              </div>
+            )}
+
+            {status && etapaAtual === 'confirmar_email' && (
               <div className={styles.actions}>
                 <button type="button" className={styles.button} onClick={reenviarConfirmacao}>
                   Reenviar confirmacao de e-mail

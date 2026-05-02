@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import logger from '../lib/logger';
 import { AuthRequest, UsuarioAutenticado } from '../types/auth';
+import { SESSION_COOKIE_NAME } from '../lib/sessionCookie';
 
 function obterJwtSecret() {
   const jwtSecret = process.env.JWT_SECRET;
@@ -24,6 +25,15 @@ function extrairBearerToken(authHeader?: string) {
   return token;
 }
 
+function extrairToken(req: Request) {
+  const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
+  if (typeof cookieToken === 'string' && cookieToken.trim()) {
+    return cookieToken.trim();
+  }
+
+  return extrairBearerToken(req.headers.authorization);
+}
+
 function payloadValido(
   decoded: string | JwtPayload,
 ): decoded is JwtPayload & UsuarioAutenticado {
@@ -39,7 +49,7 @@ export function authMiddleware(
   res: Response,
   next: NextFunction,
 ) {
-  const token = extrairBearerToken(req.headers.authorization);
+  const token = extrairToken(req);
 
   if (!token) {
     logger.warn('authMiddleware: token ausente ou mal formatado', {

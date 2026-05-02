@@ -21,6 +21,14 @@ function getErrorMessage(error: unknown): string {
   return 'Erro desconhecido';
 }
 
+function statusErroCrud(msg: string) {
+  return msg.includes('bloqueada') || msg.includes('invalida') ? 403 : 400;
+}
+
+function validarEntidade(req: Request) {
+  return ServiceCrud.validarEntidadeCrud(req.params.entity);
+}
+
 class CrudController {
   /**
    * Lista todas as entidades (tabelas) disponíveis no esquema do banco de dados.
@@ -43,9 +51,9 @@ class CrudController {
    * @param {Response} res - Resposta HTTP.
    */
   static async listarTodos(req: Request, res: Response) {
-    const { entity } = req.params;    try {      const registros = await ServiceCrud.findAll(entity);      res.json(registros);
+    const { entity } = req.params;    try {      validarEntidade(req);      const registros = await ServiceCrud.findAll(entity);      res.json(registros);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 
@@ -55,7 +63,7 @@ class CrudController {
    * @param {Response} res - Resposta HTTP.
    */
   static async buscarPorId(req: Request, res: Response) {
-    const { entity, id } = req.params;    try {      const registro = await ServiceCrud.findById(
+    const { entity, id } = req.params;    try {      validarEntidade(req);      const registro = await ServiceCrud.findById(
         entity,
         id,
       );
@@ -66,7 +74,7 @@ class CrudController {
           .json({ error: 'Registro não encontrado' });
       }      res.json(registro);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 
@@ -76,13 +84,13 @@ class CrudController {
    * @param {Response} res - Resposta HTTP.
    */
   static async buscarPorCampo(req: Request, res: Response) {
-    const { entity, field, value } = req.params;    try {      const registros = await ServiceCrud.findByField(
+    const { entity, field, value } = req.params;    try {      validarEntidade(req);      const registros = await ServiceCrud.findByField(
         entity,
         field,
         value,
       );      res.json(registros);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 
@@ -93,12 +101,12 @@ class CrudController {
    */
   static async criarRegistro(req: Request, res: Response) {
     const { entity } = req.params;
-    const data = req.body;    try {      const registroCriado = await ServiceCrud.create(
+    const data = req.body;    try {      validarEntidade(req);      const registroCriado = await ServiceCrud.create(
         entity,
         data,
       );      res.status(201).json(registroCriado);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 
@@ -109,7 +117,7 @@ class CrudController {
    */
   static async criarMultiplos(req: Request, res: Response) {
     const { entity } = req.params;
-    const data = req.body;    try {
+    const data = req.body;    try {      validarEntidade(req);
       // Ramificação condicional: Validação de estrutura de dados (Array)
       if (!Array.isArray(data)) {        return res.status(400).json({
           error: 'O corpo da requisição deve ser um array',
@@ -119,7 +127,7 @@ class CrudController {
         data,
       );      res.status(201).json(resultado);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 
@@ -133,13 +141,13 @@ class CrudController {
     res: Response,
   ) {
     const { entity, id } = req.params;
-    const data = req.body;    try {      const registroAtualizado = await ServiceCrud.update(
+    const data = req.body;    try {      validarEntidade(req);      const registroAtualizado = await ServiceCrud.update(
         entity,
         id,
         data,
       );      res.json(registroAtualizado);
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 
@@ -152,9 +160,9 @@ class CrudController {
     req: Request,
     res: Response,
   ) {
-    const { entity, id } = req.params;    try {      await ServiceCrud.delete(entity, id);      res.status(204).send();
+    const { entity, id } = req.params;    try {      validarEntidade(req);      await ServiceCrud.delete(entity, id);      res.status(204).send();
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);      res.status(400).json({ error: msg });
+      const msg = getErrorMessage(error);      res.status(statusErroCrud(msg)).json({ error: msg });
     }
   }
 }

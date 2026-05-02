@@ -6,19 +6,6 @@ import { loginService } from '@/service/Login';
 import { onboardingService } from '@/service/onboardingService';
 import styles from '@/styles/CadastroSocialPage.module.css';
 
-function decodificarTipo(token?: string) {
-  if (!token) return '';
-
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return '';
-    const dados = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    return String(dados?.tipo || '');
-  } catch {
-    return '';
-  }
-}
-
 function destinoPorTipo(tipo: string) {
   if (tipo === 'admin') return '/dashboard';
   if (tipo === 'cuidador' || tipo === 'enfermeiro' || tipo === 'acompanhante') {
@@ -29,28 +16,34 @@ function destinoPorTipo(tipo: string) {
 
 export default function SocialCallbackPage() {
   const router = useRouter();
-  const token =
-    typeof router.query.token === 'string' ? router.query.token : '';
+  const status =
+    typeof router.query.status === 'string' ? router.query.status : '';
   const erro = useMemo(() => {
     if (!router.isReady) return '';
-    return token ? '' : 'Token de login social ausente.';
-  }, [router.isReady, token]);
+    return status === 'success' ? '' : 'Login social nao concluido.';
+  }, [router.isReady, status]);
 
   useEffect(() => {
-    if (!router.isReady || !token) return;
+    if (!router.isReady || status !== 'success') return;
 
-    loginService.persistirSessao(token);
-    onboardingService
-      .obterStatusOnboarding()
-      .then((status) => {
-        if (status.isPrestador && status.etapaAtual !== 'ativo') {
+    loginService
+      .me()
+      .then((sessao) =>
+        onboardingService.obterStatusOnboarding().then((onboarding) => ({
+          sessao,
+          onboarding,
+        })),
+      )
+      .then(({ sessao, onboarding }) => {
+        const usuario = sessao.user || sessao.usuario;
+        if (onboarding.isPrestador && onboarding.etapaAtual !== 'ativo') {
           router.replace('/onboarding/prestador');
           return;
         }
-        router.replace(destinoPorTipo(decodificarTipo(token)));
+        router.replace(destinoPorTipo(usuario?.tipo || 'cliente'));
       })
-      .catch(() => router.replace(destinoPorTipo(decodificarTipo(token))));
-  }, [router, token]);
+      .catch(() => router.replace('/login-user'));
+  }, [router, status]);
 
   if (erro) {
     return (

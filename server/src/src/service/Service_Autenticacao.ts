@@ -240,8 +240,11 @@ export class ServiceAuth {
     });
 
     if (usuario) {
-      const token = criarTokenSessao(usuario);
-      return `${obterFrontendUrl()}/auth/social-callback?token=${encodeURIComponent(token)}`;
+      return {
+        tipo: 'login' as const,
+        redirectUrl: `${obterFrontendUrl()}/auth/social-callback?status=success`,
+        token: criarTokenSessao(usuario),
+      };
     }
 
     const tokenCadastro = sign(
@@ -256,7 +259,11 @@ export class ServiceAuth {
       { expiresIn: TEMPO_CADASTRO_SOCIAL },
     );
 
-    return `${obterFrontendUrl()}/cadastro-social?token=${encodeURIComponent(tokenCadastro)}`;
+    return {
+      tipo: 'cadastro' as const,
+      redirectUrl: `${obterFrontendUrl()}/cadastro-social?status=signup`,
+      tokenCadastro,
+    };
   }
 
   static async completarCadastroSocial(data: any) {
@@ -358,6 +365,53 @@ export class ServiceAuth {
         email_confirmado: usuarioCriado.email_confirmado,
       },
       onboardingStatus: await ServiceOnboarding.obterStatus(usuarioCriado.id),
+    };
+  }
+
+  static async obterCadastroSocialPendente(token: string) {
+    const { verify } = await import('jsonwebtoken');
+    const decoded = verify(String(token || ''), obterJwtSecret()) as {
+      purpose?: string;
+      provider?: 'google' | 'facebook';
+      email?: string;
+      nome?: string;
+      url_foto_perfil?: string;
+      exp?: number;
+    };
+
+    if (decoded.purpose !== 'social_signup' || !decoded.email) {
+      throw new Error('Cadastro social pendente invalido.');
+    }
+
+    return {
+      provider: decoded.provider,
+      email: decoded.email,
+      nome: decoded.nome,
+      url_foto_perfil: decoded.url_foto_perfil,
+      exp: decoded.exp,
+    };
+  }
+
+  static async obterUsuarioAutenticado(usuarioId: string) {
+    const usuario = await prisma.usuarios.findUnique({
+      where: { id: usuarioId },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        email_confirmado: true,
+        status_cadastro: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new Error('Usuario nao encontrado.');
+    }
+
+    return {
+      user: usuario,
+      onboardingStatus: await ServiceOnboarding.obterStatus(usuario.id),
     };
   }
 

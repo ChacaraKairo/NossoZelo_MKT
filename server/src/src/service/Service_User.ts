@@ -17,6 +17,7 @@ import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
 import ServiceConfirmacaoEmail from './Service_ConfirmacaoEmail';
 import { STATUS_CADASTRO_USUARIO } from '../constants/financeiro';
+import { senhaForte } from '../validator/create/Validator_User';
 
 type CadastroError = Error & { status?: number };
 
@@ -351,8 +352,8 @@ class ServiceUser {
     id: string,
     novaSenha: string,
   ) {    try {
-      if (!novaSenha || novaSenha.length < 6) {        throw new Error(
-          'A senha deve ter pelo menos 6 caracteres.',
+      if (!senhaForte(novaSenha)) {        throw new Error(
+          'Senha deve ter 8 a 72 caracteres, com letra maiuscula, minuscula, numero e caractere especial.',
         );
       }      const senhaCriptografada = await bcrypt.hash(
         novaSenha,

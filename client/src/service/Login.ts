@@ -1,4 +1,3 @@
-import Cookies from 'js-cookie';
 import { OnboardingStatus } from '@/types/onboarding';
 import logger from '@/utils/logger';
 
@@ -8,7 +7,6 @@ export interface LoginRequestBody {
 }
 
 export interface LoginResponse {
-  token?: string;
   user?: {
     id: string;
     nome: string;
@@ -30,39 +28,6 @@ export interface LoginResponse {
 const CONTEXTO = 'LoginService';
 const MENSAGEM_CREDENCIAIS_INVALIDAS =
   'Usuario ou senha invalidos. Por favor, tente novamente.';
-const DIAS_SESSAO_LOGIN = 7;
-
-function obterExpiracaoCookie(token: string) {
-  try {
-    const payloadBase64 = token.split('.')[1];
-    if (!payloadBase64) return DIAS_SESSAO_LOGIN;
-
-    const base64 = payloadBase64
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64)) as { exp?: number };
-
-    if (!payload.exp) return DIAS_SESSAO_LOGIN;
-
-    return new Date(payload.exp * 1000);
-  } catch {
-    return DIAS_SESSAO_LOGIN;
-  }
-}
-
-function gravarCookieSessao(token: string) {
-  const opcoes = {
-    expires: obterExpiracaoCookie(token),
-    path: '/',
-    sameSite: 'strict' as const,
-    secure:
-      typeof window !== 'undefined' &&
-      window.location.protocol === 'https:',
-  };
-
-  Cookies.set('token', token, opcoes);
-  Cookies.set('zelo_token', token, opcoes);
-}
 
 function mascararIdentificador(identificador: string) {
   const valor = identificador.trim();
@@ -79,9 +44,17 @@ function mascararIdentificador(identificador: string) {
   return '***';
 }
 
+function armazenarUsuarioSessao(responseData: LoginResponse) {
+  if (typeof window === 'undefined') return;
+  const usuario = responseData.user || responseData.usuario;
+  if (usuario) {
+    sessionStorage.setItem('nossozelo_usuario', JSON.stringify(usuario));
+  }
+}
+
 class LoginService {
-  public persistirSessao(token: string) {
-    gravarCookieSessao(token);
+  public persistirSessao(_token?: string) {
+    logger.warn(CONTEXTO, 'Persistencia manual de JWT desativada; usando cookie HttpOnly.');
   }
 
   public iniciarLoginSocial(provider: 'google' | 'facebook') {
@@ -98,6 +71,7 @@ class LoginService {
       `${apiUrl}/nossozelo/login/social/completar-cadastro`,
       {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       },
@@ -115,12 +89,9 @@ class LoginService {
       );
     }
 
-    if (responseData.token) {
-      gravarCookieSessao(responseData.token);
-      logger.info(CONTEXTO, 'Cadastro social concluido com sessao criada');
-    }
-
-    return responseData as LoginResponse;
+    const resposta = responseData as LoginResponse;
+    armazenarUsuarioSessao(resposta);
+    return resposta;
   }
 
   public async solicitarRecuperacaoSenha(email: string) {
@@ -234,15 +205,10 @@ class LoginService {
 
       const responseData: LoginResponse = await response.json();
 
-      if (responseData.token) {
-        logger.debug(CONTEXTO, 'Token JWT detectado. Persistindo sessao');
-        gravarCookieSessao(responseData.token);
-        logger.debug(CONTEXTO, 'Cookie de sessao gravado com sucesso');
-      }
-
       logger.info(CONTEXTO, 'Fluxo de login finalizado com sucesso', {
         identificador: mascararIdentificador(data.identificador),
       });
+      armazenarUsuarioSessao(responseData);
       return responseData;
     } catch (error: unknown) {
       if (
@@ -269,6 +235,32 @@ class LoginService {
       logger.error(CONTEXTO, 'Erro critico no LoginService', error);
       throw error;
     }
+  }
+
+  public async me(): Promise<LoginResponse> {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const response = await fetch(`${apiUrl}/nossozelo/login/me`, {
+      credentials: 'include',
+    });
+
+    const responseData = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(responseData.error || 'Sessao invalida.');
+    }
+
+    const resposta = responseData as LoginResponse;
+    armazenarUsuarioSessao(resposta);
+    return resposta;
+  }
+
+  public async logout() {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    await fetch(`${apiUrl}/nossozelo/login/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => undefined);
   }
 }
 

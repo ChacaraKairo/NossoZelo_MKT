@@ -149,7 +149,7 @@ function telefoneBrasileiroValido(telefoneOriginal: unknown): boolean {
   return /^[2-5]/.test(numero);
 }
 
-function senhaForte(senha: unknown): boolean {
+export function senhaForte(senha: unknown): boolean {
   if (typeof senha !== 'string') return false;
 
   return (

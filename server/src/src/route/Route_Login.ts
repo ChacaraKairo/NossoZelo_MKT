@@ -32,6 +32,8 @@ function isProvedorSocial(provider: string): provider is ProvedorSocial {
  * Recebe identificador (E-mail/CPF) e senha para geração de token JWT.
  */
 LoginRouter.post('/login', loginRateLimit, AuthController.login);
+LoginRouter.get('/me', authMiddleware, AuthController.me as any);
+LoginRouter.post('/logout', AuthController.logout);
 LoginRouter.get(
   '/social/:provider',
   (req, res) => {
@@ -63,6 +65,10 @@ LoginRouter.get(
 LoginRouter.post(
   '/social/completar-cadastro',
   AuthController.completarCadastroSocial,
+);
+LoginRouter.get(
+  '/social/cadastro-pendente',
+  AuthController.cadastroSocialPendente,
 );
 LoginRouter.post(
   '/recuperar-senha',

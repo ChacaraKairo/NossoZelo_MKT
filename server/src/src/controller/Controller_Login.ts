@@ -2,6 +2,14 @@
 import { randomBytes } from 'crypto';
 import { ServiceAuth } from '../service/Service_Autenticacao';
 import logger from '../lib/logger';
+import { AuthRequest } from '../types/auth';
+import {
+  definirCookieCadastroSocial,
+  definirCookieSessao,
+  limparCookieCadastroSocial,
+  limparCookieSessao,
+  SOCIAL_SIGNUP_COOKIE_NAME,
+} from '../lib/sessionCookie';
 
 const OAUTH_STATE_COOKIE = 'nossozelo_oauth_state';
 
@@ -48,11 +56,18 @@ export class AuthController {
           return res.status(400).json({ error: 'Codigo OAuth ausente.' });
         }
 
-        const redirectUrl = await ServiceAuth.concluirCallbackSocial(
+        const resultado = await ServiceAuth.concluirCallbackSocial(
           provider,
           code,
         );
-        return res.redirect(redirectUrl);
+
+        if (resultado.tipo === 'login') {
+          definirCookieSessao(res, resultado.token);
+        } else {
+          definirCookieCadastroSocial(res, resultado.tokenCadastro);
+        }
+
+        return res.redirect(resultado.redirectUrl);
       } catch (error: any) {
         logger.error('AuthController: falha no callback social', {
           provider,
@@ -72,8 +87,16 @@ export class AuthController {
 
   static async completarCadastroSocial(req: Request, res: Response) {
     try {
-      const result = await ServiceAuth.completarCadastroSocial(req.body);
-      return res.status(201).json(result);
+      const result = await ServiceAuth.completarCadastroSocial({
+        ...req.body,
+        socialToken:
+          req.body?.socialToken ||
+          req.cookies?.[SOCIAL_SIGNUP_COOKIE_NAME],
+      });
+      definirCookieSessao(res, result.token);
+      limparCookieCadastroSocial(res);
+      const { token, ...response } = result;
+      return res.status(201).json(response);
     } catch (error: any) {
       logger.error('AuthController: falha ao completar cadastro social', {
         erro: error?.message,
@@ -104,7 +127,9 @@ export class AuthController {
         senha,
       });
 
-      return res.status(200).json(result);
+      definirCookieSessao(res, result.token);
+      const { token, ...response } = result;
+      return res.status(200).json(response);
     } catch (error: any) {
       if (erroAutenticacao(error?.message || '')) {
         return res.status(401).json({
@@ -119,6 +144,48 @@ export class AuthController {
       return res.status(500).json({
         error:
           'Erro interno ao processar login. Tente novamente em instantes.',
+      });
+    }
+  }
+
+  static async me(req: AuthRequest, res: Response) {
+    try {
+      const usuarioId = req.user?.id;
+      if (!usuarioId) {
+        return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      }
+
+      const result = await ServiceAuth.obterUsuarioAutenticado(usuarioId);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      logger.warn('AuthController: falha ao carregar sessao', {
+        erro: error?.message,
+      });
+      return res.status(401).json({ error: 'Sessao invalida.' });
+    }
+  }
+
+  static logout(_req: Request, res: Response) {
+    limparCookieSessao(res);
+    limparCookieCadastroSocial(res);
+    return res.status(200).json({ message: 'Sessao encerrada.' });
+  }
+
+  static async cadastroSocialPendente(req: Request, res: Response) {
+    try {
+      const token = req.cookies?.[SOCIAL_SIGNUP_COOKIE_NAME];
+      if (!token) {
+        return res.status(401).json({
+          error: 'Cadastro social pendente ausente.',
+        });
+      }
+
+      const dados = await ServiceAuth.obterCadastroSocialPendente(token);
+      return res.status(200).json(dados);
+    } catch (error: any) {
+      limparCookieCadastroSocial(res);
+      return res.status(401).json({
+        error: error?.message || 'Cadastro social pendente invalido.',
       });
     }
   }

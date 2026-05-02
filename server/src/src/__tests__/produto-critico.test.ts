@@ -1,5 +1,6 @@
 import express from 'express';
 import { existsSync, readFileSync } from 'fs';
+import { sign } from 'jsonwebtoken';
 import path from 'path';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -106,6 +107,8 @@ import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenh
 import ServiceAgendamento from '../service/Service_Agendamento';
 import ServiceAssinatura from '../service/Service_Assinatura';
 import ServiceOnboarding from '../service/Service_Onboarding';
+import CrudRouter from '../route/Route_Crud';
+import UserRouter from '../route/Route_User';
 
 function appComRotasPublicas() {
   const app = express();
@@ -114,6 +117,28 @@ function appComRotasPublicas() {
   app.post('/email/confirmar', ControllerConfirmacaoEmail.confirmar as any);
   app.post('/recuperar-senha', RecuperacaoSenhaController.enviarEmail);
   return app;
+}
+
+function appComRotasProtegidas() {
+  const app = express();
+  app.use(express.json());
+  app.use('/crud', CrudRouter);
+  app.use('/create-users', UserRouter);
+  return app;
+}
+
+function tokenTeste(payload: Record<string, unknown>) {
+  return sign(
+    {
+      id: 'u1',
+      nome: 'Usuario',
+      email: 'u@test.com',
+      tipo: 'cliente',
+      ...payload,
+    },
+    process.env.JWT_SECRET || 'segredo-de-teste-com-mais-de-32-caracteres',
+    { expiresIn: '1h' },
+  );
 }
 
 const assinaturaBase = {
@@ -138,6 +163,46 @@ describe('fluxos criticos do produto', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ASAAS_WEBHOOK_TOKEN = 'asaas-test-token';
+    process.env.JWT_SECRET = 'segredo-de-teste-com-mais-de-32-caracteres';
+  });
+
+  it('bloqueia CRUD generico para usuario anonimo', async () => {
+    const response = await request(appComRotasProtegidas()).get('/crud/entities');
+
+    expect(response.status).toBe(401);
+  });
+
+  it('bloqueia CRUD generico para usuario nao admin', async () => {
+    const response = await request(appComRotasProtegidas())
+      .get('/crud/entities')
+      .set('Authorization', `Bearer ${tokenTeste({ tipo: 'cliente' })}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it('bloqueia entidade sensivel mesmo para admin no CRUD generico', async () => {
+    const response = await request(appComRotasProtegidas())
+      .get('/crud/usuarios')
+      .set('Authorization', `Bearer ${tokenTeste({ tipo: 'admin' })}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it('bloqueia busca de usuario anonima', async () => {
+    const response = await request(appComRotasProtegidas()).get(
+      '/create-users/usuario/u1',
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('bloqueia acesso cruzado de usuario comum', async () => {
+    const response = await request(appComRotasProtegidas())
+      .put('/create-users/usuario/u2')
+      .set('Authorization', `Bearer ${tokenTeste({ id: 'u1', tipo: 'cliente' })}`)
+      .send({ usuario: { nome: 'Outro' } });
+
+    expect(response.status).toBe(403);
   });
 
   it('realiza login sem expor senha no retorno', async () => {
@@ -151,7 +216,10 @@ describe('fluxos criticos do produto', () => {
       .send({ identificador: 'user@test.com', senha: 'Senha!123' });
 
     expect(response.status).toBe(200);
-    expect(response.body.token).toBe('jwt');
+    expect(response.body.token).toBeUndefined();
+    expect(response.headers['set-cookie']?.join(';')).toContain(
+      'nossozelo_session=jwt',
+    );
     expect(response.body.user.senha).toBeUndefined();
   });
 

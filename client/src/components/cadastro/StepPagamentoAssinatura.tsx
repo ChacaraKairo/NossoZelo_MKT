@@ -10,7 +10,7 @@ export default function StepPagamentoAssinatura() {
   const router = useRouter();
   const [estado, setEstado] = useState<Estado>('aguardando_email');
   const [mensagem, setMensagem] = useState(
-    'Após confirmar seu e-mail, acesse a área financeira para ativar sua assinatura e liberar seu perfil profissional.',
+    'Apos confirmar seu e-mail, entre na sua conta e continue a ativacao em /onboarding/prestador.',
   );
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function StepPagamentoAssinatura() {
     if (!token) {
       setEstado('aguardando_email');
       setMensagem(
-        'Enviamos um link para o e-mail informado. Após confirmar seu e-mail, acesse a área financeira para ativar sua assinatura e liberar seu perfil profissional.',
+        'Enviamos um link para o e-mail informado. Apos confirmar seu e-mail, entre na sua conta e continue a ativacao em /onboarding/prestador.',
       );
       return;
     }
@@ -38,7 +38,7 @@ export default function StepPagamentoAssinatura() {
         setEstado('confirmado');
         setMensagem(
           resposta.proximo_passo ||
-            'E-mail confirmado. Acesse a área financeira para ativar sua assinatura e liberar seu perfil profissional.',
+            'E-mail confirmado. Entre na sua conta e continue a ativacao em /onboarding/prestador.',
         );
       })
       .catch((error) => {
@@ -64,15 +64,15 @@ export default function StepPagamentoAssinatura() {
             : estado === 'confirmando'
               ? 'Confirmando e-mail'
               : estado === 'erro'
-                ? 'Não foi possível confirmar'
+                ? 'Nao foi possivel confirmar'
                 : 'Confirme seu e-mail'}
         </h3>
         <p>{mensagem}</p>
       </div>
 
       <p className={Style.fieldHelpText}>
-        O pagamento não é feito nesta tela. A cobrança será gerada no Asaas pela
-        área financeira do perfil profissional.
+        O pagamento nao e feito nesta tela. A cobranca sera gerada no Asaas pelo
+        onboarding do perfil profissional, sem coleta de cartao no NossoZelo.
       </p>
     </div>
   );

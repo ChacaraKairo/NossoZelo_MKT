@@ -3,7 +3,10 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { UploadController } from '../controller/Controller_Upload';
-import { validarTokenUploadCadastro } from '../middleware/uploadCadastro';
+import {
+  validarArquivosUploadCadastro,
+  validarTokenUploadCadastro,
+} from '../middleware/uploadCadastro';
 
 const UploadRouter = Router();
 
@@ -44,6 +47,7 @@ UploadRouter.post(
   '/completar-cadastro',
   validarTokenUploadCadastro,
   upload.fields(camposCadastro),
+  validarArquivosUploadCadastro,
   UploadController.fazerUpload,
 );
 

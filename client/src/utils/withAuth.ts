@@ -5,7 +5,7 @@ import {
   useState,
 } from 'react';
 import { useRouter } from 'next/router';
-import { getUsuarioDoCookie } from './auth';
+import { loginService } from '@/service/Login';
 import logger from '@/utils/logger';
 
 interface WithAuthOptions {
@@ -28,45 +28,55 @@ export function withAuth<P extends object>(
     const [isVerifying, setIsVerifying] = useState(true);
 
     useEffect(() => {
+      let cancelado = false;
       logger.debug(CONTEXTO, 'Iniciando verificacao de seguranca', {
         rota: asPath,
       });
 
-      try {
-        const usuario = getUsuarioDoCookie();
+      async function verificarSessao() {
+        try {
+          const sessao = await loginService.me();
+          if (cancelado) return;
+          const usuario = sessao.user || sessao.usuario;
 
-        if (!usuario) {
-          logger.warn(CONTEXTO, 'Usuario nao autenticado', {
+          if (!usuario) {
+            logger.warn(CONTEXTO, 'Usuario nao autenticado', {
+              rota: asPath,
+              redirectPath,
+            });
+            replace(redirectPath);
+            return;
+          }
+
+          if (
+            rolesPermitidas &&
+            !rolesPermitidas.includes(usuario.tipo)
+          ) {
+            logger.warn(CONTEXTO, 'Permissao insuficiente', {
+              tipoUsuario: usuario.tipo,
+              rolesPermitidas,
+            });
+            replace('/');
+            return;
+          }
+
+          logger.debug(CONTEXTO, 'Usuario autorizado', {
+            usuarioId: usuario.id,
             rota: asPath,
-            redirectPath,
           });
+          setIsAuthorized(true);
+        } catch (error: unknown) {
+          logger.error(CONTEXTO, 'Falha no processamento do HOC', error);
           replace(redirectPath);
-          return;
+        } finally {
+          if (!cancelado) setIsVerifying(false);
         }
-
-        if (
-          rolesPermitidas &&
-          !rolesPermitidas.includes(usuario.tipo)
-        ) {
-          logger.warn(CONTEXTO, 'Permissao insuficiente', {
-            tipoUsuario: usuario.tipo,
-            rolesPermitidas,
-          });
-          replace('/');
-          return;
-        }
-
-        logger.debug(CONTEXTO, 'Usuario autorizado', {
-          usuarioId: usuario.id,
-          rota: asPath,
-        });
-        setIsAuthorized(true);
-      } catch (error: unknown) {
-        logger.error(CONTEXTO, 'Falha no processamento do HOC', error);
-        replace(redirectPath);
-      } finally {
-        setIsVerifying(false);
       }
+
+      verificarSessao();
+      return () => {
+        cancelado = true;
+      };
     }, [asPath, replace]);
 
     if (isVerifying || !isAuthorized) {

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { JwtPayload, verify } from 'jsonwebtoken';
+import path from 'path';
 
 export type CadastroUploadRequest = Request & {
   cadastroUpload?: {
@@ -66,4 +67,68 @@ export function validarTokenUploadCadastro(
       message: 'Token temporario de cadastro expirado ou invalido.',
     });
   }
+}
+
+const ASSINATURAS_PERMITIDAS = [
+  {
+    mime: 'image/jpeg',
+    extensoes: ['.jpg', '.jpeg'],
+    maxBytes: 5 * 1024 * 1024,
+    valida: (buffer: Buffer) => buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff,
+  },
+  {
+    mime: 'image/png',
+    extensoes: ['.png'],
+    maxBytes: 5 * 1024 * 1024,
+    valida: (buffer: Buffer) =>
+      buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+  },
+  {
+    mime: 'image/webp',
+    extensoes: ['.webp'],
+    maxBytes: 5 * 1024 * 1024,
+    valida: (buffer: Buffer) =>
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP',
+  },
+  {
+    mime: 'application/pdf',
+    extensoes: ['.pdf'],
+    maxBytes: 10 * 1024 * 1024,
+    valida: (buffer: Buffer) => buffer.subarray(0, 5).toString('ascii') === '%PDF-',
+  },
+];
+
+function nomeSuspeito(nome: string) {
+  return /[\\/:*?"<>|\x00]/.test(nome) || nome.includes('..') || nome.trim().length > 180;
+}
+
+export function validarArquivosUploadCadastro(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const arquivosPorCampo = req.files as
+    | Record<string, Express.Multer.File[]>
+    | undefined;
+  const arquivos = Object.values(arquivosPorCampo || {}).flat();
+
+  for (const arquivo of arquivos) {
+    const extensao = path.extname(arquivo.originalname || '').toLowerCase();
+
+    if (nomeSuspeito(arquivo.originalname || '') || extensao === '.svg') {
+      return res.status(400).json({ error: 'Nome ou extensao de arquivo invalida.' });
+    }
+
+    const regra = ASSINATURAS_PERMITIDAS.find(
+      (item) => item.mime === arquivo.mimetype && item.extensoes.includes(extensao),
+    );
+
+    if (!regra || arquivo.size > regra.maxBytes || !regra.valida(arquivo.buffer)) {
+      return res.status(400).json({ error: 'Arquivo invalido ou nao permitido.' });
+    }
+  }
+
+  // TODO(seguranca): integrar antivirus/quarentena antes de aceitar documentos em producao regulada.
+  return next();
 }

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FaFacebookF, FaGoogle } from 'react-icons/fa';
@@ -62,12 +62,7 @@ function destinoPorTipo(tipo: string) {
 
 export default function CadastroSocialPage() {
   const router = useRouter();
-  const socialToken =
-    typeof router.query.token === 'string' ? router.query.token : '';
-  const dadosSociais = useMemo(
-    () => decodificarToken(socialToken),
-    [socialToken],
-  );
+  const socialToken = '';
 
   const [tipo, setTipo] = useState<TipoConta>('cliente');
   const [nome, setNome] = useState('');
@@ -91,15 +86,44 @@ export default function CadastroSocialPage() {
   const [loadingCep, setLoadingCep] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dadosSociais, setDadosSociais] = useState<SocialPayload | null>(null);
+  const [carregandoCadastroSocial, setCarregandoCadastroSocial] = useState(true);
 
   const tokenInvalido =
     router.isReady &&
-    (!socialToken ||
-      !dadosSociais ||
+    !carregandoCadastroSocial &&
+    (!dadosSociais ||
       dadosSociais.purpose !== 'social_signup' ||
       !dadosSociais.email);
 
   const isPrestador = tipo !== 'cliente';
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const tokenLegado =
+      typeof router.query.token === 'string' ? router.query.token : '';
+    if (tokenLegado) {
+      setDadosSociais(decodificarToken(tokenLegado));
+      setCarregandoCadastroSocial(false);
+      return;
+    }
+
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    fetch(`${apiUrl}/nossozelo/login/social/cadastro-pendente`, {
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Cadastro social pendente invalido.');
+        setDadosSociais({ ...data, purpose: 'social_signup' });
+      })
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : 'Cadastro social pendente invalido.'),
+      )
+      .finally(() => setCarregandoCadastroSocial(false));
+  }, [router.isReady, router.query.token]);
 
   useEffect(() => {
     if (dadosSociais?.nome) {
@@ -217,6 +241,10 @@ export default function CadastroSocialPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (carregandoCadastroSocial) {
+    return <main className={styles.page}><section className={styles.card}>Carregando cadastro social...</section></main>;
   }
 
   if (tokenInvalido) {

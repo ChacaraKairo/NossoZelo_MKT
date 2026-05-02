@@ -1,6 +1,6 @@
 import axios from 'axios';
 import logger from '@/utils/logger';
-import { getToken, logout } from '@/utils/auth';
+import { logout } from '@/utils/auth';
 
 const CONTEXTO = 'api';
 
@@ -10,7 +10,7 @@ const apiUrl =
 
 export const baseURL = `${apiUrl}/nossozelo`;
 
-export const api = axios.create({ baseURL });
+export const api = axios.create({ baseURL, withCredentials: true });
 
 export function extrairErroApi(error: unknown) {
   if (axios.isAxiosError(error)) {
@@ -38,13 +38,6 @@ export function extrairErroApi(error: unknown) {
 
 api.interceptors.request.use(
   (config) => {
-    const token =
-      typeof window !== 'undefined' ? getToken() : undefined;
-
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     logger.debug(CONTEXTO, 'Requisição HTTP preparada', {
       method: config.method,
       url: config.url,

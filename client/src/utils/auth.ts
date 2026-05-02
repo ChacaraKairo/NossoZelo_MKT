@@ -18,18 +18,11 @@ const STORAGE_KEYS_SESSAO = [
   'auth',
   'nossozelo_usuario',
 ];
+const USUARIO_CACHE_KEY = 'nossozelo_usuario';
 
 export const getToken = (): string | undefined => {
-  if (typeof document === 'undefined') return undefined;
-
-  for (const name of COOKIE_NAMES) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-      return parts.pop()?.split(';').shift();
-    }
-  }
-
+  // Sessao de usuario usa cookie HttpOnly definido pelo backend.
+  // JWT nao deve ficar acessivel ao JavaScript.
   return undefined;
 };
 
@@ -39,6 +32,11 @@ export const logout = (silent: boolean = false) => {
   COOKIE_NAMES.forEach((name) => {
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   });
+
+  fetch(
+    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/nossozelo/login/logout`,
+    { method: 'POST', credentials: 'include' },
+  ).catch(() => undefined);
 
   STORAGE_KEYS_SESSAO.forEach((key) => {
     localStorage.removeItem(key);
@@ -58,57 +56,13 @@ export const logout = (silent: boolean = false) => {
 };
 
 export const getUsuarioDoCookie = (): UsuarioDecodificado | null => {
-  const token = getToken();
-
-  if (!token) return null;
+  if (typeof window === 'undefined') return null;
 
   try {
-    const payloadBase64 = token.split('.')[1];
-    if (!payloadBase64) {
-      throw new Error('Estrutura de token invalida');
-    }
-
-    const base64 = payloadBase64
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    const decodedJson = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(
-          (char) =>
-            `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`,
-        )
-        .join(''),
-    );
-
-    const usuario = JSON.parse(decodedJson) as UsuarioDecodificado;
-
-    // Esta leitura no frontend serve apenas para UX. A validacao de
-    // seguranca real sempre acontece no backend.
-    if (!usuario.exp) {
-      logger.warn('auth', 'Token sem exp recebido no frontend');
-      logout(true);
-      return null;
-    }
-
-    const agora = Math.floor(Date.now() / 1000);
-    if (usuario.exp < agora) {
-      logger.warn('auth', 'Sessao expirada', {
-        usuarioId: usuario.id,
-        expiradoEm: new Date(usuario.exp * 1000).toISOString(),
-      });
-      logout(true);
-      return null;
-    }
-
-    return usuario;
-  } catch (error) {
-    logger.error('auth', 'Falha ao decodificar JWT no frontend', {
-      timestamp: new Date().toISOString(),
-      mensagem: error instanceof Error ? error.message : 'Unknown Error',
-      tokenHash: `${token.substring(0, 10)}...`,
-    });
-    logout(true);
+    const cache = sessionStorage.getItem(USUARIO_CACHE_KEY);
+    return cache ? (JSON.parse(cache) as UsuarioDecodificado) : null;
+  } catch {
+    logger.debug('auth', 'Cache local de usuario invalido.');
     return null;
   }
 };

@@ -7,15 +7,31 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import logger from './src/lib/logger';
+import helmet from 'helmet';
 
 dotenv.config();
 
 const app = express();
 const APP_NAME = process.env.APP_NAME || 'Nosso Zelo API';
 const APP_VERSION = process.env.APP_VERSION || '1.0.0';
+const isProduction = process.env.NODE_ENV === 'production';
+
+function validarAmbiente() {
+  const jwtSecret = process.env.JWT_SECRET || '';
+
+  if (!jwtSecret || jwtSecret.length < 32 || jwtSecret === 'secret') {
+    throw new Error('JWT_SECRET ausente ou fraco. Use pelo menos 32 caracteres.');
+  }
+
+  if (isProduction && !process.env.ALLOWED_ORIGINS) {
+    throw new Error('ALLOWED_ORIGINS e obrigatorio em producao.');
+  }
+}
+
+validarAmbiente();
 
 const allowedOrigins = (
-  process.env.ALLOWED_ORIGINS || 'http://localhost:3000'
+  process.env.ALLOWED_ORIGINS || (isProduction ? '' : 'http://localhost:3000')
 )
   .split(',')
   .map((origin) => origin.trim())
@@ -23,6 +39,7 @@ const allowedOrigins = (
 
 logger.info('App: CORS configurado', { allowedOrigins });
 
+app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
@@ -74,11 +91,19 @@ app.get('/health', (_req, res) => {
   });
 });
 
+app.get('/nossozelo/health', (_req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    name: APP_NAME,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const htmlPath = path.join(__dirname, 'HTML');
 app.use(express.static(htmlPath));
 
-const uploadsPath = path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsPath));
+// Documentos privados nao devem ser servidos como arquivos estaticos.
+// Imagens publicas devem ser entregues por URLs controladas do storage.
 
 app.get('/', (_req, res) => {
   const indexPath = path.join(__dirname, 'HTML', 'index.html');

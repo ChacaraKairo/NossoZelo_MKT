@@ -63,4 +63,24 @@ Ambos precisam responder sem depender de sessao.
 - Verificar que planos inativos nao aparecem no marketplace.
 - Verificar que prestador inadimplente nao aparece na busca.
 - Verificar cron dos jobs.
+# Deploy
+
+Antes de publicar:
+
+- `JWT_SECRET` forte, unico por ambiente.
+- `ALLOWED_ORIGINS` definido, sem wildcard.
+- HTTPS ativo para client, controlador e API.
+- Cookies de sessao validados em ambiente com dominio real.
+- Buckets S3 separados para publico e privado.
+- Webhook Asaas configurado com `ASAAS_WEBHOOK_TOKEN`.
+- `npx prisma migrate deploy` executado no banco de producao.
+
+Comandos de validacao:
+
+```bash
+cd server && npm test && npm run build
+cd client && npm run lint && npm run build
+cd controlador && npm run prisma:generate && npm test && npm run lint && npm run build
+docker compose config
+```
 

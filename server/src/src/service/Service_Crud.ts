@@ -9,6 +9,29 @@
 
 import prisma from '../lib/prisma';
 
+export const ENTIDADES_CRUD_PERMITIDAS = new Set([
+  'especialidades',
+  'planos',
+  'servicos',
+  'relatorios',
+]);
+
+export const ENTIDADES_CRUD_BLOQUEADAS = new Set([
+  'usuarios',
+  'usuario',
+  'admins',
+  'recuperacao_senhas',
+  'confirmacoes_email',
+  'logs_acesso',
+  'logs_acao',
+  'cartoes',
+  'dados_bancarios',
+  'documentos_cuidadores',
+  'assinaturas',
+  'pagamentos',
+  'eventos_assinatura',
+]);
+
 const entidadesComIdNumerico = new Set([
   'agenda',
   'agenda_recorrente',
@@ -33,6 +56,27 @@ const entidadesComIdNumerico = new Set([
 ]);
 
 class ServiceCrud {
+  static normalizarEntidade(entity: string) {
+    return String(entity || '').trim();
+  }
+
+  static validarEntidadeCrud(entity: string) {
+    const entidade = this.normalizarEntidade(entity);
+
+    if (!entidade || entidade.includes('.') || entidade.includes('$')) {
+      throw new Error('Entidade invalida para CRUD generico.');
+    }
+
+    if (
+      ENTIDADES_CRUD_BLOQUEADAS.has(entidade) ||
+      !ENTIDADES_CRUD_PERMITIDAS.has(entidade)
+    ) {
+      throw new Error('Entidade bloqueada para CRUD generico.');
+    }
+
+    return entidade;
+  }
+
   static normalizarId(entity: string, id: string) {
     if (!entidadesComIdNumerico.has(entity)) {
       return id;
@@ -65,6 +109,14 @@ class ServiceCrud {
    * @throws {Error} - Falha na execução da query bruta de metadados.
    */
   static async listar_entidades(): Promise<any[]> {    try {      const result =
+        await prisma.$queryRaw`SELECT table_name AS TABLE_NAME FROM information_schema.tables WHERE table_schema = DATABASE()`;      return (result as any[]).filter((table) =>
+        ENTIDADES_CRUD_PERMITIDAS.has(String(table.TABLE_NAME || table.table_name || '')),
+      );
+    } catch (error: any) {      throw error;
+    }
+  }
+
+  static async listar_todas_entidades(): Promise<any[]> {    try {      const result =
         await prisma.$queryRaw`SELECT table_name AS TABLE_NAME FROM information_schema.tables WHERE table_schema = DATABASE()`;      return result as any[];
     } catch (error: any) {      throw error;
     }
@@ -77,7 +129,7 @@ class ServiceCrud {
    */
   static async checkIfEntityExists(
     entity: string,
-  ): Promise<boolean> {    const tables = await this.listar_entidades();
+  ): Promise<boolean> {    const tables = await this.listar_todas_entidades();
     const exists = tables.some(
       (table) => table.TABLE_NAME === entity,
     );

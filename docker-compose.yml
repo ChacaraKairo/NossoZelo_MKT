@@ -34,6 +34,7 @@ services:
       PORT: 4000
       API_URL: http://localhost:4000
       ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      JWT_SECRET: dev-local-jwt-secret-change-before-production-123456
     volumes:
       - ./server:/app
       - /app/node_modules
@@ -58,6 +59,28 @@ services:
       - /app/.next
     depends_on:
       - backend
+    networks:
+      - nossozelo_network
+
+  controlador:
+    build: ./controlador
+    container_name: nossozelo_controlador
+    restart: always
+    ports:
+      - '3001:3001'
+    environment:
+      DATABASE_URL: mysql://root:nossozelo123@db:3306/db
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      JWT_SECRET: dev-local-admin-secret-change-before-production-123456
+    volumes:
+      - ./controlador:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
     networks:
       - nossozelo_network
 
