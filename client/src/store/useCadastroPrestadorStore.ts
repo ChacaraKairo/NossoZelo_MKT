@@ -149,6 +149,8 @@ export const useCadastroPrestadorStore =
               state.documentos,
               state.profissional.categoria,
             );
+          } else if (etapaAtual === 5) {
+            novosErros = {};
           }
 
           set({ erros: novosErros });

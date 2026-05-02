@@ -14,8 +14,8 @@ export const useFinalizarCadastro = () => {
     endereco,
     profissional,
     documentos,
-    limparRascunho,
     validarEtapa,
+    setStep,
   } = useCadastroPrestadorStore();
 
   const prepararPayload = (): CadastroPayload => {
@@ -147,9 +147,12 @@ export const useFinalizarCadastro = () => {
       // 🔥 O PASSO QUE FALTAVA: Disparar os uploads com o ID real
       await executarUploads(idValido, uploadToken);
 
-      alert('Cadastro realizado com sucesso!');
-      limparRascunho();
-      router.push('/login-parceiro');
+      const avisoEmail = usuario.data?.aviso_confirmacao_email
+        ? ` ${usuario.data.aviso_confirmacao_email}`
+        : '';
+      alert(`Cadastro recebido. Verifique seu e-mail para confirmar a conta e pagar a assinatura.${avisoEmail}`);
+      setStep(5);
+      router.push('/cadastro-prestador?email_enviado=1');
     } catch (error: any) {      alert(error.message);
     } finally {
       setLoading(false);

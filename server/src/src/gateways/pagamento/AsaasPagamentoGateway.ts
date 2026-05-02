@@ -21,6 +21,23 @@ type AsaasSubscriptionResponse = {
   deleted?: boolean;
 };
 
+type AsaasPaymentResponse = {
+  id: string;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+  status?: string;
+};
+
+type AsaasPaymentListResponse = {
+  data?: AsaasPaymentResponse[];
+};
+
+type AsaasPixQrCodeResponse = {
+  encodedImage?: string | null;
+  payload?: string | null;
+  expirationDate?: string | null;
+};
+
 function apiKeyObrigatoria() {
   const apiKey = process.env.ASAAS_API_KEY?.trim();
   if (!apiKey) {
@@ -47,8 +64,27 @@ function adicionarDias(data: Date, dias: number) {
 }
 
 function billingTypeAssinatura(input: CriarAssinaturaMensalInput) {
-  if (input.cartaoToken) return 'CREDIT_CARD';
+  if (input.cartaoToken || input.creditCard) return 'CREDIT_CARD';
+  if (input.metodoPagamento === 'pix') return 'PIX';
+  if (input.metodoPagamento === 'credito') return 'CREDIT_CARD';
+  if (input.metodoPagamento === 'debito') return 'UNDEFINED';
   return process.env.ASAAS_BILLING_TYPE || 'PIX';
+}
+
+function mensagemPorBillingType(billingType: string) {
+  if (billingType === 'PIX') {
+    return 'Assinatura Pix recorrente criada no Asaas. Pague a primeira cobranca para ativar o perfil.';
+  }
+
+  if (billingType === 'CREDIT_CARD') {
+    return 'Assinatura por cartao de credito criada no Asaas. Abra a fatura para informar o cartao com seguranca.';
+  }
+
+  if (billingType === 'UNDEFINED') {
+    return 'Assinatura criada no Asaas. Abra a fatura para escolher cartao de debito ou outra forma disponivel.';
+  }
+
+  return 'Assinatura criada no Asaas. Aguarde confirmacao por webhook de pagamento.';
 }
 
 function normalizarStatusAsaas(status?: string): GatewayStatusAssinatura {
@@ -74,6 +110,10 @@ function mensagemErroAsaas(error: unknown) {
   return error instanceof Error
     ? error.message
     : 'Erro ao comunicar com o Asaas.';
+}
+
+function isPix(input: CriarAssinaturaMensalInput) {
+  return billingTypeAssinatura(input).toUpperCase() === 'PIX';
 }
 
 export class AsaasPagamentoGateway implements PagamentoGateway {
@@ -140,9 +180,32 @@ export class AsaasPagamentoGateway implements PagamentoGateway {
           externalReference: input.prestadorId,
           creditCardToken:
             billingType === 'CREDIT_CARD' ? input.cartaoToken : undefined,
+          creditCard:
+            billingType === 'CREDIT_CARD' && input.creditCard
+              ? input.creditCard
+              : undefined,
+          creditCardHolderInfo:
+            billingType === 'CREDIT_CARD' && input.creditCardHolderInfo
+              ? input.creditCardHolderInfo
+              : undefined,
           remoteIp: input.remoteIp,
         },
       );
+      const paymentsResponse =
+        await this.client.get<AsaasPaymentListResponse>(
+          `/subscriptions/${response.data.id}/payments`,
+          { params: { limit: 1 } },
+        );
+      const primeiraCobranca = paymentsResponse.data.data?.[0];
+      const pixQrCode =
+        primeiraCobranca?.id && isPix(input)
+          ? await this.client
+              .get<AsaasPixQrCodeResponse>(
+                `/payments/${primeiraCobranca.id}/pixQrCode`,
+              )
+              .then((pixResponse) => pixResponse.data)
+              .catch(() => null)
+          : null;
 
       return {
         sucesso: true,
@@ -150,8 +213,11 @@ export class AsaasPagamentoGateway implements PagamentoGateway {
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewaySubscriptionId: response.data.id,
         gatewayCustomerId: response.data.customer || input.gatewayCustomerId,
-        mensagem:
-          'Assinatura criada no Asaas. Aguarde confirmacao por webhook de pagamento.',
+        gatewayPaymentId: primeiraCobranca?.id,
+        invoiceUrl: primeiraCobranca?.invoiceUrl || null,
+        bankSlipUrl: primeiraCobranca?.bankSlipUrl || null,
+        pixQrCode,
+        mensagem: mensagemPorBillingType(billingType),
         confirmacaoExpiraEm: adicionarDias(new Date(), 3),
       };
     } catch (error) {

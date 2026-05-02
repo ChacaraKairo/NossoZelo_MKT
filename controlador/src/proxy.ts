@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, validarTokenAdmin } from "@/lib/sessionToken";
 
-const rotasPublicas = ["/login", "/api/auth/login"];
+const rotasPublicas = ["/login", "/api/auth/login", "/api/webhooks/asaas"];
 
 function isAsset(pathname: string) {
   return (
@@ -19,14 +19,10 @@ export async function proxy(request: NextRequest) {
   const sessao = await validarTokenAdmin(token);
   const publica = rotasPublicas.some((rota) => pathname === rota || pathname.startsWith(`${rota}/`));
 
-  if (!sessao && publica) return NextResponse.next();
+  if (publica) return NextResponse.next();
 
   if (!sessao) {
     return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

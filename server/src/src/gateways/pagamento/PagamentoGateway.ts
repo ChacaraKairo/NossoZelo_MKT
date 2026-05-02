@@ -29,8 +29,24 @@ export type CriarAssinaturaMensalInput = {
   cpfCnpj: string;
   telefone?: string | null;
   gatewayCustomerId?: string | null;
-  metodoPagamento?: 'credito' | 'debito';
+  metodoPagamento?: 'pix' | 'credito' | 'debito';
   cartaoToken?: string;
+  creditCard?: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  };
+  creditCardHolderInfo?: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    phone?: string;
+    mobilePhone?: string;
+  };
   remoteIp?: string;
 };
 
@@ -40,6 +56,14 @@ export type CriarAssinaturaResultado = {
   gateway: GatewayPagamento;
   gatewaySubscriptionId?: string;
   gatewayCustomerId?: string;
+  gatewayPaymentId?: string;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+  pixQrCode?: {
+    encodedImage?: string | null;
+    payload?: string | null;
+    expirationDate?: string | null;
+  } | null;
   mensagem?: string;
   confirmacaoExpiraEm?: Date;
 };

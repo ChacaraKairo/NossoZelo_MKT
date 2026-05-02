@@ -10,6 +10,11 @@ ConfirmacaoEmailRouter.get(
 );
 
 ConfirmacaoEmailRouter.post(
+  '/confirmar',
+  ControllerConfirmacaoEmail.confirmar as any,
+);
+
+ConfirmacaoEmailRouter.post(
   '/reenviar-confirmacao',
   authMiddleware,
   ControllerConfirmacaoEmail.reenviar as any,

@@ -18,7 +18,7 @@ type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
   planoId?: number;
 };
 
-type MetodoPagamentoAssinatura = 'credito' | 'debito';
+export type MetodoPagamentoAssinatura = 'pix' | 'credito' | 'debito';
 
 type CartaoResumoAssinatura = {
   nomeTitular: string;
@@ -29,10 +29,22 @@ type CartaoResumoAssinatura = {
   bandeira?: string;
 };
 
+type CartaoCreditoAssinatura = {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+  postalCode: string;
+  addressNumber: string;
+};
+
 export type DadosPagamentoAssinatura = {
   metodoPagamento?: MetodoPagamentoAssinatura;
   cartaoToken?: string;
   cartaoResumo?: CartaoResumoAssinatura;
+  cartaoCredito?: CartaoCreditoAssinatura;
+  remoteIp?: string;
 };
 
 type WebhookAsaasInput = {
@@ -75,12 +87,21 @@ function adicionarDias(data: Date, dias: number) {
 }
 
 function valorAssinaturaMensal(valorPlano: Prisma.Decimal | number | string) {
-  const valorConfigurado = Number(process.env.ASSINATURA_VALOR ?? 0.01);
+  const valorAmbiente = process.env.ASSINATURA_VALOR?.trim();
+  const valorConfigurado = valorAmbiente ? Number(valorAmbiente) : NaN;
   if (Number.isFinite(valorConfigurado) && valorConfigurado > 0) {
     return valorConfigurado;
   }
 
-  return Number(valorPlano);
+  const valorBanco = Number(valorPlano);
+  if (Number.isFinite(valorBanco) && valorBanco > 0) {
+    return valorBanco;
+  }
+
+  throw erroNegocio(
+    'Valor real da assinatura nao configurado. Atualize o plano no banco ou defina ASSINATURA_VALOR.',
+    500,
+  );
 }
 
 async function obterOuCriarPlanoAssinatura(planoId: number) {
@@ -90,20 +111,7 @@ async function obterOuCriarPlanoAssinatura(planoId: number) {
 
   if (planoInformado) return planoInformado;
 
-  const primeiroPlano = await prisma.planos.findFirst({
-    orderBy: { id: 'asc' },
-  });
-
-  if (primeiroPlano) return primeiroPlano;
-
-  return prisma.planos.create({
-    data: {
-      nome: 'Assinatura Profissional Mensal',
-      valor: 0.01,
-      beneficios:
-        'Plano mensal para ativacao de prestadores profissionais.',
-    },
-  });
+  throw erroNegocio('Plano de assinatura nao encontrado.', 404);
 }
 
 function statusCadastroPorAssinatura(
@@ -174,11 +182,75 @@ function validarDadosPagamentoAssinatura(
 
   if (dadosPagamento.metodoPagamento) {
     const metodoValido =
+      dadosPagamento.metodoPagamento === 'pix' ||
       dadosPagamento.metodoPagamento === 'credito' ||
       dadosPagamento.metodoPagamento === 'debito';
     if (!metodoValido) {
       throw erroNegocio('Metodo de pagamento invalido.', 400);
     }
+  }
+
+  if (dadosPagamento.metodoPagamento === 'credito') {
+    const cartao = dadosPagamento.cartaoCredito;
+    if (!cartao) {
+      throw erroNegocio('Dados do cartao de credito sao obrigatorios.', 400);
+    }
+
+    const numero = String(cartao.number || '').replace(/\D/g, '');
+    const cpfTitular =
+      dadosPagamento.cartaoResumo?.cpfTitular?.replace(/\D/g, '') || '';
+    const cep = String(cartao.postalCode || '').replace(/\D/g, '');
+    const mes = String(cartao.expiryMonth || '').padStart(2, '0');
+    const ano = String(cartao.expiryYear || '');
+
+    if (!cartao.holderName?.trim()) {
+      throw erroNegocio('Nome do titular do cartao e obrigatorio.', 400);
+    }
+
+    if (numero.length < 13 || numero.length > 19) {
+      throw erroNegocio('Numero de cartao invalido.', 400);
+    }
+
+    if (!/^(0[1-9]|1[0-2])$/.test(mes)) {
+      throw erroNegocio('Mes de validade do cartao invalido.', 400);
+    }
+
+    if (!/^\d{4}$/.test(ano)) {
+      throw erroNegocio('Ano de validade do cartao invalido.', 400);
+    }
+
+    if (!/^\d{3,4}$/.test(String(cartao.ccv || '').replace(/\D/g, ''))) {
+      throw erroNegocio('CVV do cartao invalido.', 400);
+    }
+
+    if (cpfTitular.length !== 11) {
+      throw erroNegocio('CPF do titular do cartao invalido.', 400);
+    }
+
+    if (cep.length !== 8) {
+      throw erroNegocio('CEP do titular do cartao invalido.', 400);
+    }
+
+    if (!String(cartao.addressNumber || '').trim()) {
+      throw erroNegocio('Numero do endereco do titular e obrigatorio.', 400);
+    }
+
+    return {
+      recebido: true,
+      metodoPagamento: dadosPagamento.metodoPagamento,
+      cartaoResumo: dadosPagamento.cartaoResumo,
+    };
+  }
+
+  if (
+    dadosPagamento.metodoPagamento === 'pix' ||
+    dadosPagamento.metodoPagamento === 'debito' ||
+    !dadosPagamento.metodoPagamento
+  ) {
+    return {
+      recebido: true,
+      metodoPagamento: dadosPagamento.metodoPagamento,
+    };
   }
 
   const resumo = dadosPagamento.cartaoResumo;
@@ -357,6 +429,14 @@ export class ServiceAssinatura {
       telefone: usuario.telefone,
     });
 
+    if (!clienteGateway.sucesso || !clienteGateway.gatewayCustomerId) {
+      throw erroNegocio(
+        clienteGateway.mensagem ||
+          'Nao foi possivel criar o cliente no Asaas.',
+        502,
+      );
+    }
+
     const resultado = await gateway.criarAssinaturaMensal({
       prestadorId,
       planoId,
@@ -368,12 +448,45 @@ export class ServiceAssinatura {
       gatewayCustomerId: clienteGateway.gatewayCustomerId,
       metodoPagamento: dadosPagamento?.metodoPagamento,
       cartaoToken: dadosPagamento?.cartaoToken,
+      creditCard: dadosPagamento?.cartaoCredito
+        ? {
+            holderName: dadosPagamento.cartaoCredito.holderName,
+            number: dadosPagamento.cartaoCredito.number.replace(/\D/g, ''),
+            expiryMonth: dadosPagamento.cartaoCredito.expiryMonth.padStart(
+              2,
+              '0',
+            ),
+            expiryYear: dadosPagamento.cartaoCredito.expiryYear,
+            ccv: dadosPagamento.cartaoCredito.ccv.replace(/\D/g, ''),
+          }
+        : undefined,
+      creditCardHolderInfo:
+        dadosPagamento?.metodoPagamento === 'credito' &&
+        dadosPagamento.cartaoCredito &&
+        dadosPagamento.cartaoResumo
+          ? {
+              name: dadosPagamento.cartaoCredito.holderName,
+              email: usuario.email,
+              cpfCnpj: dadosPagamento.cartaoResumo.cpfTitular.replace(
+                /\D/g,
+                '',
+              ),
+              postalCode: dadosPagamento.cartaoCredito.postalCode.replace(
+                /\D/g,
+                '',
+              ),
+              addressNumber: dadosPagamento.cartaoCredito.addressNumber,
+              phone: usuario.telefone?.replace(/\D/g, '') || undefined,
+              mobilePhone: usuario.telefone?.replace(/\D/g, '') || undefined,
+            }
+          : undefined,
+      remoteIp: dadosPagamento?.remoteIp,
     });
 
     if (resultado.status === 'aprovado') {
       const assinatura = await this.ativarAssinatura(prestadorId, {
         ...resultado,
-      planoId,
+        planoId,
       });
       return {
         gateway_resultado: {
@@ -388,6 +501,18 @@ export class ServiceAssinatura {
       const assinatura = await this.marcarAssinaturaFalhou(
         prestadorId,
         resultado.mensagem || 'Pagamento recusado.',
+        planoId,
+      );
+      return {
+        gateway_resultado: resultado,
+        assinatura,
+      };
+    }
+
+    if (!resultado.sucesso || resultado.status === 'erro') {
+      const assinatura = await this.marcarAssinaturaFalhou(
+        prestadorId,
+        resultado.mensagem || 'Erro ao criar assinatura no Asaas.',
         planoId,
       );
       return {

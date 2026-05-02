@@ -1,10 +1,6 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { assinaturaService } from '@/service/assinaturaService';
-import {
-  CartaoAssinaturaPayload,
-  MetodoPagamentoAssinatura,
-  ModoModalCartaoAssinatura,
-} from '@/types/assinatura';
+import { ModoModalCartaoAssinatura } from '@/types/assinatura';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import styles from '@/styles/components/perfil/ModalCartaoAssinatura.module.css';
 
@@ -17,67 +13,6 @@ type ModalCartaoAssinaturaProps = {
   onSucesso: (mensagem: string) => void;
 };
 
-type FormState = {
-  nomeTitular: string;
-  cpfTitular: string;
-  numeroCartao: string;
-  validade: string;
-  cvv: string;
-  metodoPagamento: MetodoPagamentoAssinatura;
-};
-
-const estadoInicial: FormState = {
-  nomeTitular: '',
-  cpfTitular: '',
-  numeroCartao: '',
-  validade: '',
-  cvv: '',
-  metodoPagamento: 'credito',
-};
-
-function apenasDigitos(valor: string) {
-  return valor.replace(/\D/g, '');
-}
-
-function formatarNumeroCartao(valor: string) {
-  return apenasDigitos(valor)
-    .slice(0, 19)
-    .replace(/(\d{4})(?=\d)/g, '$1 ')
-    .trim();
-}
-
-function formatarCpf(valor: string) {
-  const digitos = apenasDigitos(valor).slice(0, 11);
-  return digitos
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-}
-
-function formatarValidade(valor: string) {
-  const digitos = apenasDigitos(valor).slice(0, 4);
-  if (digitos.length <= 2) return digitos;
-  return `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
-}
-
-function estimarBandeira(numero: string) {
-  const digitos = apenasDigitos(numero);
-  if (digitos.startsWith('4')) return 'visa';
-  if (/^5[1-5]/.test(digitos) || /^2[2-7]/.test(digitos)) {
-    return 'mastercard';
-  }
-  if (/^3[47]/.test(digitos)) return 'amex';
-  if (/^(6011|65|64[4-9])/.test(digitos)) return 'discover';
-  if (/^(4011|4312|4389|4514|4576|5041|5067|509|6277|6362|6363)/.test(digitos)) {
-    return 'elo';
-  }
-  return undefined;
-}
-
-function anoCompleto(ano: string) {
-  return ano.length === 2 ? `20${ano}` : ano;
-}
-
 export default function ModalCartaoAssinatura({
   aberto,
   planoId,
@@ -85,74 +20,29 @@ export default function ModalCartaoAssinatura({
   onFechar,
   onSucesso,
 }: ModalCartaoAssinaturaProps) {
-  const [form, setForm] = useState<FormState>(estadoInicial);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
+  const [linkPagamento, setLinkPagamento] = useState<string | null>(null);
+  const [pixCopiaCola, setPixCopiaCola] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!aberto) {
-      setForm(estadoInicial);
       setErro(null);
       setSucesso(null);
+      setLinkPagamento(null);
+      setPixCopiaCola(null);
       setLoading(false);
     }
   }, [aberto]);
 
-  const titulo = 'Regularizar assinatura';
-  const descricao =
-    'Envie os dados para criar a assinatura no Asaas. A confirmacao pode levar ate 72 horas.';
-  const bandeira = useMemo(
-    () => estimarBandeira(form.numeroCartao),
-    [form.numeroCartao],
-  );
-
   if (!aberto) return null;
-
-  function validar() {
-    const numero = apenasDigitos(form.numeroCartao);
-    const cpf = apenasDigitos(form.cpfTitular);
-    const validade = apenasDigitos(form.validade);
-
-    if (!form.nomeTitular.trim()) return 'Informe o nome impresso no cartao.';
-    if (cpf.length < 11) return 'Informe um CPF valido para o titular.';
-    if (numero.length < 13) return 'Informe um numero de cartao valido.';
-    if (validade.length !== 4) return 'Informe a validade no formato MM/AA.';
-    const mes = Number(validade.slice(0, 2));
-    if (mes < 1 || mes > 12) return 'Informe um mes de validade valido.';
-    if (apenasDigitos(form.cvv).length < 3) return 'Informe o CVV.';
-    if (!Number.isInteger(planoId) || planoId <= 0) {
-      return 'Informe um plano valido antes de continuar.';
-    }
-
-    return null;
-  }
-
-  function montarPayload(): CartaoAssinaturaPayload {
-    const numero = apenasDigitos(form.numeroCartao);
-    const validade = apenasDigitos(form.validade);
-    const validadeMes = validade.slice(0, 2);
-    const validadeAno = anoCompleto(validade.slice(2));
-
-    return {
-      planoId,
-      metodoPagamento: form.metodoPagamento,
-      cartaoResumo: {
-        nomeTitular: form.nomeTitular.trim(),
-        cpfTitular: apenasDigitos(form.cpfTitular),
-        numeroFinal: numero.slice(-4),
-        validadeMes,
-        validadeAno,
-        bandeira,
-      },
-    };
-  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const erroValidacao = validar();
-    if (erroValidacao) {
-      setErro(erroValidacao);
+
+    if (!Number.isInteger(planoId) || planoId <= 0) {
+      setErro('Informe um plano valido antes de continuar.');
       setSucesso(null);
       return;
     }
@@ -161,15 +51,18 @@ export default function ModalCartaoAssinatura({
       setLoading(true);
       setErro(null);
       setSucesso(null);
-      const payload = montarPayload();
-      const resultado =
-        await assinaturaService.regularizarAssinaturaComCartao(payload);
+      const resultado = await assinaturaService.regularizarAssinatura(planoId);
       const mensagem =
         resultado.gateway_resultado.mensagem ||
-        'Solicitacao enviada com sucesso.';
+        'Cobranca criada no Asaas. Conclua o pagamento para ativar o perfil.';
 
       setSucesso(mensagem);
-      setForm(estadoInicial);
+      setLinkPagamento(
+        resultado.gateway_resultado.invoiceUrl ||
+          resultado.gateway_resultado.bankSlipUrl ||
+          null,
+      );
+      setPixCopiaCola(resultado.gateway_resultado.pixQrCode?.payload || null);
       onSucesso(mensagem);
     } catch (error) {
       setErro(extrairMensagemErro(error));
@@ -184,12 +77,15 @@ export default function ModalCartaoAssinatura({
         className={styles.modal}
         aria-modal="true"
         role="dialog"
-        aria-labelledby="modal-cartao-assinatura-titulo"
+        aria-labelledby="modal-assinatura-titulo"
       >
         <header className={styles.header}>
           <div>
-            <h3 id="modal-cartao-assinatura-titulo">{titulo}</h3>
-            <p>{descricao}</p>
+            <h3 id="modal-assinatura-titulo">Gerar cobranca Asaas</h3>
+            <p>
+              A cobranca sera criada diretamente no Asaas. O perfil profissional
+              so fica ativo depois da confirmacao pelo webhook.
+            </p>
           </div>
           <button
             type="button"
@@ -203,134 +99,32 @@ export default function ModalCartaoAssinatura({
         </header>
 
         <div className={styles.securityNote}>
-          O numero completo e o CVV nao sao enviados ao backend.
-          Status atual: {statusAssinatura}.
+          Status atual: {statusAssinatura}. Nenhum dado de cartao e coletado
+          por esta tela.
         </div>
 
         {erro && <div className={styles.error}>{erro}</div>}
         {sucesso && <div className={styles.success}>{sucesso}</div>}
+        {linkPagamento && (
+          <a
+            className={`${styles.primaryButton} ${styles.paymentLink}`}
+            href={linkPagamento}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Abrir pagamento
+          </a>
+        )}
+        {pixCopiaCola && (
+          <textarea
+            className={styles.pixPayload}
+            readOnly
+            value={pixCopiaCola}
+            aria-label="Pix copia e cola"
+          />
+        )}
 
         <form className={styles.form} onSubmit={onSubmit}>
-          <label className={styles.field}>
-            <span>Nome impresso no cartao</span>
-            <input
-              value={form.nomeTitular}
-              onChange={(event) =>
-                setForm((atual) => ({
-                  ...atual,
-                  nomeTitular: event.target.value,
-                }))
-              }
-              disabled={loading}
-              autoComplete="cc-name"
-            />
-          </label>
-
-          <label className={styles.field}>
-            <span>CPF do titular</span>
-            <input
-              value={form.cpfTitular}
-              onChange={(event) =>
-                setForm((atual) => ({
-                  ...atual,
-                  cpfTitular: formatarCpf(event.target.value),
-                }))
-              }
-              disabled={loading}
-              inputMode="numeric"
-              autoComplete="off"
-            />
-          </label>
-
-          <label className={styles.field}>
-            <span>Numero do cartao</span>
-            <input
-              value={form.numeroCartao}
-              onChange={(event) =>
-                setForm((atual) => ({
-                  ...atual,
-                  numeroCartao: formatarNumeroCartao(event.target.value),
-                }))
-              }
-              disabled={loading}
-              inputMode="numeric"
-              autoComplete="cc-number"
-            />
-          </label>
-
-          <div className={styles.row}>
-            <label className={styles.field}>
-              <span>Validade MM/AA</span>
-              <input
-                value={form.validade}
-                onChange={(event) =>
-                  setForm((atual) => ({
-                    ...atual,
-                    validade: formatarValidade(event.target.value),
-                  }))
-                }
-                disabled={loading}
-                inputMode="numeric"
-                autoComplete="cc-exp"
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>CVV</span>
-              <input
-                value={form.cvv}
-                onChange={(event) =>
-                  setForm((atual) => ({
-                    ...atual,
-                    cvv: apenasDigitos(event.target.value).slice(0, 4),
-                  }))
-                }
-                disabled={loading}
-                type="password"
-                inputMode="numeric"
-                autoComplete="cc-csc"
-              />
-            </label>
-          </div>
-
-          <fieldset className={styles.methodGroup}>
-            <legend>Tipo de pagamento</legend>
-            <label>
-              <input
-                type="radio"
-                name="metodoPagamento"
-                checked={form.metodoPagamento === 'credito'}
-                onChange={() =>
-                  setForm((atual) => ({
-                    ...atual,
-                    metodoPagamento: 'credito',
-                  }))
-                }
-                disabled={loading}
-              />
-              Credito
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="metodoPagamento"
-                checked={form.metodoPagamento === 'debito'}
-                onChange={() =>
-                  setForm((atual) => ({
-                    ...atual,
-                    metodoPagamento: 'debito',
-                  }))
-                }
-                disabled={loading}
-              />
-              Debito
-            </label>
-          </fieldset>
-
-          {bandeira && (
-            <p className={styles.brandHint}>Bandeira estimada: {bandeira}</p>
-          )}
-
           <footer className={styles.actions}>
             <button
               type="button"
@@ -338,14 +132,14 @@ export default function ModalCartaoAssinatura({
               onClick={onFechar}
               disabled={loading}
             >
-              Cancelar
+              Fechar
             </button>
             <button
               type="submit"
               className={styles.primaryButton}
               disabled={loading}
             >
-              {loading ? 'Processando...' : 'Confirmar'}
+              {loading ? 'Gerando...' : 'Gerar cobranca'}
             </button>
           </footer>
         </form>

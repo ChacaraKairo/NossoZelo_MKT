@@ -22,7 +22,7 @@ const links = [
   { href: "/pendencias", label: "Pendencias", icon: AlertTriangle },
   { href: "/assinaturas", label: "Assinaturas", icon: ClipboardList },
   { href: "/email", label: "E-mails", icon: MailWarning },
-  { href: "/logs", label: "Logs", icon: ScrollText },
+  { href: "/logs", label: "Logs Asaas", icon: ScrollText },
   { href: "/configuracoes", label: "Configuracoes", icon: Settings }
 ];
 

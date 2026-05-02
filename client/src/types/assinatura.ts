@@ -1,6 +1,6 @@
 import { AssinaturaAtual } from '@/types/perfil';
 
-export type MetodoPagamentoAssinatura = 'credito' | 'debito';
+export type MetodoPagamentoAssinatura = 'pix' | 'credito' | 'debito';
 
 export type ModoModalCartaoAssinatura = 'regularizar';
 
@@ -18,6 +18,24 @@ export interface CartaoAssinaturaPayload {
   metodoPagamento: MetodoPagamentoAssinatura;
   cartaoToken?: string;
   cartaoResumo: CartaoResumoAssinatura;
+}
+
+export interface CartaoCreditoAssinatura {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+  postalCode: string;
+  addressNumber: string;
+}
+
+export interface ConfirmacaoPagamentoCadastroPayload {
+  token: string;
+  metodoPagamento: MetodoPagamentoAssinatura;
+  cartaoToken?: string;
+  cartaoResumo?: CartaoResumoAssinatura;
+  cartaoCredito?: CartaoCreditoAssinatura;
 }
 
 export interface StatusAssinaturaPrestador {
@@ -39,6 +57,14 @@ export interface RespostaAssinatura {
     gateway: 'asaas';
     gatewaySubscriptionId?: string;
     gatewayCustomerId?: string;
+    gatewayPaymentId?: string;
+    invoiceUrl?: string | null;
+    bankSlipUrl?: string | null;
+    pixQrCode?: {
+      encodedImage?: string | null;
+      payload?: string | null;
+      expirationDate?: string | null;
+    } | null;
     mensagem?: string;
     confirmacaoExpiraEm?: string | Date;
   };

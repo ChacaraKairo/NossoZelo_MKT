@@ -206,17 +206,10 @@ export class ServiceRecuperacaoSenha {
         where: { id: recuperacao.usuario_id },
         data: { senha: senhaCriptografada },
       }),
-      prisma.recuperacao_senhas.update({
-        where: { id: recuperacao.id },
-        data: { usado: true },
-      }),
-      prisma.recuperacao_senhas.updateMany({
+      prisma.recuperacao_senhas.deleteMany({
         where: {
           usuario_id: recuperacao.usuario_id,
-          id: { not: recuperacao.id },
-          usado: false,
         },
-        data: { usado: true },
       }),
     ]);
 

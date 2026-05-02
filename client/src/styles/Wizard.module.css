@@ -111,18 +111,22 @@
 }
 
 .progressStep1 {
-  width: 25%;
+  width: 20%;
 }
 
 .progressStep2 {
-  width: 50%;
+  width: 40%;
 }
 
 .progressStep3 {
-  width: 75%;
+  width: 60%;
 }
 
 .progressStep4 {
+  width: 80%;
+}
+
+.progressStep5 {
   width: 100%;
 }
 
@@ -244,6 +248,143 @@
   font-size: 12px;
   color: #607d8b;
   margin: 0 0 10px;
+}
+
+.infoBanner,
+.successBanner {
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.infoBanner {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.successBanner {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.infoBanner h3,
+.successBanner h3,
+.validationBanner h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.infoBanner p,
+.successBanner p,
+.validationBanner p {
+  margin: 0;
+}
+
+.paymentStep {
+  display: grid;
+  gap: 16px;
+}
+
+.paymentForm {
+  display: grid;
+  gap: 16px;
+}
+
+.paymentButton {
+  width: fit-content;
+  min-height: 44px;
+  border-radius: 12px;
+  background: #16a34a;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.paymentMethods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.paymentMethodButton {
+  min-height: 112px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #334155;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  text-align: left;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.paymentMethodButton:hover {
+  border-color: #0ea5e9;
+  background: #f0f9ff;
+}
+
+.paymentMethodButtonActive {
+  border-color: #0ea5e9;
+  background: #f0f9ff;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+
+.paymentMethodButton strong {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.paymentMethodButton span {
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.cardPaymentBox {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.pixBox {
+  display: grid;
+  gap: 8px;
+}
+
+.pixBox span {
+  font-weight: 700;
+  color: #334155;
+}
+
+.pixBox textarea {
+  min-height: 96px;
+  border: 1.5px solid #dee2e6;
+  border-radius: 12px;
+  padding: 12px;
+  resize: vertical;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.pixQrImage {
+  width: 180px;
+  max-width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
 }
 
 .loadingText {
@@ -513,6 +654,10 @@
   .wizardFooter {
     align-items: stretch;
     flex-direction: column-reverse;
+  }
+
+  .paymentMethods {
+    grid-template-columns: 1fr;
   }
 
   .btnBack,

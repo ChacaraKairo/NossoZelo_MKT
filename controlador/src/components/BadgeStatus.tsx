@@ -9,13 +9,14 @@ function classeStatus(status?: string | null | boolean) {
   if (status === false) return styles.badgeWarning;
   const texto = String(status ?? "").toLowerCase();
 
-  if (["ativo", "ativa", "confirmado", "true"].includes(texto)) return styles.badgeSuccess;
-  if (["pendente", "aguardando_confirmacao", "aguardando_confirmacao_pagamento", "pendente_pagamento"].includes(texto)) {
+  if (["ativo", "ativa", "confirmado", "sucesso", "true"].includes(texto)) return styles.badgeSuccess;
+  if (["pendente", "aguardando_confirmacao", "aguardando_confirmacao_pagamento", "pendente_pagamento", "recebido"].includes(texto)) {
     return styles.badgeWarning;
   }
-  if (["bloqueado", "cancelado", "cancelada", "falhou", "expirada", "inadimplente"].includes(texto)) {
+  if (["bloqueado", "cancelado", "cancelada", "falhou", "expirada", "inadimplente", "erro"].includes(texto)) {
     return styles.badgeDanger;
   }
+  if (["ignorado"].includes(texto)) return styles.badgeInfo;
   return styles.badgeNeutral;
 }
 

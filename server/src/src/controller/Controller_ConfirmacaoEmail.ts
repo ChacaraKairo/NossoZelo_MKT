@@ -7,11 +7,35 @@ function statusErro(error: any) {
   return typeof error?.status === 'number' ? error.status : 500;
 }
 
+function obterIpCliente(req: Request) {
+  const encaminhado = req.headers['x-forwarded-for'];
+  const primeiroIp = Array.isArray(encaminhado)
+    ? encaminhado[0]
+    : encaminhado?.split(',')[0];
+  return primeiroIp?.trim() || req.ip || req.socket.remoteAddress || undefined;
+}
+
 class ControllerConfirmacaoEmail {
   async confirmar(req: Request, res: Response) {
     try {
+      const token =
+        req.method === 'POST'
+          ? String(req.body?.token || '')
+          : String(req.query.token || '');
+      const dadosPagamento =
+        req.method === 'POST'
+          ? {
+              metodoPagamento: req.body?.metodoPagamento,
+              cartaoToken: req.body?.cartaoToken,
+              cartaoResumo: req.body?.cartaoResumo,
+              cartaoCredito: req.body?.cartaoCredito,
+              remoteIp: obterIpCliente(req),
+            }
+          : String(req.query.metodo_pagamento || '');
+
       const resultado = await ServiceConfirmacaoEmail.confirmarEmail(
-        String(req.query.token || ''),
+        token,
+        dadosPagamento,
       );
       return res.status(200).json(resultado);
     } catch (error: any) {

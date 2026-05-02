@@ -4,18 +4,19 @@ Prestadores dos tipos cuidador, enfermeiro e acompanhante precisam ter uma assin
 
 Sem assinatura ativa, o prestador pode acessar o site, perfil e financeiro, mas fica profissionalmente inativo: nao aparece na busca, nao recebe pedidos e ve alertas no perfil e na aba Financeiro.
 
-## Valor de teste
+## Valor real da assinatura
 
-Durante os testes de integracao, a assinatura e criada com valor de `0.01`.
+O valor cobrado precisa vir de um plano real no banco ou de `ASSINATURA_VALOR`.
+Nao deixe `ASSINATURA_VALOR` como `0.01` fora de um teste isolado de sandbox.
 
 ```env
 PAYMENT_GATEWAY="asaas"
-ASSINATURA_VALOR="0.01"
-ASAAS_BASE_URL="https://api-sandbox.asaas.com/v3"
+ASSINATURA_VALOR=""
+ASAAS_BASE_URL="https://api.asaas.com/v3"
 ASAAS_BILLING_TYPE="PIX"
 ```
 
-Quando o valor comercial estiver definido, altere `ASSINATURA_VALOR` no ambiente de producao.
+Em producao, use a URL oficial do Asaas e uma chave `ASAAS_API_KEY` de producao. Em sandbox, use apenas dados de homologacao.
 
 ## Status
 
@@ -48,9 +49,9 @@ Somente `usuarios.status_cadastro = ativo` com `assinaturas.status = ativa` libe
 3. Backend cria cliente no Asaas.
 4. Backend cria assinatura mensal no Asaas.
 5. Assinatura local fica `aguardando_confirmacao`.
-6. Asaas envia webhook.
+6. Asaas envia webhook real de pagamento.
 7. Backend valida o token do webhook.
-8. Backend atualiza assinatura e `usuarios.status_cadastro`.
+8. Backend atualiza assinatura e `usuarios.status_cadastro` somente quando o `subscription` do Asaas bater com `gateway_subscription_id`.
 9. Prestador passa a aparecer na busca quando a assinatura ficar `ativa`.
 
 ## Webhook
@@ -59,6 +60,7 @@ Cadastre no Asaas:
 
 ```text
 https://SEU_BACKEND/nossozelo/assinaturas/webhook/asaas
+https://SEU_CONTROLADOR/api/webhooks/asaas
 ```
 
 O token configurado no painel do Asaas precisa ser igual ao valor de:

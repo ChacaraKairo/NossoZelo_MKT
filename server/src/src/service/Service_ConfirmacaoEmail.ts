@@ -1,5 +1,11 @@
 import { randomBytes } from 'crypto';
 import prisma from '../lib/prisma';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
+import logger from '../lib/logger';
+import ServiceAssinatura, {
+  DadosPagamentoAssinatura,
+  MetodoPagamentoAssinatura,
+} from './Service_Assinatura';
 import EmailService from './Service_Email';
 
 const HORAS_EXPIRACAO_CONFIRMACAO = 24;
@@ -41,17 +47,30 @@ function frontendUrl() {
   return process.env.FRONTEND_URL || 'http://localhost:3000';
 }
 
+function linkConfirmacaoEmail(token: string, tipo?: string) {
+  const ehPrestador = TIPOS_PRESTADOR.includes(tipo as any);
+  const caminho = ehPrestador ? '/cadastro-prestador' : '/confirmar-email';
+  const parametro = ehPrestador ? 'confirmar_email' : 'token';
+
+  return `${frontendUrl()}${caminho}?${parametro}=${encodeURIComponent(token)}`;
+}
+
 function adicionarHoras(data: Date, horas: number) {
   const novaData = new Date(data);
   novaData.setHours(novaData.getHours() + horas);
   return novaData;
 }
 
-function htmlConfirmacao(nome: string, link: string) {
+function htmlConfirmacao(nome: string, link: string, tipo?: string) {
+  const complementoPrestador = TIPOS_PRESTADOR.includes(tipo as any)
+    ? '<p>Depois da confirmacao, voce concluira o pagamento da assinatura profissional no proprio cadastro.</p>'
+    : '';
+
   return `
     <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
       <h1 style="color: #0f766e; font-size: 22px;">Confirme seu e-mail no NossoZelo</h1>
       <p>Olá, ${nome}. Confirme seu e-mail para liberar todas as funcionalidades da sua conta.</p>
+      ${complementoPrestador}
       <p style="margin: 24px 0;">
         <a href="${link}" style="background: #0f766e; color: #ffffff; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: bold;">
           Confirmar e-mail
@@ -62,6 +81,83 @@ function htmlConfirmacao(nome: string, link: string) {
       <p style="color: #64748b; font-size: 13px;">Este link expira em 24 horas.</p>
     </div>
   `;
+}
+
+async function obterPlanoCadastroPrestador() {
+  const planoConfigurado = Number(process.env.ASSINATURA_PLANO_ID || 0);
+  if (Number.isInteger(planoConfigurado) && planoConfigurado > 0) {
+    const plano = await prisma.planos.findUnique({
+      where: { id: planoConfigurado },
+      select: { id: true },
+    });
+    if (plano) return plano.id;
+  }
+
+  const plano = await prisma.planos.findFirst({
+    where: { valor: { gt: 0 } },
+    orderBy: { id: 'asc' },
+    select: { id: true },
+  });
+
+  if (!plano) {
+    throw erroNegocio(
+      'Nenhum plano com valor real cadastrado para cobrar o registro do prestador.',
+      500,
+    );
+  }
+
+  return plano.id;
+}
+
+function metodoPagamentoCadastro(valor?: string): MetodoPagamentoAssinatura {
+  if (valor === 'credito' || valor === 'debito' || valor === 'pix') {
+    return valor;
+  }
+
+  return 'pix';
+}
+
+async function iniciarPagamentoCadastroSePrestador(
+  usuarioId: string,
+  dadosPagamento: DadosPagamentoAssinatura,
+) {
+  const usuario = await prisma.usuarios.findUnique({
+    where: { id: usuarioId },
+    select: { id: true, tipo: true },
+  });
+
+  if (!usuario || !TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
+    return null;
+  }
+
+  const assinaturaAtual = await ServiceAssinatura.obterAssinaturaAtual(
+    usuario.id,
+  );
+  if (
+    assinaturaAtual &&
+    ['ativa', 'aguardando_confirmacao'].includes(assinaturaAtual.status)
+  ) {
+    return {
+      criada: false,
+      assinatura: assinaturaAtual,
+      message:
+        assinaturaAtual.status === 'ativa'
+          ? 'Assinatura ja ativa.'
+          : 'Assinatura ja aguardando confirmacao de pagamento.',
+    };
+  }
+
+  const planoId = await obterPlanoCadastroPrestador();
+  const resultado = await ServiceAssinatura.iniciarOuRegularizarAssinatura(
+    usuario.id,
+    planoId,
+    dadosPagamento,
+  );
+
+  return {
+    criada: true,
+    ...resultado,
+  };
 }
 
 export class ServiceConfirmacaoEmail {
@@ -91,6 +187,7 @@ export class ServiceConfirmacaoEmail {
         id: true,
         nome: true,
         email: true,
+        tipo: true,
         email_confirmado: true,
       },
     });
@@ -106,21 +203,28 @@ export class ServiceConfirmacaoEmail {
     }
 
     const confirmacao = await this.criarConfirmacaoEmail(usuario.id);
-    const link = `${frontendUrl()}/confirmar-email?token=${encodeURIComponent(
-      confirmacao.token,
-    )}`;
+    const link = linkConfirmacaoEmail(confirmacao.token, usuario.tipo);
 
     try {
       const emailService = new EmailService();
       await emailService.send(
         usuario.email,
         'Confirme seu e-mail no NossoZelo',
-        htmlConfirmacao(usuario.nome, link),
+        htmlConfirmacao(usuario.nome, link, usuario.tipo),
       );
+      logger.info('E-mail de confirmacao enviado', {
+        usuarioId: usuario.id,
+        email: usuario.email,
+      });
     } catch (error) {
       await prisma.confirmacoes_email.update({
         where: { id: confirmacao.id },
         data: { usado: true },
+      });
+      logger.error('Falha ao enviar e-mail de confirmacao', {
+        usuarioId: usuario.id,
+        email: usuario.email,
+        error,
       });
       throw erroServicoEmail(error);
     }
@@ -133,7 +237,10 @@ export class ServiceConfirmacaoEmail {
     };
   }
 
-  static async confirmarEmail(token: string) {
+  static async confirmarEmail(
+    token: string,
+    dadosPagamento?: DadosPagamentoAssinatura | string,
+  ) {
     const tokenNormalizado = String(token || '').trim();
     if (!tokenNormalizado) {
       throw erroNegocio('Token de confirmacao ausente.', 400);
@@ -183,9 +290,39 @@ export class ServiceConfirmacaoEmail {
       }),
     ]);
 
+    let pagamentoCadastro = null;
+    let avisoPagamento: string | null = null;
+    const pagamentoNormalizado =
+      typeof dadosPagamento === 'string'
+        ? { metodoPagamento: metodoPagamentoCadastro(dadosPagamento) }
+        : {
+            ...dadosPagamento,
+            metodoPagamento: metodoPagamentoCadastro(
+              dadosPagamento?.metodoPagamento,
+            ),
+          };
+
+    try {
+      pagamentoCadastro = await iniciarPagamentoCadastroSePrestador(
+        confirmacao.usuario_id,
+        pagamentoNormalizado,
+      );
+    } catch (error) {
+      avisoPagamento =
+        error instanceof Error
+          ? error.message
+          : 'Nao foi possivel iniciar a cobranca do registro.';
+      logger.error('Falha ao iniciar pagamento no cadastro do prestador', {
+        usuarioId: confirmacao.usuario_id,
+        error,
+      });
+    }
+
     return {
       email_confirmado: true,
       message: 'E-mail confirmado com sucesso.',
+      pagamento_cadastro: pagamentoCadastro,
+      aviso_pagamento: avisoPagamento,
     };
   }
 

@@ -1,0 +1,26 @@
+CREATE TABLE `asaas_webhook_logs` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `event_id` VARCHAR(191) NULL,
+  `event` VARCHAR(80) NOT NULL,
+  `status_processamento` VARCHAR(30) NOT NULL DEFAULT 'recebido',
+  `motivo` VARCHAR(255) NULL,
+  `payment_id` VARCHAR(120) NULL,
+  `subscription_id` VARCHAR(120) NULL,
+  `customer_id` VARCHAR(120) NULL,
+  `prestador_id` VARCHAR(20) NULL,
+  `assinatura_id` INT NULL,
+  `assinatura_status_antes` VARCHAR(40) NULL,
+  `assinatura_status_depois` VARCHAR(40) NULL,
+  `valor` DECIMAL(10, 2) NULL,
+  `pago_em` TIMESTAMP(0) NULL,
+  `payload` JSON NOT NULL,
+  `criado_em` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `atualizado_em` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
+
+  UNIQUE INDEX `asaas_webhook_logs_event_id_key` (`event_id`),
+  INDEX `asaas_webhook_logs_event_idx` (`event`),
+  INDEX `asaas_webhook_logs_status_idx` (`status_processamento`),
+  INDEX `asaas_webhook_logs_prestador_idx` (`prestador_id`),
+  INDEX `asaas_webhook_logs_subscription_idx` (`subscription_id`),
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { useCadastroPrestadorStore } from '@/store/useCadastroPrestadorStore';
 import { useFinalizarCadastro } from '@/store/useFinalizarCadastro';
 import {
@@ -7,6 +8,7 @@ import {
   FaMapMarkerAlt,
   FaBriefcase,
   FaFileAlt,
+  FaCreditCard,
   FaArrowRight,
   FaArrowLeft,
 } from 'react-icons/fa';
@@ -18,15 +20,17 @@ import StepPessoais from '@/components/cadastro/StepPessoais';
 import StepEndereco from '@/components/cadastro/StepEndereco';
 import StepProfissional from '@/components/cadastro/StepProfissional';
 import StepDocumentos from '@/components/cadastro/StepDocumentos';
+import StepPagamentoAssinatura from '@/components/cadastro/StepPagamentoAssinatura';
 
 const WizardCadastroPrestador = () => {
+  const router = useRouter();
   const { step, setStep, validarEtapa, erros } =
     useCadastroPrestadorStore();
   const { handleFinalizar, loading } =
     useFinalizarCadastro();
   const stepContentRef = useRef<HTMLElement | null>(null);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const possuiErros = Object.keys(erros).length > 0;
   const mensagensErro = Object.values(erros).filter(
     (mensagem): mensagem is string => Boolean(mensagem),
@@ -46,11 +50,20 @@ const WizardCadastroPrestador = () => {
     });
   };
 
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    if (router.query.confirmar_email || router.query.email_enviado) {
+      setStep(5);
+    }
+  }, [router.isReady, router.query.confirmar_email, router.query.email_enviado, setStep]);
+
   const stepsConfig = [
     { id: 1, title: 'Pessoais', icon: <FaUser /> },
     { id: 2, title: 'Endereço', icon: <FaMapMarkerAlt /> },
     { id: 3, title: 'Profissional', icon: <FaBriefcase /> },
     { id: 4, title: 'Documentos', icon: <FaFileAlt /> },
+    { id: 5, title: 'Pagamento', icon: <FaCreditCard /> },
   ];
 
   const progressClass =
@@ -117,6 +130,7 @@ const WizardCadastroPrestador = () => {
             {step === 2 && <StepEndereco />}
             {step === 3 && <StepProfissional />}
             {step === 4 && <StepDocumentos />}
+            {step === 5 && <StepPagamentoAssinatura />}
           </section>
         </main>
 
@@ -130,7 +144,7 @@ const WizardCadastroPrestador = () => {
             <FaArrowLeft /> Voltar
           </button>
 
-          {step < totalSteps ? (
+          {step < 4 ? (
             <button
               onClick={nextStep}
               className={Style.btnNext}
@@ -138,7 +152,7 @@ const WizardCadastroPrestador = () => {
             >
               Próximo Passo <FaArrowRight />
             </button>
-          ) : (
+          ) : step === 4 ? (
             <button
               onClick={handleFinalizar}
               disabled={loading}
@@ -151,6 +165,14 @@ const WizardCadastroPrestador = () => {
                   <FaCheckCircle /> Enviar para Análise
                 </>
               )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={Style.btnSubmit}
+              onClick={() => window.location.assign('/login-parceiro')}
+            >
+              Ir para login
             </button>
           )}
         </footer>
