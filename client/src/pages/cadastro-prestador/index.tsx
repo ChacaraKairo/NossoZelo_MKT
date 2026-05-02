@@ -8,7 +8,7 @@ import {
   FaMapMarkerAlt,
   FaBriefcase,
   FaFileAlt,
-  FaCreditCard,
+  FaEnvelope,
   FaArrowRight,
   FaArrowLeft,
 } from 'react-icons/fa';
@@ -63,7 +63,7 @@ const WizardCadastroPrestador = () => {
     { id: 2, title: 'Endereço', icon: <FaMapMarkerAlt /> },
     { id: 3, title: 'Profissional', icon: <FaBriefcase /> },
     { id: 4, title: 'Documentos', icon: <FaFileAlt /> },
-    { id: 5, title: 'Pagamento', icon: <FaCreditCard /> },
+    { id: 5, title: 'E-mail', icon: <FaEnvelope /> },
   ];
 
   const progressClass =

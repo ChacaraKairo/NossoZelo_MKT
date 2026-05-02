@@ -125,20 +125,13 @@
   padding: var(--space-5);
 }
 
-.formRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3);
-}
-
 .field {
   display: grid;
   gap: 0.35rem;
 }
 
 .input {
-  width: 9rem;
+  width: min(100%, 24rem);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -147,6 +140,47 @@
   font-weight: 800;
   min-height: 44px;
   padding: 0.7rem 0.85rem;
+}
+
+.planGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.planCard {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 112px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  padding: var(--space-4);
+  text-align: left;
+}
+
+.planCard strong {
+  color: var(--color-text-strong);
+  font-weight: 900;
+}
+
+.planCard span {
+  color: var(--color-primary-700);
+  font-weight: 900;
+}
+
+.planCard small {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+.planCardActive {
+  border-color: var(--color-primary-700);
+  background: var(--color-primary-50);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
 }
 
 .actions {
@@ -209,7 +243,6 @@
     grid-template-columns: 1fr;
   }
 
-  .formRow,
   .actions,
   .actions button {
     width: 100%;

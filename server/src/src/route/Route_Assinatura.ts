@@ -12,6 +12,12 @@ AssinaturaRouter.post(
 );
 
 AssinaturaRouter.get(
+  '/planos',
+  authMiddleware,
+  ControllerAssinatura.planos as any,
+);
+
+AssinaturaRouter.get(
   '/minha',
   authMiddleware,
   ControllerAssinatura.minha as any,

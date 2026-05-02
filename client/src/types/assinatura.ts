@@ -1,41 +1,35 @@
 import { AssinaturaAtual } from '@/types/perfil';
 
-export type MetodoPagamentoAssinatura = 'pix' | 'credito' | 'debito';
+export type ModoModalPagamentoAssinatura =
+  | 'iniciar'
+  | 'regularizar'
+  | 'gerenciar';
 
-export type ModoModalCartaoAssinatura = 'regularizar';
-
-export interface CartaoResumoAssinatura {
-  nomeTitular: string;
-  cpfTitular: string;
-  numeroFinal: string;
-  validadeMes: string;
-  validadeAno: string;
-  bandeira?: string;
+export interface PlanoAssinatura {
+  id: number;
+  nome: string;
+  valor: number;
+  beneficios?: string | null;
 }
 
-export interface CartaoAssinaturaPayload {
-  planoId: number;
-  metodoPagamento: MetodoPagamentoAssinatura;
-  cartaoToken?: string;
-  cartaoResumo: CartaoResumoAssinatura;
+export interface PixQrCode {
+  encodedImage?: string | null;
+  payload?: string | null;
+  expirationDate?: string | null;
 }
 
-export interface CartaoCreditoAssinatura {
-  holderName: string;
-  number: string;
-  expiryMonth: string;
-  expiryYear: string;
-  ccv: string;
-  postalCode: string;
-  addressNumber: string;
-}
-
-export interface ConfirmacaoPagamentoCadastroPayload {
-  token: string;
-  metodoPagamento: MetodoPagamentoAssinatura;
-  cartaoToken?: string;
-  cartaoResumo?: CartaoResumoAssinatura;
-  cartaoCredito?: CartaoCreditoAssinatura;
+export interface GatewayResultado {
+  sucesso: boolean;
+  status: 'aprovado' | 'pendente' | 'recusado' | 'erro';
+  gateway: 'asaas';
+  gatewaySubscriptionId?: string;
+  gatewayCustomerId?: string;
+  gatewayPaymentId?: string;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+  pixQrCode?: PixQrCode | null;
+  mensagem?: string;
+  confirmacaoExpiraEm?: string | Date;
 }
 
 export interface StatusAssinaturaPrestador {
@@ -51,28 +45,11 @@ export interface StatusAssinaturaPrestador {
 }
 
 export interface RespostaAssinatura {
-  gateway_resultado: {
-    sucesso: boolean;
-    status: 'aprovado' | 'pendente' | 'recusado' | 'erro';
-    gateway: 'asaas';
-    gatewaySubscriptionId?: string;
-    gatewayCustomerId?: string;
-    gatewayPaymentId?: string;
-    invoiceUrl?: string | null;
-    bankSlipUrl?: string | null;
-    pixQrCode?: {
-      encodedImage?: string | null;
-      payload?: string | null;
-      expirationDate?: string | null;
-    } | null;
-    mensagem?: string;
-    confirmacaoExpiraEm?: string | Date;
-  };
+  gateway_resultado: GatewayResultado;
   assinatura: AssinaturaAtual;
   pagamento?: {
     recebido: boolean;
-    metodoPagamento?: MetodoPagamentoAssinatura;
-    cartaoResumo?: CartaoResumoAssinatura;
+    metodoPagamento?: 'pix';
   };
 }
 

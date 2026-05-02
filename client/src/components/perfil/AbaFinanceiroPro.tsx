@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
-import ModalCartaoAssinatura from '@/components/perfil/ModalCartaoAssinatura';
+import { useEffect, useMemo, useState } from 'react';
+import ModalPagamentoAssinatura from '@/components/perfil/ModalPagamentoAssinatura';
 import { assinaturaService } from '@/service/assinaturaService';
 import { PerfilUsuario } from '@/types/perfil';
-import { ModoModalCartaoAssinatura } from '@/types/assinatura';
+import {
+  ModoModalPagamentoAssinatura,
+  PlanoAssinatura,
+} from '@/types/assinatura';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import styles from '@/styles/components/perfil/AbaFinanceiroPro.module.css';
 
@@ -13,7 +16,7 @@ interface AbaFinanceiroProProps {
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: 'Pendente',
-  aguardando_confirmacao: 'Aguardando confirmacao',
+  aguardando_confirmacao: 'Pagamento em análise',
   ativa: 'Ativa',
   atrasada: 'Atrasada',
   bloqueada: 'Bloqueada',
@@ -22,10 +25,19 @@ const STATUS_LABEL: Record<string, string> = {
   expirada: 'Expirada',
 };
 
+const STATUS_REGULARIZAVEL = new Set([
+  'pendente',
+  'falhou',
+  'expirada',
+  'bloqueada',
+  'cancelada',
+  'atrasada',
+]);
+
 function formatarData(valor?: string | Date | null) {
-  if (!valor) return 'Nao informado';
+  if (!valor) return 'Não informado';
   const data = new Date(valor);
-  if (Number.isNaN(data.getTime())) return 'Nao informado';
+  if (Number.isNaN(data.getTime())) return 'Não informado';
 
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
@@ -34,6 +46,16 @@ function formatarData(valor?: string | Date | null) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(data);
+}
+
+function formatarValor(valor?: number | string | null) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return 'Valor não informado';
+
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 }
 
 function classeStatus(status: string) {
@@ -45,7 +67,8 @@ function classeStatus(status: string) {
     status === 'falhou' ||
     status === 'expirada' ||
     status === 'bloqueada' ||
-    status === 'cancelada'
+    status === 'cancelada' ||
+    status === 'atrasada'
   ) {
     return styles.statusDanger;
   }
@@ -57,15 +80,17 @@ export default function AbaFinanceiroPro({
   perfil,
   onAssinaturaAtualizada,
 }: AbaFinanceiroProProps) {
-  const [planoId, setPlanoId] = useState(
-    perfil.assinatura_atual?.plano_id || 1,
+  const [planos, setPlanos] = useState<PlanoAssinatura[]>([]);
+  const [planoSelecionado, setPlanoSelecionado] = useState<number | null>(
+    perfil.assinatura_atual?.plano_id || null,
   );
+  const [carregandoPlanos, setCarregandoPlanos] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState<
     'cancelar' | null
   >(null);
-  const [modalCartaoAberto, setModalCartaoAberto] = useState(false);
-  const [modoModalCartao, setModoModalCartao] =
-    useState<ModoModalCartaoAssinatura>('regularizar');
+  const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false);
+  const [modoModalPagamento, setModoModalPagamento] =
+    useState<ModoModalPagamentoAssinatura>('regularizar');
   const [erro, setErro] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
@@ -73,6 +98,7 @@ export default function AbaFinanceiroPro({
   const status = perfil.assinatura_status || assinatura?.status || 'pendente';
   const aguardandoConfirmacao = status === 'aguardando_confirmacao';
   const assinaturaAtiva = status === 'ativa';
+  const assinaturaRegularizavel = STATUS_REGULARIZAVEL.has(status);
   const assinaturaCancelavel = Boolean(
     assinatura && !['cancelada', 'expirada'].includes(status),
   );
@@ -81,23 +107,49 @@ export default function AbaFinanceiroPro({
       perfil.assinatura_confirmacao_expira_em ||
       assinatura?.confirmacao_expira_em ||
       null,
-    [assinatura?.confirmacao_expira_em, perfil.assinatura_confirmacao_expira_em],
+    [
+      assinatura?.confirmacao_expira_em,
+      perfil.assinatura_confirmacao_expira_em,
+    ],
   );
 
-  const abrirModalCartao = (modo: ModoModalCartaoAssinatura) => {
+  useEffect(() => {
+    let ativo = true;
+
+    setCarregandoPlanos(true);
+    assinaturaService
+      .listarPlanos()
+      .then((lista) => {
+        if (!ativo) return;
+        setPlanos(lista);
+        setPlanoSelecionado((atual) => atual || lista[0]?.id || null);
+      })
+      .catch((error) => {
+        if (!ativo) return;
+        setErro(extrairMensagemErro(error));
+      })
+      .finally(() => {
+        if (ativo) setCarregandoPlanos(false);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const abrirModalPagamento = (modo: ModoModalPagamentoAssinatura) => {
     setErro(null);
     setMensagem(null);
-    setModoModalCartao(modo);
-    setModalCartaoAberto(true);
+    setModoModalPagamento(modo);
+    setModalPagamentoAberto(true);
   };
 
-  const fecharModalCartao = () => {
-    setModalCartaoAberto(false);
+  const fecharModalPagamento = () => {
+    setModalPagamentoAberto(false);
   };
 
-  const sucessoModalCartao = (mensagemSucesso: string) => {
+  const sucessoModalPagamento = (mensagemSucesso: string) => {
     setMensagem(mensagemSucesso);
-    setModalCartaoAberto(false);
     onAssinaturaAtualizada?.();
   };
 
@@ -121,7 +173,9 @@ export default function AbaFinanceiroPro({
     }
   };
 
-  const carregando = carregandoAcao !== null;
+  const carregando = carregandoAcao !== null || carregandoPlanos;
+  const planoInvalido = !planoSelecionado;
+
   return (
     <section className={styles.section}>
       <header className={styles.header}>
@@ -145,11 +199,11 @@ export default function AbaFinanceiroPro({
           </p>
         </article>
         <article className={styles.card}>
-          <span className={styles.label}>Limite de confirmacao</span>
+          <span className={styles.label}>Limite de confirmação</span>
           <p className={styles.value}>{formatarData(dataLimite)}</p>
         </article>
         <article className={styles.card}>
-          <span className={styles.label}>Proximo vencimento</span>
+          <span className={styles.label}>Próximo vencimento</span>
           <p className={styles.value}>
             {formatarData(assinatura?.data_proximo_vencimento)}
           </p>
@@ -162,22 +216,21 @@ export default function AbaFinanceiroPro({
 
       {aguardandoConfirmacao && (
         <div className={styles.notice}>
-          Pagamento em analise. A confirmacao pode levar ate 72 horas. Enquanto
-          isso, seu perfil nao aparece nas buscas e voce nao recebe pedidos.
+          Pagamento em análise. A confirmação pode levar até 72 horas. Enquanto
+          isso, seu perfil não aparece nas buscas e você não recebe pedidos.
         </div>
       )}
 
       {assinaturaAtiva && (
         <div className={styles.success}>
-          Sua assinatura esta ativa. Perfil profissional liberado para buscas e
+          Sua assinatura está ativa. Perfil profissional liberado para buscas e
           pedidos.
         </div>
       )}
 
-      {!perfil.perfil_profissional_ativo && !aguardandoConfirmacao && (
+      {!perfil.perfil_profissional_ativo && (
         <div className={styles.notice}>
-          Regularize a assinatura para voltar a aparecer nas buscas e receber
-          pedidos.
+          Prestador inativo não aparece nas buscas e não recebe pedidos.
         </div>
       )}
 
@@ -185,64 +238,99 @@ export default function AbaFinanceiroPro({
       {mensagem && <div className={styles.success}>{mensagem}</div>}
 
       <div className={styles.form}>
-        <div className={styles.formRow}>
-          <label className={styles.field}>
-            <span className={styles.label}>Plano</span>
-            <input
-              className={styles.input}
-              type="number"
-              min={1}
-              value={planoId}
-              onChange={(event) => setPlanoId(Number(event.target.value))}
-              disabled={carregando}
-            />
-          </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Plano</span>
+          <select
+            className={styles.input}
+            value={planoSelecionado || ''}
+            onChange={(event) =>
+              setPlanoSelecionado(Number(event.target.value) || null)
+            }
+            disabled={carregando}
+          >
+            {!planos.length && <option value="">Nenhum plano disponível</option>}
+            {planos.map((plano) => (
+              <option key={plano.id} value={plano.id}>
+                {plano.nome} - {formatarValor(plano.valor)}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <div className={styles.actions}>
-            {!assinaturaAtiva && (
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => abrirModalCartao('regularizar')}
-                disabled={
-                  carregando || !Number.isInteger(planoId) || planoId <= 0
-                }
-              >
-                Regularizar assinatura
-              </button>
-            )}
-            {aguardandoConfirmacao && (
-              <button
-                type="button"
-                className={styles.ghostButton}
-                onClick={() => abrirModalCartao('regularizar')}
-                disabled={
-                  carregando || !Number.isInteger(planoId) || planoId <= 0
-                }
-              >
-                Tentar novamente
-              </button>
-            )}
+        <div className={styles.planGrid}>
+          {planos.map((plano) => (
+            <button
+              key={plano.id}
+              type="button"
+              className={`${styles.planCard} ${
+                planoSelecionado === plano.id ? styles.planCardActive : ''
+              }`}
+              onClick={() => setPlanoSelecionado(plano.id)}
+              disabled={carregando}
+            >
+              <strong>{plano.nome}</strong>
+              <span>{formatarValor(plano.valor)} / mês</span>
+              {plano.beneficios && <small>{plano.beneficios}</small>}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.actions}>
+          {assinaturaAtiva && (
             <button
               type="button"
-              className={styles.dangerButton}
-              onClick={cancelar}
-              disabled={carregando || !assinaturaCancelavel}
+              className={styles.primaryButton}
+              onClick={() => abrirModalPagamento('gerenciar')}
+              disabled={carregando || planoInvalido}
             >
-              {carregandoAcao === 'cancelar'
-                ? 'Cancelando...'
-                : 'Cancelar assinatura'}
+              Gerenciar pagamento
             </button>
-          </div>
+          )}
+
+          {assinaturaRegularizavel && (
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() =>
+                abrirModalPagamento(assinatura ? 'regularizar' : 'iniciar')
+              }
+              disabled={carregando || planoInvalido}
+            >
+              Regularizar assinatura
+            </button>
+          )}
+
+          {aguardandoConfirmacao && (
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => abrirModalPagamento('regularizar')}
+              disabled={carregando || planoInvalido}
+            >
+              Abrir/gerar nova cobrança
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={styles.dangerButton}
+            onClick={cancelar}
+            disabled={carregando || !assinaturaCancelavel}
+          >
+            {carregandoAcao === 'cancelar'
+              ? 'Cancelando...'
+              : 'Cancelar assinatura'}
+          </button>
         </div>
       </div>
-      <ModalCartaoAssinatura
-        aberto={modalCartaoAberto}
-        modo={modoModalCartao}
-        planoId={planoId}
+
+      <ModalPagamentoAssinatura
+        aberto={modalPagamentoAberto}
+        modo={modoModalPagamento}
+        planoId={planoSelecionado}
         statusAssinatura={status}
-        onFechar={fecharModalCartao}
-        onSucesso={sucessoModalCartao}
+        onFechar={fecharModalPagamento}
+        onSucesso={sucessoModalPagamento}
       />
     </section>
   );

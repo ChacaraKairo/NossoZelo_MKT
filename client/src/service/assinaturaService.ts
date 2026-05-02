@@ -1,6 +1,6 @@
 import api from '@/service/api';
 import {
-  CartaoAssinaturaPayload,
+  PlanoAssinatura,
   RespostaAssinatura,
   RespostaCancelarAssinatura,
   StatusAssinaturaPrestador,
@@ -28,20 +28,17 @@ export const assinaturaService = {
     return response.data;
   },
 
-  regularizarAssinatura: async (planoId: number) => {
-    const response = await api.post<RespostaAssinatura>(
-      '/assinaturas/regularizar',
-      { planoId },
+  listarPlanos: async () => {
+    const response = await api.get<PlanoAssinatura[]>(
+      '/assinaturas/planos',
     );
     return response.data;
   },
 
-  regularizarAssinaturaComCartao: async (
-    payload: CartaoAssinaturaPayload,
-  ) => {
+  regularizarAssinatura: async (planoId: number) => {
     const response = await api.post<RespostaAssinatura>(
       '/assinaturas/regularizar',
-      payload,
+      { planoId },
     );
     return response.data;
   },

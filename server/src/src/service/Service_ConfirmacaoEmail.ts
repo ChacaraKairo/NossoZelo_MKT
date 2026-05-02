@@ -2,10 +2,6 @@ import { randomBytes } from 'crypto';
 import prisma from '../lib/prisma';
 import { TIPOS_PRESTADOR } from '../constants/dominio';
 import logger from '../lib/logger';
-import ServiceAssinatura, {
-  DadosPagamentoAssinatura,
-  MetodoPagamentoAssinatura,
-} from './Service_Assinatura';
 import EmailService from './Service_Email';
 
 const HORAS_EXPIRACAO_CONFIRMACAO = 24;
@@ -63,7 +59,7 @@ function adicionarHoras(data: Date, horas: number) {
 
 function htmlConfirmacao(nome: string, link: string, tipo?: string) {
   const complementoPrestador = TIPOS_PRESTADOR.includes(tipo as any)
-    ? '<p>Depois da confirmacao, voce concluira o pagamento da assinatura profissional no proprio cadastro.</p>'
+    ? '<p>Depois da confirmacao, acesse a area financeira para ativar sua assinatura e liberar seu perfil profissional.</p>'
     : '';
 
   return `
@@ -81,83 +77,6 @@ function htmlConfirmacao(nome: string, link: string, tipo?: string) {
       <p style="color: #64748b; font-size: 13px;">Este link expira em 24 horas.</p>
     </div>
   `;
-}
-
-async function obterPlanoCadastroPrestador() {
-  const planoConfigurado = Number(process.env.ASSINATURA_PLANO_ID || 0);
-  if (Number.isInteger(planoConfigurado) && planoConfigurado > 0) {
-    const plano = await prisma.planos.findUnique({
-      where: { id: planoConfigurado },
-      select: { id: true },
-    });
-    if (plano) return plano.id;
-  }
-
-  const plano = await prisma.planos.findFirst({
-    where: { valor: { gt: 0 } },
-    orderBy: { id: 'asc' },
-    select: { id: true },
-  });
-
-  if (!plano) {
-    throw erroNegocio(
-      'Nenhum plano com valor real cadastrado para cobrar o registro do prestador.',
-      500,
-    );
-  }
-
-  return plano.id;
-}
-
-function metodoPagamentoCadastro(valor?: string): MetodoPagamentoAssinatura {
-  if (valor === 'credito' || valor === 'debito' || valor === 'pix') {
-    return valor;
-  }
-
-  return 'pix';
-}
-
-async function iniciarPagamentoCadastroSePrestador(
-  usuarioId: string,
-  dadosPagamento: DadosPagamentoAssinatura,
-) {
-  const usuario = await prisma.usuarios.findUnique({
-    where: { id: usuarioId },
-    select: { id: true, tipo: true },
-  });
-
-  if (!usuario || !TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
-    return null;
-  }
-
-  const assinaturaAtual = await ServiceAssinatura.obterAssinaturaAtual(
-    usuario.id,
-  );
-  if (
-    assinaturaAtual &&
-    ['ativa', 'aguardando_confirmacao'].includes(assinaturaAtual.status)
-  ) {
-    return {
-      criada: false,
-      assinatura: assinaturaAtual,
-      message:
-        assinaturaAtual.status === 'ativa'
-          ? 'Assinatura ja ativa.'
-          : 'Assinatura ja aguardando confirmacao de pagamento.',
-    };
-  }
-
-  const planoId = await obterPlanoCadastroPrestador();
-  const resultado = await ServiceAssinatura.iniciarOuRegularizarAssinatura(
-    usuario.id,
-    planoId,
-    dadosPagamento,
-  );
-
-  return {
-    criada: true,
-    ...resultado,
-  };
 }
 
 export class ServiceConfirmacaoEmail {
@@ -237,10 +156,7 @@ export class ServiceConfirmacaoEmail {
     };
   }
 
-  static async confirmarEmail(
-    token: string,
-    dadosPagamento?: DadosPagamentoAssinatura | string,
-  ) {
+  static async confirmarEmail(token: string) {
     const tokenNormalizado = String(token || '').trim();
     if (!tokenNormalizado) {
       throw erroNegocio('Token de confirmacao ausente.', 400);
@@ -290,39 +206,11 @@ export class ServiceConfirmacaoEmail {
       }),
     ]);
 
-    let pagamentoCadastro = null;
-    let avisoPagamento: string | null = null;
-    const pagamentoNormalizado =
-      typeof dadosPagamento === 'string'
-        ? { metodoPagamento: metodoPagamentoCadastro(dadosPagamento) }
-        : {
-            ...dadosPagamento,
-            metodoPagamento: metodoPagamentoCadastro(
-              dadosPagamento?.metodoPagamento,
-            ),
-          };
-
-    try {
-      pagamentoCadastro = await iniciarPagamentoCadastroSePrestador(
-        confirmacao.usuario_id,
-        pagamentoNormalizado,
-      );
-    } catch (error) {
-      avisoPagamento =
-        error instanceof Error
-          ? error.message
-          : 'Nao foi possivel iniciar a cobranca do registro.';
-      logger.error('Falha ao iniciar pagamento no cadastro do prestador', {
-        usuarioId: confirmacao.usuario_id,
-        error,
-      });
-    }
-
     return {
       email_confirmado: true,
       message: 'E-mail confirmado com sucesso.',
-      pagamento_cadastro: pagamentoCadastro,
-      aviso_pagamento: avisoPagamento,
+      proximo_passo:
+        'Acesse a area financeira para ativar sua assinatura profissional.',
     };
   }
 

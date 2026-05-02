@@ -19,18 +19,6 @@ function planoIdDoBody(body: any) {
   return planoId;
 }
 
-function dadosPagamentoDoBody(body: any) {
-  if (!body?.cartaoToken && !body?.cartaoResumo && !body?.metodoPagamento) {
-    return undefined;
-  }
-
-  return {
-    metodoPagamento: body?.metodoPagamento,
-    cartaoToken: body?.cartaoToken,
-    cartaoResumo: body?.cartaoResumo,
-  };
-}
-
 class ControllerAssinatura {
   async webhookAsaas(req: Request, res: Response) {
     try {
@@ -59,6 +47,17 @@ class ControllerAssinatura {
       const status =
         await ServiceAssinatura.obterStatusAssinaturaPrestador(req.user.id);
       return res.status(200).json(status);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: error.message });
+    }
+  }
+
+  async planos(_req: Request, res: Response) {
+    try {
+      const planos = await ServiceAssinatura.listarPlanosDisponiveis();
+      return res.status(200).json(planos);
     } catch (error: any) {
       return res
         .status(statusErro(error))
@@ -101,7 +100,6 @@ class ControllerAssinatura {
         await ServiceAssinatura.iniciarOuRegularizarAssinatura(
           req.user.id,
           planoId,
-          dadosPagamentoDoBody(req.body),
         );
 
       return res.status(201).json(resultado);
@@ -123,7 +121,6 @@ class ControllerAssinatura {
         await ServiceAssinatura.iniciarOuRegularizarAssinatura(
           req.user.id,
           planoId,
-          dadosPagamentoDoBody(req.body),
         );
 
       return res.status(200).json(resultado);

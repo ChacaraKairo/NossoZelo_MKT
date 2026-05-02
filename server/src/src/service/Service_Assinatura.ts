@@ -18,33 +18,8 @@ type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
   planoId?: number;
 };
 
-export type MetodoPagamentoAssinatura = 'pix' | 'credito' | 'debito';
-
-type CartaoResumoAssinatura = {
-  nomeTitular: string;
-  cpfTitular: string;
-  numeroFinal: string;
-  validadeMes: string;
-  validadeAno: string;
-  bandeira?: string;
-};
-
-type CartaoCreditoAssinatura = {
-  holderName: string;
-  number: string;
-  expiryMonth: string;
-  expiryYear: string;
-  ccv: string;
-  postalCode: string;
-  addressNumber: string;
-};
-
 export type DadosPagamentoAssinatura = {
-  metodoPagamento?: MetodoPagamentoAssinatura;
-  cartaoToken?: string;
-  cartaoResumo?: CartaoResumoAssinatura;
-  cartaoCredito?: CartaoCreditoAssinatura;
-  remoteIp?: string;
+  metodoPagamento?: 'pix';
 };
 
 type WebhookAsaasInput = {
@@ -109,7 +84,9 @@ async function obterOuCriarPlanoAssinatura(planoId: number) {
     where: { id: planoId },
   });
 
-  if (planoInformado) return planoInformado;
+  if (planoInformado && Number(planoInformado.valor) > 0) {
+    return planoInformado;
+  }
 
   throw erroNegocio('Plano de assinatura nao encontrado.', 404);
 }
@@ -180,105 +157,17 @@ function validarDadosPagamentoAssinatura(
 ) {
   if (!dadosPagamento) return null;
 
-  if (dadosPagamento.metodoPagamento) {
-    const metodoValido =
-      dadosPagamento.metodoPagamento === 'pix' ||
-      dadosPagamento.metodoPagamento === 'credito' ||
-      dadosPagamento.metodoPagamento === 'debito';
-    if (!metodoValido) {
-      throw erroNegocio('Metodo de pagamento invalido.', 400);
-    }
-  }
-
-  if (dadosPagamento.metodoPagamento === 'credito') {
-    const cartao = dadosPagamento.cartaoCredito;
-    if (!cartao) {
-      throw erroNegocio('Dados do cartao de credito sao obrigatorios.', 400);
-    }
-
-    const numero = String(cartao.number || '').replace(/\D/g, '');
-    const cpfTitular =
-      dadosPagamento.cartaoResumo?.cpfTitular?.replace(/\D/g, '') || '';
-    const cep = String(cartao.postalCode || '').replace(/\D/g, '');
-    const mes = String(cartao.expiryMonth || '').padStart(2, '0');
-    const ano = String(cartao.expiryYear || '');
-
-    if (!cartao.holderName?.trim()) {
-      throw erroNegocio('Nome do titular do cartao e obrigatorio.', 400);
-    }
-
-    if (numero.length < 13 || numero.length > 19) {
-      throw erroNegocio('Numero de cartao invalido.', 400);
-    }
-
-    if (!/^(0[1-9]|1[0-2])$/.test(mes)) {
-      throw erroNegocio('Mes de validade do cartao invalido.', 400);
-    }
-
-    if (!/^\d{4}$/.test(ano)) {
-      throw erroNegocio('Ano de validade do cartao invalido.', 400);
-    }
-
-    if (!/^\d{3,4}$/.test(String(cartao.ccv || '').replace(/\D/g, ''))) {
-      throw erroNegocio('CVV do cartao invalido.', 400);
-    }
-
-    if (cpfTitular.length !== 11) {
-      throw erroNegocio('CPF do titular do cartao invalido.', 400);
-    }
-
-    if (cep.length !== 8) {
-      throw erroNegocio('CEP do titular do cartao invalido.', 400);
-    }
-
-    if (!String(cartao.addressNumber || '').trim()) {
-      throw erroNegocio('Numero do endereco do titular e obrigatorio.', 400);
-    }
-
-    return {
-      recebido: true,
-      metodoPagamento: dadosPagamento.metodoPagamento,
-      cartaoResumo: dadosPagamento.cartaoResumo,
-    };
-  }
-
   if (
-    dadosPagamento.metodoPagamento === 'pix' ||
-    dadosPagamento.metodoPagamento === 'debito' ||
-    !dadosPagamento.metodoPagamento
+    dadosPagamento.metodoPagamento &&
+    dadosPagamento.metodoPagamento !== 'pix'
   ) {
-    return {
-      recebido: true,
-      metodoPagamento: dadosPagamento.metodoPagamento,
-    };
+    throw erroNegocio(
+      'Nesta etapa o pagamento deve ser concluido pelo link do Asaas.',
+      400,
+    );
   }
 
-  const resumo = dadosPagamento.cartaoResumo;
-  if (!resumo) {
-    throw erroNegocio('Resumo do cartao e obrigatorio.', 400);
-  }
-
-  if (!resumo.nomeTitular?.trim()) {
-    throw erroNegocio('Nome do titular e obrigatorio.', 400);
-  }
-
-  if (!/^\d{4}$/.test(resumo.numeroFinal)) {
-    throw erroNegocio('Final do cartao invalido.', 400);
-  }
-
-  if (!/^\d{2}$/.test(resumo.validadeMes)) {
-    throw erroNegocio('Mes de validade invalido.', 400);
-  }
-
-  if (!/^\d{2,4}$/.test(resumo.validadeAno)) {
-    throw erroNegocio('Ano de validade invalido.', 400);
-  }
-
-  return {
-    recebido: true,
-    metodoPagamento: dadosPagamento.metodoPagamento,
-    cartaoResumo: resumo,
-  };
+  return { recebido: true, metodoPagamento: 'pix' };
 }
 
 export class ServiceAssinatura {
@@ -286,6 +175,24 @@ export class ServiceAssinatura {
     const data = new Date();
     data.setHours(data.getHours() + HORAS_CONFIRMACAO_PAGAMENTO);
     return data;
+  }
+
+  static async listarPlanosDisponiveis() {
+    const planos = await prisma.planos.findMany({
+      where: { valor: { gt: 0 } },
+      orderBy: { id: 'asc' },
+      select: {
+        id: true,
+        nome: true,
+        valor: true,
+        beneficios: true,
+      },
+    });
+
+    return planos.map((plano) => ({
+      ...plano,
+      valor: Number(plano.valor),
+    }));
   }
 
   static async obterAssinaturaAtual(prestadorId: string) {
@@ -421,20 +328,35 @@ export class ServiceAssinatura {
     }
 
     const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
+    const assinaturaComCliente = assinaturaAtual?.gateway_customer_id
+      ? assinaturaAtual
+      : await prisma.assinaturas.findFirst({
+          where: {
+            prestador_id: prestadorId,
+            gateway_customer_id: { not: null },
+          },
+          orderBy: [{ criado_em: 'desc' }, { id: 'desc' }],
+        });
     const gateway = obterPagamentoGateway();
-    const clienteGateway = await gateway.criarCliente({
-      nome: usuario.nome,
-      email: usuario.email,
-      cpfCnpj: usuario.cpf,
-      telefone: usuario.telefone,
-    });
+    let gatewayCustomerId = assinaturaComCliente?.gateway_customer_id;
 
-    if (!clienteGateway.sucesso || !clienteGateway.gatewayCustomerId) {
-      throw erroNegocio(
-        clienteGateway.mensagem ||
-          'Nao foi possivel criar o cliente no Asaas.',
-        502,
-      );
+    if (!gatewayCustomerId) {
+      const clienteGateway = await gateway.criarCliente({
+        nome: usuario.nome,
+        email: usuario.email,
+        cpfCnpj: usuario.cpf,
+        telefone: usuario.telefone,
+      });
+
+      if (!clienteGateway.sucesso || !clienteGateway.gatewayCustomerId) {
+        throw erroNegocio(
+          clienteGateway.mensagem ||
+            'Nao foi possivel criar o cliente no Asaas.',
+          502,
+        );
+      }
+
+      gatewayCustomerId = clienteGateway.gatewayCustomerId;
     }
 
     const resultado = await gateway.criarAssinaturaMensal({
@@ -445,42 +367,7 @@ export class ServiceAssinatura {
       email: usuario.email,
       cpfCnpj: usuario.cpf,
       telefone: usuario.telefone,
-      gatewayCustomerId: clienteGateway.gatewayCustomerId,
-      metodoPagamento: dadosPagamento?.metodoPagamento,
-      cartaoToken: dadosPagamento?.cartaoToken,
-      creditCard: dadosPagamento?.cartaoCredito
-        ? {
-            holderName: dadosPagamento.cartaoCredito.holderName,
-            number: dadosPagamento.cartaoCredito.number.replace(/\D/g, ''),
-            expiryMonth: dadosPagamento.cartaoCredito.expiryMonth.padStart(
-              2,
-              '0',
-            ),
-            expiryYear: dadosPagamento.cartaoCredito.expiryYear,
-            ccv: dadosPagamento.cartaoCredito.ccv.replace(/\D/g, ''),
-          }
-        : undefined,
-      creditCardHolderInfo:
-        dadosPagamento?.metodoPagamento === 'credito' &&
-        dadosPagamento.cartaoCredito &&
-        dadosPagamento.cartaoResumo
-          ? {
-              name: dadosPagamento.cartaoCredito.holderName,
-              email: usuario.email,
-              cpfCnpj: dadosPagamento.cartaoResumo.cpfTitular.replace(
-                /\D/g,
-                '',
-              ),
-              postalCode: dadosPagamento.cartaoCredito.postalCode.replace(
-                /\D/g,
-                '',
-              ),
-              addressNumber: dadosPagamento.cartaoCredito.addressNumber,
-              phone: usuario.telefone?.replace(/\D/g, '') || undefined,
-              mobilePhone: usuario.telefone?.replace(/\D/g, '') || undefined,
-            }
-          : undefined,
-      remoteIp: dadosPagamento?.remoteIp,
+      gatewayCustomerId,
     });
 
     if (resultado.status === 'aprovado') {
@@ -925,6 +812,24 @@ export class ServiceAssinatura {
       };
     }
 
+    if (
+      statusAssinatura === STATUS_ASSINATURA.aguardando_confirmacao &&
+      assinaturaAtual.status === STATUS_ASSINATURA.ativa
+    ) {
+      logger.info('Webhook Asaas pendente ignorado para assinatura ativa', {
+        event,
+        gatewaySubscriptionId,
+        gatewayPaymentId: payment?.id,
+        assinaturaId: assinaturaAtual.id,
+      });
+      return {
+        processado: false,
+        motivo: 'evento_pendente_ignorado_assinatura_ativa',
+        event,
+        gateway_subscription_id: gatewaySubscriptionId,
+      };
+    }
+
     const agora = new Date();
     const dataPagamento =
       dataAsaas(payment?.paymentDate) ||
@@ -985,12 +890,19 @@ export class ServiceAssinatura {
         where: { id: assinaturaAtual.id },
         data: dados,
       });
+      const usuario = await tx.usuarios.findUnique({
+        where: { id: assinatura.prestador_id },
+        select: { email_confirmado: true },
+      });
+      const statusCadastro =
+        statusAssinatura === STATUS_ASSINATURA.ativa &&
+        !usuario?.email_confirmado
+          ? STATUS_CADASTRO_USUARIO.pendente_pagamento
+          : statusCadastroPorAssinatura(statusAssinatura);
 
       await tx.usuarios.update({
         where: { id: assinatura.prestador_id },
-        data: {
-          status_cadastro: statusCadastroPorAssinatura(statusAssinatura),
-        },
+        data: { status_cadastro: statusCadastro },
       });
 
       await tx.logs_acao.create({
@@ -1007,6 +919,7 @@ export class ServiceAssinatura {
     logger.info('Webhook Asaas processado', {
       event,
       gatewaySubscriptionId,
+      gatewayPaymentId: payment?.id,
       assinaturaId: resultado.id,
       status: resultado.status,
     });
