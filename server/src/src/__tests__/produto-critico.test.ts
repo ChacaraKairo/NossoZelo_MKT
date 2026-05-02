@@ -1,4 +1,6 @@
 import express from 'express';
+import { existsSync, readFileSync } from 'fs';
+import path from 'path';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -200,6 +202,7 @@ describe('fluxos criticos do produto', () => {
       id: 1,
       nome: 'Mensal',
       valor: '49.90',
+      ativo: true,
     });
     mocks.prisma.assinaturas.findFirst
       .mockResolvedValueOnce(null)
@@ -312,6 +315,175 @@ describe('fluxos criticos do produto', () => {
     );
   });
 
+  it('ignora webhook duplicado sem alterar assinatura novamente', async () => {
+    mocks.prisma.eventos_assinatura.findUnique.mockResolvedValue({
+      id: 99,
+      tipo: 'pagamento_confirmado',
+      criado_em: new Date(),
+    });
+
+    const resultado = await ServiceAssinatura.processarWebhookAsaas({
+      token: 'asaas-test-token',
+      payload: {
+        id: 'evt_duplicado',
+        event: 'PAYMENT_CONFIRMED',
+        payment: {
+          id: 'pay_duplicado',
+          subscription: 'sub_1',
+          status: 'CONFIRMED',
+        },
+      },
+    });
+
+    expect(resultado).toMatchObject({
+      processado: true,
+      idempotente: true,
+      motivo: 'evento_repetido',
+      evento_assinatura_id: 99,
+    });
+    expect(mocks.prisma.eventos_assinatura.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tipo: 'webhook_evento_duplicado_ignorado',
+          gateway_event_id: null,
+        }),
+      }),
+    );
+    expect(mocks.prisma.assinaturas.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.usuarios.update).not.toHaveBeenCalled();
+  });
+
+  it('processa webhook PAYMENT_RECEIVED como confirmacao financeira', async () => {
+    mocks.prisma.eventos_assinatura.findUnique.mockResolvedValue(null);
+    mocks.prisma.assinaturas.findFirst.mockResolvedValue(assinaturaBase);
+    mocks.prisma.assinaturas.update.mockResolvedValue({
+      ...assinaturaBase,
+      status: 'ativa',
+    });
+    mocks.prisma.usuarios.findUnique.mockResolvedValue({
+      email_confirmado: true,
+    });
+    mocks.prisma.usuarios.update.mockResolvedValue({});
+    mocks.prisma.logs_acao.create.mockResolvedValue({});
+    mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 4 });
+
+    const resultado = await ServiceAssinatura.processarWebhookAsaas({
+      token: 'asaas-test-token',
+      payload: {
+        id: 'evt_received',
+        event: 'PAYMENT_RECEIVED',
+        payment: {
+          id: 'pay_received',
+          subscription: 'sub_1',
+          customer: 'cus_1',
+          status: 'RECEIVED',
+          paymentDate: '2026-05-02',
+          dueDate: '2026-06-02',
+        },
+      },
+    });
+
+    expect(resultado.processado).toBe(true);
+    expect(mocks.prisma.eventos_assinatura.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tipo: 'pagamento_confirmado',
+          status_anterior: 'aguardando_confirmacao',
+          status_novo: 'ativa',
+        }),
+      }),
+    );
+  });
+
+  it('processa cancelamento de assinatura pelo Asaas', async () => {
+    mocks.prisma.eventos_assinatura.findUnique.mockResolvedValue(null);
+    mocks.prisma.assinaturas.findFirst.mockResolvedValue({
+      ...assinaturaBase,
+      status: 'ativa',
+    });
+    mocks.prisma.assinaturas.update.mockResolvedValue({
+      ...assinaturaBase,
+      status: 'cancelada',
+    });
+    mocks.prisma.usuarios.findUnique.mockResolvedValue({
+      email_confirmado: true,
+    });
+    mocks.prisma.usuarios.update.mockResolvedValue({});
+    mocks.prisma.logs_acao.create.mockResolvedValue({});
+    mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 5 });
+
+    const resultado = await ServiceAssinatura.processarWebhookAsaas({
+      token: 'asaas-test-token',
+      payload: {
+        id: 'evt_cancelada',
+        event: 'SUBSCRIPTION_CANCELLED',
+        subscription: {
+          id: 'sub_1',
+          customer: 'cus_1',
+          status: 'CANCELLED',
+        },
+      },
+    });
+
+    expect(resultado.processado).toBe(true);
+    expect(mocks.prisma.usuarios.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status_cadastro: 'cancelado' } }),
+    );
+  });
+
+  it('ignora evento antigo sem sobrescrever pagamento mais recente', async () => {
+    mocks.prisma.eventos_assinatura.findUnique.mockResolvedValue(null);
+    mocks.prisma.assinaturas.findFirst.mockResolvedValue({
+      ...assinaturaBase,
+      status: 'ativa',
+      data_ultimo_pagamento: new Date('2026-05-20T00:00:00Z'),
+    });
+    mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 3 });
+
+    const resultado = await ServiceAssinatura.processarWebhookAsaas({
+      token: 'asaas-test-token',
+      payload: {
+        id: 'evt_antigo',
+        event: 'PAYMENT_OVERDUE',
+        payment: {
+          id: 'pay_antigo',
+          subscription: 'sub_1',
+          status: 'OVERDUE',
+          dueDate: '2026-05-01',
+        },
+      },
+    });
+
+    expect(resultado).toMatchObject({
+      processado: false,
+      motivo: 'evento_antigo_ignorado',
+    });
+    expect(mocks.prisma.assinaturas.update).not.toHaveBeenCalled();
+  });
+
+  it('nao permite iniciar assinatura com plano inativo', async () => {
+    mocks.prisma.usuarios.findUnique.mockResolvedValue({
+      id: 'prestador-1',
+      nome: 'Prestador',
+      email: 'pro@test.com',
+      cpf: '12345678901',
+      telefone: '11999999999',
+      tipo: 'cuidador',
+      email_confirmado: true,
+    });
+    mocks.prisma.planos.findUnique.mockResolvedValue({
+      id: 2,
+      nome: 'Inativo',
+      valor: '49.90',
+      ativo: false,
+    });
+
+    await expect(
+      ServiceAssinatura.iniciarOuRegularizarAssinatura('prestador-1', 2),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(mocks.gateway.criarAssinaturaMensal).not.toHaveBeenCalled();
+  });
+
   it('prestador ativo pode aparecer na busca e inativo nao pode', async () => {
     mocks.prisma.usuarios.findUnique.mockResolvedValue({
       id: 'prestador-1',
@@ -364,5 +536,16 @@ describe('fluxos criticos do produto', () => {
       ),
     ).rejects.toMatchObject({ status: 403 });
   });
-});
 
+  it('migration de eventos financeiros contem hash e data de processamento', () => {
+    const migrationPath = path.resolve(
+      process.cwd(),
+      'prisma/migrations/20260502170000_add_hash_to_eventos_assinatura/migration.sql',
+    );
+
+    expect(existsSync(migrationPath)).toBe(true);
+    const sql = readFileSync(migrationPath, 'utf8');
+    expect(sql).toContain('payload_hash');
+    expect(sql).toContain('processado_em');
+  });
+});

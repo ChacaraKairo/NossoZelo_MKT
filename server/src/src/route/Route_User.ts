@@ -9,11 +9,18 @@
 
 import { Router } from 'express';
 import UserController from '../controller/Controller_User';
-import { validarUsuario } from '../middleware/user';const UserRouter = Router();/**
+import { validarUsuario } from '../middleware/user';
+import { rateLimit } from '../middleware/rateLimit';const UserRouter = Router();
+const cadastroRateLimit = rateLimit({
+  nome: 'cadastro_usuario',
+  janelaMs: 15 * 60 * 1000,
+  max: 8,
+});
+/**
  * Esta única rota agora substitui as antigas /cuidador, /enfermeiro e /admin.
  * O UserController.criarUsuario lê o "req.body.usuario.tipo" e roteia automaticamente.
  */
-UserRouter.post('/usuario', validarUsuario, UserController.criarUsuario);UserRouter.get(
+UserRouter.post('/usuario', cadastroRateLimit, validarUsuario, UserController.criarUsuario);UserRouter.get(
   '/usuario/:id',
   UserController.buscarUsuarioCompleto,
 );UserRouter.put(

@@ -382,17 +382,7 @@ export class ServicePerfil {
         throw new Error('Prestador indisponivel');
       }
 
-      const {
-        senha,
-        cpf,
-        email,
-        telefone,
-        endereco,
-        cuidadores,
-        enfermeiros,
-        acompanhantes,
-        ...dadosPublicos
-      } = perfil;
+      const { cuidadores, enfermeiros, acompanhantes } = perfil;
       const dadosProfissionais =
         perfil.tipo === 'cuidador'
           ? cuidadores
@@ -403,8 +393,33 @@ export class ServicePerfil {
               : null;
 
       return {
-        ...dadosPublicos,
-        dados_profissionais: dadosProfissionais,
+        id: perfil.id,
+        nome: perfil.nome,
+        tipo: perfil.tipo,
+        url_foto_perfil: perfil.url_foto_perfil,
+        cidade: perfil.cidade,
+        estado: perfil.estado,
+        servicos: perfil.servicos,
+        avaliacoes_avaliacoes_prestador_idTousuarios:
+          perfil.avaliacoes_avaliacoes_prestador_idTousuarios,
+        dados_profissionais: dadosProfissionais
+          ? {
+              bio: dadosProfissionais.bio ?? null,
+              anos_experiencia: dadosProfissionais.anos_experiencia ?? null,
+              valor_hora: dadosProfissionais.valor_hora ?? null,
+              valor_diaria: dadosProfissionais.valor_diaria ?? null,
+              disponibilidade: dadosProfissionais.disponibilidade ?? null,
+              especialidades: dadosProfissionais.especialidades ?? null,
+              especialidade:
+                perfil.tipo === 'enfermeiro'
+                  ? enfermeiros?.especialidade
+                  : undefined,
+              coren:
+                perfil.tipo === 'enfermeiro'
+                  ? enfermeiros?.coren
+                  : undefined,
+            }
+          : null,
         bio: dadosProfissionais?.bio ?? null,
         anos_experiencia:
           dadosProfissionais?.anos_experiencia ?? null,

@@ -27,6 +27,7 @@ type AsaasSubscription = {
   customer?: string;
   status?: string;
   nextDueDate?: string;
+  dateCreated?: string;
 };
 
 type AsaasWebhookPayload = {
@@ -95,6 +96,21 @@ function jsonEstavel(valor: unknown): string {
 
 function hashPayload(valor: unknown) {
   return createHash("sha256").update(jsonEstavel(valor)).digest("hex");
+}
+
+function idEventoAsaas(payload: AsaasWebhookPayload, subscriptionId?: string) {
+  return limitar(
+    payload.id ||
+      [
+        payload.event || "EVENTO_DESCONHECIDO",
+        payload.payment?.id,
+        subscriptionId,
+        payload.payment?.status || payload.subscription?.status
+      ]
+        .filter(Boolean)
+        .join(":"),
+    191
+  );
 }
 
 function statusAssinaturaPorEventoAsaas(
@@ -175,8 +191,8 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
   const event = payload.event || "EVENTO_DESCONHECIDO";
   const payment = payload.payment;
   const subscription = payload.subscription;
-  const eventId = payload.id ? limitar(payload.id, 191) : null;
   const subscriptionId = payment?.subscription || subscription?.id;
+  const eventId = idEventoAsaas(payload, subscriptionId);
   const customerId = payment?.customer || subscription?.customer;
   const prestadorReferencia = payment?.externalReference;
   const statusAssinatura = statusAssinaturaPorEventoAsaas(
@@ -204,33 +220,52 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
     dataAsaas(payment?.clientPaymentDate) ||
     dataAsaas(payment?.confirmedDate);
 
-  if (eventId) {
-    const eventoExistente = await prisma.eventos_assinatura.findUnique({
-      where: { gateway_event_id: eventId },
-      select: { id: true }
+  const eventoExistente = await prisma.eventos_assinatura.findUnique({
+    where: { gateway_event_id: eventId },
+    select: { id: true }
+  });
+
+  if (eventoExistente) {
+    await prisma.eventos_assinatura.create({
+      data: {
+        tipo: "webhook_evento_duplicado_ignorado",
+        origem: "webhook",
+        gateway: "asaas",
+        gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
+        gateway_subscription_id: subscriptionId ? limitar(subscriptionId, 120) : null,
+        status_novo: statusAssinatura,
+        payload_hash: payloadHash,
+        payload_resumo: {
+          ...payloadJson,
+          motivo: "evento_ja_processado",
+          gatewayEventIdOriginal: eventId,
+          eventoAssinaturaOriginalId: eventoExistente.id
+        },
+        processado_em: new Date()
+      }
     });
 
-    if (eventoExistente) {
-      return {
-        processado: false,
-        duplicado: true,
-        motivo: "evento_ja_processado",
-        evento_assinatura_id: eventoExistente.id
-      };
-    }
+    return {
+      processado: true,
+      idempotente: true,
+      duplicado: true,
+      motivo: "evento_ja_processado",
+      evento_assinatura_id: eventoExistente.id
+    };
+  }
 
-    const logExistente = await prisma.asaas_webhook_logs.findUnique({
-      where: { event_id: eventId }
-    });
+  const logExistente = await prisma.asaas_webhook_logs.findUnique({
+    where: { event_id: eventId }
+  });
 
-    if (logExistente) {
-      return {
-        processado: false,
-        duplicado: true,
-        motivo: "evento_ja_processado",
-        log_id: logExistente.id
-      };
-    }
+  if (logExistente) {
+    return {
+      processado: true,
+      idempotente: true,
+      duplicado: true,
+      motivo: "evento_ja_processado",
+      log_id: logExistente.id
+    };
   }
 
   const log = await prisma.asaas_webhook_logs.create({
@@ -260,7 +295,7 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
       await prisma.eventos_assinatura.create({
         data: {
           tipo: "webhook_ignorado",
-          origem: "webhook_asaas",
+          origem: "webhook",
           gateway: "asaas",
           gateway_event_id: eventId,
           gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
@@ -287,7 +322,7 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
       await prisma.eventos_assinatura.create({
         data: {
           tipo: "webhook_ignorado",
-          origem: "webhook_asaas",
+          origem: "webhook",
           gateway: "asaas",
           gateway_event_id: eventId,
           gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
@@ -315,7 +350,7 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
       await prisma.eventos_assinatura.create({
         data: {
           tipo: "webhook_assinatura_nao_encontrada",
-          origem: "webhook_asaas",
+          origem: "webhook",
           gateway: "asaas",
           gateway_event_id: eventId,
           gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
@@ -335,6 +370,53 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
       dataAsaas(subscription?.nextDueDate) ||
       dataAsaas(payment?.dueDate) ||
       adicionarDias(dataPagamento, 30);
+    const dataReferenciaEvento =
+      pagoEm ||
+      dataAsaas(payment?.dueDate) ||
+      dataAsaas(subscription?.nextDueDate) ||
+      dataAsaas(subscription?.dateCreated) ||
+      dataAsaas(payload.dateCreated);
+
+    if (
+      statusAssinatura !== "ativa" &&
+      assinaturaAtual.data_ultimo_pagamento &&
+      dataReferenciaEvento &&
+      dataReferenciaEvento < assinaturaAtual.data_ultimo_pagamento
+    ) {
+      const atualizado = await prisma.asaas_webhook_logs.update({
+        where: { id: log.id },
+        data: {
+          status_processamento: "ignorado",
+          motivo: "evento_antigo_ignorado",
+          prestador_id: assinaturaAtual.prestador_id,
+          assinatura_id: assinaturaAtual.id,
+          assinatura_status_antes: assinaturaAtual.status,
+          assinatura_status_depois: assinaturaAtual.status
+        }
+      });
+
+      await prisma.eventos_assinatura.create({
+        data: {
+          assinatura_id: assinaturaAtual.id,
+          prestador_id: assinaturaAtual.prestador_id,
+          plano_id: assinaturaAtual.plano_id,
+          tipo: "webhook_evento_antigo_ignorado",
+          origem: "webhook",
+          gateway: "asaas",
+          gateway_event_id: eventId,
+          gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
+          gateway_subscription_id: subscriptionId ? limitar(subscriptionId, 120) : null,
+          status_anterior: assinaturaAtual.status,
+          status_novo: assinaturaAtual.status,
+          valor: numeroAsaas(payment?.value),
+          payload_hash: payloadHash,
+          payload_resumo: payloadJson,
+          processado_em: new Date()
+        }
+      });
+
+      return { processado: false, motivo: atualizado.motivo, log_id: atualizado.id };
+    }
     const dados: Prisma.assinaturasUncheckedUpdateInput = {
       status: statusAssinatura,
       gateway: "asaas",
@@ -398,7 +480,7 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
           prestador_id: assinatura.prestador_id,
           plano_id: assinatura.plano_id,
           tipo: statusAssinatura === "ativa" ? "pagamento_confirmado" : statusAssinatura === "atrasada" ? "pagamento_atrasado" : "webhook_asaas",
-          origem: "webhook_asaas",
+          origem: "webhook",
           gateway: "asaas",
           gateway_event_id: eventId,
           gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,

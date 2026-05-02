@@ -66,7 +66,7 @@ Somente `usuarios.email_confirmado = true`, `usuarios.status_cadastro = ativo` e
 4. Prestador escolhe um plano ativo.
 5. Backend reutiliza `gateway_customer_id` anterior, quando existir.
 6. Backend cria uma assinatura mensal no Asaas e retorna `invoiceUrl`, `bankSlipUrl` ou Pix.
-7. Assinatura local fica `aguardando_confirmacao`.
+7. Assinatura local fica `aguardando_confirmacao`, mesmo que o Asaas retorne `ACTIVE`.
 8. Prestador paga no ambiente/link do Asaas.
 9. Asaas envia webhook real de pagamento.
 10. Backend valida o token do webhook.
@@ -96,7 +96,11 @@ Eventos principais:
 
 O webhook nao deve registrar payload completo com dados sensiveis. Registre apenas evento, IDs do gateway, assinatura local e status resultante.
 
+No Asaas, `ACTIVE` indica que a assinatura recorrente foi criada e esta operacional no gateway. No NossoZelo, isso nao significa pagamento aprovado: a assinatura local so vira `ativa` depois de `PAYMENT_RECEIVED` ou `PAYMENT_CONFIRMED`.
+
 Cada evento recebido ou gerado pelo sistema deve criar uma linha em `eventos_assinatura`. O campo `gateway_event_id` garante idempotencia: o mesmo evento do Asaas nao pode ser aplicado duas vezes. Eventos antigos que nao representam pagamento confirmado nao devem sobrescrever uma assinatura ja reativada por pagamento posterior.
+
+O evento financeiro armazena `payload_hash` e `payload_resumo`, nunca o payload completo sensivel. `processado_em` marca quando o evento foi avaliado pelo sistema.
 
 Eventos financeiros registrados:
 
@@ -136,8 +140,11 @@ No controlador:
 - **Planos**: cria e mantém planos disponiveis para assinatura.
 - **Assinaturas**: lista assinaturas, filtra por status/prestador e abre detalhe.
 - **Detalhe da assinatura**: mostra prestador, plano, valor, status, gateway, IDs do Asaas e datas financeiras.
-- **Reprocessar**: recalcula `usuarios.status_cadastro` a partir do status atual da assinatura.
+- **Reprocessar**: consulta o Asaas, atualiza `gateway_status` e datas conhecidas, mas nao ativa localmente uma assinatura apenas porque o gateway retornou `ACTIVE`.
 - **Alterar status**: acao administrativa manual, com confirmacao para status destrutivos como `cancelada`, `bloqueada` e `falhou`.
+- **Relatorio de inadimplencia**: lista prestadores fora da operacao por atraso, bloqueio, falha, expiracao ou cancelamento, com dados pessoais mascarados.
+
+Todas as rotas administrativas passam por `exigirAdminApi`, com excecao intencional de login/logout e webhook publico do Asaas. O `controlador/src/proxy.ts` protege rotas de pagina e API no build de producao do Next, redirecionando para `/login` quando nao ha sessao administrativa valida.
 
 ## Fluxo de regularizacao
 
@@ -146,6 +153,16 @@ Quando uma assinatura fica `pendente`, `atrasada`, `falhou`, `expirada`, `bloque
 Quando fica `aguardando_confirmacao`, a tela mostra **Pagamento em analise** e permite abrir ou gerar nova cobranca se necessario.
 
 Quando fica `ativa`, a tela mostra **Gerenciar pagamento**. Nesta etapa, o NossoZelo nao coleta numero de cartao nem CVV; o prestador conclui pagamentos no Asaas.
+
+## Seguranca operacional
+
+O backend aplica rate limit em login, cadastro, recuperacao de senha, confirmacao e reenvio de e-mail.
+
+O login social usa `state` OAuth salvo em cookie HTTP-only temporario. Logs devem continuar passando pelo logger sanitizado e nao devem incluir senha, token, CPF completo, cartao, CVV ou headers sensiveis.
+
+## FAQ publica
+
+A pagina `/assinatura` explica ao prestador o fluxo de cadastro, confirmacao de e-mail, escolha de plano, pagamento no Asaas, espera de confirmacao e reativacao apos regularizacao.
 
 ## Pagamentos de contratacao
 

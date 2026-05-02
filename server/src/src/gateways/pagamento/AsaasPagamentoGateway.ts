@@ -84,6 +84,18 @@ function mensagemPorBillingType(billingType: string) {
   return 'Assinatura criada no Asaas. Aguarde confirmacao por webhook de pagamento.';
 }
 
+function complementoSemCobrancaAcessivel(
+  pagamento?: AsaasPaymentResponse,
+  pixQrCode?: AsaasPixQrCodeResponse | null,
+) {
+  const temPix = Boolean(pixQrCode?.payload || pixQrCode?.encodedImage);
+  const temLink = Boolean(pagamento?.invoiceUrl || pagamento?.bankSlipUrl);
+
+  if (temPix || temLink) return '';
+
+  return ' O Asaas ainda nao retornou link ou Pix da primeira cobranca; tente abrir a assinatura novamente em alguns segundos ou consulte o Asaas.';
+}
+
 function normalizarStatusAsaas(status?: string): GatewayStatusAssinatura {
   const valor = status?.toUpperCase();
   if (valor === 'ACTIVE') return 'pendente';
@@ -192,6 +204,9 @@ export class AsaasPagamentoGateway implements PagamentoGateway {
               .then((pixResponse) => pixResponse.data)
               .catch(() => null)
           : null;
+      const mensagem =
+        mensagemPorBillingType(billingType) +
+        complementoSemCobrancaAcessivel(primeiraCobranca, pixQrCode);
 
       return {
         sucesso: true,
@@ -203,7 +218,7 @@ export class AsaasPagamentoGateway implements PagamentoGateway {
         invoiceUrl: primeiraCobranca?.invoiceUrl || null,
         bankSlipUrl: primeiraCobranca?.bankSlipUrl || null,
         pixQrCode,
-        mensagem: mensagemPorBillingType(billingType),
+        mensagem,
         confirmacaoExpiraEm: adicionarDias(new Date(), 3),
       };
     } catch (error) {

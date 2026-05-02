@@ -78,12 +78,16 @@ const MOTIVOS_PERFIL_INATIVO: Record<string, string> = {
     'Assinatura mensal pendente. Regularize para ativar seu perfil profissional.',
   assinatura_falhou:
     'Pagamento nao confirmado. Regularize a assinatura para reativar seu perfil.',
+  assinatura_atrasada:
+    'Assinatura atrasada. Regularize para voltar a aparecer nas buscas e receber pedidos.',
   assinatura_expirada:
     'Prazo de confirmacao expirado. Inicie a regularizacao novamente.',
   assinatura_bloqueada:
     'Assinatura bloqueada. Regularize para voltar a receber pedidos.',
   assinatura_cancelada:
     'Assinatura cancelada. Regularize para reativar seu perfil profissional.',
+  perfil_ativo:
+    'Perfil ativo. Voce aparece nas buscas e pode receber pedidos.',
 };
 
 function AlertaAssinaturaInativa({

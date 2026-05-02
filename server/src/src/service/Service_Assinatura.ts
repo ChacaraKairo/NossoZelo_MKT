@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { assinaturas_status, Prisma, usuarios_status_cadastro } from '@prisma/client';
 import {
   DIAS_TOLERANCIA_ASSINATURA,
@@ -63,7 +64,9 @@ type RegistrarEventoInput = {
   statusAnterior?: string | null;
   statusNovo?: string | null;
   valor?: Prisma.Decimal | number | string | null;
+  payloadHash?: string | null;
   payloadResumo?: Prisma.InputJsonValue | null;
+  processadoEm?: Date | null;
 };
 
 function erroNegocio(mensagem: string, status = 400) {
@@ -101,11 +104,11 @@ async function obterOuCriarPlanoAssinatura(planoId: number) {
     where: { id: planoId },
   });
 
-  if (planoInformado && Number(planoInformado.valor) > 0) {
+  if (planoInformado && planoInformado.ativo && Number(planoInformado.valor) > 0) {
     return planoInformado;
   }
 
-  throw erroNegocio('Plano de assinatura nao encontrado.', 404);
+  throw erroNegocio('Plano de assinatura nao encontrado ou inativo.', 404);
 }
 
 function statusCadastroPorAssinatura(
@@ -143,6 +146,7 @@ function motivoPerfilInativo(status?: assinaturas_status | null) {
     return 'pagamento_aguardando_confirmacao';
   }
   if (status === STATUS_ASSINATURA.falhou) return 'assinatura_falhou';
+  if (status === STATUS_ASSINATURA.atrasada) return 'assinatura_atrasada';
   if (status === STATUS_ASSINATURA.expirada) return 'assinatura_expirada';
   if (status === STATUS_ASSINATURA.bloqueada) return 'assinatura_bloqueada';
   if (status === STATUS_ASSINATURA.cancelada) return 'assinatura_cancelada';
@@ -210,6 +214,25 @@ function resumoPayloadAsaas(payload: AsaasWebhookPayload) {
   };
 }
 
+function jsonEstavel(valor: unknown): string {
+  if (valor === null || typeof valor !== 'object') {
+    return JSON.stringify(valor);
+  }
+
+  if (Array.isArray(valor)) {
+    return `[${valor.map(jsonEstavel).join(',')}]`;
+  }
+
+  return `{${Object.keys(valor as Record<string, unknown>)
+    .sort()
+    .map((chave) => `${JSON.stringify(chave)}:${jsonEstavel((valor as Record<string, unknown>)[chave])}`)
+    .join(',')}}`;
+}
+
+function hashPayload(valor: unknown) {
+  return createHash('sha256').update(jsonEstavel(valor)).digest('hex');
+}
+
 async function registrarEventoAssinatura(
   input: RegistrarEventoInput,
   tx: Prisma.TransactionClient | typeof prisma = prisma,
@@ -229,7 +252,11 @@ async function registrarEventoAssinatura(
         status_anterior: input.statusAnterior ?? null,
         status_novo: input.statusNovo ?? null,
         valor: input.valor === undefined || input.valor === null ? null : input.valor,
+        payload_hash:
+          input.payloadHash ||
+          (input.payloadResumo ? hashPayload(input.payloadResumo) : null),
         payload_resumo: input.payloadResumo ?? undefined,
+        processado_em: input.processadoEm ?? new Date(),
       },
     });
   } catch (error: any) {
@@ -998,6 +1025,7 @@ export class ServiceAssinatura {
     const gatewayCustomerId = payment?.customer || subscription?.customer;
     const gatewayEventId = idEventoAsaas(payload, gatewaySubscriptionId);
     const payloadResumo = resumoPayloadAsaas(payload);
+    const payloadHash = hashPayload(payloadResumo);
     const statusAssinatura = this.statusAssinaturaPorEventoAsaas(
       event,
       payment?.status,
@@ -1014,8 +1042,24 @@ export class ServiceAssinatura {
         event,
         eventoAssinaturaId: eventoExistente.id,
       });
+      await registrarEventoAssinatura({
+        tipo: 'webhook_evento_duplicado_ignorado',
+        origem: 'webhook',
+        gateway: GATEWAY_PAGAMENTO.asaas,
+        gatewayPaymentId: payment?.id,
+        gatewaySubscriptionId,
+        statusNovo: statusAssinatura,
+        payloadHash,
+        payloadResumo: {
+          ...payloadResumo,
+          motivo: 'evento_repetido',
+          gatewayEventIdOriginal: gatewayEventId,
+          eventoAssinaturaOriginalId: eventoExistente.id,
+        },
+      });
       return {
-        processado: false,
+        processado: true,
+        idempotente: true,
         motivo: 'evento_repetido',
         event,
         evento_assinatura_id: eventoExistente.id,
@@ -1026,11 +1070,12 @@ export class ServiceAssinatura {
       logger.warn('Webhook Asaas ignorado: assinatura ausente', { event });
       await registrarEventoAssinatura({
         tipo: tipoEventoFinanceiro(statusAssinatura, event),
-        origem: 'webhook_asaas',
+        origem: 'webhook',
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewayEventId,
         gatewayPaymentId: payment?.id,
         statusNovo: statusAssinatura,
+        payloadHash,
         payloadResumo,
       });
       return {
@@ -1047,12 +1092,13 @@ export class ServiceAssinatura {
       });
       await registrarEventoAssinatura({
         tipo: tipoEventoFinanceiro(statusAssinatura, event),
-        origem: 'webhook_asaas',
+        origem: 'webhook',
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewayEventId,
         gatewayPaymentId: payment?.id,
         gatewaySubscriptionId,
         statusNovo: statusAssinatura,
+        payloadHash,
         payloadResumo,
       });
       return {
@@ -1075,12 +1121,13 @@ export class ServiceAssinatura {
       });
       await registrarEventoAssinatura({
         tipo: 'webhook_assinatura_nao_encontrada',
-        origem: 'webhook_asaas',
+        origem: 'webhook',
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewayEventId,
         gatewayPaymentId: payment?.id,
         gatewaySubscriptionId,
         statusNovo: statusAssinatura,
+        payloadHash,
         payloadResumo,
       });
       return {
@@ -1106,13 +1153,14 @@ export class ServiceAssinatura {
         prestadorId: assinaturaAtual.prestador_id,
         planoId: assinaturaAtual.plano_id,
         tipo: 'webhook_evento_antigo_ignorado',
-        origem: 'webhook_asaas',
+        origem: 'webhook',
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewayEventId,
         gatewayPaymentId: payment?.id,
         gatewaySubscriptionId,
         statusAnterior: assinaturaAtual.status,
         statusNovo: assinaturaAtual.status,
+        payloadHash,
         payloadResumo,
       });
       return {
@@ -1151,13 +1199,14 @@ export class ServiceAssinatura {
         prestadorId: assinaturaAtual.prestador_id,
         planoId: assinaturaAtual.plano_id,
         tipo: 'webhook_evento_antigo_ignorado',
-        origem: 'webhook_asaas',
+        origem: 'webhook',
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewayEventId,
         gatewayPaymentId: payment?.id,
         gatewaySubscriptionId,
         statusAnterior: assinaturaAtual.status,
         statusNovo: assinaturaAtual.status,
+        payloadHash,
         payloadResumo,
       });
 
@@ -1248,13 +1297,14 @@ export class ServiceAssinatura {
           prestadorId: assinatura.prestador_id,
           planoId: assinatura.plano_id,
           tipo: tipoEventoFinanceiro(statusAssinatura, event),
-          origem: 'webhook_asaas',
+          origem: 'webhook',
           gateway: GATEWAY_PAGAMENTO.asaas,
           gatewayEventId,
           gatewayPaymentId: payment?.id,
           gatewaySubscriptionId,
           statusAnterior: assinaturaAtual.status,
           statusNovo: assinatura.status,
+          payloadHash,
           payloadResumo,
         },
         tx,

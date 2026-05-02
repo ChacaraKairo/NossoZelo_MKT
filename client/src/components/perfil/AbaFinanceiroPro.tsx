@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import ModalPagamentoAssinatura from '@/components/perfil/ModalPagamentoAssinatura';
 import { assinaturaService } from '@/service/assinaturaService';
 import { PerfilUsuario } from '@/types/perfil';
@@ -16,7 +16,7 @@ interface AbaFinanceiroProProps {
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: 'Pendente',
-  aguardando_confirmacao: 'Pagamento em análise',
+  aguardando_confirmacao: 'Pagamento em anÃ¡lise',
   ativa: 'Ativa',
   atrasada: 'Atrasada',
   bloqueada: 'Bloqueada',
@@ -35,9 +35,9 @@ const STATUS_REGULARIZAVEL = new Set([
 ]);
 
 function formatarData(valor?: string | Date | null) {
-  if (!valor) return 'Não informado';
+  if (!valor) return 'NÃ£o informado';
   const data = new Date(valor);
-  if (Number.isNaN(data.getTime())) return 'Não informado';
+  if (Number.isNaN(data.getTime())) return 'NÃ£o informado';
 
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
@@ -50,7 +50,7 @@ function formatarData(valor?: string | Date | null) {
 
 function formatarValor(valor?: number | string | null) {
   const numero = Number(valor);
-  if (!Number.isFinite(numero)) return 'Valor não informado';
+  if (!Number.isFinite(numero)) return 'Valor nÃ£o informado';
 
   return numero.toLocaleString('pt-BR', {
     style: 'currency',
@@ -155,7 +155,7 @@ export default function AbaFinanceiroPro({
 
   const cancelar = async () => {
     const confirmou = window.confirm(
-      'Cancelar sua assinatura? Seu perfil profissional ficará inativo para buscas e pedidos.',
+      'Cancelar sua assinatura? Seu perfil profissional ficarÃ¡ inativo para buscas e pedidos.',
     );
     if (!confirmou) return;
 
@@ -199,11 +199,11 @@ export default function AbaFinanceiroPro({
           </p>
         </article>
         <article className={styles.card}>
-          <span className={styles.label}>Limite de confirmação</span>
+          <span className={styles.label}>Limite de confirmaÃ§Ã£o</span>
           <p className={styles.value}>{formatarData(dataLimite)}</p>
         </article>
         <article className={styles.card}>
-          <span className={styles.label}>Próximo vencimento</span>
+          <span className={styles.label}>PrÃ³ximo vencimento</span>
           <p className={styles.value}>
             {formatarData(assinatura?.data_proximo_vencimento)}
           </p>
@@ -216,21 +216,21 @@ export default function AbaFinanceiroPro({
 
       {aguardandoConfirmacao && (
         <div className={styles.notice}>
-          Pagamento em análise. A confirmação pode levar até 72 horas. Enquanto
-          isso, seu perfil não aparece nas buscas e você não recebe pedidos.
+          Pagamento em anÃ¡lise. A confirmaÃ§Ã£o pode levar atÃ© 72 horas. Enquanto
+          isso, seu perfil nÃ£o aparece nas buscas e vocÃª nÃ£o recebe pedidos.
         </div>
       )}
 
       {assinaturaAtiva && (
         <div className={styles.success}>
-          Sua assinatura está ativa. Perfil profissional liberado para buscas e
+          Sua assinatura estÃ¡ ativa. Perfil profissional liberado para buscas e
           pedidos.
         </div>
       )}
 
       {!perfil.perfil_profissional_ativo && (
         <div className={styles.notice}>
-          Prestador inativo não aparece nas buscas e não recebe pedidos.
+          Prestador inativo nÃ£o aparece nas buscas e nÃ£o recebe pedidos.
         </div>
       )}
 
@@ -248,7 +248,7 @@ export default function AbaFinanceiroPro({
             }
             disabled={carregando}
           >
-            {!planos.length && <option value="">Nenhum plano disponível</option>}
+            {!planos.length && <option value="">Nenhum plano disponÃ­vel</option>}
             {planos.map((plano) => (
               <option key={plano.id} value={plano.id}>
                 {plano.nome} - {formatarValor(plano.valor)}
@@ -269,7 +269,7 @@ export default function AbaFinanceiroPro({
               disabled={carregando}
             >
               <strong>{plano.nome}</strong>
-              <span>{formatarValor(plano.valor)} / mês</span>
+              <span>{formatarValor(plano.valor)} / mÃªs</span>
               {plano.beneficios && <small>{plano.beneficios}</small>}
             </button>
           ))}
@@ -307,7 +307,7 @@ export default function AbaFinanceiroPro({
               onClick={() => abrirModalPagamento('regularizar')}
               disabled={carregando || planoInvalido}
             >
-              Abrir/gerar nova cobrança
+              Abrir/gerar nova cobranÃ§a
             </button>
           )}
 
@@ -335,3 +335,4 @@ export default function AbaFinanceiroPro({
     </section>
   );
 }
+
