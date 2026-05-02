@@ -18,7 +18,8 @@ import PerfilRouter from './Route_Perfil';
 import AvaliacaoRouter from './Route_Avaliacao';
 import ServicoRouter from './Route_Servico';
 import AssinaturaRouter from './Route_Assinatura';
-import ConfirmacaoEmailRouter from './Route_ConfirmacaoEmail';const router = Router();/**
+import ConfirmacaoEmailRouter from './Route_ConfirmacaoEmail';
+import OnboardingRouter from './Route_Onboarding';const router = Router();/**
  * Rota para criação e gerenciamento básico de usuários.
  */
 router.use('/create-users', UserRouter);/**
@@ -49,4 +50,6 @@ router.use('/servicos', ServicoRouter);
 
 router.use('/assinaturas', AssinaturaRouter);
 
-router.use('/email', ConfirmacaoEmailRouter);export default router;
+router.use('/email', ConfirmacaoEmailRouter);
+
+router.use('/onboarding', OnboardingRouter);export default router;

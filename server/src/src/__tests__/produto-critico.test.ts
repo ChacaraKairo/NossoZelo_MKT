@@ -29,6 +29,18 @@ const mocks = vi.hoisted(() => {
     logs_acao: {
       create: vi.fn(),
     },
+    cuidadores: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    enfermeiros: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    acompanhantes: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
     servicos: {
       findFirst: vi.fn(),
     },
@@ -93,6 +105,7 @@ import ControllerConfirmacaoEmail from '../controller/Controller_ConfirmacaoEmai
 import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenha';
 import ServiceAgendamento from '../service/Service_Agendamento';
 import ServiceAssinatura from '../service/Service_Assinatura';
+import ServiceOnboarding from '../service/Service_Onboarding';
 
 function appComRotasPublicas() {
   const app = express();
@@ -189,15 +202,30 @@ describe('fluxos criticos do produto', () => {
   });
 
   it('inicia assinatura criando cobranca no gateway', async () => {
-    mocks.prisma.usuarios.findUnique.mockResolvedValue({
-      id: 'prestador-1',
-      nome: 'Prestador',
-      email: 'pro@test.com',
-      cpf: '12345678901',
-      telefone: '11999999999',
-      tipo: 'cuidador',
-      email_confirmado: true,
-    });
+    mocks.prisma.usuarios.findUnique
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'pro@test.com',
+        cpf: '12345678901',
+        telefone: '11999999999',
+        tipo: 'cuidador',
+        email_confirmado: true,
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: 'pendente_pagamento',
+        cuidadores: {
+          bio: 'Bio profissional',
+          disponibilidade: 'Dias uteis',
+          especialidades: 'Idosos',
+        },
+        enfermeiros: null,
+        acompanhantes: null,
+        assinaturas: [],
+      });
     mocks.prisma.planos.findUnique.mockResolvedValue({
       id: 1,
       nome: 'Mensal',
@@ -484,7 +512,112 @@ describe('fluxos criticos do produto', () => {
     expect(mocks.gateway.criarAssinaturaMensal).not.toHaveBeenCalled();
   });
 
+  it('cliente cadastrado nao precisa de assinatura para concluir onboarding', async () => {
+    mocks.prisma.usuarios.findUnique.mockResolvedValue({
+      id: 'cliente-1',
+      tipo: 'cliente',
+      email_confirmado: true,
+      status_cadastro: 'ativo',
+      cuidadores: null,
+      enfermeiros: null,
+      acompanhantes: null,
+      assinaturas: [],
+    });
+
+    const status = await ServiceOnboarding.obterStatus('cliente-1');
+
+    expect(status).toMatchObject({
+      isPrestador: false,
+      etapaAtual: 'ativo',
+      perfilProfissionalAtivo: true,
+    });
+  });
+
+  it('prestador cadastrado inicia pendente de confirmacao de email', async () => {
+    mocks.prisma.usuarios.findUnique.mockResolvedValue({
+      id: 'prestador-1',
+      tipo: 'cuidador',
+      email_confirmado: false,
+      status_cadastro: 'pendente_pagamento',
+      cuidadores: null,
+      enfermeiros: null,
+      acompanhantes: null,
+      assinaturas: [],
+    });
+
+    const status = await ServiceOnboarding.obterStatus('prestador-1');
+
+    expect(status).toMatchObject({
+      isPrestador: true,
+      etapaAtual: 'confirmar_email',
+      perfilProfissionalAtivo: false,
+      podeAparecerNaBusca: false,
+    });
+  });
+
+  it('GET /onboarding/status identifica etapa de escolher plano', async () => {
+    mocks.prisma.usuarios.findUnique.mockResolvedValue({
+      id: 'prestador-1',
+      tipo: 'cuidador',
+      email_confirmado: true,
+      status_cadastro: 'pendente_pagamento',
+      cuidadores: {
+        bio: 'Bio profissional',
+        disponibilidade: 'Dias uteis',
+        especialidades: 'Idosos',
+      },
+      enfermeiros: null,
+      acompanhantes: null,
+      assinaturas: [],
+    });
+
+    const status = await ServiceOnboarding.obterStatus('prestador-1');
+
+    expect(status).toMatchObject({
+      etapaAtual: 'escolher_plano',
+      possuiDadosProfissionais: true,
+      possuiAssinatura: false,
+      proximaAcao: expect.stringContaining('Escolha um plano'),
+    });
+  });
+
+  it('prestador sem e-mail confirmado nao inicia pagamento', async () => {
+    mocks.prisma.usuarios.findUnique
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'pro@test.com',
+        cpf: '12345678901',
+        telefone: '11999999999',
+        tipo: 'cuidador',
+        email_confirmado: false,
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: false,
+        status_cadastro: 'pendente_pagamento',
+        cuidadores: null,
+        enfermeiros: null,
+        acompanhantes: null,
+        assinaturas: [],
+      });
+    mocks.prisma.planos.findUnique.mockResolvedValue({
+      id: 1,
+      nome: 'Mensal',
+      valor: '49.90',
+      ativo: true,
+    });
+
+    await expect(
+      ServiceAssinatura.iniciarOuRegularizarAssinatura('prestador-1', 1),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(mocks.gateway.criarAssinaturaMensal).not.toHaveBeenCalled();
+  });
+
   it('prestador ativo pode aparecer na busca e inativo nao pode', async () => {
+    mocks.prisma.usuarios.findUnique.mockReset();
+    mocks.prisma.assinaturas.findFirst.mockReset();
     mocks.prisma.usuarios.findUnique.mockResolvedValue({
       id: 'prestador-1',
       tipo: 'cuidador',

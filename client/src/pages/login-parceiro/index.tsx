@@ -41,7 +41,7 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      await loginService.login({
+      const response = await loginService.login({
         identificador,
         senha,
       });
@@ -49,7 +49,14 @@ const LoginPage = () => {
       // O token já foi salvo nos cookies pelo serviço.
       // Apenas redirecionamos o usuário para a página principal.
       logger.info('LoginParceiroPage', 'Login concluído com sucesso');
-      router.push('/prestadores'); // Ajuste a rota de destino se necessário
+      if (
+        response.onboardingStatus?.isPrestador &&
+        response.onboardingStatus.etapaAtual !== 'ativo'
+      ) {
+        router.push('/onboarding/prestador');
+        return;
+      }
+      router.push('/meu-perfil');
     } catch (err) {
       const errorMessage =
         err instanceof Error

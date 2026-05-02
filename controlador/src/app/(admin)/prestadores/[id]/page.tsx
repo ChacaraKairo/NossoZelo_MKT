@@ -25,6 +25,36 @@ export default async function PrestadorDetalhePage({ params }: PrestadorDetalheP
   const assinatura = prestador.assinaturas[0];
   const dadosProfissionais = prestador.cuidadores ?? prestador.enfermeiros ?? prestador.acompanhantes;
   const ativo = prestador.email_confirmado && prestador.status_cadastro === "ativo" && assinatura?.status === "ativa";
+  const dadosProfissionaisCompletos = Boolean(
+    dadosProfissionais &&
+      "bio" in dadosProfissionais &&
+      dadosProfissionais.bio &&
+      dadosProfissionais.disponibilidade &&
+      dadosProfissionais.especialidades &&
+      (prestador.tipo !== "enfermeiro" || ("coren" in dadosProfissionais && dadosProfissionais.coren))
+  );
+  const etapaOnboarding = !prestador.email_confirmado
+    ? "confirmar_email"
+    : !dadosProfissionaisCompletos
+      ? "completar_perfil"
+      : !assinatura
+        ? "escolher_plano"
+        : assinatura.status === "aguardando_confirmacao"
+          ? "aguardando_confirmacao_pagamento"
+          : ativo
+            ? "ativo"
+            : assinatura.status === "bloqueada" || prestador.status_cadastro === "bloqueado"
+              ? "bloqueado"
+              : "inadimplente";
+  const proximaAcao = {
+    confirmar_email: "Prestador precisa confirmar e-mail.",
+    completar_perfil: "Prestador precisa completar os dados profissionais obrigatorios.",
+    escolher_plano: "Prestador precisa escolher plano.",
+    aguardando_confirmacao_pagamento: "Aguardar webhook de pagamento confirmado.",
+    ativo: "Perfil profissional liberado.",
+    bloqueado: "Verificar bloqueio administrativo ou financeiro.",
+    inadimplente: "Prestador precisa regularizar assinatura.",
+  }[etapaOnboarding];
 
   return (
     <>
@@ -42,9 +72,12 @@ export default async function PrestadorDetalhePage({ params }: PrestadorDetalheP
             <div className={styles.field}><span>Cadastro</span><strong><BadgeStatus status={prestador.status_cadastro} /></strong></div>
             <div className={styles.field}><span>E-mail confirmado</span><strong><BadgeStatus status={prestador.email_confirmado} /></strong></div>
             <div className={styles.field}><span>Assinatura</span><strong><BadgeStatus status={assinatura?.status ?? "sem assinatura"} /></strong></div>
+            <div className={styles.field}><span>Etapa onboarding</span><strong><BadgeStatus status={etapaOnboarding} /></strong></div>
+            <div className={styles.field}><span>Dados profissionais completos</span><strong><BadgeStatus status={dadosProfissionaisCompletos} /></strong></div>
             <div className={styles.field}><span>Aparece na busca</span><strong><BadgeStatus status={ativo} /></strong></div>
             <div className={styles.field}><span>Recebe pedidos</span><strong><BadgeStatus status={ativo} /></strong></div>
             <div className={styles.field}><span>Avaliacao media</span><strong>{String(prestador.avaliacao_media ?? "0")}</strong></div>
+            <div className={styles.field}><span>Proxima acao</span><strong>{proximaAcao}</strong></div>
           </div>
         </div>
 

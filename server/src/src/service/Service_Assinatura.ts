@@ -12,6 +12,7 @@ import { obterPagamentoGateway } from '../gateways/pagamento';
 import { CriarAssinaturaResultado } from '../gateways/pagamento/PagamentoGateway';
 import logger from '../lib/logger';
 import prisma from '../lib/prisma';
+import ServiceOnboarding from './Service_Onboarding';
 
 type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
   gatewaySubscriptionId?: string;
@@ -454,6 +455,8 @@ export class ServiceAssinatura {
         403,
       );
     }
+
+    await ServiceOnboarding.validarPodeIniciarAssinatura(prestadorId);
 
     const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
     const assinaturaComCliente = assinaturaAtual?.gateway_customer_id

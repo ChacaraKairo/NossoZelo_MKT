@@ -30,6 +30,8 @@ Use quando a validacao automatica nao conseguir provar o comportamento real do a
 - Validar fluxo: cadastro -> confirmacao de e-mail -> completar perfil -> escolher plano -> gerar cobranca -> pagar -> aguardar confirmacao -> perfil ativo.
 - Confirmar mensagens para `email_nao_confirmado`, `pagamento_pendente`, `pagamento_aguardando_confirmacao`, `assinatura_atrasada`, `assinatura_bloqueada`, `assinatura_cancelada` e `perfil_ativo`.
 - Confirmar que prestador pendente, atrasado, bloqueado, cancelado, expirado ou com falha nao aparece na busca publica.
+- Testar cadastro prestador tradicional, cadastro prestador social, saida antes de pagar e login posterior redirecionando para `/onboarding/prestador`.
+- Testar geracao de cobranca, tela de aguardando confirmacao e ativacao apos webhook de pagamento confirmado.
 
 ## Operacao
 

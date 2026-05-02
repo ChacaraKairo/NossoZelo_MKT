@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 import ServiceUser from './Service_User';
+import ServiceOnboarding from './Service_Onboarding';
 
 const TEMPO_SESSAO_LOGIN = '7d';
 const TEMPO_CADASTRO_SOCIAL = '30m';
@@ -292,7 +293,11 @@ export class ServiceAuth {
     });
 
     if (existente) {
-      return { token: criarTokenSessao(existente), user: existente };
+      return {
+        token: criarTokenSessao(existente),
+        user: existente,
+        onboardingStatus: await ServiceOnboarding.obterStatus(existente.id),
+      };
     }
 
     const cpf = normalizarDigitos(data.cpf);
@@ -352,6 +357,7 @@ export class ServiceAuth {
         tipo: usuarioCriado.tipo,
         email_confirmado: usuarioCriado.email_confirmado,
       },
+      onboardingStatus: await ServiceOnboarding.obterStatus(usuarioCriado.id),
     };
   }
 
@@ -494,6 +500,7 @@ export class ServiceAuth {
           tipo: user.tipo,
           email_confirmado: user.email_confirmado,
         },
+        onboardingStatus: await ServiceOnboarding.obterStatus(user.id),
       };
     } catch (error: any) {
       logger.warn('AuthService: falha no login', {

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Carregando from '@/components/common/Carregando';
 import { loginService } from '@/service/Login';
+import { onboardingService } from '@/service/onboardingService';
 import styles from '@/styles/CadastroSocialPage.module.css';
 
 function decodificarTipo(token?: string) {
@@ -39,7 +40,16 @@ export default function SocialCallbackPage() {
     if (!router.isReady || !token) return;
 
     loginService.persistirSessao(token);
-    router.replace(destinoPorTipo(decodificarTipo(token)));
+    onboardingService
+      .obterStatusOnboarding()
+      .then((status) => {
+        if (status.isPrestador && status.etapaAtual !== 'ativo') {
+          router.replace('/onboarding/prestador');
+          return;
+        }
+        router.replace(destinoPorTipo(decodificarTipo(token)));
+      })
+      .catch(() => router.replace(destinoPorTipo(decodificarTipo(token))));
   }, [router, token]);
 
   if (erro) {

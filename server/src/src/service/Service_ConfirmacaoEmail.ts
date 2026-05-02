@@ -45,7 +45,7 @@ function frontendUrl() {
 
 function linkConfirmacaoEmail(token: string, tipo?: string) {
   const ehPrestador = TIPOS_PRESTADOR.includes(tipo as any);
-  const caminho = ehPrestador ? '/cadastro-prestador' : '/confirmar-email';
+  const caminho = ehPrestador ? '/onboarding/prestador' : '/confirmar-email';
   const parametro = ehPrestador ? 'confirmar_email' : 'token';
 
   return `${frontendUrl()}${caminho}?${parametro}=${encodeURIComponent(token)}`;
@@ -59,7 +59,7 @@ function adicionarHoras(data: Date, horas: number) {
 
 function htmlConfirmacao(nome: string, link: string, tipo?: string) {
   const complementoPrestador = TIPOS_PRESTADOR.includes(tipo as any)
-    ? '<p>Depois da confirmacao, acesse a area financeira para ativar sua assinatura e liberar seu perfil profissional.</p>'
+    ? '<p>Depois da confirmacao, continue o onboarding para escolher um plano, gerar a cobranca e liberar seu perfil profissional.</p>'
     : '';
 
   return `
@@ -210,7 +210,7 @@ export class ServiceConfirmacaoEmail {
       email_confirmado: true,
       message: 'E-mail confirmado com sucesso.',
       proximo_passo:
-        'Acesse a area financeira para ativar sua assinatura profissional.',
+        'Continue o onboarding para ativar sua assinatura profissional.',
     };
   }
 

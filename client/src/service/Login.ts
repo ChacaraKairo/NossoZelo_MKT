@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie';
+import { OnboardingStatus } from '@/types/onboarding';
 import logger from '@/utils/logger';
 
 export interface LoginRequestBody {
@@ -23,6 +24,7 @@ export interface LoginResponse {
     email_confirmado?: boolean;
   };
   message?: string;
+  onboardingStatus?: OnboardingStatus;
 }
 
 const CONTEXTO = 'LoginService';

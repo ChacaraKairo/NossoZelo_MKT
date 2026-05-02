@@ -62,7 +62,7 @@ Somente `usuarios.email_confirmado = true`, `usuarios.status_cadastro = ativo` e
 
 1. Prestador cria cadastro.
 2. Prestador confirma e-mail.
-3. Prestador acessa a aba Financeiro.
+3. Prestador continua o onboarding em `/onboarding/prestador`.
 4. Prestador escolhe um plano ativo.
 5. Backend reutiliza `gateway_customer_id` anterior, quando existir.
 6. Backend cria uma assinatura mensal no Asaas e retorna `invoiceUrl`, `bankSlipUrl` ou Pix.
@@ -147,6 +147,8 @@ No controlador:
 Todas as rotas administrativas passam por `exigirAdminApi`, com excecao intencional de login/logout e webhook publico do Asaas. O `controlador/src/proxy.ts` protege rotas de pagina e API no build de producao do Next, redirecionando para `/login` quando nao ha sessao administrativa valida.
 
 ## Fluxo de regularizacao
+
+O pagamento inicial ocorre durante o onboarding do prestador. A aba Financeiro continua existindo para regularizacao futura depois que o cadastro ja foi criado.
 
 Quando uma assinatura fica `pendente`, `atrasada`, `falhou`, `expirada`, `bloqueada` ou `cancelada`, a aba Financeiro mostra **Regularizar assinatura**.
 

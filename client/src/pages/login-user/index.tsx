@@ -80,7 +80,7 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      await loginService.login({
+      const response = await loginService.login({
         identificador: identificador, // Mandando o nome exato que o Backend quer
         senha,
       });
@@ -99,7 +99,14 @@ const LoginPage = () => {
       }
 
       setLoading(false);
-      router.push('/prestadores');
+      if (
+        response.onboardingStatus?.isPrestador &&
+        response.onboardingStatus.etapaAtual !== 'ativo'
+      ) {
+        router.push('/onboarding/prestador');
+        return;
+      }
+      router.push(response.user?.tipo === 'admin' ? '/dashboard' : '/prestadores');
     } catch (err) {
       const errorMessage =
         err instanceof Error

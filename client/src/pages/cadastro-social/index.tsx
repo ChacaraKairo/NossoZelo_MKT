@@ -57,7 +57,7 @@ function limparDigitos(valor: string) {
 }
 
 function destinoPorTipo(tipo: string) {
-  return tipo === 'cliente' ? '/prestadores' : '/perfil';
+  return tipo === 'cliente' ? '/prestadores' : '/onboarding/prestador';
 }
 
 export default function CadastroSocialPage() {
