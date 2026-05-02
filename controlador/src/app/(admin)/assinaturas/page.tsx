@@ -70,7 +70,12 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
                 <td>{assinatura.gateway}</td>
                 <td>{assinatura.data_proximo_vencimento?.toLocaleDateString("pt-BR") ?? "-"}</td>
                 <td>{assinatura.confirmacao_expira_em?.toLocaleString("pt-BR") ?? "-"}</td>
-                <td><Link className={styles.button} href={`/prestadores/${assinatura.prestador_id}`}>Prestador</Link></td>
+                <td>
+                  <div className={styles.actionStack}>
+                    <Link className={styles.button} href={`/assinaturas/${assinatura.id}`}>Detalhe</Link>
+                    <Link className={styles.button} href={`/prestadores/${assinatura.prestador_id}`}>Prestador</Link>
+                  </div>
+                </td>
               </tr>
             ))}
           </DataTable>

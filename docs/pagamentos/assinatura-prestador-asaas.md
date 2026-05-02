@@ -4,9 +4,25 @@ Prestadores dos tipos cuidador, enfermeiro e acompanhante precisam ter uma assin
 
 Sem assinatura ativa, o prestador pode acessar o site, perfil e financeiro, mas fica profissionalmente inativo: nao aparece na busca, nao recebe pedidos e ve alertas no perfil e na aba Financeiro.
 
+## Gestao de planos
+
+Planos sao administrados pelo controlador em **Planos**. O painel permite criar, editar, ativar e desativar planos sem excluir historico financeiro.
+
+Campos principais:
+
+- `nome`
+- `descricao`
+- `valor`
+- `beneficios`
+- `ativo`
+- `ordem`
+
+O marketplace lista somente planos com `ativo = true` e `valor > 0`, ordenados por `ordem ASC, id ASC`.
+Desative planos antigos em vez de excluir, porque assinaturas existentes continuam vinculadas ao plano historico.
+
 ## Valor real da assinatura
 
-O valor cobrado precisa vir de um plano real no banco ou de `ASSINATURA_VALOR`.
+O valor cobrado vem do plano selecionado. `ASSINATURA_VALOR` pode sobrescrever o valor em cenarios controlados, mas deve ficar vazio em operacao normal.
 Nao deixe `ASSINATURA_VALOR` como `0.01` fora de um teste isolado de sandbox.
 
 ```env
@@ -40,19 +56,22 @@ Cadastro do usuario:
 - `bloqueado`
 - `cancelado`
 
-Somente `usuarios.status_cadastro = ativo` com `assinaturas.status = ativa` libera busca, pedidos e perfil profissional ativo.
+Somente `usuarios.email_confirmado = true`, `usuarios.status_cadastro = ativo` e `assinaturas.status = ativa` liberam busca, pedidos e perfil profissional ativo.
 
 ## Fluxo com Asaas
 
-1. Prestador confirma e-mail.
-2. Prestador inicia ou regulariza a assinatura.
-3. Backend cria cliente no Asaas.
-4. Backend cria assinatura mensal no Asaas.
-5. Assinatura local fica `aguardando_confirmacao`.
-6. Asaas envia webhook real de pagamento.
-7. Backend valida o token do webhook.
-8. Backend atualiza assinatura e `usuarios.status_cadastro` somente quando o `subscription` do Asaas bater com `gateway_subscription_id`.
-9. Prestador passa a aparecer na busca quando a assinatura ficar `ativa`.
+1. Prestador cria cadastro.
+2. Prestador confirma e-mail.
+3. Prestador acessa a aba Financeiro.
+4. Prestador escolhe um plano ativo.
+5. Backend reutiliza `gateway_customer_id` anterior, quando existir.
+6. Backend cria uma assinatura mensal no Asaas e retorna `invoiceUrl`, `bankSlipUrl` ou Pix.
+7. Assinatura local fica `aguardando_confirmacao`.
+8. Prestador paga no ambiente/link do Asaas.
+9. Asaas envia webhook real de pagamento.
+10. Backend valida o token do webhook.
+11. Backend atualiza assinatura e `usuarios.status_cadastro` somente quando o `subscription` do Asaas bater com `gateway_subscription_id`.
+12. Prestador passa a aparecer na busca quando a assinatura ficar `ativa`.
 
 ## Webhook
 
@@ -68,6 +87,14 @@ O token configurado no painel do Asaas precisa ser igual ao valor de:
 ```env
 ASAAS_WEBHOOK_TOKEN=""
 ```
+
+Eventos principais:
+
+- `PAYMENT_RECEIVED` e `PAYMENT_CONFIRMED`: ativam assinatura e usuario, desde que o e-mail esteja confirmado.
+- `PAYMENT_OVERDUE`: marca assinatura como `atrasada` e o usuario como inadimplente.
+- cancelamentos, falhas, chargeback ou refund: removem o prestador da busca ao atualizar o status local.
+
+O webhook nao deve registrar payload completo com dados sensiveis. Registre apenas evento, IDs do gateway, assinatura local e status resultante.
 
 ## Confirmacao em ate 72 horas
 
@@ -88,3 +115,21 @@ npm run tokens:limpar
 ```
 
 O webhook e a verificacao local trabalham juntos para bloquear, expirar e reativar prestadores conforme o estado financeiro.
+
+## Atuação do admin
+
+No controlador:
+
+- **Planos**: cria e mantém planos disponiveis para assinatura.
+- **Assinaturas**: lista assinaturas, filtra por status/prestador e abre detalhe.
+- **Detalhe da assinatura**: mostra prestador, plano, valor, status, gateway, IDs do Asaas e datas financeiras.
+- **Reprocessar**: recalcula `usuarios.status_cadastro` a partir do status atual da assinatura.
+- **Alterar status**: acao administrativa manual, com confirmacao para status destrutivos como `cancelada`, `bloqueada` e `falhou`.
+
+## Fluxo de regularizacao
+
+Quando uma assinatura fica `pendente`, `atrasada`, `falhou`, `expirada`, `bloqueada` ou `cancelada`, a aba Financeiro mostra **Regularizar assinatura**.
+
+Quando fica `aguardando_confirmacao`, a tela mostra **Pagamento em analise** e permite abrir ou gerar nova cobranca se necessario.
+
+Quando fica `ativa`, a tela mostra **Gerenciar pagamento**. Nesta etapa, o NossoZelo nao coleta numero de cartao nem CVV; o prestador conclui pagamentos no Asaas.

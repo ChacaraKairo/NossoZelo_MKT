@@ -247,8 +247,13 @@ model pagamentos {
 model planos {
   id          Int           @id @default(autoincrement())
   nome        String        @db.VarChar(100)
+  descricao   String?       @db.Text
   valor       Decimal       @db.Decimal(10, 2)
   beneficios  String?       @db.Text
+  ativo       Boolean       @default(true)
+  ordem       Int           @default(0)
+  criado_em   DateTime      @default(now()) @db.Timestamp(0)
+  atualizado_em DateTime    @updatedAt @db.Timestamp(0)
   assinaturas assinaturas[]
 }
 

@@ -179,11 +179,12 @@ export class ServiceAssinatura {
 
   static async listarPlanosDisponiveis() {
     const planos = await prisma.planos.findMany({
-      where: { valor: { gt: 0 } },
-      orderBy: { id: 'asc' },
+      where: { ativo: true, valor: { gt: 0 } },
+      orderBy: [{ ordem: 'asc' }, { id: 'asc' }],
       select: {
         id: true,
         nome: true,
+        descricao: true,
         valor: true,
         beneficios: true,
       },
