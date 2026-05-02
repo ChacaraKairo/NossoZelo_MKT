@@ -1,22 +1,22 @@
-# 🛠️ Projeto Node.js + TypeScript – Estrutura Base
+﻿# ðŸ› ï¸ Projeto Node.js + TypeScript â€“ Estrutura Base
 
-Este projeto oferece uma base robusta para a criação de APIs modernas com Node.js e TypeScript. Ele inclui autenticação JWT/OAuth2, ORM com Prisma, WebSocket, envio de e-mails, integração com pagamentos e muito mais.
+Este projeto oferece uma base robusta para a criaÃ§Ã£o de APIs modernas com Node.js e TypeScript. Ele inclui autenticaÃ§Ã£o JWT/OAuth2, ORM com Prisma, WebSocket, envio de e-mails, integraÃ§Ã£o com pagamentos e muito mais.
 
 ---
 
-## ✅ Instalação Rápida
+## âœ… InstalaÃ§Ã£o RÃ¡pida
 
 ```bash
 npm install
 ```
 
-Em seguida, crie um arquivo `.env` com suas configurações de ambiente.
+Em seguida, crie um arquivo `.env` com suas configuraÃ§Ãµes de ambiente.
 
 ---
 
-## 📦 Pacotes e Módulos Utilizados
+## ðŸ“¦ Pacotes e MÃ³dulos Utilizados
 
-### 🌐 Backend Express + TypeScript
+### ðŸŒ Backend Express + TypeScript
 
 ```bash
 npm install express
@@ -24,11 +24,11 @@ npm install typescript ts-node-dev nodemon --save-dev
 npm install @types/node @types/express
 ```
 
-- **express**: Framework web para criação da API.
+- **express**: Framework web para criaÃ§Ã£o da API.
 - **ts-node-dev**: Hot reload para ambiente de desenvolvimento.
 - \*\*@types/- **@types/\u\***: Tipagens para compatibilidade com TypeScript.
 
-### 🔐 Autenticação (JWT e OAuth2)
+### ðŸ” AutenticaÃ§Ã£o (JWT e OAuth2)
 
 ```bash
 npm install jsonwebtoken bcrypt
@@ -38,10 +38,10 @@ npm install @types/passport @types/passport-jwt @types/passport-google-oauth20
 ```
 
 - **JWT + Bcrypt**: Login seguro com tokens.
-- **Passport**: Middleware de autenticação.
+- **Passport**: Middleware de autenticaÃ§Ã£o.
 - **OAuth2**: Login social (Google etc).
 
-### 🛢 ORM + Banco de Dados (Prisma + MySQL)
+### ðŸ›¢ ORM + Banco de Dados (Prisma + MySQL)
 
 ```bash
 npm install prisma --save-dev
@@ -54,44 +54,44 @@ npx prisma generate
 - **Prisma**: ORM moderno com autocompletar.
 - **MySQL**: Banco de dados relacional.
 
-### 📄 Validação e DTO
+### ðŸ“„ ValidaÃ§Ã£o e DTO
 
 ```bash
 npm install validator
 npm install @types/validator
 ```
 
-- **validator**: Validação de e-mail, cpf, cep, etc.
+- **validator**: ValidaÃ§Ã£o de e-mail, cpf, cep, etc.
 
-### 🧰 Middlewares e Segurança
+### ðŸ§° Middlewares e SeguranÃ§a
 
 ```bash
 npm install cors helmet morgan
 npm install @types/cors @types/morgan
 ```
 
-- **CORS**: Permitir requisições entre domínios.
+- **CORS**: Permitir requisiÃ§Ãµes entre domÃ­nios.
 - **Helmet**: Headers HTTP seguros.
-- **Morgan**: Logger de requisições.
+- **Morgan**: Logger de requisiÃ§Ãµes.
 
-### 🌍 Variáveis de Ambiente
+### ðŸŒ VariÃ¡veis de Ambiente
 
 ```bash
 npm install dotenv
 ```
 
-- **dotenv**: Gerenciar variáveis como JWT_SECRET, DB_URL, etc.
+- **dotenv**: Gerenciar variÃ¡veis como JWT_SECRET, DB_URL, etc.
 
-### 🔐 Cookies & Parser
+### ðŸ” Cookies & Parser
 
 ```bash
 npm install cookie-parser
 npm install @types/cookie-parser
 ```
 
-- **cookie-parser**: Leitura de cookies para sessões e tokens.
+- **cookie-parser**: Leitura de cookies para sessÃµes e tokens.
 
-### 🎯 Upload de Arquivos
+### ðŸŽ¯ Upload de Arquivos
 
 ```bash
 npm install multer
@@ -100,7 +100,7 @@ npm install @types/multer
 
 - Upload de fotos, documentos e perfis.
 
-### 💬 WebSocket (Notificações e Chat)
+### ðŸ’¬ WebSocket (NotificaÃ§Ãµes e Chat)
 
 ```bash
 npm install socket.io
@@ -109,15 +109,12 @@ npm install @types/socket.io
 
 - Envio de mensagens em tempo real (chat, alertas, etc).
 
-### 💸 Integração com Pagamentos (Mercado Pago)
+### Integração com Pagamentos (Asaas)
 
-```bash
-npm install mercadopago
-```
+- Assinaturas de prestadores usam cobrança/link/Pix via Asaas.
+- O NossoZelo não coleta cartão diretamente nesta etapa.
 
-- Integração direta com a API do Mercado Pago.
-
-### 🔑 NanoID
+### ðŸ”‘ NanoID
 
 ```bash
 npm install nanoid
@@ -126,26 +123,26 @@ npm install @types/nanoid
 
 - Gerar IDs curtos e seguros para recursos e tokens.
 
-### 📧 Envio de E-mails
+### ðŸ“§ Envio de E-mails
 
 ```bash
 npm install nodemailer
 npm install @types/nodemailer
 ```
 
-- Envio de e-mails com templates HTML (cadastro, redefinição de senha, etc).
+- Envio de e-mails com templates HTML (cadastro, redefiniÃ§Ã£o de senha, etc).
 
-### 📝 Logging Avançado
+### ðŸ“ Logging AvanÃ§ado
 
 ```bash
 npm install winston
 ```
 
-- Logging estruturado, persistente e configurável.
+- Logging estruturado, persistente e configurÃ¡vel.
 
 ---
 
-## 🧠 Scripts no package.json
+## ðŸ§  Scripts no package.json
 
 ```json
 "scripts": {
@@ -157,19 +154,20 @@ npm install winston
 
 ---
 
-## 📍 Licença e Termos de Uso – Projeto NossoZelo
+## ðŸ“ LicenÃ§a e Termos de Uso â€“ Projeto NossoZelo
 
-> **Copyright © 2025** > **Kairo Esteves Pinheiro Chácara - NossoZelo**
+> **Copyright Â© 2025** > **Kairo Esteves Pinheiro ChÃ¡cara - NossoZelo**
 
-Este projeto é **proprietário** e disponibilizado apenas para **visualização e estudo**.
+Este projeto Ã© **proprietÃ¡rio** e disponibilizado apenas para **visualizaÃ§Ã£o e estudo**.
 
-### ❌ Restrições:
+### âŒ RestriÃ§Ãµes:
 
-- É **proibido** copiar, modificar, redistribuir, sublicenciar, aplicar engenharia reversa ou reutilizar o código sem **autorização prévia por escrito**.
+- Ã‰ **proibido** copiar, modificar, redistribuir, sublicenciar, aplicar engenharia reversa ou reutilizar o cÃ³digo sem **autorizaÃ§Ã£o prÃ©via por escrito**.
 
-### 📩 Licenciamento:
+### ðŸ“© Licenciamento:
 
-Para uso comercial ou integração:
+Para uso comercial ou integraÃ§Ã£o:
 **[kairoepc2@gmail.com](mailto:kairoepc2@gmail.com)**
 
-> O software é fornecido "no estado em que se encontra", **sem garantias de qualquer tipo**, expressas ou implícitas.
+> O software Ã© fornecido "no estado em que se encontra", **sem garantias de qualquer tipo**, expressas ou implÃ­citas.
+

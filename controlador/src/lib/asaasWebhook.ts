@@ -173,7 +173,20 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
     payment?.status,
     subscription?.status
   );
-  const payloadJson = input.payload as Prisma.InputJsonValue;
+  const payloadJson = {
+    event,
+    paymentId: payment?.id || null,
+    paymentStatus: payment?.status || null,
+    subscriptionId: subscriptionId || null,
+    subscriptionStatus: subscription?.status || null,
+    customerId: customerId || null,
+    dueDate: payment?.dueDate || subscription?.nextDueDate || null,
+    paymentDate:
+      payment?.paymentDate ||
+      payment?.clientPaymentDate ||
+      payment?.confirmedDate ||
+      null
+  } satisfies Prisma.InputJsonValue;
   const pagoEm =
     dataAsaas(payment?.paymentDate) ||
     dataAsaas(payment?.clientPaymentDate) ||
@@ -306,6 +319,24 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
           usuario_id: assinatura.prestador_id,
           tabela_afetada: "assinaturas",
           acao: "UPDATE"
+        }
+      });
+
+      await tx.eventos_assinatura.create({
+        data: {
+          assinatura_id: assinatura.id,
+          prestador_id: assinatura.prestador_id,
+          plano_id: assinatura.plano_id,
+          tipo: statusAssinatura === "ativa" ? "pagamento_confirmado" : statusAssinatura === "atrasada" ? "pagamento_atrasado" : "webhook_asaas",
+          origem: "webhook_asaas",
+          gateway: "asaas",
+          gateway_event_id: eventId,
+          gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
+          gateway_subscription_id: subscriptionId ? limitar(subscriptionId, 120) : null,
+          status_anterior: assinaturaAtual.status,
+          status_novo: assinatura.status,
+          valor: numeroAsaas(payment?.value),
+          payload_resumo: payloadJson
         }
       });
 

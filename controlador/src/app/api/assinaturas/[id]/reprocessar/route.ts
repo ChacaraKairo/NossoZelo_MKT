@@ -25,9 +25,26 @@ export async function POST(_request: Request, { params }: Params) {
         ? "pendente_pagamento"
         : statusCadastroPorAssinatura(assinatura.status);
 
-    await prisma.usuarios.update({
-      where: { id: assinatura.prestador_id },
-      data: { status_cadastro: statusCadastro }
+    await prisma.$transaction(async (tx) => {
+      await tx.usuarios.update({
+        where: { id: assinatura.prestador_id },
+        data: { status_cadastro: statusCadastro }
+      });
+
+      await tx.eventos_assinatura.create({
+        data: {
+          assinatura_id: assinatura.id,
+          prestador_id: assinatura.prestador_id,
+          plano_id: assinatura.plano_id,
+          tipo: "reprocessamento_admin",
+          origem: "admin",
+          gateway: assinatura.gateway,
+          gateway_subscription_id: assinatura.gateway_subscription_id,
+          status_anterior: assinatura.status,
+          status_novo: assinatura.status,
+          payload_resumo: { adminId: admin.id, status_cadastro: statusCadastro }
+        }
+      });
     });
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "assinaturas" });
 

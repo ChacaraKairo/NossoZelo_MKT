@@ -187,7 +187,7 @@ function mascararIdentificador(identificador: string) {
 }
 
 export class ServiceAuth {
-  static iniciarLoginSocial(provider: SocialProvider) {
+  static iniciarLoginSocial(provider: SocialProvider, state: string) {
     if (provider === 'google') {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       if (!clientId) throw new Error('GOOGLE_CLIENT_ID nao configurado.');
@@ -198,6 +198,7 @@ export class ServiceAuth {
       url.searchParams.set('response_type', 'code');
       url.searchParams.set('scope', 'openid email profile');
       url.searchParams.set('prompt', 'select_account');
+      url.searchParams.set('state', state);
       return url.toString();
     }
 
@@ -209,6 +210,7 @@ export class ServiceAuth {
     url.searchParams.set('redirect_uri', criarUrlCallback('facebook'));
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('scope', 'email,public_profile');
+    url.searchParams.set('state', state);
     return url.toString();
   }
 

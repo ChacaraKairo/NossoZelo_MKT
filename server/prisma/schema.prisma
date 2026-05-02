@@ -64,6 +64,7 @@ model assinaturas {
   atualizado_em           DateTime            @updatedAt @db.Timestamp(0)
   usuarios                usuarios            @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   planos                  planos              @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
+  eventos_assinatura      eventos_assinatura[]
 
   @@index([prestador_id], map: "prestador_id")
   @@index([prestador_id, status], map: "assinaturas_prestador_status_idx")
@@ -257,6 +258,31 @@ model planos {
   assinaturas assinaturas[]
 }
 
+model eventos_assinatura {
+  id                       Int       @id @default(autoincrement())
+  assinatura_id            Int?
+  prestador_id             String?   @db.VarChar(20)
+  plano_id                 Int?
+  tipo                     String    @db.VarChar(80)
+  origem                   String    @default("sistema") @db.VarChar(40)
+  gateway                  String?   @db.VarChar(30)
+  gateway_event_id         String?   @unique @db.VarChar(191)
+  gateway_payment_id       String?   @db.VarChar(120)
+  gateway_subscription_id  String?   @db.VarChar(120)
+  status_anterior          String?   @db.VarChar(40)
+  status_novo              String?   @db.VarChar(40)
+  valor                    Decimal?  @db.Decimal(10, 2)
+  payload_resumo           Json?
+  criado_em                DateTime  @default(now()) @db.Timestamp(0)
+  assinaturas              assinaturas? @relation(fields: [assinatura_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  usuarios                 usuarios?    @relation(fields: [prestador_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([assinatura_id])
+  @@index([prestador_id])
+  @@index([tipo])
+  @@index([gateway_subscription_id])
+}
+
 model recuperacao_senhas {
   id         Int       @id @default(autoincrement())
   usuario_id String    @db.VarChar(20)
@@ -326,6 +352,7 @@ model usuarios {
   agenda                                           agenda[]
   agenda_recorrente                                agenda_recorrente[]
   assinaturas                                      assinaturas[]
+  eventos_assinatura                              eventos_assinatura[]
   avaliacoes_avaliacoes_cliente_idTousuarios       avaliacoes[]            @relation("avaliacoes_cliente_idTousuarios")
   avaliacoes_avaliacoes_prestador_idTousuarios     avaliacoes[]            @relation("avaliacoes_prestador_idTousuarios")
   cartoes                                          cartoes[]

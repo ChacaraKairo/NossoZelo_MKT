@@ -28,6 +28,7 @@ type WebhookAsaasInput = {
 };
 
 type AsaasWebhookPayload = {
+  id?: string;
   event?: string;
   payment?: {
     id?: string;
@@ -47,6 +48,22 @@ type AsaasWebhookPayload = {
     nextDueDate?: string;
     dateCreated?: string;
   };
+};
+
+type RegistrarEventoInput = {
+  assinaturaId?: number | null;
+  prestadorId?: string | null;
+  planoId?: number | null;
+  tipo: string;
+  origem?: string;
+  gateway?: string | null;
+  gatewayEventId?: string | null;
+  gatewayPaymentId?: string | null;
+  gatewaySubscriptionId?: string | null;
+  statusAnterior?: string | null;
+  statusNovo?: string | null;
+  valor?: Prisma.Decimal | number | string | null;
+  payloadResumo?: Prisma.InputJsonValue | null;
 };
 
 function erroNegocio(mensagem: string, status = 400) {
@@ -152,6 +169,75 @@ function limitarGatewayStatus(valor: string) {
   return valor.slice(0, 60);
 }
 
+function tipoEventoFinanceiro(status: assinaturas_status | null, event?: string) {
+  if (status === STATUS_ASSINATURA.ativa) return 'pagamento_confirmado';
+  if (status === STATUS_ASSINATURA.atrasada) return 'pagamento_atrasado';
+  if (status === STATUS_ASSINATURA.cancelada) return 'assinatura_cancelada';
+  if (status === STATUS_ASSINATURA.falhou) return 'pagamento_falhou';
+  if (status === STATUS_ASSINATURA.aguardando_confirmacao) return 'cobranca_atualizada';
+  return `webhook_${String(event || 'sem_mapeamento').toLowerCase()}`.slice(0, 80);
+}
+
+function idEventoAsaas(payload: AsaasWebhookPayload, gatewaySubscriptionId?: string) {
+  return (
+    payload.id ||
+    [
+      payload.event || 'EVENTO_DESCONHECIDO',
+      payload.payment?.id,
+      gatewaySubscriptionId,
+      payload.payment?.status || payload.subscription?.status,
+    ]
+      .filter(Boolean)
+      .join(':')
+      .slice(0, 191)
+  );
+}
+
+function resumoPayloadAsaas(payload: AsaasWebhookPayload) {
+  return {
+    event: payload.event || null,
+    paymentId: payload.payment?.id || null,
+    paymentStatus: payload.payment?.status || null,
+    subscriptionId: payload.payment?.subscription || payload.subscription?.id || null,
+    subscriptionStatus: payload.subscription?.status || null,
+    customerId: payload.payment?.customer || payload.subscription?.customer || null,
+    dueDate: payload.payment?.dueDate || payload.subscription?.nextDueDate || null,
+    paymentDate:
+      payload.payment?.paymentDate ||
+      payload.payment?.clientPaymentDate ||
+      payload.payment?.confirmedDate ||
+      null,
+  };
+}
+
+async function registrarEventoAssinatura(
+  input: RegistrarEventoInput,
+  tx: Prisma.TransactionClient | typeof prisma = prisma,
+) {
+  try {
+    return await tx.eventos_assinatura.create({
+      data: {
+        assinatura_id: input.assinaturaId ?? null,
+        prestador_id: input.prestadorId ?? null,
+        plano_id: input.planoId ?? null,
+        tipo: input.tipo,
+        origem: input.origem || 'sistema',
+        gateway: input.gateway ?? null,
+        gateway_event_id: input.gatewayEventId ?? null,
+        gateway_payment_id: input.gatewayPaymentId ?? null,
+        gateway_subscription_id: input.gatewaySubscriptionId ?? null,
+        status_anterior: input.statusAnterior ?? null,
+        status_novo: input.statusNovo ?? null,
+        valor: input.valor === undefined || input.valor === null ? null : input.valor,
+        payload_resumo: input.payloadResumo ?? undefined,
+      },
+    });
+  } catch (error: any) {
+    if (error?.code === 'P2002') return null;
+    throw error;
+  }
+}
+
 function validarDadosPagamentoAssinatura(
   dadosPagamento?: DadosPagamentoAssinatura,
 ) {
@@ -175,6 +261,10 @@ export class ServiceAssinatura {
     const data = new Date();
     data.setHours(data.getHours() + HORAS_CONFIRMACAO_PAGAMENTO);
     return data;
+  }
+
+  static async registrarEventoFinanceiro(input: RegistrarEventoInput) {
+    return registrarEventoAssinatura(input);
   }
 
   static async listarPlanosDisponiveis() {
@@ -290,6 +380,16 @@ export class ServiceAssinatura {
         status_cadastro:
           STATUS_CADASTRO_USUARIO.aguardando_confirmacao_pagamento,
       },
+    });
+
+    await registrarEventoAssinatura({
+      assinaturaId: assinatura.id,
+      prestadorId,
+      planoId,
+      tipo: 'assinatura_criada',
+      origem: 'sistema',
+      gateway: GATEWAY_PAGAMENTO.asaas,
+      statusNovo: assinatura.status,
     });
 
     return assinatura;
@@ -439,6 +539,29 @@ export class ServiceAssinatura {
         },
       });
 
+      await registrarEventoAssinatura(
+        {
+          assinaturaId: novaAssinatura.id,
+          prestadorId,
+          planoId,
+          tipo: assinaturaAtual ? 'cobranca_criada' : 'assinatura_criada',
+          origem: 'sistema',
+          gateway: resultado.gateway,
+          gatewayPaymentId: resultado.gatewayPaymentId,
+          gatewaySubscriptionId: resultado.gatewaySubscriptionId,
+          statusAnterior: assinaturaAtual?.status,
+          statusNovo: novaAssinatura.status,
+          valor: valorAssinaturaMensal(plano.valor),
+          payloadResumo: {
+            status: resultado.status,
+            invoiceUrlDisponivel: Boolean(resultado.invoiceUrl),
+            bankSlipUrlDisponivel: Boolean(resultado.bankSlipUrl),
+            pixQrCodeDisponivel: Boolean(resultado.pixQrCode),
+          },
+        },
+        tx,
+      );
+
       return novaAssinatura;
     });
 
@@ -492,6 +615,26 @@ export class ServiceAssinatura {
         data: { status_cadastro: STATUS_CADASTRO_USUARIO.ativo },
       });
 
+      await registrarEventoAssinatura(
+        {
+          assinaturaId: assinatura.id,
+          prestadorId,
+          planoId: assinatura.plano_id,
+          tipo:
+            assinaturaAtual?.status === STATUS_ASSINATURA.ativa
+              ? 'pagamento_confirmado'
+              : 'prestador_reativado',
+          origem: 'sistema',
+          gateway: dados.gateway,
+          gatewaySubscriptionId:
+            dadosGateway.gatewaySubscriptionId ||
+            assinaturaAtual?.gateway_subscription_id,
+          statusAnterior: assinaturaAtual?.status,
+          statusNovo: assinatura.status,
+        },
+        tx,
+      );
+
       return assinatura;
     });
   }
@@ -527,6 +670,21 @@ export class ServiceAssinatura {
         where: { id: prestadorId },
         data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
       });
+
+      await registrarEventoAssinatura(
+        {
+          assinaturaId: assinatura.id,
+          prestadorId,
+          planoId: assinatura.plano_id,
+          tipo: 'pagamento_falhou',
+          origem: 'sistema',
+          gateway: GATEWAY_PAGAMENTO.asaas,
+          statusAnterior: assinaturaAtual?.status,
+          statusNovo: assinatura.status,
+          payloadResumo: { motivo },
+        },
+        tx,
+      );
 
       return assinatura;
     });
@@ -566,6 +724,22 @@ export class ServiceAssinatura {
         data: { status_cadastro: STATUS_CADASTRO_USUARIO.cancelado },
       });
 
+      await registrarEventoAssinatura(
+        {
+          assinaturaId: assinatura.id,
+          prestadorId,
+          planoId: assinatura.plano_id,
+          tipo: 'assinatura_cancelada',
+          origem: 'sistema',
+          gateway: assinatura.gateway,
+          gatewaySubscriptionId: assinatura.gateway_subscription_id,
+          statusAnterior: assinaturaAtual.status,
+          statusNovo: assinatura.status,
+          payloadResumo: { gatewayStatus },
+        },
+        tx,
+      );
+
       return assinatura;
     });
   }
@@ -601,6 +775,24 @@ export class ServiceAssinatura {
           status_cadastro: STATUS_CADASTRO_USUARIO.pendente_pagamento,
         },
       });
+
+      await Promise.all(
+        pendentes.map((item) =>
+          registrarEventoAssinatura(
+            {
+              assinaturaId: item.id,
+              prestadorId: item.prestador_id,
+              tipo: 'assinatura_expirada',
+              origem: 'job',
+              gateway: GATEWAY_PAGAMENTO.asaas,
+              statusAnterior: STATUS_ASSINATURA.aguardando_confirmacao,
+              statusNovo: STATUS_ASSINATURA.expirada,
+              payloadResumo: { motivo: 'confirmacao_expirada' },
+            },
+            tx,
+          ),
+        ),
+      );
     });
 
     return { expiradas: pendentes.length };
@@ -653,6 +845,26 @@ export class ServiceAssinatura {
           },
           data: { status_cadastro: STATUS_CADASTRO_USUARIO.inadimplente },
         });
+
+        await Promise.all(
+          vencidas
+            .filter((item) => idsApenasAtrasadas.includes(item.id))
+            .map((item) =>
+              registrarEventoAssinatura(
+                {
+                  assinaturaId: item.id,
+                  prestadorId: item.prestador_id,
+                  tipo: 'pagamento_atrasado',
+                  origem: 'job',
+                  gateway: GATEWAY_PAGAMENTO.asaas,
+                  statusAnterior: STATUS_ASSINATURA.ativa,
+                  statusNovo: STATUS_ASSINATURA.atrasada,
+                  payloadResumo: { motivo: 'vencimento_local_detectado' },
+                },
+                tx,
+              ),
+            ),
+        );
       }
 
       if (idsBloqueadas.length) {
@@ -670,6 +882,23 @@ export class ServiceAssinatura {
           },
           data: { status_cadastro: STATUS_CADASTRO_USUARIO.bloqueado },
         });
+
+        await Promise.all(
+          bloqueadas.map((item) =>
+            registrarEventoAssinatura(
+              {
+                assinaturaId: item.id,
+                prestadorId: item.prestador_id,
+                tipo: 'prestador_bloqueado',
+                origem: 'job',
+                gateway: GATEWAY_PAGAMENTO.asaas,
+                statusNovo: STATUS_ASSINATURA.bloqueada,
+                payloadResumo: { motivo: 'tolerancia_expirada' },
+              },
+              tx,
+            ),
+          ),
+        );
       }
     });
 
@@ -767,14 +996,43 @@ export class ServiceAssinatura {
     const subscription = payload.subscription;
     const gatewaySubscriptionId = payment?.subscription || subscription?.id;
     const gatewayCustomerId = payment?.customer || subscription?.customer;
+    const gatewayEventId = idEventoAsaas(payload, gatewaySubscriptionId);
+    const payloadResumo = resumoPayloadAsaas(payload);
     const statusAssinatura = this.statusAssinaturaPorEventoAsaas(
       event,
       payment?.status,
       subscription?.status,
     );
 
+    const eventoExistente = await prisma.eventos_assinatura.findUnique({
+      where: { gateway_event_id: gatewayEventId },
+      select: { id: true, tipo: true, criado_em: true },
+    });
+
+    if (eventoExistente) {
+      logger.info('Webhook Asaas repetido ignorado', {
+        event,
+        eventoAssinaturaId: eventoExistente.id,
+      });
+      return {
+        processado: false,
+        motivo: 'evento_repetido',
+        event,
+        evento_assinatura_id: eventoExistente.id,
+      };
+    }
+
     if (!gatewaySubscriptionId) {
       logger.warn('Webhook Asaas ignorado: assinatura ausente', { event });
+      await registrarEventoAssinatura({
+        tipo: tipoEventoFinanceiro(statusAssinatura, event),
+        origem: 'webhook_asaas',
+        gateway: GATEWAY_PAGAMENTO.asaas,
+        gatewayEventId,
+        gatewayPaymentId: payment?.id,
+        statusNovo: statusAssinatura,
+        payloadResumo,
+      });
       return {
         processado: false,
         motivo: 'assinatura_gateway_ausente',
@@ -786,6 +1044,16 @@ export class ServiceAssinatura {
       logger.info('Webhook Asaas recebido sem acao local', {
         event,
         gatewaySubscriptionId,
+      });
+      await registrarEventoAssinatura({
+        tipo: tipoEventoFinanceiro(statusAssinatura, event),
+        origem: 'webhook_asaas',
+        gateway: GATEWAY_PAGAMENTO.asaas,
+        gatewayEventId,
+        gatewayPaymentId: payment?.id,
+        gatewaySubscriptionId,
+        statusNovo: statusAssinatura,
+        payloadResumo,
       });
       return {
         processado: false,
@@ -805,6 +1073,16 @@ export class ServiceAssinatura {
         event,
         gatewaySubscriptionId,
       });
+      await registrarEventoAssinatura({
+        tipo: 'webhook_assinatura_nao_encontrada',
+        origem: 'webhook_asaas',
+        gateway: GATEWAY_PAGAMENTO.asaas,
+        gatewayEventId,
+        gatewayPaymentId: payment?.id,
+        gatewaySubscriptionId,
+        statusNovo: statusAssinatura,
+        payloadResumo,
+      });
       return {
         processado: false,
         motivo: 'assinatura_local_nao_encontrada',
@@ -822,6 +1100,20 @@ export class ServiceAssinatura {
         gatewaySubscriptionId,
         gatewayPaymentId: payment?.id,
         assinaturaId: assinaturaAtual.id,
+      });
+      await registrarEventoAssinatura({
+        assinaturaId: assinaturaAtual.id,
+        prestadorId: assinaturaAtual.prestador_id,
+        planoId: assinaturaAtual.plano_id,
+        tipo: 'webhook_evento_antigo_ignorado',
+        origem: 'webhook_asaas',
+        gateway: GATEWAY_PAGAMENTO.asaas,
+        gatewayEventId,
+        gatewayPaymentId: payment?.id,
+        gatewaySubscriptionId,
+        statusAnterior: assinaturaAtual.status,
+        statusNovo: assinaturaAtual.status,
+        payloadResumo,
       });
       return {
         processado: false,
@@ -841,6 +1133,42 @@ export class ServiceAssinatura {
       dataAsaas(subscription?.nextDueDate) ||
       dataAsaas(payment?.dueDate) ||
       adicionarDias(dataPagamento, 30);
+    const dataReferenciaEvento =
+      dataAsaas(payment?.paymentDate) ||
+      dataAsaas(payment?.clientPaymentDate) ||
+      dataAsaas(payment?.confirmedDate) ||
+      dataAsaas(payment?.dueDate) ||
+      dataAsaas(subscription?.dateCreated);
+
+    if (
+      statusAssinatura !== STATUS_ASSINATURA.ativa &&
+      assinaturaAtual.data_ultimo_pagamento &&
+      dataReferenciaEvento &&
+      dataReferenciaEvento < assinaturaAtual.data_ultimo_pagamento
+    ) {
+      await registrarEventoAssinatura({
+        assinaturaId: assinaturaAtual.id,
+        prestadorId: assinaturaAtual.prestador_id,
+        planoId: assinaturaAtual.plano_id,
+        tipo: 'webhook_evento_antigo_ignorado',
+        origem: 'webhook_asaas',
+        gateway: GATEWAY_PAGAMENTO.asaas,
+        gatewayEventId,
+        gatewayPaymentId: payment?.id,
+        gatewaySubscriptionId,
+        statusAnterior: assinaturaAtual.status,
+        statusNovo: assinaturaAtual.status,
+        payloadResumo,
+      });
+
+      return {
+        processado: false,
+        motivo: 'evento_antigo_ignorado',
+        event,
+        gateway_subscription_id: gatewaySubscriptionId,
+      };
+    }
+
     const dados: Prisma.assinaturasUncheckedUpdateInput = {
       status: statusAssinatura,
       gateway: GATEWAY_PAGAMENTO.asaas,
@@ -913,6 +1241,24 @@ export class ServiceAssinatura {
           acao: 'UPDATE',
         },
       });
+
+      await registrarEventoAssinatura(
+        {
+          assinaturaId: assinatura.id,
+          prestadorId: assinatura.prestador_id,
+          planoId: assinatura.plano_id,
+          tipo: tipoEventoFinanceiro(statusAssinatura, event),
+          origem: 'webhook_asaas',
+          gateway: GATEWAY_PAGAMENTO.asaas,
+          gatewayEventId,
+          gatewayPaymentId: payment?.id,
+          gatewaySubscriptionId,
+          statusAnterior: assinaturaAtual.status,
+          statusNovo: assinatura.status,
+          payloadResumo,
+        },
+        tx,
+      );
 
       return assinatura;
     });

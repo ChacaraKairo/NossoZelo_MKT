@@ -96,6 +96,19 @@ Eventos principais:
 
 O webhook nao deve registrar payload completo com dados sensiveis. Registre apenas evento, IDs do gateway, assinatura local e status resultante.
 
+Cada evento recebido ou gerado pelo sistema deve criar uma linha em `eventos_assinatura`. O campo `gateway_event_id` garante idempotencia: o mesmo evento do Asaas nao pode ser aplicado duas vezes. Eventos antigos que nao representam pagamento confirmado nao devem sobrescrever uma assinatura ja reativada por pagamento posterior.
+
+Eventos financeiros registrados:
+
+- `assinatura_criada`
+- `cobranca_criada`
+- `pagamento_confirmado`
+- `pagamento_atrasado`
+- `assinatura_cancelada`
+- `prestador_bloqueado`
+- `prestador_reativado`
+- `reprocessamento_admin`
+
 ## Confirmacao em ate 72 horas
 
 Quando o pagamento fica pendente, a assinatura entra em `aguardando_confirmacao` e recebe `confirmacao_expira_em` com 72 horas a partir da tentativa.
@@ -114,7 +127,7 @@ npm run assinaturas:expirar-pendentes
 npm run tokens:limpar
 ```
 
-O webhook e a verificacao local trabalham juntos para bloquear, expirar e reativar prestadores conforme o estado financeiro.
+O webhook e a verificacao local trabalham juntos para bloquear, expirar e reativar prestadores conforme o estado financeiro. Em producao, rode esses comandos por cron, Render Cron Jobs, PM2 cron ou agendador equivalente. Falhas retornam exit code diferente de zero e devem gerar alerta operacional.
 
 ## Atuação do admin
 
@@ -133,3 +146,7 @@ Quando uma assinatura fica `pendente`, `atrasada`, `falhou`, `expirada`, `bloque
 Quando fica `aguardando_confirmacao`, a tela mostra **Pagamento em analise** e permite abrir ou gerar nova cobranca se necessario.
 
 Quando fica `ativa`, a tela mostra **Gerenciar pagamento**. Nesta etapa, o NossoZelo nao coleta numero de cartao nem CVV; o prestador conclui pagamentos no Asaas.
+
+## Pagamentos de contratacao
+
+Pagamentos de contratacao entre cliente e prestador continuam fora deste fluxo. Para uma etapa futura, documente e migre `pagamentos.servico_id` para `pagamentos.contratacao_id`, mantendo compatibilidade por migration planejada. O status `contratacoes_status.manual` deve continuar restrito a atendimentos registrados manualmente por prestadores; se nao houver regra comercial clara, remova esse status em uma migration futura.

@@ -1,8 +1,9 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeStatus } from "@/components/BadgeStatus";
 import { AssinaturaAdminActions } from "@/components/AssinaturaAdminActions";
 import { prisma } from "@/lib/prisma";
+import { mascararEmail } from "@/lib/sanitize";
 import styles from "@/styles/admin.module.css";
 
 type AssinaturaDetalhePageProps = { params: Promise<{ id: string }> };
@@ -31,27 +32,25 @@ export default async function AssinaturaDetalhePage({ params }: AssinaturaDetalh
 
   if (!assinatura) notFound();
 
-  const eventosFinanceiros = await prisma.asaas_webhook_logs.findMany({
+  const eventosFinanceiros = await prisma.eventos_assinatura.findMany({
     where: {
       OR: [
         { assinatura_id: assinatura.id },
         assinatura.gateway_subscription_id
-          ? { subscription_id: assinatura.gateway_subscription_id }
+          ? { gateway_subscription_id: assinatura.gateway_subscription_id }
           : undefined
-      ].filter(Boolean) as { assinatura_id?: number; subscription_id?: string }[]
+      ].filter(Boolean) as { assinatura_id?: number; gateway_subscription_id?: string }[]
     },
     orderBy: { criado_em: "desc" },
     take: 20,
     select: {
       id: true,
-      event: true,
-      status_processamento: true,
-      motivo: true,
-      payment_id: true,
+      tipo: true,
+      origem: true,
+      gateway_payment_id: true,
       valor: true,
-      pago_em: true,
-      assinatura_status_antes: true,
-      assinatura_status_depois: true,
+      status_anterior: true,
+      status_novo: true,
       criado_em: true
     }
   });
@@ -74,7 +73,7 @@ export default async function AssinaturaDetalhePage({ params }: AssinaturaDetalh
           </div>
           <div className={styles.fieldList}>
             <div className={styles.field}><span>Prestador</span><strong>{assinatura.usuarios.nome}</strong></div>
-            <div className={styles.field}><span>E-mail</span><strong>{assinatura.usuarios.email}</strong></div>
+            <div className={styles.field}><span>E-mail</span><strong>{mascararEmail(assinatura.usuarios.email)}</strong></div>
             <div className={styles.field}><span>Plano</span><strong>{assinatura.planos.nome}</strong></div>
             <div className={styles.field}><span>Valor</span><strong>{moeda(assinatura.planos.valor)}</strong></div>
             <div className={styles.field}><span>Status</span><strong>{assinatura.status}</strong></div>
@@ -92,7 +91,7 @@ export default async function AssinaturaDetalhePage({ params }: AssinaturaDetalh
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h2>Ações administrativas</h2>
+            <h2>AÃ§Ãµes administrativas</h2>
           </div>
           <AssinaturaAdminActions id={assinatura.id} statusAtual={assinatura.status} />
         </section>
@@ -100,7 +99,7 @@ export default async function AssinaturaDetalhePage({ params }: AssinaturaDetalh
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
-          <h2>Histórico financeiro</h2>
+          <h2>HistÃ³rico financeiro</h2>
         </div>
         {eventosFinanceiros.length === 0 ? (
           <div className={styles.empty}>Nenhum evento financeiro registrado para esta assinatura.</div>
@@ -121,14 +120,14 @@ export default async function AssinaturaDetalhePage({ params }: AssinaturaDetalh
                 {eventosFinanceiros.map((evento) => (
                   <tr key={evento.id}>
                     <td>
-                      {evento.event}
-                      {evento.motivo && <span className={styles.tableSubtext}>{evento.motivo}</span>}
+                      {evento.tipo}
+                      {evento.origem && <span className={styles.tableSubtext}>{evento.origem}</span>}
                     </td>
-                    <td><BadgeStatus status={evento.status_processamento} /></td>
-                    <td>{texto(evento.payment_id)}</td>
+                    <td><BadgeStatus status={evento.status_novo || evento.tipo} /></td>
+                    <td>{texto(evento.gateway_payment_id)}</td>
                     <td>{moeda(evento.valor)}</td>
-                    <td>{texto(evento.assinatura_status_antes)} → {texto(evento.assinatura_status_depois)}</td>
-                    <td>{data(evento.pago_em || evento.criado_em)}</td>
+                    <td>{texto(evento.status_anterior)} â†’ {texto(evento.status_novo)}</td>
+                    <td>{data(evento.criado_em)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -139,3 +138,4 @@ export default async function AssinaturaDetalhePage({ params }: AssinaturaDetalh
     </>
   );
 }
+

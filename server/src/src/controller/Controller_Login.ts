@@ -1,6 +1,9 @@
 ﻿import { Request, Response } from 'express';
+import { randomBytes } from 'crypto';
 import { ServiceAuth } from '../service/Service_Autenticacao';
 import logger from '../lib/logger';
+
+const OAUTH_STATE_COOKIE = 'nossozelo_oauth_state';
 
 function erroAutenticacao(mensagem: string) {
   return mensagem.toLowerCase().includes('usuário ou senha inválidos');
@@ -10,7 +13,14 @@ export class AuthController {
   static iniciarSocial(provider: 'google' | 'facebook') {
     return (_req: Request, res: Response) => {
       try {
-        return res.redirect(ServiceAuth.iniciarLoginSocial(provider));
+        const state = randomBytes(24).toString('hex');
+        res.cookie(OAUTH_STATE_COOKIE, state, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 10 * 60 * 1000,
+        });
+        return res.redirect(ServiceAuth.iniciarLoginSocial(provider, state));
       } catch (error: any) {
         logger.error('AuthController: falha ao iniciar login social', {
           provider,
@@ -27,6 +37,13 @@ export class AuthController {
     return async (req: Request, res: Response) => {
       try {
         const code = String(req.query.code || '');
+        const state = String(req.query.state || '');
+        const stateCookie = String(req.cookies?.[OAUTH_STATE_COOKIE] || '');
+        res.clearCookie(OAUTH_STATE_COOKIE);
+
+        if (!state || !stateCookie || state !== stateCookie) {
+          return res.status(400).json({ error: 'Estado OAuth invalido.' });
+        }
         if (!code) {
           return res.status(400).json({ error: 'Codigo OAuth ausente.' });
         }
@@ -108,3 +125,4 @@ export class AuthController {
 }
 
 export default AuthController;
+

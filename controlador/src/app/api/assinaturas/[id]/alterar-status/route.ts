@@ -25,6 +25,11 @@ async function alterarStatus(request: Request, { params }: Params) {
 
     const { id } = await params;
     const assinatura = await prisma.$transaction(async (tx) => {
+      const anterior = await tx.assinaturas.findUnique({
+        where: { id: Number(id) },
+        select: { status: true }
+      });
+
       const atualizada = await tx.assinaturas.update({
         where: { id: Number(id) },
         data: {
@@ -37,6 +42,21 @@ async function alterarStatus(request: Request, { params }: Params) {
       await tx.usuarios.update({
         where: { id: atualizada.prestador_id },
         data: { status_cadastro: statusCadastroPorAssinatura(input.status) }
+      });
+
+      await tx.eventos_assinatura.create({
+        data: {
+          assinatura_id: atualizada.id,
+          prestador_id: atualizada.prestador_id,
+          plano_id: atualizada.plano_id,
+          tipo: "alteracao_status_admin",
+          origem: "admin",
+          gateway: atualizada.gateway,
+          gateway_subscription_id: atualizada.gateway_subscription_id,
+          status_anterior: anterior?.status || null,
+          status_novo: atualizada.status,
+          payload_resumo: { adminId: admin.id }
+        }
       });
 
       return atualizada;
