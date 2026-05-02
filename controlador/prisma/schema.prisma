@@ -84,7 +84,9 @@ model eventos_assinatura {
   status_anterior          String?   @db.VarChar(40)
   status_novo              String?   @db.VarChar(40)
   valor                    Decimal?  @db.Decimal(10, 2)
+  payload_hash             String?   @db.VarChar(64)
   payload_resumo           Json?
+  processado_em            DateTime? @db.Timestamp(0)
   criado_em                DateTime  @default(now()) @db.Timestamp(0)
   assinaturas              assinaturas? @relation(fields: [assinatura_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   usuarios                 usuarios?    @relation(fields: [prestador_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -93,6 +95,7 @@ model eventos_assinatura {
   @@index([prestador_id])
   @@index([tipo])
   @@index([gateway_subscription_id])
+  @@index([payload_hash])
 }
 
 model asaas_webhook_logs {

@@ -6,7 +6,7 @@ import { FilterSelect } from "@/components/FilterSelect";
 import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { listarPrestadores } from "@/lib/queries";
-import { mascararEmail } from "@/lib/sanitize";
+import { mascararDocumento, mascararEmail, mascararTelefone } from "@/lib/sanitize";
 import styles from "@/styles/admin.module.css";
 
 type PrestadoresPageProps = {
@@ -68,9 +68,17 @@ export default async function PrestadoresPage({ searchParams }: PrestadoresPageP
                 const assinatura = prestador.assinaturas[0];
                 return (
                   <tr key={prestador.id}>
-                    <td><strong>{prestador.nome}</strong></td>
+                    <td>
+                      <strong>{prestador.nome}</strong>
+                      <br />
+                      {mascararDocumento(prestador.cpf)}
+                    </td>
                     <td>{prestador.tipo}</td>
-                    <td>{mascararEmail(prestador.email)}</td>
+                    <td>
+                      {mascararEmail(prestador.email)}
+                      <br />
+                      {mascararTelefone(prestador.telefone)}
+                    </td>
                     <td><BadgeStatus status={prestador.status_cadastro} /></td>
                     <td><BadgeStatus status={prestador.email_confirmado} /></td>
                     <td><BadgeStatus status={assinatura?.status ?? "sem assinatura"} /></td>

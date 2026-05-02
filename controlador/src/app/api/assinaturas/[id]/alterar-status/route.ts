@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { z } from "zod";
 import { exigirAdminApi } from "@/lib/auth";
 import { statusCadastroPorAssinatura } from "@/lib/financeiro";
@@ -10,6 +11,10 @@ const Schema = z.object({
   status: z.enum(["pendente", "aguardando_confirmacao", "ativa", "atrasada", "bloqueada", "cancelada", "falhou", "expirada"]),
   confirmacao: z.literal(true).optional()
 });
+
+function hashPayload(valor: unknown) {
+  return createHash("sha256").update(JSON.stringify(valor)).digest("hex");
+}
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -44,6 +49,7 @@ async function alterarStatus(request: Request, { params }: Params) {
         data: { status_cadastro: statusCadastroPorAssinatura(input.status) }
       });
 
+      const payloadResumo = { adminId: admin.id };
       await tx.eventos_assinatura.create({
         data: {
           assinatura_id: atualizada.id,
@@ -55,7 +61,9 @@ async function alterarStatus(request: Request, { params }: Params) {
           gateway_subscription_id: atualizada.gateway_subscription_id,
           status_anterior: anterior?.status || null,
           status_novo: atualizada.status,
-          payload_resumo: { adminId: admin.id }
+          payload_hash: hashPayload(payloadResumo),
+          payload_resumo: payloadResumo,
+          processado_em: new Date()
         }
       });
 

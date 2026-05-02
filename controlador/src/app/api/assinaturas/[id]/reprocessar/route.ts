@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { exigirAdminApi } from "@/lib/auth";
 import { registrarLogAdministrativo } from "@/lib/adminLog";
 import { statusCadastroPorAssinatura } from "@/lib/financeiro";
@@ -6,6 +7,55 @@ import { respostaErro } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
+
+function jsonEstavel(valor: unknown): string {
+  if (valor === null || typeof valor !== "object") return JSON.stringify(valor);
+  if (Array.isArray(valor)) return `[${valor.map(jsonEstavel).join(",")}]`;
+  return `{${Object.keys(valor as Record<string, unknown>).sort().map((chave) => `${JSON.stringify(chave)}:${jsonEstavel((valor as Record<string, unknown>)[chave])}`).join(",")}}`;
+}
+
+function hashPayload(valor: unknown) {
+  return createHash("sha256").update(jsonEstavel(valor)).digest("hex");
+}
+
+function statusLocalPorStatusAsaas(status?: string | null) {
+  const normalizado = String(status || "").toUpperCase();
+  if (normalizado === "ACTIVE") return "ativa" as const;
+  if (["INACTIVE", "CANCELLED", "DELETED"].includes(normalizado)) return "cancelada" as const;
+  return null;
+}
+
+async function consultarAssinaturaAsaas(gatewaySubscriptionId?: string | null) {
+  const apiKey = process.env.ASAAS_API_KEY?.trim();
+  const baseUrl = process.env.ASAAS_BASE_URL?.trim() || "https://api-sandbox.asaas.com/v3";
+  if (!apiKey || !gatewaySubscriptionId) return null;
+
+  const resposta = await fetch(`${baseUrl}/subscriptions/${encodeURIComponent(gatewaySubscriptionId)}`, {
+    headers: { access_token: apiKey }
+  });
+
+  if (!resposta.ok) {
+    return {
+      erro: `asaas_${resposta.status}`,
+      status: null
+    };
+  }
+
+  const dados = await resposta.json() as {
+    id?: string;
+    status?: string;
+    nextDueDate?: string;
+    customer?: string;
+  };
+
+  return {
+    id: dados.id || gatewaySubscriptionId,
+    status: dados.status || null,
+    status_local: statusLocalPorStatusAsaas(dados.status),
+    nextDueDate: dados.nextDueDate || null,
+    customer: dados.customer || null
+  };
+}
 
 export async function POST(_request: Request, { params }: Params) {
   const { admin, response } = await exigirAdminApi();
@@ -20,12 +70,30 @@ export async function POST(_request: Request, { params }: Params) {
 
     if (!assinatura) return NextResponse.json({ error: "Assinatura nao encontrada." }, { status: 404 });
 
+    const consultaAsaas = await consultarAssinaturaAsaas(assinatura.gateway_subscription_id);
+    const statusReprocessado = consultaAsaas?.status_local || assinatura.status;
     const statusCadastro =
-      assinatura.status === "ativa" && !assinatura.usuarios.email_confirmado
+      statusReprocessado === "ativa" && !assinatura.usuarios.email_confirmado
         ? "pendente_pagamento"
-        : statusCadastroPorAssinatura(assinatura.status);
+        : statusCadastroPorAssinatura(statusReprocessado);
+    const payloadResumo = {
+      adminId: admin.id,
+      status_cadastro: statusCadastro,
+      consulta_asaas: consultaAsaas
+    };
 
-    await prisma.$transaction(async (tx) => {
+    const assinaturaAtualizada = await prisma.$transaction(async (tx) => {
+      const assinaturaAtualizada = await tx.assinaturas.update({
+        where: { id: assinatura.id },
+        data: {
+          status: statusReprocessado,
+          gateway_status: consultaAsaas?.status || assinatura.gateway_status,
+          data_proximo_vencimento: consultaAsaas?.nextDueDate
+            ? new Date(`${consultaAsaas.nextDueDate}T00:00:00`)
+            : assinatura.data_proximo_vencimento
+        }
+      });
+
       await tx.usuarios.update({
         where: { id: assinatura.prestador_id },
         data: { status_cadastro: statusCadastro }
@@ -41,16 +109,20 @@ export async function POST(_request: Request, { params }: Params) {
           gateway: assinatura.gateway,
           gateway_subscription_id: assinatura.gateway_subscription_id,
           status_anterior: assinatura.status,
-          status_novo: assinatura.status,
-          payload_resumo: { adminId: admin.id, status_cadastro: statusCadastro }
+          status_novo: assinaturaAtualizada.status,
+          payload_hash: hashPayload(payloadResumo),
+          payload_resumo: payloadResumo,
+          processado_em: new Date()
         }
       });
+
+      return assinaturaAtualizada;
     });
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "assinaturas" });
 
     return NextResponse.json({
       message: "Assinatura reprocessada.",
-      assinatura,
+      assinatura: assinaturaAtualizada,
       status_cadastro: statusCadastro
     });
   } catch (error) {

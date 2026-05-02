@@ -7,6 +7,7 @@ import {
   BarChart3,
   ClipboardList,
   CreditCard,
+  FileWarning,
   MailWarning,
   ScrollText,
   Settings,
@@ -23,6 +24,7 @@ const links = [
   { href: "/pendencias", label: "Pendencias", icon: AlertTriangle },
   { href: "/planos", label: "Planos", icon: CreditCard },
   { href: "/assinaturas", label: "Assinaturas", icon: ClipboardList },
+  { href: "/relatorios/inadimplencia", label: "Inadimplencia", icon: FileWarning },
   { href: "/email", label: "E-mails", icon: MailWarning },
   { href: "/logs", label: "Logs Asaas", icon: ScrollText },
   { href: "/configuracoes", label: "Configuracoes", icon: Settings }

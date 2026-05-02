@@ -1,4 +1,5 @@
 import type { assinaturas_status, Prisma } from "@prisma/client";
+import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { statusCadastroPorAssinatura } from "@/lib/financeiro";
 
@@ -84,6 +85,16 @@ function numeroAsaas(valor?: number | string | null) {
 
 function limitar(valor: string, tamanho: number) {
   return valor.slice(0, tamanho);
+}
+
+function jsonEstavel(valor: unknown): string {
+  if (valor === null || typeof valor !== "object") return JSON.stringify(valor);
+  if (Array.isArray(valor)) return `[${valor.map(jsonEstavel).join(",")}]`;
+  return `{${Object.keys(valor as Record<string, unknown>).sort().map((chave) => `${JSON.stringify(chave)}:${jsonEstavel((valor as Record<string, unknown>)[chave])}`).join(",")}}`;
+}
+
+function hashPayload(valor: unknown) {
+  return createHash("sha256").update(jsonEstavel(valor)).digest("hex");
 }
 
 function statusAssinaturaPorEventoAsaas(
@@ -187,12 +198,27 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
       payment?.confirmedDate ||
       null
   } satisfies Prisma.InputJsonValue;
+  const payloadHash = hashPayload(payloadJson);
   const pagoEm =
     dataAsaas(payment?.paymentDate) ||
     dataAsaas(payment?.clientPaymentDate) ||
     dataAsaas(payment?.confirmedDate);
 
   if (eventId) {
+    const eventoExistente = await prisma.eventos_assinatura.findUnique({
+      where: { gateway_event_id: eventId },
+      select: { id: true }
+    });
+
+    if (eventoExistente) {
+      return {
+        processado: false,
+        duplicado: true,
+        motivo: "evento_ja_processado",
+        evento_assinatura_id: eventoExistente.id
+      };
+    }
+
     const logExistente = await prisma.asaas_webhook_logs.findUnique({
       where: { event_id: eventId }
     });
@@ -231,6 +257,21 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
         }
       });
 
+      await prisma.eventos_assinatura.create({
+        data: {
+          tipo: "webhook_ignorado",
+          origem: "webhook_asaas",
+          gateway: "asaas",
+          gateway_event_id: eventId,
+          gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
+          gateway_subscription_id: subscriptionId ? limitar(subscriptionId, 120) : null,
+          status_novo: statusAssinatura,
+          payload_hash: payloadHash,
+          payload_resumo: payloadJson,
+          processado_em: new Date()
+        }
+      });
+
       return { processado: false, motivo: atualizado.motivo, log_id: atualizado.id };
     }
 
@@ -240,6 +281,20 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
         data: {
           status_processamento: "erro",
           motivo: "assinatura_gateway_ausente"
+        }
+      });
+
+      await prisma.eventos_assinatura.create({
+        data: {
+          tipo: "webhook_ignorado",
+          origem: "webhook_asaas",
+          gateway: "asaas",
+          gateway_event_id: eventId,
+          gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
+          status_novo: statusAssinatura,
+          payload_hash: payloadHash,
+          payload_resumo: payloadJson,
+          processado_em: new Date()
         }
       });
 
@@ -254,6 +309,21 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
         data: {
           status_processamento: "erro",
           motivo: "assinatura_local_nao_encontrada"
+        }
+      });
+
+      await prisma.eventos_assinatura.create({
+        data: {
+          tipo: "webhook_assinatura_nao_encontrada",
+          origem: "webhook_asaas",
+          gateway: "asaas",
+          gateway_event_id: eventId,
+          gateway_payment_id: payment?.id ? limitar(payment.id, 120) : null,
+          gateway_subscription_id: subscriptionId ? limitar(subscriptionId, 120) : null,
+          status_novo: statusAssinatura,
+          payload_hash: payloadHash,
+          payload_resumo: payloadJson,
+          processado_em: new Date()
         }
       });
 
@@ -336,7 +406,10 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
           status_anterior: assinaturaAtual.status,
           status_novo: assinatura.status,
           valor: numeroAsaas(payment?.value),
+          payload_hash: payloadHash,
           payload_resumo: payloadJson
+          ,
+          processado_em: new Date()
         }
       });
 
