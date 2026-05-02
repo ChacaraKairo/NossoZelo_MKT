@@ -13,6 +13,7 @@ Use quando a validacao automatica nao conseguir provar o comportamento real do a
 
 - Criar prestador real de homologacao.
 - Confirmar e-mail.
+- Completar perfil profissional antes da assinatura.
 - Selecionar plano ativo.
 - Gerar cobranca.
 - Confirmar que retorna `invoiceUrl`, `bankSlipUrl` ou Pix.
@@ -23,6 +24,12 @@ Use quando a validacao automatica nao conseguir provar o comportamento real do a
 - Simular `PAYMENT_OVERDUE`.
 - Confirmar prestador sai da busca.
 - Reprocessar no controlador e confirmar que `ACTIVE` do Asaas nao ativa localmente sem pagamento.
+
+## UX do prestador
+
+- Validar fluxo: cadastro -> confirmacao de e-mail -> completar perfil -> escolher plano -> gerar cobranca -> pagar -> aguardar confirmacao -> perfil ativo.
+- Confirmar mensagens para `email_nao_confirmado`, `pagamento_pendente`, `pagamento_aguardando_confirmacao`, `assinatura_atrasada`, `assinatura_bloqueada`, `assinatura_cancelada` e `perfil_ativo`.
+- Confirmar que prestador pendente, atrasado, bloqueado, cancelado, expirado ou com falha nao aparece na busca publica.
 
 ## Operacao
 
