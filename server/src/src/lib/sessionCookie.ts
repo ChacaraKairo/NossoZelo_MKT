@@ -9,10 +9,38 @@ function cookieSecure() {
   return process.env.NODE_ENV === 'production';
 }
 
+function obterHost(url?: string) {
+  if (!url) return '';
+
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return '';
+  }
+}
+
+function frontendBackendEmSitesDiferentes() {
+  if (process.env.NODE_ENV !== 'production') return false;
+
+  const frontendHost = obterHost(process.env.FRONTEND_URL);
+  const backendHost = obterHost(
+    process.env.BACKEND_PUBLIC_URL ||
+      process.env.API_URL ||
+      process.env.RENDER_EXTERNAL_URL,
+  );
+
+  return Boolean(
+    frontendHost &&
+      backendHost &&
+      frontendHost !== backendHost,
+  );
+}
+
 function sameSite(): 'strict' | 'lax' | 'none' {
   const configured = String(process.env.COOKIE_SAMESITE || '').toLowerCase();
   if (configured === 'none') return 'none';
   if (configured === 'strict') return 'strict';
+  if (frontendBackendEmSitesDiferentes()) return 'none';
   return 'lax';
 }
 

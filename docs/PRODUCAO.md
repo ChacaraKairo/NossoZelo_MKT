@@ -14,7 +14,7 @@ Backend em produção não deve iniciar sem:
 - `ASAAS_API_KEY`, se `PAYMENT_GATEWAY=asaas`
 - Variáveis AWS, se `ENABLE_UPLOADS=true`
 
-Use HTTPS para frontend e backend. Se estiverem em domínios diferentes, use `COOKIE_SAMESITE=none`.
+Use HTTPS para frontend e backend. Se estiverem em domínios diferentes, confirme que `FRONTEND_URL` e `BACKEND_PUBLIC_URL` estão corretos; o cookie será `SameSite=None; Secure` automaticamente. Para forçar, configure `COOKIE_SAMESITE=none`.
 
 ## Deploy Sugerido
 

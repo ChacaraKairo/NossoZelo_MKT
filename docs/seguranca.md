@@ -4,7 +4,7 @@
 
 - Sessão principal via cookie HttpOnly `zelo_token`.
 - `secure=true` em produção.
-- `sameSite=lax` por padrão local; use `COOKIE_SAMESITE=none` quando frontend e backend estiverem em domínios diferentes com HTTPS.
+- `sameSite=lax` por padrão local; em produção cross-site o backend usa `none` automaticamente quando `FRONTEND_URL` e `BACKEND_PUBLIC_URL/API_URL` apontam para hosts diferentes. Também é possível forçar com `COOKIE_SAMESITE=none`.
 - JWT no JSON foi removido do login tradicional.
 
 ## Autorização
