@@ -2,7 +2,6 @@ import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
-import EmailService from './Service_Email';
 
 const TEMPO_EXPIRACAO_MINUTOS = 30;
 export const MENSAGEM_RECUPERACAO_GENERICA =
@@ -106,18 +105,7 @@ export class ServiceRecuperacaoSenha {
       },
     });
 
-    const link = `${frontendUrl()}/redefinir-senha?token=${encodeURIComponent(
-      token,
-    )}`;
-
-    const emailService = new EmailService();
-    await emailService.send(
-      usuario.email,
-      'Redefinicao de senha - NossoZelo',
-      htmlRecuperacaoSenha(usuario.nome, link),
-    );
-
-    logger.info('RecuperacaoSenha: e-mail enviado', {
+    logger.info('RecuperacaoSenha: e-mail simulado na branch teste_no_email', {
       usuarioId: usuario.id,
       email: emailMascarado,
     });

@@ -2,7 +2,6 @@ import { randomBytes } from 'crypto';
 import prisma from '../lib/prisma';
 import { TIPOS_PRESTADOR } from '../constants/dominio';
 import logger from '../lib/logger';
-import EmailService from './Service_Email';
 
 const HORAS_EXPIRACAO_CONFIRMACAO = 24;
 const COOLDOWN_REENVIO_MS = 60 * 1000;
@@ -121,38 +120,25 @@ export class ServiceConfirmacaoEmail {
       };
     }
 
-    const confirmacao = await this.criarConfirmacaoEmail(usuario.id);
-    const link = linkConfirmacaoEmail(confirmacao.token, usuario.tipo);
+    await prisma.usuarios.update({
+      where: { id: usuario.id },
+      data: { email_confirmado: true },
+    });
 
-    try {
-      const emailService = new EmailService();
-      await emailService.send(
-        usuario.email,
-        'Confirme seu e-mail no NossoZelo',
-        htmlConfirmacao(usuario.nome, link, usuario.tipo),
-      );
-      logger.info('E-mail de confirmacao enviado', {
-        usuarioId: usuario.id,
-        email: usuario.email,
-      });
-    } catch (error) {
-      await prisma.confirmacoes_email.update({
-        where: { id: confirmacao.id },
-        data: { usado: true },
-      });
-      logger.error('Falha ao enviar e-mail de confirmacao', {
-        usuarioId: usuario.id,
-        email: usuario.email,
-        error,
-      });
-      throw erroServicoEmail(error);
-    }
+    await prisma.confirmacoes_email.updateMany({
+      where: { usuario_id: usuario.id, usado: false },
+      data: { usado: true },
+    });
+
+    logger.info('Confirmacao de e-mail simulada na branch teste_no_email', {
+      usuarioId: usuario.id,
+      email: usuario.email,
+    });
 
     return {
-      enviado: true,
-      email_confirmado: false,
-      expiracao: confirmacao.expiracao,
-      message: 'E-mail de confirmacao enviado.',
+      enviado: false,
+      email_confirmado: true,
+      message: 'E-mail confirmado automaticamente na versao de demonstracao.',
     };
   }
 
@@ -240,10 +226,10 @@ export class ServiceConfirmacaoEmail {
       ultimaConfirmacao &&
       Date.now() - ultimaConfirmacao.criado_em.getTime() < COOLDOWN_REENVIO_MS
     ) {
-      throw erroNegocio(
-        'Aguarde um minuto antes de reenviar o e-mail de confirmacao.',
-        429,
-      );
+      await prisma.confirmacoes_email.updateMany({
+        where: { usuario_id: usuarioId, usado: false },
+        data: { usado: true },
+      });
     }
 
     return this.enviarEmailConfirmacao(usuarioId);

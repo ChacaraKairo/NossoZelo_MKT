@@ -537,14 +537,20 @@ export class ServiceAuth {
         throw new Error('Usuário ou senha inválidos.');
       }
 
-      if (user.tipo === 'admin' && user.email_confirmado !== true) {
-        logger.warn('AuthService: admin sem e-mail confirmado bloqueado', {
+      let usuarioAutenticado = user;
+
+      if (!user.email_confirmado) {
+        await prisma.usuarios.update({
+          where: { id: user.id },
+          data: { email_confirmado: true },
+        });
+        usuarioAutenticado = { ...user, email_confirmado: true };
+        logger.info('AuthService: e-mail confirmado automaticamente na branch teste_no_email', {
           usuarioId: user.id,
         });
-        throw new Error('Usuario administrativo aguardando confirmacao.');
       }
 
-      const token = criarTokenSessao(user);
+      const token = criarTokenSessao(usuarioAutenticado);
 
       logger.info('AuthService: login concluído', {
         usuarioId: user.id,
@@ -555,13 +561,13 @@ export class ServiceAuth {
       return {
         token,
         user: {
-          id: user.id,
-          nome: user.nome,
-          email: user.email,
-          tipo: user.tipo,
-          email_confirmado: user.email_confirmado,
+          id: usuarioAutenticado.id,
+          nome: usuarioAutenticado.nome,
+          email: usuarioAutenticado.email,
+          tipo: usuarioAutenticado.tipo,
+          email_confirmado: usuarioAutenticado.email_confirmado,
         },
-        onboardingStatus: await ServiceOnboarding.obterStatus(user.id),
+        onboardingStatus: await ServiceOnboarding.obterStatus(usuarioAutenticado.id),
       };
     } catch (error: any) {
       logger.warn('AuthService: falha no login', {

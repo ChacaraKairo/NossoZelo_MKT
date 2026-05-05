@@ -7,15 +7,11 @@
  * @rota server\src\src\service\Service_User.ts
  */
 
-import fs from 'fs';
-import path from 'path';
 import ServiceCrud from './Service_Crud';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
 import { sign } from 'jsonwebtoken';
-import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
-import ServiceConfirmacaoEmail from './Service_ConfirmacaoEmail';
 import { STATUS_CADASTRO_USUARIO } from '../constants/financeiro';
 import { senhaForte } from '../validator/create/Validator_User';
 import prisma from '../lib/prisma';
@@ -108,7 +104,7 @@ class ServiceUser {
       acompanhante,
       admin,
     } = data;
-    const emailConfirmadoInicial = data.emailConfirmadoInicial === true;
+    const emailConfirmadoInicial = true;
     const criacaoAdminAutorizada = data.criacaoAdminAutorizada === true;
 
     let id = '';
@@ -185,42 +181,8 @@ class ServiceUser {
         );
       } else {      }
 
-      // 4. ENVIO DE E-MAIL (Background)
-      let avisoConfirmacaoEmail: string | null = null;
-      try {
-        if (!usuarioData.email_confirmado) {
-          await ServiceConfirmacaoEmail.enviarEmailConfirmacao(id);
-        } else {
-          const emailService = new EmailService();
-          const templatePath = path.join(
-            __dirname,
-            '../../HTML/emails/cadastro.html',
-          );
-
-          if (fs.existsSync(templatePath)) {
-            let html = fs.readFileSync(templatePath, 'utf-8');
-
-            html = html
-              .replace('{{nome}}', usuario.nome)
-              .replace(
-                '{{link}}',
-                'https://devmarkt.com.br/login',
-              );
-
-            emailService
-              .send(
-                usuario.email,
-                'Bem-vindo ao Nosso Zelo!',
-                html,
-              )
-              .catch((err) =>
-                {},
-              );
-          }
-        }
-      } catch (emailErr: any) {        avisoConfirmacaoEmail =
-          'Conta criada, mas nao foi possivel enviar o e-mail de confirmacao. Voce pode reenviar pelo perfil.';
-      }      const jwtSecret = process.env.JWT_SECRET;
+      const avisoConfirmacaoEmail: string | null = null;
+      const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) {
         throw criarErroCadastro(
           'Configuracao de seguranca ausente para gerar token temporario de upload.',
