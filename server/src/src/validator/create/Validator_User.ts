@@ -8,6 +8,13 @@ enum TipoUsuario {
   ADMIN = 'admin',
 }
 
+const TIPOS_CADASTRO_PUBLICO = new Set<TipoUsuario>([
+  TipoUsuario.CLIENTE,
+  TipoUsuario.CUIDADOR,
+  TipoUsuario.ENFERMEIRO,
+  TipoUsuario.ACOMPANHANTE,
+]);
+
 const DDD_VALIDOS_BR = new Set([
   '11',
   '12',
@@ -339,6 +346,12 @@ export function validarCreateUsuarioDto(input: any): {
     !Object.values(TipoUsuario).includes(usuario.tipo)
   ) {
     adicionarErro(erros, 'tipo', 'Tipo de usuario invalido.');
+  } else if (!TIPOS_CADASTRO_PUBLICO.has(usuario.tipo)) {
+    adicionarErro(
+      erros,
+      'tipo',
+      'Tipo de usuario nao permitido no cadastro publico.',
+    );
   }
 
   if (tipo === TipoUsuario.CUIDADOR) {

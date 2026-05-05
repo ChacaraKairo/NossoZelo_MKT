@@ -226,6 +226,31 @@ describe('fluxos criticos do produto', () => {
     expect(response.status).toBe(403);
   });
 
+  it('bloqueia cadastro publico de administrador', async () => {
+    const response = await request(appComRotasProtegidas())
+      .post('/create-users/usuario')
+      .send({
+        usuario: {
+          nome: 'Admin Publico',
+          email: 'admin-publico@test.com',
+          senha: 'Senha!123',
+          telefone: '11999999999',
+          cpf: '52998224725',
+          cep: '01001000',
+          tipo: 'admin',
+        },
+        admin: {
+          cargo: 'Administrador',
+          permissao_total: true,
+        },
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.erros.tipo).toContain(
+      'Tipo de usuario nao permitido no cadastro publico.',
+    );
+  });
+
   it('realiza login sem expor senha no retorno', async () => {
     mocks.authService.login.mockResolvedValue({
       token: 'jwt',

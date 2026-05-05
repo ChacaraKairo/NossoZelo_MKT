@@ -537,6 +537,13 @@ export class ServiceAuth {
         throw new Error('Usuário ou senha inválidos.');
       }
 
+      if (user.tipo === 'admin' && user.email_confirmado !== true) {
+        logger.warn('AuthService: admin sem e-mail confirmado bloqueado', {
+          usuarioId: user.id,
+        });
+        throw new Error('Usuario administrativo aguardando confirmacao.');
+      }
+
       const token = criarTokenSessao(user);
 
       logger.info('AuthService: login concluído', {

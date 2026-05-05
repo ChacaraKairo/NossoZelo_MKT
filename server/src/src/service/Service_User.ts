@@ -109,6 +109,7 @@ class ServiceUser {
       admin,
     } = data;
     const emailConfirmadoInicial = data.emailConfirmadoInicial === true;
+    const criacaoAdminAutorizada = data.criacaoAdminAutorizada === true;
 
     let id = '';
 
@@ -124,6 +125,13 @@ class ServiceUser {
 
         if (isNaN(dataNascimentoObj.getTime())) {          throw criarErroCadastro('data_nascimento invalida');
         }      }
+
+      if (usuario.tipo === 'admin' && !criacaoAdminAutorizada) {
+        throw criarErroCadastro(
+          'Cadastro de administrador nao permitido por este fluxo.',
+          403,
+        );
+      }
 
       // 1. CRIAÇÃO DO USUÁRIO BASE
       const usuarioData = {
@@ -356,7 +364,7 @@ class ServiceUser {
 
           if (registroExtra) {            await ServiceCrud.update(
               tabelaExtra,
-              registroExtra.id,
+              id,
               perfil,
             );          } else {          }
         }
