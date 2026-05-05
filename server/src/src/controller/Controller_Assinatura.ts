@@ -19,6 +19,31 @@ function planoIdDoBody(body: any) {
   return planoId;
 }
 
+function dadosPagamentoDoBody(body: any, req: Request) {
+  const dadosPagamento = body?.dadosPagamento;
+  if (dadosPagamento === undefined || dadosPagamento === null) return undefined;
+
+  if (!dadosPagamento || typeof dadosPagamento !== 'object') {
+    const error = new Error('Dados de pagamento invalidos.') as Error & {
+      status?: number;
+    };
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    metodoPagamento: dadosPagamento.metodoPagamento,
+    creditCard: dadosPagamento.creditCard,
+    creditCardHolderInfo: dadosPagamento.creditCardHolderInfo,
+    creditCardToken: dadosPagamento.creditCardToken,
+    remoteIp:
+      req.ip ||
+      String(req.headers['x-forwarded-for'] || '')
+        .split(',')[0]
+        .trim(),
+  };
+}
+
 class ControllerAssinatura {
   async webhookAsaas(req: Request, res: Response) {
     try {
@@ -96,10 +121,12 @@ class ControllerAssinatura {
       }
 
       const planoId = planoIdDoBody(req.body);
+      const dadosPagamento = dadosPagamentoDoBody(req.body, req);
       const resultado =
         await ServiceAssinatura.iniciarOuRegularizarAssinatura(
           req.user.id,
           planoId,
+          dadosPagamento,
         );
 
       return res.status(201).json(resultado);
@@ -117,10 +144,12 @@ class ControllerAssinatura {
       }
 
       const planoId = planoIdDoBody(req.body);
+      const dadosPagamento = dadosPagamentoDoBody(req.body, req);
       const resultado =
         await ServiceAssinatura.iniciarOuRegularizarAssinatura(
           req.user.id,
           planoId,
+          dadosPagamento,
         );
 
       return res.status(200).json(resultado);

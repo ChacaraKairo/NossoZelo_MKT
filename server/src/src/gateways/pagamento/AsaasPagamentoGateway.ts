@@ -64,10 +64,17 @@ function adicionarDias(data: Date, dias: number) {
 }
 
 function billingTypeAssinatura(input: CriarAssinaturaMensalInput) {
+  const metodoPagamento = input.dadosPagamento?.metodoPagamento;
+
+  if (metodoPagamento === 'credit_card') return 'CREDIT_CARD';
+  if (metodoPagamento === 'asaas_invoice') return 'UNDEFINED';
+  if (metodoPagamento === 'pix') return 'PIX';
+  if (metodoPagamento === 'boleto') return 'BOLETO';
+
   const configurado = (process.env.ASAAS_BILLING_TYPE || 'PIX')
     .trim()
     .toUpperCase();
-  const permitidos = ['PIX', 'BOLETO', 'UNDEFINED'];
+  const permitidos = ['PIX', 'BOLETO', 'UNDEFINED', 'CREDIT_CARD'];
 
   return permitidos.includes(configurado) ? configurado : 'PIX';
 }
@@ -78,7 +85,11 @@ function mensagemPorBillingType(billingType: string) {
   }
 
   if (billingType === 'UNDEFINED') {
-    return 'Assinatura criada no Asaas. Abra a fatura para escolher a forma de pagamento disponivel.';
+    return 'Assinatura criada no Asaas. Abra a fatura para pagar com debito ou outro metodo disponivel no checkout seguro.';
+  }
+
+  if (billingType === 'CREDIT_CARD') {
+    return 'Cartao validado no Asaas. A assinatura sera ativada apos confirmacao do pagamento por webhook.';
   }
 
   return 'Assinatura criada no Asaas. Aguarde confirmacao por webhook de pagamento.';
@@ -121,8 +132,42 @@ function mensagemErroAsaas(error: unknown) {
     : 'Erro ao comunicar com o Asaas.';
 }
 
+function statusErroGateway(
+  error: unknown,
+  input?: CriarAssinaturaMensalInput,
+): GatewayStatusAssinatura {
+  const axiosError = error as AxiosError<any>;
+  if (
+    input?.dadosPagamento?.metodoPagamento === 'credit_card' &&
+    axiosError.response?.status === 400
+  ) {
+    return 'recusado';
+  }
+
+  return 'erro';
+}
+
 function isPix(input: CriarAssinaturaMensalInput) {
   return billingTypeAssinatura(input).toUpperCase() === 'PIX';
+}
+
+function dadosCartaoAsaas(input: CriarAssinaturaMensalInput) {
+  const dadosPagamento = input.dadosPagamento;
+
+  if (dadosPagamento?.metodoPagamento !== 'credit_card') return {};
+
+  if (dadosPagamento.creditCardToken) {
+    return {
+      creditCardToken: dadosPagamento.creditCardToken,
+      remoteIp: dadosPagamento.remoteIp,
+    };
+  }
+
+  return {
+    creditCard: dadosPagamento.creditCard,
+    creditCardHolderInfo: dadosPagamento.creditCardHolderInfo,
+    remoteIp: dadosPagamento.remoteIp,
+  };
 }
 
 export class AsaasPagamentoGateway implements PagamentoGateway {
@@ -187,6 +232,7 @@ export class AsaasPagamentoGateway implements PagamentoGateway {
           cycle: 'MONTHLY',
           description: 'Assinatura Profissional NossoZelo',
           externalReference: input.prestadorId,
+          ...dadosCartaoAsaas(input),
         },
       );
       const paymentsResponse =
@@ -224,7 +270,7 @@ export class AsaasPagamentoGateway implements PagamentoGateway {
     } catch (error) {
       return {
         sucesso: false,
-        status: 'erro',
+        status: statusErroGateway(error, input),
         gateway: GATEWAY_PAGAMENTO.asaas,
         gatewayCustomerId: input.gatewayCustomerId || undefined,
         mensagem: mensagemErroAsaas(error),

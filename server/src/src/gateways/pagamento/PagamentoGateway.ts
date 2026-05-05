@@ -6,6 +6,39 @@ export type GatewayStatusAssinatura =
   | 'recusado'
   | 'erro';
 
+export type MetodoPagamentoAssinatura =
+  | 'credit_card'
+  | 'asaas_invoice'
+  | 'pix'
+  | 'boleto';
+
+export type DadosCartaoCredito = {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+};
+
+export type DadosTitularCartao = {
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  postalCode: string;
+  addressNumber: string;
+  addressComplement?: string | null;
+  phone?: string | null;
+  mobilePhone?: string | null;
+};
+
+export type DadosPagamentoAssinaturaGateway = {
+  metodoPagamento?: MetodoPagamentoAssinatura;
+  creditCard?: DadosCartaoCredito;
+  creditCardHolderInfo?: DadosTitularCartao;
+  creditCardToken?: string;
+  remoteIp?: string;
+};
+
 export type CriarClienteInput = {
   nome: string;
   email: string;
@@ -29,6 +62,7 @@ export type CriarAssinaturaMensalInput = {
   cpfCnpj: string;
   telefone?: string | null;
   gatewayCustomerId?: string | null;
+  dadosPagamento?: DadosPagamentoAssinaturaGateway;
 };
 
 export type CriarAssinaturaResultado = {

@@ -32,6 +32,38 @@ export interface GatewayResultado {
   confirmacaoExpiraEm?: string | Date;
 }
 
+export type MetodoPagamentoAssinatura =
+  | 'credit_card'
+  | 'asaas_invoice'
+  | 'pix'
+  | 'boleto';
+
+export interface DadosCartaoCredito {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+}
+
+export interface DadosTitularCartao {
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  postalCode: string;
+  addressNumber: string;
+  addressComplement?: string | null;
+  phone?: string | null;
+  mobilePhone?: string | null;
+}
+
+export interface DadosPagamentoAssinatura {
+  metodoPagamento: MetodoPagamentoAssinatura;
+  creditCard?: DadosCartaoCredito;
+  creditCardHolderInfo?: DadosTitularCartao;
+  creditCardToken?: string;
+}
+
 export interface StatusAssinaturaPrestador {
   prestador_id: string;
   status_cadastro: string;
@@ -49,7 +81,7 @@ export interface RespostaAssinatura {
   assinatura: AssinaturaAtual;
   pagamento?: {
     recebido: boolean;
-    metodoPagamento?: 'pix';
+    metodoPagamento?: MetodoPagamentoAssinatura;
   };
 }
 

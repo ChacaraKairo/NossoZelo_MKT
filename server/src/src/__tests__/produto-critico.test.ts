@@ -169,6 +169,28 @@ const assinaturaBase = {
   atualizado_em: new Date(),
 };
 
+const dadosPagamentoCredito = {
+  metodoPagamento: 'credit_card' as const,
+  remoteIp: '203.0.113.10',
+  creditCard: {
+    holderName: 'Prestador Teste',
+    number: '5162306219378829',
+    expiryMonth: '05',
+    expiryYear: '2028',
+    ccv: '318',
+  },
+  creditCardHolderInfo: {
+    name: 'Prestador Teste',
+    email: 'prestador@test.com',
+    cpfCnpj: '12345678901',
+    postalCode: '01001000',
+    addressNumber: '100',
+    addressComplement: null,
+    phone: '1133333333',
+    mobilePhone: '11999999999',
+  },
+};
+
 describe('fluxos criticos do produto', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -436,6 +458,159 @@ describe('fluxos criticos do produto', () => {
         data: expect.objectContaining({ tipo: 'assinatura_criada' }),
       }),
     );
+  });
+
+  it('inicia assinatura com credito sem registrar numero completo ou CVV em eventos', async () => {
+    mocks.prisma.usuarios.findUnique
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'pro@test.com',
+        cpf: '12345678901',
+        telefone: '11999999999',
+        tipo: 'cuidador',
+        email_confirmado: true,
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: 'pendente_pagamento',
+        cuidadores: {
+          bio: 'Bio profissional',
+          disponibilidade: 'Dias uteis',
+          especialidades: 'Idosos',
+        },
+        enfermeiros: null,
+        acompanhantes: null,
+        assinaturas: [],
+      });
+    mocks.prisma.planos.findUnique.mockResolvedValue({
+      id: 1,
+      nome: 'Mensal',
+      valor: '49.90',
+      ativo: true,
+    });
+    mocks.prisma.assinaturas.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    mocks.gateway.criarCliente.mockResolvedValue({
+      sucesso: true,
+      gateway: 'asaas',
+      gatewayCustomerId: 'cus_1',
+    });
+    mocks.gateway.criarAssinaturaMensal.mockResolvedValue({
+      sucesso: true,
+      status: 'pendente',
+      gateway: 'asaas',
+      gatewayCustomerId: 'cus_1',
+      gatewaySubscriptionId: 'sub_credito',
+      gatewayPaymentId: 'pay_credito',
+      mensagem: 'Cartao validado no Asaas.',
+    });
+    mocks.prisma.assinaturas.create.mockResolvedValue({
+      ...assinaturaBase,
+      gateway_subscription_id: 'sub_credito',
+    });
+    mocks.prisma.usuarios.update.mockResolvedValue({});
+    mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 10 });
+
+    await ServiceAssinatura.iniciarOuRegularizarAssinatura(
+      'prestador-1',
+      1,
+      dadosPagamentoCredito,
+    );
+
+    expect(mocks.gateway.criarAssinaturaMensal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dadosPagamento: expect.objectContaining({
+          metodoPagamento: 'credit_card',
+          creditCard: dadosPagamentoCredito.creditCard,
+          creditCardHolderInfo: dadosPagamentoCredito.creditCardHolderInfo,
+          remoteIp: '203.0.113.10',
+        }),
+      }),
+    );
+
+    const eventosSerializados = JSON.stringify(
+      mocks.prisma.eventos_assinatura.create.mock.calls,
+    );
+    expect(eventosSerializados).not.toContain('5162306219378829');
+    expect(eventosSerializados).not.toContain('318');
+    expect(eventosSerializados).toContain('credit_card');
+  });
+
+  it('marca assinatura como falhou quando credito e recusado', async () => {
+    mocks.prisma.usuarios.findUnique
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'pro@test.com',
+        cpf: '12345678901',
+        telefone: '11999999999',
+        tipo: 'cuidador',
+        email_confirmado: true,
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: 'pendente_pagamento',
+        cuidadores: {
+          bio: 'Bio profissional',
+          disponibilidade: 'Dias uteis',
+          especialidades: 'Idosos',
+        },
+        enfermeiros: null,
+        acompanhantes: null,
+        assinaturas: [],
+      });
+    mocks.prisma.planos.findUnique.mockResolvedValue({
+      id: 1,
+      nome: 'Mensal',
+      valor: '49.90',
+      ativo: true,
+    });
+    mocks.prisma.assinaturas.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    mocks.gateway.criarCliente.mockResolvedValue({
+      sucesso: true,
+      gateway: 'asaas',
+      gatewayCustomerId: 'cus_1',
+    });
+    mocks.gateway.criarAssinaturaMensal.mockResolvedValue({
+      sucesso: false,
+      status: 'recusado',
+      gateway: 'asaas',
+      gatewayCustomerId: 'cus_1',
+      mensagem: 'Transacao recusada pelo emissor.',
+    });
+    mocks.prisma.assinaturas.create.mockResolvedValue({
+      ...assinaturaBase,
+      status: 'falhou',
+    });
+    mocks.prisma.usuarios.update.mockResolvedValue({});
+    mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 11 });
+
+    const resultado = await ServiceAssinatura.iniciarOuRegularizarAssinatura(
+      'prestador-1',
+      1,
+      dadosPagamentoCredito,
+    );
+
+    expect(resultado.gateway_resultado.status).toBe('recusado');
+    expect(resultado.assinatura.status).toBe('falhou');
+  });
+
+  it('bloqueia debito direto antes de chamar gateway de assinatura', async () => {
+    await expect(
+      ServiceAssinatura.iniciarOuRegularizarAssinatura('prestador-1', 1, {
+        metodoPagamento: 'debit_card',
+      } as any),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(mocks.gateway.criarAssinaturaMensal).not.toHaveBeenCalled();
   });
 
   it('processa webhook PAYMENT_CONFIRMED e ativa prestador', async () => {

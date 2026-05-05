@@ -9,7 +9,12 @@ import {
 } from '../constants/financeiro';
 import { TIPOS_PRESTADOR } from '../constants/dominio';
 import { obterPagamentoGateway } from '../gateways/pagamento';
-import { CriarAssinaturaResultado } from '../gateways/pagamento/PagamentoGateway';
+import {
+  CriarAssinaturaResultado,
+  DadosCartaoCredito,
+  DadosTitularCartao,
+  MetodoPagamentoAssinatura,
+} from '../gateways/pagamento/PagamentoGateway';
 import logger from '../lib/logger';
 import prisma from '../lib/prisma';
 import ServiceOnboarding from './Service_Onboarding';
@@ -21,7 +26,11 @@ type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
 };
 
 export type DadosPagamentoAssinatura = {
-  metodoPagamento?: 'pix';
+  metodoPagamento?: MetodoPagamentoAssinatura;
+  creditCard?: DadosCartaoCredito;
+  creditCardHolderInfo?: DadosTitularCartao;
+  creditCardToken?: string;
+  remoteIp?: string;
 };
 
 type WebhookAsaasInput = {
@@ -271,17 +280,49 @@ function validarDadosPagamentoAssinatura(
 ) {
   if (!dadosPagamento) return null;
 
+  const metodoPagamento = dadosPagamento?.metodoPagamento || 'pix';
+
   if (
-    dadosPagamento.metodoPagamento &&
-    dadosPagamento.metodoPagamento !== 'pix'
+    !['credit_card', 'asaas_invoice', 'pix', 'boleto'].includes(
+      metodoPagamento,
+    )
   ) {
-    throw erroNegocio(
-      'Nesta etapa o pagamento deve ser concluido pelo link do Asaas.',
-      400,
-    );
+    throw erroNegocio('Metodo de pagamento invalido para assinatura.', 400);
   }
 
-  return { recebido: true, metodoPagamento: 'pix' };
+  if (metodoPagamento === 'credit_card') {
+    if (!dadosPagamento?.creditCardToken) {
+      const cartao = dadosPagamento?.creditCard;
+      const titular = dadosPagamento?.creditCardHolderInfo;
+
+      if (
+        !cartao?.holderName ||
+        !cartao.number ||
+        !cartao.expiryMonth ||
+        !cartao.expiryYear ||
+        !cartao.ccv ||
+        !titular?.name ||
+        !titular.email ||
+        !titular.cpfCnpj ||
+        !titular.postalCode ||
+        !titular.addressNumber
+      ) {
+        throw erroNegocio(
+          'Informe os dados do cartao de credito e do titular.',
+          400,
+        );
+      }
+    }
+
+    if (!dadosPagamento?.remoteIp) {
+      throw erroNegocio(
+        'Nao foi possivel identificar o IP do comprador para o Asaas.',
+        400,
+      );
+    }
+  }
+
+  return { recebido: true, metodoPagamento };
 }
 
 export class ServiceAssinatura {
@@ -499,6 +540,12 @@ export class ServiceAssinatura {
       cpfCnpj: usuario.cpf,
       telefone: usuario.telefone,
       gatewayCustomerId,
+      dadosPagamento: dadosPagamento
+        ? {
+            ...dadosPagamento,
+            metodoPagamento: dadosValidados?.metodoPagamento,
+          }
+        : { metodoPagamento: dadosValidados?.metodoPagamento },
     });
 
     if (resultado.status === 'aprovado') {
@@ -584,6 +631,7 @@ export class ServiceAssinatura {
           valor: valorAssinaturaMensal(plano.valor),
           payloadResumo: {
             status: resultado.status,
+            metodoPagamento: dadosValidados?.metodoPagamento || null,
             invoiceUrlDisponivel: Boolean(resultado.invoiceUrl),
             bankSlipUrlDisponivel: Boolean(resultado.bankSlipUrl),
             pixQrCodeDisponivel: Boolean(resultado.pixQrCode),

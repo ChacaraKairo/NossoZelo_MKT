@@ -58,6 +58,30 @@ Cadastro do usuario:
 
 Somente `usuarios.email_confirmado = true`, `usuarios.status_cadastro = ativo` e `assinaturas.status = ativa` liberam busca, pedidos e perfil profissional ativo.
 
+## Metodos de pagamento suportados
+
+A assinatura recorrente do Asaas aceita `PIX`, `BOLETO`, `UNDEFINED` e `CREDIT_CARD` como `billingType` no endpoint `POST /v3/subscriptions`.
+
+Para cartao de credito, o backend envia:
+
+- `billingType: CREDIT_CARD`
+- `creditCard`
+- `creditCardHolderInfo`
+- `remoteIp`
+
+O Asaas valida o cartao ao criar a assinatura, mas a assinatura local do NossoZelo continua `aguardando_confirmacao` ate o webhook confiavel de pagamento.
+
+Metodos internos aceitos pelo backend:
+
+- `credit_card`: cartao de credito recorrente via API.
+- `asaas_invoice`: fatura/checkout Asaas com `billingType = UNDEFINED`, caminho recomendado para debito.
+- `pix`: assinatura Pix.
+- `boleto`: assinatura boleto.
+
+Cartao de debito nao e suportado como `billingType` de assinatura recorrente via API do Asaas. A documentacao do Asaas informa que dados de cartao de debito nao podem ser enviados pela API; debito pode aparecer na `invoiceUrl` de cobrancas quando o `billingType` e `CREDIT_CARD` ou `UNDEFINED`. Por isso o NossoZelo nao envia `metodoPagamento = debit_card` ao backend. Para debito, o metodo interno correto e `asaas_invoice`, que cria a assinatura com `billingType = UNDEFINED` e direciona o prestador para o checkout seguro do Asaas.
+
+Nunca salve numero completo de cartao ou CVV. Esses dados podem existir apenas no payload em memoria da tentativa, enviados ao Asaas, e nao devem entrar em banco, evento financeiro, log ou analytics.
+
 ## Fluxo com Asaas
 
 1. Prestador cria cadastro.
@@ -65,13 +89,16 @@ Somente `usuarios.email_confirmado = true`, `usuarios.status_cadastro = ativo` e
 3. Prestador continua o onboarding em `/onboarding/prestador`.
 4. Prestador escolhe um plano ativo.
 5. Backend reutiliza `gateway_customer_id` anterior, quando existir.
-6. Backend cria uma assinatura mensal no Asaas e retorna `invoiceUrl`, `bankSlipUrl` ou Pix.
-7. Assinatura local fica `aguardando_confirmacao`, mesmo que o Asaas retorne `ACTIVE`.
-8. Prestador paga no ambiente/link do Asaas.
-9. Asaas envia webhook real de pagamento.
-10. Backend valida o token do webhook.
-11. Backend atualiza assinatura e `usuarios.status_cadastro` somente quando o `subscription` do Asaas bater com `gateway_subscription_id`.
-12. Prestador passa a aparecer na busca quando a assinatura ficar `ativa`.
+6. Prestador escolhe credito, checkout Asaas, Pix ou boleto. Debito direto via API nao e oferecido.
+7. Backend cria uma assinatura mensal no Asaas.
+8. Para credito, backend envia dados do cartao e titular ao Asaas, sem persistir numero completo ou CVV.
+9. Para checkout Asaas/Pix/boleto, backend retorna `invoiceUrl`, `bankSlipUrl` ou Pix quando o Asaas disponibilizar a primeira cobranca.
+10. Assinatura local fica `aguardando_confirmacao`, mesmo que o Asaas retorne `ACTIVE` ou aceite a criacao com cartao.
+11. Prestador conclui o pagamento no cartao de credito recorrente, Pix/boleto ou checkout seguro do Asaas conforme o metodo.
+12. Asaas envia webhook real de pagamento.
+13. Backend valida o token do webhook.
+14. Backend atualiza assinatura e `usuarios.status_cadastro` somente quando o `subscription` do Asaas bater com `gateway_subscription_id`.
+15. Prestador passa a aparecer na busca quando a assinatura ficar `ativa`.
 
 ## Webhook
 
@@ -97,6 +124,8 @@ Eventos principais:
 O webhook nao deve registrar payload completo com dados sensiveis. Registre apenas evento, IDs do gateway, assinatura local e status resultante.
 
 No Asaas, `ACTIVE` indica que a assinatura recorrente foi criada e esta operacional no gateway. No NossoZelo, isso nao significa pagamento aprovado: a assinatura local so vira `ativa` depois de `PAYMENT_RECEIVED` ou `PAYMENT_CONFIRMED`.
+
+Mesmo no fluxo de cartao de credito, HTTP 200 na criacao da assinatura significa que o Asaas aceitou/validou a assinatura, nao que o NossoZelo deve liberar o prestador imediatamente. O webhook continua sendo a fonte final da verdade.
 
 Cada evento recebido ou gerado pelo sistema deve criar uma linha em `eventos_assinatura`. O campo `gateway_event_id` garante idempotencia: o mesmo evento do Asaas nao pode ser aplicado duas vezes. Eventos antigos que nao representam pagamento confirmado nao devem sobrescrever uma assinatura ja reativada por pagamento posterior.
 
@@ -154,7 +183,7 @@ Quando uma assinatura fica `pendente`, `atrasada`, `falhou`, `expirada`, `bloque
 
 Quando fica `aguardando_confirmacao`, a tela mostra **Pagamento em analise** e permite abrir ou gerar nova cobranca se necessario.
 
-Quando fica `ativa`, a tela mostra **Gerenciar pagamento**. Nesta etapa, o NossoZelo nao coleta numero de cartao nem CVV; o prestador conclui pagamentos no Asaas.
+Quando fica `ativa`, a tela mostra **Gerenciar pagamento**. Troca futura de cartao deve usar fluxo seguro do Asaas, preferencialmente tokenizacao ou endpoint proprio de atualizacao de cartao da assinatura. Numero completo e CVV nunca devem ser persistidos.
 
 ## Seguranca operacional
 
