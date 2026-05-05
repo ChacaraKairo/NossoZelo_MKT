@@ -16,15 +16,29 @@ cd controlador && npm run lint && npm run build
 3. Confirmar variaveis:
 
 ```env
+NODE_ENV=production
 DATABASE_URL=
 JWT_SECRET=
+ALLOWED_ORIGINS=
 FRONTEND_URL=
 BACKEND_PUBLIC_URL=
+RATE_LIMIT_STORE=upstash
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 PAYMENT_GATEWAY=asaas
 ASAAS_API_KEY=
 ASAAS_WEBHOOK_TOKEN=
 ASAAS_BASE_URL=https://api.asaas.com/v3
-ASAAS_BILLING_TYPE=PIX
+ASAAS_TIMEOUT_MS=60000
+ENABLE_UPLOADS=true
+UPLOAD_SCAN_MODE=clamav
+CLAMAV_HOST=
+CLAMAV_PORT=3310
+AWS_REGION=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_PUBLIC_BUCKET_NAME=
+AWS_PRIVATE_BUCKET_NAME=
 ```
 
 4. Confirmar webhook no Asaas:
@@ -37,13 +51,15 @@ https://SEU_CONTROLADOR/api/webhooks/asaas
 ## Ordem segura
 
 1. Fazer backup do banco.
-2. Aplicar migrations.
+2. Aplicar migrations com `npx prisma migrate deploy`.
 3. Publicar `server`.
 4. Publicar `controlador`.
 5. Publicar `client`.
 6. Executar health check.
-7. Gerar uma cobranca em sandbox ou conta de homologacao.
-8. Simular webhook de pagamento confirmado e atraso.
+7. Testar rate limit distribuido.
+8. Validar ClamAV com arquivo limpo e EICAR em staging.
+9. Gerar assinatura em sandbox/homologacao.
+10. Simular webhook de pagamento confirmado e atraso.
 
 ## Health check
 
@@ -63,24 +79,5 @@ Ambos precisam responder sem depender de sessao.
 - Verificar que planos inativos nao aparecem no marketplace.
 - Verificar que prestador inadimplente nao aparece na busca.
 - Verificar cron dos jobs.
-# Deploy
-
-Antes de publicar:
-
-- `JWT_SECRET` forte, unico por ambiente.
-- `ALLOWED_ORIGINS` definido, sem wildcard.
-- HTTPS ativo para client, controlador e API.
-- Cookies de sessao validados em ambiente com dominio real.
-- Buckets S3 separados para publico e privado.
-- Webhook Asaas configurado com `ASAAS_WEBHOOK_TOKEN`.
-- `npx prisma migrate deploy` executado no banco de producao.
-
-Comandos de validacao:
-
-```bash
-cd server && npm test && npm run build
-cd client && npm run lint && npm run build
-cd controlador && npm run prisma:generate && npm test && npm run lint && npm run build
-docker compose config
-```
-
+- Verificar que `ENABLE_ADMIN_CRUD=false`.
+- Verificar termos e politica de privacidade publicados.

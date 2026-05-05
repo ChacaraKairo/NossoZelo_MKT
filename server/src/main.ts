@@ -37,6 +37,20 @@ function validarAmbiente() {
         `Variaveis obrigatorias ausentes em producao: ${ausentes.join(', ')}.`,
       );
     }
+
+    if (process.env.RATE_LIMIT_STORE !== 'upstash') {
+      throw new Error('RATE_LIMIT_STORE=upstash e obrigatorio em producao.');
+    }
+
+    const redisAusentes = [
+      'UPSTASH_REDIS_REST_URL',
+      'UPSTASH_REDIS_REST_TOKEN',
+    ].filter((name) => !process.env[name]);
+    if (redisAusentes.length > 0) {
+      throw new Error(
+        `Variaveis Redis obrigatorias em producao: ${redisAusentes.join(', ')}.`,
+      );
+    }
   }
 
   if (process.env.PAYMENT_GATEWAY === 'asaas' && !process.env.ASAAS_API_KEY) {
@@ -55,6 +69,12 @@ function validarAmbiente() {
     if (ausentes.length > 0) {
       throw new Error(
         `Variaveis AWS obrigatorias ausentes: ${ausentes.join(', ')}.`,
+      );
+    }
+
+    if (isProduction && process.env.UPLOAD_SCAN_MODE !== 'clamav') {
+      throw new Error(
+        'UPLOAD_SCAN_MODE=clamav e obrigatorio em producao com uploads habilitados.',
       );
     }
   }

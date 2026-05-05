@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import path from 'path';
+import { verificarArquivoSeguro } from '../lib/uploadScanner';
 
 export type CadastroUploadRequest = Request & {
   cadastroUpload?: {
@@ -103,7 +104,7 @@ function nomeSuspeito(nome: string) {
   return /[\\/:*?"<>|\x00]/.test(nome) || nome.includes('..') || nome.trim().length > 180;
 }
 
-export function validarArquivosUploadCadastro(
+export async function validarArquivosUploadCadastro(
   req: Request,
   res: Response,
   next: NextFunction,
@@ -129,6 +130,20 @@ export function validarArquivosUploadCadastro(
     }
   }
 
-  // TODO(seguranca): integrar antivirus/quarentena antes de aceitar documentos em producao regulada.
-  return next();
+  try {
+    for (const arquivo of arquivos) {
+      const resultado = await verificarArquivoSeguro(arquivo);
+      if (!resultado.seguro) {
+        return res.status(400).json({
+          error: 'Arquivo rejeitado pela verificacao de seguranca.',
+        });
+      }
+    }
+
+    return next();
+  } catch {
+    return res.status(503).json({
+      error: 'Nao foi possivel verificar a seguranca do arquivo.',
+    });
+  }
 }

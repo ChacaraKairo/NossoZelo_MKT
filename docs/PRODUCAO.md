@@ -1,27 +1,32 @@
-# Produção
+# Producao
 
-Este projeto foi aproximado de um MVP real, mas ainda não está pronto para produção sem as pendências abaixo.
+Este projeto esta mais proximo de um MVP operavel, mas producao exige que os itens abaixo estejam configurados e testados em staging antes do lancamento publico.
 
-## Variáveis Críticas
+## Variaveis criticas
 
-Backend em produção não deve iniciar sem:
+Backend em producao nao deve iniciar sem:
 
 - `JWT_SECRET`
 - `DATABASE_URL`
 - `ALLOWED_ORIGINS`
 - `FRONTEND_URL`
 - `BACKEND_PUBLIC_URL`
+- `RATE_LIMIT_STORE=upstash`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 - `ASAAS_API_KEY`, se `PAYMENT_GATEWAY=asaas`
-- Variáveis AWS, se `ENABLE_UPLOADS=true`
+- Variaveis AWS e `UPLOAD_SCAN_MODE=clamav`, se `ENABLE_UPLOADS=true`
 
-Use HTTPS para frontend e backend. Se estiverem em domínios diferentes, confirme que `FRONTEND_URL` e `BACKEND_PUBLIC_URL` estão corretos; o cookie será `SameSite=None; Secure` automaticamente. Para forçar, configure `COOKIE_SAMESITE=none`.
+Use HTTPS para frontend e backend. Se estiverem em dominios diferentes, confirme que `FRONTEND_URL` e `BACKEND_PUBLIC_URL` estao corretos; o cookie sera `SameSite=None; Secure` automaticamente. Para forcar, configure `COOKIE_SAMESITE=none`.
 
-## Deploy Sugerido
+## Deploy sugerido
 
 - Backend: Render, Fly.io, Railway ou container em cloud.
-- Frontend: Vercel ou container estático/Next server.
+- Frontend: Vercel ou container estatico/Next server.
 - Banco: MySQL gerenciado.
-- Arquivos: S3 com bucket público apenas para fotos e bucket privado para documentos.
+- Rate limit: Upstash Redis REST ou Redis compativel via adaptador equivalente.
+- Arquivos: S3 com bucket publico apenas para fotos e bucket privado para documentos.
+- Scanner: ClamAV/clamd acessivel pelo backend.
 
 ## Checklist
 
@@ -31,14 +36,15 @@ Use HTTPS para frontend e backend. Se estiverem em domínios diferentes, confirm
 - Rodar `npx prisma db seed` em ambiente novo.
 - Configurar `ALLOWED_ORIGINS` sem wildcard.
 - Configurar webhooks do Asaas com token forte.
-- Revisar `ENABLE_ADMIN_CRUD`; mantenha `false` em produção salvo janela controlada.
+- Revisar `ENABLE_ADMIN_CRUD`; mantenha `false` em producao salvo janela controlada.
+- Validar ClamAV com arquivo limpo e arquivo EICAR em staging.
+- Validar bloqueio de rate limit em staging.
 
-## Pendências Antes De Produção
+## Pendencias antes de producao publica
 
-- Substituir rate limit em memória por Redis.
-- Adicionar antivírus/quarentena nos uploads.
-- Fazer revisão completa de autorização por recurso em agendamentos e assinatura.
-- Criar testes e2e reais de login, onboarding, assinatura e agendamento.
-- Refatorar `server/src/src` em mudança dedicada.
-- Corrigir encoding legado dos enums `agenda_recorrente_dia_semana` com migração planejada.
-- Adicionar observabilidade, tracing e alertas.
+- Fazer revisao completa de autorizacao por recurso em agendamentos, assinatura, perfil e admin.
+- Criar testes E2E reais de login, onboarding, assinatura e agendamento.
+- Refatorar `server/src/src` em mudanca dedicada.
+- Corrigir encoding legado dos enums `agenda_recorrente_dia_semana` com migration planejada.
+- Adicionar observabilidade, tracing, metricas e alertas.
+- Formalizar termos, privacidade, retencao de documentos, suporte, denuncia, disputa e cancelamento.
