@@ -44,6 +44,17 @@ const ESTADOS_BRASIL: Record<string, string> = {
   sergipe: 'SE',
   tocantins: 'TO',
 };
+const EXTERNAL_FETCH_TIMEOUT_MS = Number(
+  process.env.EXTERNAL_FETCH_TIMEOUT_MS || 5000,
+);
+
+function fetchTimeoutSignal() {
+  return AbortSignal.timeout(
+    Number.isFinite(EXTERNAL_FETCH_TIMEOUT_MS) && EXTERNAL_FETCH_TIMEOUT_MS > 0
+      ? EXTERNAL_FETCH_TIMEOUT_MS
+      : 5000,
+  );
+}
 
 function normalizarTextoBusca(valor: string) {
   return valor
@@ -235,6 +246,7 @@ export class GeolocalizacaoService {
     try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
+        signal: fetchTimeoutSignal(),
       });
       const dados = await resposta.json();
 
@@ -273,7 +285,9 @@ export class GeolocalizacaoService {
     );
 
     try {
-      const resposta = await fetch(url);
+      const resposta = await fetch(url, {
+        signal: fetchTimeoutSignal(),
+      });
       const dados = await resposta.json();
 
       if (dados.erro) {
@@ -317,6 +331,7 @@ export class GeolocalizacaoService {
     try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
+        signal: fetchTimeoutSignal(),
       });
       const dados = await resposta.json();
 

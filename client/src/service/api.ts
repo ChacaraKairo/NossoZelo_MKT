@@ -7,10 +7,15 @@ const CONTEXTO = 'api';
 const apiUrl =
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:4000';
+const apiTimeout = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 15000);
 
 export const baseURL = `${apiUrl}/nossozelo`;
 
-export const api = axios.create({ baseURL });
+export const api = axios.create({
+  baseURL,
+  withCredentials: true,
+  timeout: Number.isFinite(apiTimeout) && apiTimeout > 0 ? apiTimeout : 15000,
+});
 
 export function extrairErroApi(error: unknown) {
   if (axios.isAxiosError(error)) {
