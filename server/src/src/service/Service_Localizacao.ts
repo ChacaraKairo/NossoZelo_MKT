@@ -189,6 +189,7 @@ export class GeolocalizacaoService {
     try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
+        signal: fetchTimeoutSignal(),
       });
       const dados = await resposta.json();
 
@@ -227,7 +228,9 @@ export class GeolocalizacaoService {
     );
 
     try {
-      const resposta = await fetch(url);
+      const resposta = await fetch(url, {
+        signal: fetchTimeoutSignal(),
+      });
       const dados = await resposta.json();
 
       if (dados.erro) {
@@ -271,6 +274,7 @@ export class GeolocalizacaoService {
     try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
+        signal: fetchTimeoutSignal(),
       });
       const dados = await resposta.json();
 
