@@ -5,7 +5,7 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon --watch src --ext ts,json --exec ts-node-dev --files src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --ignore-watch dist --ignore-watch uploads src/server.ts",
     "build": "npx prisma generate && tsc && node scripts/copy-static-assets.js",
     "lint": "tsc --noEmit",
     "db:keep-alive": "ts-node src/src/scripts/ping-db.ts",
