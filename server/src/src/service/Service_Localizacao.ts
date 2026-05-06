@@ -44,6 +44,17 @@ const ESTADOS_BRASIL: Record<string, string> = {
   sergipe: 'SE',
   tocantins: 'TO',
 };
+const EXTERNAL_FETCH_TIMEOUT_MS = Number(
+  process.env.EXTERNAL_FETCH_TIMEOUT_MS || 5000,
+);
+
+function fetchTimeoutSignal() {
+  return AbortSignal.timeout(
+    Number.isFinite(EXTERNAL_FETCH_TIMEOUT_MS) && EXTERNAL_FETCH_TIMEOUT_MS > 0
+      ? EXTERNAL_FETCH_TIMEOUT_MS
+      : 5000,
+  );
+}
 
 function normalizarTextoBusca(valor: string) {
   return valor
@@ -153,6 +164,7 @@ export class GeolocalizacaoService {
     const url = `https://nominatim.openstreetmap.org/search?postalcode=${cep}&country=Brazil&format=json`;    try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
+        signal: fetchTimeoutSignal(),
       });
       const dados = await resposta.json();
 
@@ -173,7 +185,9 @@ export class GeolocalizacaoService {
     cep: string,
   ): Promise<any> {
     const url = `https://viacep.com.br/ws/${cep}/json/`;    try {
-      const resposta = await fetch(url);
+      const resposta = await fetch(url, {
+        signal: fetchTimeoutSignal(),
+      });
       const dados = await resposta.json();
 
       if (dados.erro) {        throw new Error('CEP não encontrado.');
@@ -199,6 +213,7 @@ export class GeolocalizacaoService {
     )}&format=json`;    try {
       const resposta = await fetch(url, {
         headers: { 'User-Agent': this.userAgent },
+        signal: fetchTimeoutSignal(),
       });
       const dados = await resposta.json();
 
