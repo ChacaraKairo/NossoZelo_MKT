@@ -7,11 +7,13 @@
 node_modules/
 server/node_modules/
 client/node_modules/
+controlador/node_modules/
 
 # Builds and framework output
 dist/
 server/dist/
 client/.next/
+controlador/.next/
 .next/
 out/
 build/
