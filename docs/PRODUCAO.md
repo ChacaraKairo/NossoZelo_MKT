@@ -14,8 +14,20 @@ Backend em producao nao deve iniciar sem:
 - `RATE_LIMIT_STORE=upstash`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
-- `ASAAS_API_KEY`, se `PAYMENT_GATEWAY=asaas`
+- `ASAAS_ENVIRONMENT=production`, `ASAAS_API_KEY` e `ASAAS_BASE_URL=https://api.asaas.com/v3`, se `PAYMENT_GATEWAY=asaas`
 - Variaveis AWS e `UPLOAD_SCAN_MODE=clamav`, se `ENABLE_UPLOADS=true`
+
+Frontend publico em producao precisa de:
+
+- `NEXT_PUBLIC_API_URL` apontando para a URL publica HTTPS do backend
+
+Controlador/admin em producao precisa de:
+
+- `DATABASE_URL`
+- `JWT_ADMIN_SECRET` com pelo menos 32 caracteres
+- `MASTER_ADMIN_EMAIL`
+- `CRON_SECRET` com pelo menos 32 caracteres, se usar sincronizacao automatica
+- `ASAAS_ENVIRONMENT`, `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN` e `ASAAS_BASE_URL`
 
 Use HTTPS para frontend e backend. Se estiverem em dominios diferentes, confirme que `FRONTEND_URL` e `BACKEND_PUBLIC_URL` estao corretos; o cookie sera `SameSite=None; Secure` automaticamente. Para forcar, configure `COOKIE_SAMESITE=none`.
 

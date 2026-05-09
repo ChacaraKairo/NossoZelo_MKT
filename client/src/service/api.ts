@@ -1,15 +1,13 @@
 import axios from 'axios';
+import { getNossoZeloApiUrl } from '@/config/api';
 import logger from '@/utils/logger';
 import { logout } from '@/utils/auth';
 
 const CONTEXTO = 'api';
 
-const apiUrl =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:4000';
 const apiTimeout = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 15000);
 
-export const baseURL = `${apiUrl}/nossozelo`;
+export const baseURL = getNossoZeloApiUrl();
 
 export const api = axios.create({
   baseURL,

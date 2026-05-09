@@ -30,6 +30,7 @@ export interface AssinaturaAtual {
   gateway?: string | null;
   gateway_customer_id?: string | null;
   gateway_subscription_id?: string | null;
+  gateway_payment_id?: string | null;
   gateway_status?: string | null;
   data_ultimo_pagamento?: string | Date | null;
   data_proximo_vencimento?: string | Date | null;

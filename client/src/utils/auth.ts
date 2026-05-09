@@ -1,3 +1,4 @@
+import { getNossoZeloApiUrl } from '@/config/api';
 import logger from '@/utils/logger';
 
 export interface UsuarioDecodificado {
@@ -34,7 +35,7 @@ export const logout = (silent: boolean = false) => {
   });
 
   fetch(
-    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/nossozelo/login/logout`,
+    `${getNossoZeloApiUrl()}/login/logout`,
     { method: 'POST', credentials: 'include' },
   ).catch(() => undefined);
 

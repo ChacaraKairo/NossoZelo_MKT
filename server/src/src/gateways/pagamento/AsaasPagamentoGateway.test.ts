@@ -57,9 +57,42 @@ const dadosPagamentoCredito = {
 describe('AsaasPagamentoGateway', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NODE_ENV = 'test';
     process.env.ASAAS_API_KEY = 'asaas-test-key';
+    process.env.ASAAS_ENVIRONMENT = 'sandbox';
     process.env.ASAAS_BASE_URL = 'https://api-sandbox.asaas.com/v3';
     process.env.ASAAS_BILLING_TYPE = 'PIX';
+  });
+
+  it('usa URL de producao quando ASAAS_ENVIRONMENT=production e ASAAS_BASE_URL nao foi sobrescrita', () => {
+    delete process.env.ASAAS_BASE_URL;
+    process.env.ASAAS_ENVIRONMENT = 'production';
+
+    new AsaasPagamentoGateway();
+
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseURL: 'https://api.asaas.com/v3',
+      }),
+    );
+  });
+
+  it('bloqueia combinacao de producao com URL sandbox', () => {
+    process.env.ASAAS_ENVIRONMENT = 'production';
+    process.env.ASAAS_BASE_URL = 'https://api-sandbox.asaas.com/v3';
+
+    expect(() => new AsaasPagamentoGateway()).toThrow(
+      /aponta para sandbox/,
+    );
+  });
+
+  it('bloqueia combinacao de sandbox com URL de producao', () => {
+    process.env.ASAAS_ENVIRONMENT = 'sandbox';
+    process.env.ASAAS_BASE_URL = 'https://api.asaas.com/v3';
+
+    expect(() => new AsaasPagamentoGateway()).toThrow(
+      /aponta para producao/,
+    );
   });
 
   it('cria customer sanitizando CPF e telefone para o Asaas', async () => {

@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { assinaturas_status, Prisma, usuarios_status_cadastro } from '@prisma/client';
+import { assinaturas, assinaturas_status, Prisma, usuarios_status_cadastro } from '@prisma/client';
 import {
   DIAS_TOLERANCIA_ASSINATURA,
   GATEWAY_PAGAMENTO,
@@ -22,8 +22,18 @@ import ServiceOnboarding from './Service_Onboarding';
 type DadosGatewayAtivacao = Partial<CriarAssinaturaResultado> & {
   gatewaySubscriptionId?: string;
   gatewayCustomerId?: string;
+  gatewayPaymentId?: string;
   planoId?: number;
 };
+
+type StatusGatewayResposta = 'aprovado' | 'pendente' | 'recusado' | 'erro';
+
+type ProximaAcaoAssinatura =
+  | 'aguardar_webhook'
+  | 'pagar_fatura'
+  | 'regularizar_pagamento'
+  | 'confirmar_email'
+  | 'nenhuma';
 
 export type DadosPagamentoAssinatura = {
   metodoPagamento?: MetodoPagamentoAssinatura;
@@ -161,6 +171,106 @@ function motivoPerfilInativo(status?: assinaturas_status | null) {
   if (status === STATUS_ASSINATURA.bloqueada) return 'assinatura_bloqueada';
   if (status === STATUS_ASSINATURA.cancelada) return 'assinatura_cancelada';
   return 'pagamento_pendente';
+}
+
+function dataIsoOuNull(data?: Date | string | null) {
+  if (!data) return null;
+  const valor = data instanceof Date ? data : new Date(data);
+  return Number.isNaN(valor.getTime()) ? null : valor.toISOString();
+}
+
+function statusGatewayResposta(
+  statusAssinatura: assinaturas_status,
+  resultadoGateway?: CriarAssinaturaResultado | null,
+): StatusGatewayResposta {
+  if (resultadoGateway?.status === 'aprovado') return 'aprovado';
+  if (resultadoGateway?.status === 'recusado') return 'recusado';
+  if (resultadoGateway?.status === 'erro') return 'erro';
+  if (statusAssinatura === STATUS_ASSINATURA.ativa) return 'aprovado';
+  if (
+    statusAssinatura === STATUS_ASSINATURA.falhou ||
+    statusAssinatura === STATUS_ASSINATURA.cancelada
+  ) {
+    return 'recusado';
+  }
+  return 'pendente';
+}
+
+function proximaAcaoAssinatura(
+  emailConfirmado: boolean,
+  statusAssinatura: assinaturas_status,
+  resultadoGateway?: CriarAssinaturaResultado | null,
+): ProximaAcaoAssinatura {
+  if (!emailConfirmado) return 'confirmar_email';
+  if (statusAssinatura === STATUS_ASSINATURA.ativa) return 'nenhuma';
+
+  const temCobrancaAberta = Boolean(
+    resultadoGateway?.invoiceUrl ||
+      resultadoGateway?.bankSlipUrl ||
+      resultadoGateway?.pixQrCode?.payload ||
+      resultadoGateway?.pixQrCode?.encodedImage,
+  );
+
+  if (
+    statusAssinatura === STATUS_ASSINATURA.aguardando_confirmacao ||
+    statusAssinatura === STATUS_ASSINATURA.pendente
+  ) {
+    return temCobrancaAberta ? 'pagar_fatura' : 'aguardar_webhook';
+  }
+
+  return 'regularizar_pagamento';
+}
+
+function mensagemUsuarioAssinatura(
+  liberado: boolean,
+  emailConfirmado: boolean,
+  statusAssinatura: assinaturas_status,
+  resultadoGateway?: CriarAssinaturaResultado | null,
+) {
+  if (!emailConfirmado) {
+    return 'Confirme seu e-mail para liberar o perfil profissional.';
+  }
+
+  if (liberado) {
+    return 'Assinatura ativa. Seu perfil esta liberado para buscas e pedidos.';
+  }
+
+  if (resultadoGateway?.status === 'erro') {
+    return resultadoGateway.mensagem ||
+      'Nao foi possivel criar a assinatura no Asaas. Tente novamente.';
+  }
+
+  if (resultadoGateway?.status === 'recusado') {
+    return resultadoGateway.mensagem ||
+      'Pagamento recusado. Revise os dados ou use outro metodo.';
+  }
+
+  if (statusAssinatura === STATUS_ASSINATURA.aguardando_confirmacao) {
+    return resultadoGateway?.mensagem ||
+      'Assinatura mensal criada. Pague a primeira cobranca e aguarde a confirmacao automatica do Asaas.';
+  }
+
+  if (statusAssinatura === STATUS_ASSINATURA.atrasada) {
+    return 'Assinatura atrasada. Regularize o pagamento para voltar a receber pedidos.';
+  }
+
+  if (statusAssinatura === STATUS_ASSINATURA.bloqueada) {
+    return 'Assinatura bloqueada por inadimplencia. Regularize para reativar o perfil.';
+  }
+
+  if (statusAssinatura === STATUS_ASSINATURA.cancelada) {
+    return 'Assinatura cancelada. Inicie uma nova assinatura mensal para reativar o perfil.';
+  }
+
+  if (statusAssinatura === STATUS_ASSINATURA.expirada) {
+    return 'A confirmacao do pagamento expirou. Gere uma nova cobranca de assinatura.';
+  }
+
+  if (statusAssinatura === STATUS_ASSINATURA.falhou) {
+    return 'Pagamento nao confirmado. Regularize a assinatura para liberar o acesso.';
+  }
+
+  return 'Assinatura pendente. Inicie o pagamento mensal para liberar seu perfil.';
 }
 
 function payloadAsaas(payload: unknown): AsaasWebhookPayload {
@@ -409,6 +519,99 @@ export class ServiceAssinatura {
     };
   }
 
+  static async montarRespostaAssinatura(
+    prestadorId: string,
+    assinaturaAtual?: assinaturas | null,
+    resultadoGateway?: CriarAssinaturaResultado | null,
+  ) {
+    const [usuario, assinaturaBase] = await Promise.all([
+      prisma.usuarios.findUnique({
+        where: { id: prestadorId },
+        select: {
+          id: true,
+          tipo: true,
+          email_confirmado: true,
+          status_cadastro: true,
+        },
+      }),
+      assinaturaAtual === undefined
+        ? this.obterAssinaturaAtual(prestadorId)
+        : Promise.resolve(assinaturaAtual),
+    ]);
+
+    if (!usuario) {
+      throw erroNegocio('Prestador nao encontrado.', 404);
+    }
+
+    if (!TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
+      throw erroNegocio('Usuario informado nao e um prestador.', 400);
+    }
+
+    const statusAssinatura =
+      assinaturaBase?.status ?? STATUS_ASSINATURA.pendente;
+    const perfilProfissionalAtivo =
+      usuario.email_confirmado &&
+      usuario.status_cadastro === STATUS_CADASTRO_USUARIO.ativo &&
+      statusAssinatura === STATUS_ASSINATURA.ativa;
+    const motivoBloqueio = perfilProfissionalAtivo
+      ? null
+      : usuario.email_confirmado
+        ? motivoPerfilInativo(assinaturaBase?.status)
+        : 'email_nao_confirmado';
+
+    return {
+      assinatura: {
+        id: assinaturaBase?.id ?? null,
+        status: statusAssinatura,
+        plano_id: assinaturaBase?.plano_id ?? null,
+        gateway: assinaturaBase?.gateway ?? resultadoGateway?.gateway ?? null,
+        gateway_subscription_id:
+          assinaturaBase?.gateway_subscription_id ??
+          resultadoGateway?.gatewaySubscriptionId ??
+          null,
+        gateway_payment_id:
+          assinaturaBase?.gateway_payment_id ??
+          resultadoGateway?.gatewayPaymentId ??
+          null,
+        data_ultimo_pagamento: dataIsoOuNull(
+          assinaturaBase?.data_ultimo_pagamento,
+        ),
+        data_proximo_vencimento: dataIsoOuNull(
+          assinaturaBase?.data_proximo_vencimento,
+        ),
+        confirmacao_expira_em: dataIsoOuNull(
+          assinaturaBase?.confirmacao_expira_em,
+        ),
+      },
+      acesso: {
+        liberado: perfilProfissionalAtivo,
+        perfil_profissional_ativo: perfilProfissionalAtivo,
+        pode_aparecer_na_busca: perfilProfissionalAtivo,
+        pode_receber_pedidos: perfilProfissionalAtivo,
+        motivo_bloqueio: motivoBloqueio,
+        mensagem_usuario: mensagemUsuarioAssinatura(
+          perfilProfissionalAtivo,
+          usuario.email_confirmado,
+          statusAssinatura,
+          resultadoGateway,
+        ),
+        proxima_acao: proximaAcaoAssinatura(
+          usuario.email_confirmado,
+          statusAssinatura,
+          resultadoGateway,
+        ),
+      },
+      pagamento: {
+        status_gateway: statusGatewayResposta(statusAssinatura, resultadoGateway),
+        invoiceUrl: resultadoGateway?.invoiceUrl ?? null,
+        bankSlipUrl: resultadoGateway?.bankSlipUrl ?? null,
+        pixQrCode: resultadoGateway?.pixQrCode ?? null,
+        mensagem_gateway:
+          resultadoGateway?.mensagem ?? assinaturaBase?.gateway_status ?? undefined,
+      },
+    };
+  }
+
   static async prestadorPodeAparecerNaBusca(prestadorId: string) {
     const status =
       await this.obterStatusAssinaturaPrestador(prestadorId);
@@ -553,13 +756,10 @@ export class ServiceAssinatura {
         ...resultado,
         planoId,
       });
-      return {
-        gateway_resultado: {
-          ...resultado,
-          mensagem: 'Assinatura ativada com sucesso.',
-        },
-        assinatura,
-      };
+      return this.montarRespostaAssinatura(prestadorId, assinatura, {
+        ...resultado,
+        mensagem: 'Assinatura ativada com sucesso.',
+      });
     }
 
     if (resultado.status === 'recusado') {
@@ -567,11 +767,9 @@ export class ServiceAssinatura {
         prestadorId,
         resultado.mensagem || 'Pagamento recusado.',
         planoId,
+        resultado,
       );
-      return {
-        gateway_resultado: resultado,
-        assinatura,
-      };
+      return this.montarRespostaAssinatura(prestadorId, assinatura, resultado);
     }
 
     if (!resultado.sucesso || resultado.status === 'erro') {
@@ -579,11 +777,9 @@ export class ServiceAssinatura {
         prestadorId,
         resultado.mensagem || 'Erro ao criar assinatura no Asaas.',
         planoId,
+        resultado,
       );
-      return {
-        gateway_resultado: resultado,
-        assinatura,
-      };
+      return this.montarRespostaAssinatura(prestadorId, assinatura, resultado);
     }
 
     const confirmacaoExpiraEm =
@@ -596,6 +792,7 @@ export class ServiceAssinatura {
       gateway: resultado.gateway,
       gateway_customer_id: resultado.gatewayCustomerId,
       gateway_subscription_id: resultado.gatewaySubscriptionId,
+      gateway_payment_id: resultado.gatewayPaymentId,
       gateway_status: resultado.status,
       confirmacao_expira_em: confirmacaoExpiraEm,
     };
@@ -643,16 +840,12 @@ export class ServiceAssinatura {
       return novaAssinatura;
     });
 
-    return {
-      gateway_resultado: {
-        ...resultado,
-        mensagem:
-          resultado.mensagem ||
-          'Pagamento enviado para analise. A confirmacao pode levar ate 72 horas.',
-      },
-      assinatura,
-      ...(dadosValidados ? { pagamento: dadosValidados } : {}),
-    };
+    return this.montarRespostaAssinatura(prestadorId, assinatura, {
+      ...resultado,
+      mensagem:
+        resultado.mensagem ||
+        'Pagamento enviado para analise. A confirmacao pode levar ate 72 horas.',
+    });
   }
 
   static async ativarAssinatura(
@@ -670,6 +863,7 @@ export class ServiceAssinatura {
       gateway: dadosGateway.gateway || GATEWAY_PAGAMENTO.asaas,
       gateway_customer_id: dadosGateway.gatewayCustomerId,
       gateway_subscription_id: dadosGateway.gatewaySubscriptionId,
+      gateway_payment_id: dadosGateway.gatewayPaymentId,
       gateway_status: dadosGateway.status || 'aprovado',
       data_ultimo_pagamento: agora,
       data_proximo_vencimento: dataProximoVencimento,
@@ -721,10 +915,21 @@ export class ServiceAssinatura {
     prestadorId: string,
     motivo: string,
     planoId?: number,
+    resultadoGateway?: CriarAssinaturaResultado,
   ) {
     const assinaturaAtual = await this.obterAssinaturaAtual(prestadorId);
     const dados = {
       status: STATUS_ASSINATURA.falhou,
+      gateway: resultadoGateway?.gateway || GATEWAY_PAGAMENTO.asaas,
+      gateway_customer_id:
+        resultadoGateway?.gatewayCustomerId ||
+        assinaturaAtual?.gateway_customer_id,
+      gateway_subscription_id:
+        resultadoGateway?.gatewaySubscriptionId ||
+        assinaturaAtual?.gateway_subscription_id,
+      gateway_payment_id:
+        resultadoGateway?.gatewayPaymentId ||
+        assinaturaAtual?.gateway_payment_id,
       gateway_status: motivo,
       confirmacao_expira_em: null,
     };
@@ -739,7 +944,6 @@ export class ServiceAssinatura {
             data: {
               prestador_id: prestadorId,
               plano_id: planoId || 1,
-              gateway: GATEWAY_PAGAMENTO.asaas,
               ...dados,
             },
           });
@@ -757,6 +961,8 @@ export class ServiceAssinatura {
           tipo: 'pagamento_falhou',
           origem: 'sistema',
           gateway: GATEWAY_PAGAMENTO.asaas,
+          gatewayPaymentId: resultadoGateway?.gatewayPaymentId,
+          gatewaySubscriptionId: resultadoGateway?.gatewaySubscriptionId,
           statusAnterior: assinaturaAtual?.status,
           statusNovo: assinatura.status,
           payloadResumo: { motivo },
@@ -1274,6 +1480,7 @@ export class ServiceAssinatura {
       gateway: GATEWAY_PAGAMENTO.asaas,
       gateway_customer_id:
         gatewayCustomerId || assinaturaAtual.gateway_customer_id,
+      gateway_payment_id: payment?.id || assinaturaAtual.gateway_payment_id,
       gateway_status: limitarGatewayStatus(
         `${event}:${payment?.status || subscription?.status || statusAssinatura}`,
       ),

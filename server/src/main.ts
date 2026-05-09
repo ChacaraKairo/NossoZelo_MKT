@@ -53,8 +53,22 @@ function validarAmbiente() {
     }
   }
 
-  if (process.env.PAYMENT_GATEWAY === 'asaas' && !process.env.ASAAS_API_KEY) {
-    throw new Error('ASAAS_API_KEY e obrigatorio quando PAYMENT_GATEWAY=asaas.');
+  if (isProduction && process.env.PAYMENT_GATEWAY !== 'asaas') {
+    throw new Error('PAYMENT_GATEWAY=asaas e obrigatorio em producao.');
+  }
+
+  if (process.env.PAYMENT_GATEWAY === 'asaas') {
+    const asaasAusentes = [
+      'ASAAS_ENVIRONMENT',
+      'ASAAS_API_KEY',
+      'ASAAS_WEBHOOK_TOKEN',
+    ].filter((name) => !process.env[name]?.trim());
+
+    if (asaasAusentes.length > 0) {
+      throw new Error(
+        `Variaveis Asaas obrigatorias ausentes: ${asaasAusentes.join(', ')}.`,
+      );
+    }
   }
 
   if (process.env.ENABLE_UPLOADS === 'true') {

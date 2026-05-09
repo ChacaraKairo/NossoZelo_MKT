@@ -69,9 +69,9 @@ class ControllerAssinatura {
         return res.status(401).json({ error: 'Usuario nao autenticado.' });
       }
 
-      const status =
-        await ServiceAssinatura.obterStatusAssinaturaPrestador(req.user.id);
-      return res.status(200).json(status);
+      const resposta =
+        await ServiceAssinatura.montarRespostaAssinatura(req.user.id);
+      return res.status(200).json(resposta);
     } catch (error: any) {
       return res
         .status(statusErro(error))
@@ -102,11 +102,11 @@ class ControllerAssinatura {
           .json({ error: 'Acesso negado para consultar esta assinatura.' });
       }
 
-      const status =
-        await ServiceAssinatura.obterStatusAssinaturaPrestador(
+      const resposta =
+        await ServiceAssinatura.montarRespostaAssinatura(
           req.params.prestadorId,
         );
-      return res.status(200).json(status);
+      return res.status(200).json(resposta);
     } catch (error: any) {
       return res
         .status(statusErro(error))
@@ -168,10 +168,15 @@ class ControllerAssinatura {
 
       const assinatura =
         await ServiceAssinatura.cancelarAssinaturaPrestador(req.user.id);
+      const resposta =
+        await ServiceAssinatura.montarRespostaAssinatura(
+          req.user.id,
+          assinatura,
+        );
 
       return res.status(200).json({
         message: 'Assinatura cancelada com sucesso.',
-        assinatura,
+        ...resposta,
       });
     } catch (error: any) {
       return res

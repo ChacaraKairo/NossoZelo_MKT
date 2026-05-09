@@ -47,6 +47,40 @@ Requer admin via JWT/cookie. Em produção, requer `ENABLE_ADMIN_CRUD=true`. Ape
 - `POST /assinaturas/cancelar`
 - `POST /assinaturas/webhook/asaas`
 
+`GET /assinaturas/minha`, `GET /assinaturas/status/:prestadorId`, `POST /assinaturas/iniciar` e `POST /assinaturas/regularizar` retornam o contrato padronizado:
+
+```json
+{
+  "assinatura": {
+    "id": 10,
+    "status": "aguardando_confirmacao",
+    "plano_id": 1,
+    "gateway": "asaas",
+    "gateway_subscription_id": "sub_...",
+    "gateway_payment_id": "pay_...",
+    "data_ultimo_pagamento": null,
+    "data_proximo_vencimento": null,
+    "confirmacao_expira_em": "2026-05-11T21:00:00.000Z"
+  },
+  "acesso": {
+    "liberado": false,
+    "perfil_profissional_ativo": false,
+    "pode_aparecer_na_busca": false,
+    "pode_receber_pedidos": false,
+    "motivo_bloqueio": "pagamento_aguardando_confirmacao",
+    "mensagem_usuario": "Assinatura mensal criada. Pague a primeira cobranca e aguarde a confirmacao automatica do Asaas.",
+    "proxima_acao": "pagar_fatura"
+  },
+  "pagamento": {
+    "status_gateway": "pendente",
+    "invoiceUrl": "https://...",
+    "bankSlipUrl": null,
+    "pixQrCode": null,
+    "mensagem_gateway": "Assinatura criada no Asaas."
+  }
+}
+```
+
 ## Agendamentos
 
 - `POST /agendamentos`

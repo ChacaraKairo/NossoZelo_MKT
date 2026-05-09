@@ -65,15 +65,33 @@ O monitoramento externo deve alertar quando esses endpoints deixarem de responde
 
 ## Variaveis criticas
 
+Frontend publico:
+
+- `NEXT_PUBLIC_API_URL`
+
+Backend API:
+
 - `DATABASE_URL`
 - `JWT_SECRET`
 - `FRONTEND_URL`
 - `BACKEND_PUBLIC_URL`
 - `PAYMENT_GATEWAY=asaas`
+- `ASAAS_ENVIRONMENT=production`
 - `ASAAS_API_KEY`
 - `ASAAS_WEBHOOK_TOKEN`
 - `ASAAS_BASE_URL`
 - `ASAAS_BILLING_TYPE`
+
+Controlador/admin:
+
+- `DATABASE_URL`
+- `JWT_ADMIN_SECRET`
+- `MASTER_ADMIN_EMAIL`
+- `CRON_SECRET`
+- `ASAAS_ENVIRONMENT`
+- `ASAAS_API_KEY`
+- `ASAAS_WEBHOOK_TOKEN`
+- `ASAAS_BASE_URL`
 
 Nunca publique logs contendo senha, token, CPF completo, cartao, CVV ou headers sensiveis.
 

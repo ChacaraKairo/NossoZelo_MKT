@@ -6,6 +6,7 @@ import Input from '@/components/inputs/Input';
 import InputDate from '@/components/inputs/InputDate';
 import Button from '@/components/btn/Button';
 import Logo from '@/components/logos/OnlyLogo';
+import { getNossoZeloApiUrl } from '@/config/api';
 
 import {
   cadastrarUsuario,
@@ -177,9 +178,7 @@ const CadastroPage = () => {
       if (fotoPerfil && resultadoCadastro.uploadToken) {
         const formData = new FormData();
         formData.append('foto', fotoPerfil);
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        await fetch(`${apiUrl}/nossozelo/upload/completar-cadastro`, {
+        await fetch(`${getNossoZeloApiUrl()}/upload/completar-cadastro`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${resultadoCadastro.uploadToken}`,

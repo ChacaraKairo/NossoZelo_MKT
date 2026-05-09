@@ -37,7 +37,7 @@ cd server && npm run assinaturas:expirar-pendentes
 cd server && npm run tokens:limpar
 ```
 
-Configure as mesmas variaveis de ambiente da API, principalmente `DATABASE_URL`, `ASAAS_API_KEY`, `ASAAS_BASE_URL` e `ASAAS_WEBHOOK_TOKEN`.
+Configure as mesmas variaveis de ambiente da API, principalmente `DATABASE_URL`, `ASAAS_ENVIRONMENT`, `ASAAS_API_KEY`, `ASAAS_BASE_URL` e `ASAAS_WEBHOOK_TOKEN`.
 
 ## Falhas
 

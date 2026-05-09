@@ -13,8 +13,8 @@ const encoder = new TextEncoder();
 
 function getJwtSecret() {
   const secret = process.env.JWT_ADMIN_SECRET;
-  if (!secret) {
-    throw new Error("JWT_ADMIN_SECRET nao configurado.");
+  if (!secret || secret.length < 32 || secret === "troque-por-uma-chave-forte") {
+    throw new Error("JWT_ADMIN_SECRET ausente ou fraco. Use pelo menos 32 caracteres.");
   }
   return encoder.encode(secret);
 }

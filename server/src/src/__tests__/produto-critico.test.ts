@@ -159,6 +159,7 @@ const assinaturaBase = {
   gateway: 'asaas',
   gateway_customer_id: 'cus_1',
   gateway_subscription_id: 'sub_1',
+  gateway_payment_id: null,
   gateway_status: 'PENDING',
   data_ultimo_pagamento: null,
   data_proximo_vencimento: null,
@@ -415,6 +416,12 @@ describe('fluxos criticos do produto', () => {
         enfermeiros: null,
         acompanhantes: null,
         assinaturas: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: 'aguardando_confirmacao_pagamento',
       });
     mocks.prisma.planos.findUnique.mockResolvedValue({
       id: 1,
@@ -452,7 +459,9 @@ describe('fluxos criticos do produto', () => {
     );
 
     expect(mocks.gateway.criarAssinaturaMensal).toHaveBeenCalled();
-    expect(resultado.gateway_resultado.invoiceUrl).toContain('asaas.test');
+    expect(resultado.pagamento.invoiceUrl).toContain('asaas.test');
+    expect(resultado.assinatura.gateway_payment_id).toBe('pay_1');
+    expect(resultado.acesso.liberado).toBe(false);
     expect(mocks.prisma.eventos_assinatura.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ tipo: 'assinatura_criada' }),
@@ -484,6 +493,12 @@ describe('fluxos criticos do produto', () => {
         enfermeiros: null,
         acompanhantes: null,
         assinaturas: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: 'aguardando_confirmacao_pagamento',
       });
     mocks.prisma.planos.findUnique.mockResolvedValue({
       id: 1,
@@ -564,6 +579,12 @@ describe('fluxos criticos do produto', () => {
         enfermeiros: null,
         acompanhantes: null,
         assinaturas: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: 'inadimplente',
       });
     mocks.prisma.planos.findUnique.mockResolvedValue({
       id: 1,
@@ -600,7 +621,7 @@ describe('fluxos criticos do produto', () => {
       dadosPagamentoCredito,
     );
 
-    expect(resultado.gateway_resultado.status).toBe('recusado');
+    expect(resultado.pagamento.status_gateway).toBe('recusado');
     expect(resultado.assinatura.status).toBe('falhou');
   });
 

@@ -1,5 +1,3 @@
-import { AssinaturaAtual } from '@/types/perfil';
-
 export type ModoModalPagamentoAssinatura =
   | 'iniciar'
   | 'regularizar'
@@ -18,19 +16,28 @@ export interface PixQrCode {
   expirationDate?: string | null;
 }
 
-export interface GatewayResultado {
-  sucesso: boolean;
-  status: 'aprovado' | 'pendente' | 'recusado' | 'erro';
-  gateway: 'asaas';
-  gatewaySubscriptionId?: string;
-  gatewayCustomerId?: string;
-  gatewayPaymentId?: string;
-  invoiceUrl?: string | null;
-  bankSlipUrl?: string | null;
-  pixQrCode?: PixQrCode | null;
-  mensagem?: string;
-  confirmacaoExpiraEm?: string | Date;
-}
+export type StatusAssinatura =
+  | 'pendente'
+  | 'aguardando_confirmacao'
+  | 'ativa'
+  | 'atrasada'
+  | 'bloqueada'
+  | 'cancelada'
+  | 'falhou'
+  | 'expirada';
+
+export type StatusGatewayPagamento =
+  | 'aprovado'
+  | 'pendente'
+  | 'recusado'
+  | 'erro';
+
+export type ProximaAcaoAssinatura =
+  | 'aguardar_webhook'
+  | 'pagar_fatura'
+  | 'regularizar_pagamento'
+  | 'confirmar_email'
+  | 'nenhuma';
 
 export type MetodoPagamentoAssinatura =
   | 'credit_card'
@@ -76,16 +83,42 @@ export interface StatusAssinaturaPrestador {
   motivo_perfil_inativo?: string | null;
 }
 
-export interface RespostaAssinatura {
-  gateway_resultado: GatewayResultado;
-  assinatura: AssinaturaAtual;
-  pagamento?: {
-    recebido: boolean;
-    metodoPagamento?: MetodoPagamentoAssinatura;
-  };
+export interface AssinaturaContrato {
+  id: number | null;
+  status: StatusAssinatura;
+  plano_id: number | null;
+  gateway: 'asaas' | null;
+  gateway_subscription_id: string | null;
+  gateway_payment_id?: string | null;
+  data_ultimo_pagamento: string | null;
+  data_proximo_vencimento: string | null;
+  confirmacao_expira_em: string | null;
 }
 
-export interface RespostaCancelarAssinatura {
+export interface AcessoAssinaturaContrato {
+  liberado: boolean;
+  perfil_profissional_ativo: boolean;
+  pode_aparecer_na_busca: boolean;
+  pode_receber_pedidos: boolean;
+  motivo_bloqueio: string | null;
+  mensagem_usuario: string;
+  proxima_acao: ProximaAcaoAssinatura;
+}
+
+export interface PagamentoAssinaturaContrato {
+  status_gateway: StatusGatewayPagamento;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+  pixQrCode?: PixQrCode | null;
+  mensagem_gateway?: string;
+}
+
+export interface RespostaAssinatura {
+  assinatura: AssinaturaContrato;
+  acesso: AcessoAssinaturaContrato;
+  pagamento: PagamentoAssinaturaContrato;
+}
+
+export interface RespostaCancelarAssinatura extends RespostaAssinatura {
   message: string;
-  assinatura: AssinaturaAtual;
 }

@@ -13,8 +13,11 @@ export type AdminSession = {
 };
 
 export function adminEhMestre(admin: AdminSession | null | undefined) {
-  const emailMestre = process.env.MASTER_ADMIN_EMAIL || "master@master.master";
-  return admin?.email.toLowerCase() === emailMestre.toLowerCase();
+  const emailMestre = process.env.MASTER_ADMIN_EMAIL;
+  if (!emailMestre && process.env.NODE_ENV === "production") {
+    throw new Error("MASTER_ADMIN_EMAIL precisa estar configurado em producao.");
+  }
+  return admin?.email.toLowerCase() === (emailMestre || "master@master.master").toLowerCase();
 }
 
 export async function autenticarAdmin(login: string, senha: string) {

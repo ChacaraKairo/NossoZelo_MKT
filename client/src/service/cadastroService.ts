@@ -5,6 +5,8 @@
  * @description Service ajustado para garantir a captura do ID do usuário após o cadastro.
  */
 
+import { getNossoZeloApiUrl } from '@/config/api';
+
 export interface CadastroPayload {
   usuario: {
     nome: string;
@@ -85,10 +87,7 @@ export class CadastroApiError extends Error {
 export const cadastrarUsuario = async (
   dados: CadastroPayload,
 ): Promise<any> => {  try {
-    const api_url =
-      process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:4000';
-    const URL_COMPLETA = `${api_url}/nossozelo/create-users/usuario`;
+    const URL_COMPLETA = `${getNossoZeloApiUrl()}/create-users/usuario`;
 
     const resposta = await fetch(URL_COMPLETA, {
       method: 'POST',

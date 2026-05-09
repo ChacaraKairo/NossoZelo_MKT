@@ -7,7 +7,7 @@ import { respostaErro } from "@/lib/http";
 function cronAutorizado(request: Request) {
   const segredo = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
-  return Boolean(segredo) && authHeader === `Bearer ${segredo}`;
+  return Boolean(segredo && segredo.length >= 32) && authHeader === `Bearer ${segredo}`;
 }
 
 export async function POST() {

@@ -30,34 +30,39 @@ type CriarAgendamentoInput = {
   observacao?: string;
 };
 
-type ContratacaoComUsuarios = Prisma.contratacoesGetPayload<{
-  include: {
-    usuarios_contratacoes_cliente_idTousuarios: {
-      select: {
-        id: true;
-        nome: true;
-        email: true;
+type ContratacaoComUsuarios =
+  Prisma.contratacoesGetPayload<{
+    include: {
+      usuarios_contratacoes_cliente_idTousuarios: {
+        select: {
+          id: true;
+          nome: true;
+          email: true;
+        };
+      };
+      usuarios_contratacoes_prestador_idTousuarios: {
+        select: {
+          id: true;
+          nome: true;
+          email: true;
+        };
       };
     };
-    usuarios_contratacoes_prestador_idTousuarios: {
-      select: {
-        id: true;
-        nome: true;
-        email: true;
-      };
-    };
-  };
-}>;
+  }>;
 
 function erroNegocio(mensagem: string, status = 400) {
-  const error = new Error(mensagem) as Error & { status?: number };
+  const error = new Error(mensagem) as Error & {
+    status?: number;
+  };
   error.status = status;
   return error;
 }
 
 function dataSomenteData(valor?: string) {
   if (!valor) {
-    throw erroNegocio('Informe a data desejada para o agendamento.');
+    throw erroNegocio(
+      'Informe a data desejada para o agendamento.',
+    );
   }
 
   const data = new Date(`${valor}T00:00:00`);
@@ -68,7 +73,10 @@ function dataSomenteData(valor?: string) {
   return data;
 }
 
-function horaSomenteHora(valor?: string, campo = 'horario') {
+function horaSomenteHora(
+  valor?: string,
+  campo = 'horario',
+) {
   if (!valor) {
     throw erroNegocio(`Informe ${campo} do agendamento.`);
   }
@@ -93,16 +101,25 @@ function horaSomenteHora(valor?: string, campo = 'horario') {
   );
 }
 
-function horaFimPadrao(horaInicio?: string, horaFim?: string) {
-  if (horaFim) return horaSomenteHora(horaFim, 'o horario final');
+function horaFimPadrao(
+  horaInicio?: string,
+  horaFim?: string,
+) {
+  if (horaFim)
+    return horaSomenteHora(horaFim, 'o horario final');
 
-  const inicio = horaSomenteHora(horaInicio, 'o horario inicial');
+  const inicio = horaSomenteHora(
+    horaInicio,
+    'o horario inicial',
+  );
   const fim = new Date(inicio);
   fim.setUTCHours(fim.getUTCHours() + 1);
   return fim;
 }
 
-function formatarMoeda(valor: Prisma.Decimal | number | string) {
+function formatarMoeda(
+  valor: Prisma.Decimal | number | string,
+) {
   return Number(valor).toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -150,11 +167,14 @@ async function enviarEmailSeguro(
     const emailService = new EmailService();
     await emailService.send(to, subject, html);
     return true;
-  } catch (error) {    return false;
+  } catch (error) {
+    return false;
   }
 }
 
-async function notificarCriacao(contratacao: ContratacaoComUsuarios) {
+async function notificarCriacao(
+  contratacao: ContratacaoComUsuarios,
+) {
   const cliente =
     contratacao.usuarios_contratacoes_cliente_idTousuarios;
   const prestador =
@@ -188,7 +208,10 @@ async function notificarCriacao(contratacao: ContratacaoComUsuarios) {
     ),
   ]);
 
-  return { cliente: emailCliente, prestador: emailPrestador };
+  return {
+    cliente: emailCliente,
+    prestador: emailPrestador,
+  };
 }
 
 async function notificarMudancaStatus(
@@ -236,7 +259,10 @@ async function notificarMudancaStatus(
     ),
   ]);
 
-  return { cliente: emailCliente, prestador: emailPrestador };
+  return {
+    cliente: emailCliente,
+    prestador: emailPrestador,
+  };
 }
 
 async function buscarContratacaoCompleta(id: number) {
@@ -262,9 +288,13 @@ async function buscarContratacaoCompleta(id: number) {
 }
 
 class ServiceAgendamento {
-  private static async validarPrestadorOperacional(prestadorId: string) {
+  private static async validarPrestadorOperacional(
+    prestadorId: string,
+  ) {
     const podeReceberPedidos =
-      await ServiceAssinatura.prestadorPodeReceberPedidos(prestadorId);
+      await ServiceAssinatura.prestadorPodeReceberPedidos(
+        prestadorId,
+      );
 
     if (!podeReceberPedidos) {
       throw erroNegocio(
@@ -279,7 +309,10 @@ class ServiceAgendamento {
     usuario: UsuarioAutenticado,
   ) {
     if (!usuario?.id) {
-      throw erroNegocio('Cliente nao identificado na sessao.', 401);
+      throw erroNegocio(
+        'Cliente nao identificado na sessao.',
+        401,
+      );
     }
 
     const cliente = await prisma.usuarios.findUnique({
@@ -320,7 +353,10 @@ class ServiceAgendamento {
     }
 
     if (!TIPOS_PRESTADOR.includes(prestador.tipo as any)) {
-      throw erroNegocio('Usuario informado nao e um prestador.', 400);
+      throw erroNegocio(
+        'Usuario informado nao e um prestador.',
+        400,
+      );
     }
 
     if (!prestador.email_confirmado) {
@@ -331,7 +367,9 @@ class ServiceAgendamento {
     }
 
     const podeReceberPedidos =
-      await ServiceAssinatura.prestadorPodeReceberPedidos(prestador.id);
+      await ServiceAssinatura.prestadorPodeReceberPedidos(
+        prestador.id,
+      );
 
     if (!podeReceberPedidos) {
       throw erroNegocio(
@@ -342,7 +380,9 @@ class ServiceAgendamento {
 
     const servicoId = Number(data.servico_id);
     if (!servicoId || Number.isNaN(servicoId)) {
-      throw erroNegocio('Selecione um servico para solicitar o agendamento.');
+      throw erroNegocio(
+        'Selecione um servico para solicitar o agendamento.',
+      );
     }
 
     const servico = await prisma.servicos.findFirst({
@@ -364,7 +404,10 @@ class ServiceAgendamento {
       data.hora_inicio,
       'o horario inicial',
     );
-    const horaFim = horaFimPadrao(data.hora_inicio, data.hora_fim);
+    const horaFim = horaFimPadrao(
+      data.hora_inicio,
+      data.hora_fim,
+    );
 
     if (horaFim <= horaInicio) {
       throw erroNegocio(
@@ -410,7 +453,8 @@ class ServiceAgendamento {
         hora_fim: horaFim,
         preco: servico.valor,
         status: STATUS_CONTRATACAO.pendente,
-        observacoes: data.observacoes || data.observacao || null,
+        observacoes:
+          data.observacoes || data.observacao || null,
       },
       include: {
         usuarios_contratacoes_cliente_idTousuarios: {
@@ -430,7 +474,8 @@ class ServiceAgendamento {
       },
     });
 
-    const email_status = await notificarCriacao(contratacao);
+    const email_status =
+      await notificarCriacao(contratacao);
 
     return {
       ...contratacao,
@@ -477,22 +522,29 @@ class ServiceAgendamento {
     status: contratacoes_status,
   ) {
     if (!usuario?.id) {
-      throw erroNegocio('Usuario nao identificado na sessao.', 401);
+      throw erroNegocio(
+        'Usuario nao identificado na sessao.',
+        401,
+      );
     }
 
-    if (!Number.isInteger(contratacaoId) || contratacaoId <= 0) {
+    if (
+      !Number.isInteger(contratacaoId) ||
+      contratacaoId <= 0
+    ) {
       throw erroNegocio('Contratacao invalida.');
     }
 
-    const contratacaoAtual = await prisma.contratacoes.findUnique({
-      where: { id: contratacaoId },
-      select: {
-        id: true,
-        prestador_id: true,
-        cliente_id: true,
-        status: true,
-      },
-    });
+    const contratacaoAtual =
+      await prisma.contratacoes.findUnique({
+        where: { id: contratacaoId },
+        select: {
+          id: true,
+          prestador_id: true,
+          cliente_id: true,
+          status: true,
+        },
+      });
 
     if (!contratacaoAtual) {
       throw erroNegocio('Contratacao nao encontrada.', 404);
@@ -516,7 +568,10 @@ class ServiceAgendamento {
 
       await this.validarPrestadorOperacional(usuario.id);
 
-      if (contratacaoAtual.status !== STATUS_CONTRATACAO.pendente) {
+      if (
+        contratacaoAtual.status !==
+        STATUS_CONTRATACAO.pendente
+      ) {
         throw erroNegocio(
           'Somente contratacoes pendentes podem ser aceitas ou negadas.',
           409,
@@ -525,14 +580,20 @@ class ServiceAgendamento {
     }
 
     if (status === STATUS_CONTRATACAO.concluido) {
-      if (!ehPrestadorDaContratacao && !ehClienteDaContratacao) {
+      if (
+        !ehPrestadorDaContratacao &&
+        !ehClienteDaContratacao
+      ) {
         throw erroNegocio(
           'Apenas envolvidos na contratacao podem finaliza-la.',
           403,
         );
       }
 
-      if (contratacaoAtual.status !== STATUS_CONTRATACAO.confirmado) {
+      if (
+        contratacaoAtual.status !==
+        STATUS_CONTRATACAO.confirmado
+      ) {
         throw erroNegocio(
           'Somente contratacoes confirmadas podem ser concluidas.',
           409,
@@ -545,9 +606,13 @@ class ServiceAgendamento {
       data: { status },
     });
 
-    const contratacao = await buscarContratacaoCompleta(contratacaoId);
+    const contratacao =
+      await buscarContratacaoCompleta(contratacaoId);
     if (!contratacao) {
-      throw erroNegocio('Contratacao nao encontrada apos atualizacao.', 404);
+      throw erroNegocio(
+        'Contratacao nao encontrada apos atualizacao.',
+        404,
+      );
     }
 
     const email_status = await notificarMudancaStatus(
@@ -561,8 +626,14 @@ class ServiceAgendamento {
     };
   }
 
-  static async registroManual(data: any, usuario: UsuarioAutenticado) {
-    if (!usuario?.id || !TIPOS_PRESTADOR.includes(usuario.tipo as any)) {
+  static async registroManual(
+    data: any,
+    usuario: UsuarioAutenticado,
+  ) {
+    if (
+      !usuario?.id ||
+      !TIPOS_PRESTADOR.includes(usuario.tipo as any)
+    ) {
       throw erroNegocio(
         'Apenas prestadores podem registrar atendimento manual.',
         403,
@@ -582,10 +653,14 @@ class ServiceAgendamento {
           data.hora_inicio,
           'o horario inicial',
         ),
-        hora_fim: horaFimPadrao(data.hora_inicio, data.hora_fim),
+        hora_fim: horaFimPadrao(
+          data.hora_inicio,
+          data.hora_fim,
+        ),
         preco: data.preco,
         status: STATUS_CONTRATACAO.manual,
-        observacoes: data.observacoes || data.observacao || null,
+        observacoes:
+          data.observacoes || data.observacao || null,
       },
     });
   }
@@ -595,7 +670,10 @@ class ServiceAgendamento {
     prestadorId: string,
     usuario: UsuarioAutenticado,
   ) {
-    if (usuario.id !== prestadorId && usuario.tipo !== 'admin') {
+    if (
+      usuario.id !== prestadorId &&
+      usuario.tipo !== 'admin'
+    ) {
       throw erroNegocio(
         'Voce nao tem permissao para listar esta agenda.',
         403,
@@ -628,7 +706,10 @@ class ServiceAgendamento {
     clienteId: string,
     usuario: UsuarioAutenticado,
   ) {
-    if (usuario.id !== clienteId && usuario.tipo !== 'admin') {
+    if (
+      usuario.id !== clienteId &&
+      usuario.tipo !== 'admin'
+    ) {
       throw erroNegocio(
         'Voce nao tem permissao para listar estes agendamentos.',
         403,

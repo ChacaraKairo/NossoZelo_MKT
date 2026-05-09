@@ -45,14 +45,15 @@ function rotuloAcao(modo: ModoModalPagamentoAssinatura) {
 }
 
 function mensagemPorStatus(resultado: RespostaAssinatura) {
-  const gateway = resultado.gateway_resultado;
+  const { acesso, pagamento } = resultado;
 
-  if (gateway.mensagem) return gateway.mensagem;
-  if (gateway.status === 'recusado') {
+  if (acesso.mensagem_usuario) return acesso.mensagem_usuario;
+  if (pagamento.mensagem_gateway) return pagamento.mensagem_gateway;
+  if (pagamento.status_gateway === 'recusado') {
     return 'Pagamento recusado. Revise os dados ou use outro metodo.';
   }
-  if (gateway.status === 'aprovado') {
-    return 'Pagamento aprovado. A ativacao sera confirmada pelo webhook.';
+  if (pagamento.status_gateway === 'aprovado') {
+    return 'Pagamento aprovado. Perfil profissional liberado.';
   }
 
   return 'Pagamento enviado para analise. Aguarde a confirmacao automatica.';
@@ -132,13 +133,13 @@ export default function ModalPagamentoAssinatura({
               planoId,
               dadosPagamento,
             );
-      const gateway = resultado.gateway_resultado;
+      const pagamento = resultado.pagamento;
       const mensagem = mensagemPorStatus(resultado);
 
       setSucesso(mensagem);
-      setLinkPagamento(gateway.invoiceUrl || gateway.bankSlipUrl || null);
-      setPixCopiaCola(gateway.pixQrCode?.payload || null);
-      setPixImagem(gateway.pixQrCode?.encodedImage || null);
+      setLinkPagamento(pagamento.invoiceUrl || pagamento.bankSlipUrl || null);
+      setPixCopiaCola(pagamento.pixQrCode?.payload || null);
+      setPixImagem(pagamento.pixQrCode?.encodedImage || null);
       onSucesso(mensagem, resultado);
     } catch (error) {
       setErro(extrairMensagemErro(error));

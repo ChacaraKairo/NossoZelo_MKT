@@ -4,18 +4,17 @@ import {
   PlanoAssinatura,
   RespostaAssinatura,
   RespostaCancelarAssinatura,
-  StatusAssinaturaPrestador,
 } from '@/types/assinatura';
 
 export const assinaturaService = {
   obterMinhaAssinatura: async () => {
     const response =
-      await api.get<StatusAssinaturaPrestador>('/assinaturas/minha');
+      await api.get<RespostaAssinatura>('/assinaturas/minha');
     return response.data;
   },
 
   obterStatusPrestador: async (prestadorId: string) => {
-    const response = await api.get<StatusAssinaturaPrestador>(
+    const response = await api.get<RespostaAssinatura>(
       `/assinaturas/status/${prestadorId}`,
     );
     return response.data;

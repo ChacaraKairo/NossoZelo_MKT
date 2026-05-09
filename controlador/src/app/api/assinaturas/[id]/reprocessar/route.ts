@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { exigirAdminApi } from "@/lib/auth";
 import { registrarLogAdministrativo } from "@/lib/adminLog";
+import { obterBaseUrlAsaas } from "@/lib/asaasConfig";
 import { statusCadastroPorAssinatura } from "@/lib/financeiro";
 import { respostaErro } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
@@ -29,9 +30,9 @@ function statusLocalPorStatusAsaas(status?: string | null) {
 
 async function consultarAssinaturaAsaas(gatewaySubscriptionId?: string | null) {
   const apiKey = process.env.ASAAS_API_KEY?.trim();
-  const baseUrl = process.env.ASAAS_BASE_URL?.trim() || "https://api-sandbox.asaas.com/v3";
   if (!apiKey || !gatewaySubscriptionId) return null;
 
+  const baseUrl = obterBaseUrlAsaas();
   const resposta = await fetch(`${baseUrl}/subscriptions/${encodeURIComponent(gatewaySubscriptionId)}`, {
     headers: { access_token: apiKey }
   });

@@ -1,3 +1,5 @@
+import { getNossoZeloApiUrl } from '@/config/api';
+
 export interface BuscarPrestadoresParams {
   nome?: string;
   localizacao?: string;
@@ -8,10 +10,6 @@ export interface BuscarPrestadoresParams {
 }
 
 export class BuscaService {
-  private static readonly API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:4000';
-
   public static async buscarPrestadores(
     params: BuscarPrestadoresParams,
   ): Promise<any[]> {
@@ -43,9 +41,7 @@ export class BuscaService {
           params.precoMax.toString(),
         );
 
-      const url = `${
-        this.API_BASE_URL
-      }/api/localizacao/prestadores?${queryParams.toString()}`;
+      const url = `${getNossoZeloApiUrl()}/geolocalizacao/prestadores?${queryParams.toString()}`;
 
       const response = await fetch(url, {
         method: 'GET',

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FaFacebookF, FaGoogle } from 'react-icons/fa';
 import Button from '@/components/btn/Button';
+import { getNossoZeloApiUrl } from '@/config/api';
 import { loginService } from '@/service/Login';
 import {
   mascaraCep,
@@ -109,9 +110,7 @@ export default function CadastroSocialPage() {
       return;
     }
 
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    fetch(`${apiUrl}/nossozelo/login/social/cadastro-pendente`, {
+    fetch(`${getNossoZeloApiUrl()}/login/social/cadastro-pendente`, {
       credentials: 'include',
     })
       .then(async (response) => {

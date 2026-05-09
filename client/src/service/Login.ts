@@ -1,4 +1,5 @@
 import { OnboardingStatus } from '@/types/onboarding';
+import { getNossoZeloApiUrl } from '@/config/api';
 import logger from '@/utils/logger';
 
 export interface LoginRequestBody {
@@ -58,17 +59,13 @@ class LoginService {
   }
 
   public iniciarLoginSocial(provider: 'google' | 'facebook') {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     logger.info(CONTEXTO, 'Iniciando login social', { provider });
-    window.location.href = `${apiUrl}/nossozelo/login/social/${provider}`;
+    window.location.href = `${getNossoZeloApiUrl()}/login/social/${provider}`;
   }
 
   public async completarCadastroSocial(data: Record<string, unknown>) {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const response = await fetch(
-      `${apiUrl}/nossozelo/login/social/completar-cadastro`,
+      `${getNossoZeloApiUrl()}/login/social/completar-cadastro`,
       {
         method: 'POST',
         credentials: 'include',
@@ -95,10 +92,8 @@ class LoginService {
   }
 
   public async solicitarRecuperacaoSenha(email: string) {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const response = await fetch(
-      `${apiUrl}/nossozelo/login/recuperar-senha`,
+      `${getNossoZeloApiUrl()}/login/recuperar-senha`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,10 +114,8 @@ class LoginService {
   }
 
   public async redefinirSenha(token: string, novaSenha: string) {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const response = await fetch(
-      `${apiUrl}/nossozelo/login/redefinir-senha`,
+      `${getNossoZeloApiUrl()}/login/redefinir-senha`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,9 +140,7 @@ class LoginService {
       identificador: mascararIdentificador(data.identificador),
     });
 
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const loginUrl = `${apiUrl}/nossozelo/login/login`;
+    const loginUrl = `${getNossoZeloApiUrl()}/login/login`;
 
     try {
       logger.debug(CONTEXTO, 'Disparando requisicao de login', {
@@ -238,9 +229,7 @@ class LoginService {
   }
 
   public async me(): Promise<LoginResponse> {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const response = await fetch(`${apiUrl}/nossozelo/login/me`, {
+    const response = await fetch(`${getNossoZeloApiUrl()}/login/me`, {
       credentials: 'include',
     });
 
@@ -255,9 +244,7 @@ class LoginService {
   }
 
   public async logout() {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    await fetch(`${apiUrl}/nossozelo/login/logout`, {
+    await fetch(`${getNossoZeloApiUrl()}/login/logout`, {
       method: 'POST',
       credentials: 'include',
     }).catch(() => undefined);

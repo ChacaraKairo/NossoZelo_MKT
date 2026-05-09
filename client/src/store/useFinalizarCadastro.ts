@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { getNossoZeloApiUrl } from '@/config/api';
 import { useCadastroPrestadorStore } from '@/store/useCadastroPrestadorStore';
 import {
   cadastrarUsuario,
@@ -94,13 +95,9 @@ export const useFinalizarCadastro = () => {
         documentos.antecedentes,
       );
 
-    const API_URL =
-      process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:4000';
-
     try {
       const response = await fetch(
-        `${API_URL}/nossozelo/upload/completar-cadastro`,
+        `${getNossoZeloApiUrl()}/upload/completar-cadastro`,
         {
           method: 'POST',
           headers: {
