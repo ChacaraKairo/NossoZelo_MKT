@@ -39,24 +39,40 @@ const estadoInicialTitular = {
 };
 
 function rotuloAcao(modo: ModoModalPagamentoAssinatura) {
-  if (modo === 'gerenciar') return 'Gerenciar pagamento';
-  if (modo === 'iniciar') return 'Iniciar assinatura';
-  return 'Regularizar assinatura';
+  if (modo === 'gerenciar') return 'Ver pagamento';
+  if (modo === 'iniciar') return 'Ativar mensalidade';
+  return 'Pagar mensalidade';
+}
+
+function rotuloSituacao(status: string) {
+  const normalizado = String(status || '').toLowerCase();
+
+  const rotulos: Record<string, string> = {
+    pendente: 'Pendente',
+    aguardando_confirmacao: 'Aguardando pagamento',
+    ativa: 'Ativa',
+    atrasada: 'Atrasada',
+    bloqueada: 'Pausada',
+    cancelada: 'Cancelada',
+    falhou: 'Nao aprovado',
+    expirada: 'Expirada',
+  };
+
+  return rotulos[normalizado] || 'Em andamento';
 }
 
 function mensagemPorStatus(resultado: RespostaAssinatura) {
   const { acesso, pagamento } = resultado;
 
   if (acesso.mensagem_usuario) return acesso.mensagem_usuario;
-  if (pagamento.mensagem_gateway) return pagamento.mensagem_gateway;
   if (pagamento.status_gateway === 'recusado') {
-    return 'Pagamento recusado. Revise os dados ou use outro metodo.';
+    return 'Pagamento recusado. Revise os dados ou escolha outra forma de pagamento.';
   }
   if (pagamento.status_gateway === 'aprovado') {
     return 'Pagamento aprovado. Perfil profissional liberado.';
   }
 
-  return 'Pagamento enviado para analise. Aguarde a confirmacao automatica.';
+  return 'Pagamento enviado. Aguarde a confirmacao automatica.';
 }
 
 export default function ModalPagamentoAssinatura({
@@ -160,8 +176,8 @@ export default function ModalPagamentoAssinatura({
           <div>
             <h3 id="modal-assinatura-titulo">{rotuloAcao(modo)}</h3>
             <p>
-              O pagamento sera processado pelo Asaas. A assinatura local so
-              fica ativa depois da confirmacao por webhook.
+              O pagamento e feito com seguranca pelo Asaas. Seu perfil sera
+              liberado assim que a confirmacao chegar ao NossoZelo.
             </p>
           </div>
           <button
@@ -169,22 +185,21 @@ export default function ModalPagamentoAssinatura({
             className={styles.closeButton}
             onClick={onFechar}
             disabled={loading}
-            aria-label="Fechar modal"
+            aria-label="Fechar janela"
           >
             x
           </button>
         </header>
 
         <div className={styles.securityNote}>
-          Status atual: {statusAssinatura}. Numero completo do cartao e CVV sao
-          enviados apenas ao Asaas nesta tentativa e nao sao salvos pelo
-          NossoZelo.
+          Situacao atual: {rotuloSituacao(statusAssinatura)}. Os dados completos do cartao sao
+          enviados apenas ao Asaas e nao ficam salvos no NossoZelo.
         </div>
 
         {modo === 'gerenciar' && (
           <div className={styles.securityNote}>
-            Nesta etapa ainda nao existe troca de cartao dentro do NossoZelo. O
-            pagamento deve ser acompanhado pelo ambiente do Asaas.
+            Para alterar dados de pagamento, acompanhe as opcoes disponiveis na
+            area segura do Asaas.
           </div>
         )}
 
@@ -197,7 +212,7 @@ export default function ModalPagamentoAssinatura({
             target="_blank"
             rel="noreferrer"
           >
-            Abrir pagamento no Asaas
+            Abrir pagamento seguro
           </a>
         )}
         {pixImagem && (
@@ -225,10 +240,10 @@ export default function ModalPagamentoAssinatura({
           {modo !== 'gerenciar' && (
             <>
               <fieldset className={styles.methodGroup}>
-                <legend>Metodo de pagamento</legend>
+                <legend>Forma de pagamento</legend>
                 {[
                   ['credit_card', 'Cartao de credito'],
-                  ['asaas_invoice', 'Debito ou checkout Asaas'],
+                  ['asaas_invoice', 'Outras opcoes no Asaas'],
                   ['pix', 'Pix'],
                   ['boleto', 'Boleto'],
                 ].map(([valor, label]) => (
@@ -252,9 +267,8 @@ export default function ModalPagamentoAssinatura({
 
               {metodoPagamento === 'asaas_invoice' && (
                 <div className={styles.securityNote}>
-                  Voce sera direcionado para a fatura segura do Asaas. A opcao
-                  de debito pode aparecer no checkout quando habilitada pelo
-                  Asaas.
+                  Voce sera levado para uma pagina segura do Asaas, onde podem
+                  aparecer outras formas de pagamento disponiveis.
                 </div>
               )}
 

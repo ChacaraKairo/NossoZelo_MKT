@@ -79,7 +79,7 @@ function VisaoGeral({
     <div className={styles.infoGrid}>
       <CampoInfo label="Telefone" valor={usuario.telefone} />
       <CampoInfo label="Pedidos ativos" valor={ativos} />
-      <CampoInfo label="Contratações" valor={contratacoes.length} />
+      <CampoInfo label="Pedidos" valor={contratacoes.length} />
       <CampoInfo label="Avaliações feitas" valor={avaliacoes.length} />
     </div>
   );
@@ -111,8 +111,8 @@ function MinhasContratacoes({
   if (contratacoes.length === 0) {
     return (
       <EstadoVazio
-        titulo="Nenhuma contratação encontrada."
-        descricao="Quando você solicitar um serviço, o histórico aparecerá aqui."
+        titulo="Nenhum pedido encontrado."
+        descricao="Quando voce solicitar um servico, ele aparecera aqui."
       />
     );
   }
@@ -126,10 +126,10 @@ function MinhasContratacoes({
         >
           <p className={styles.listTitle}>
             {contratacao.usuarios_contratacoes_prestador_idTousuarios
-              ?.nome || `Contratação #${contratacao.id}`}
+              ?.nome || `Pedido #${contratacao.id}`}
           </p>
           <p className={styles.listMeta}>
-            Status: {texto(contratacao.status)}
+            Situacao: {texto(contratacao.status)}
           </p>
           <p className={styles.listMeta}>
             Data: {formatarData(contratacao.data)}

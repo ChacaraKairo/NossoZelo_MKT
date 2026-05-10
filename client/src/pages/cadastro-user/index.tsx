@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Style from '@/styles/CadastroPage.module.css';
 
 import Input from '@/components/inputs/Input';
@@ -62,6 +63,7 @@ const CadastroPage = () => {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<File | null>(null);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,9 +150,17 @@ const CadastroPage = () => {
       return;
     }
 
+    if (!aceitouTermos) {
+      setError(
+        'Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para criar sua conta.',
+      );
+      return;
+    }
+
     setLoading(true);
 
     const dadosCadastro = {
+      aceitouTermos,
       usuario: {
         nome: `${nome} ${sobrenome}`.trim(),
         email,
@@ -186,8 +196,8 @@ const CadastroPage = () => {
           body: formData,
         });
       }
-      alert('Cadastro realizado com sucesso!');
-      router.push('/login-user');
+      alert('Cadastro realizado com sucesso! Confirme seu e-mail antes de usar a conta.');
+      router.push('/confirmar-email?enviado=1');
     } catch (err: any) {
       if (err instanceof CadastroApiError && err.fieldErrors) {
         setFieldErrors(
@@ -591,6 +601,31 @@ const CadastroPage = () => {
                   </span>
                 )}
               </div>
+
+              <label className={Style.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={aceitouTermos}
+                  onChange={(event) =>
+                    setAceitouTermos(event.target.checked)
+                  }
+                  disabled={loading}
+                />
+                <span>
+                  Li e aceito os{' '}
+                  <Link href="/termos-de-uso" style={{ textDecoration: 'none' }}>
+                    Termos de Uso
+                  </Link>{' '}
+                  e a{' '}
+                  <Link
+                    href="/politica-de-privacidade/nossozelo"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Politica de Privacidade
+                  </Link>
+                  .
+                </span>
+              </label>
 
               <Button
                 type="submit"

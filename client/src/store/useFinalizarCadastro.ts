@@ -21,6 +21,7 @@ export const useFinalizarCadastro = () => {
 
   const prepararPayload = (): CadastroPayload => {
     const payload: CadastroPayload = {
+      aceitouTermos: true,
       usuario: {
         nome: `${dadosPessoais.nome} ${dadosPessoais.sobrenome}`.trim(),
         email: dadosPessoais.email,
@@ -125,6 +126,11 @@ export const useFinalizarCadastro = () => {
       alert('Revise os documentos obrigatórios antes de enviar.');
       return;
     }
+
+    const aceitou = window.confirm(
+      'Para criar sua conta profissional, confirme que voce leu e aceita os Termos de Uso e a Politica de Privacidade.',
+    );
+    if (!aceitou) return;
 
     setLoading(true);
     try {

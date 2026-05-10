@@ -19,9 +19,9 @@ const secoes = [
       'Solicitacoes, aceite, cancelamento e finalizacao seguem as regras operacionais vigentes. Cancelamentos recorrentes, fraude, abuso ou risco a usuarios podem gerar bloqueio temporario ou permanente.',
   },
   {
-    titulo: 'Pagamentos e assinaturas',
+    titulo: 'Assinatura e pagamento do atendimento',
     texto:
-      'Assinaturas de prestadores sao processadas pelo Asaas. O perfil profissional so fica ativo depois de confirmacao confiavel de pagamento. Pagamentos por servico, comissao, reembolso e disputa devem seguir politica propria quando habilitados.',
+      'Assinaturas de prestadores sao processadas pelo Asaas. O NossoZelo nao processa, intermedeia, retem ou repassa valores dos atendimentos. Quando houver pagamento pelo servico, ele e combinado diretamente entre cliente e prestador, fora da plataforma.',
   },
   {
     titulo: 'Denuncias e moderacao',

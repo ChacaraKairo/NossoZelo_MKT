@@ -122,7 +122,7 @@ export default function FormEditarPerfil({
       avisos.estado = 'Use a UF para manter o endereco padronizado.';
     }
     if (!bairro) avisos.bairro = 'Bairro ajuda clientes e prestadores.';
-    if (!endereco) avisos.endereco = 'Endereco completo ajuda na agenda.';
+    if (!endereco) avisos.endereco = 'Endereco completo ajuda nos atendimentos.';
 
     setErrosValidacao(erros);
     setAvisosValidacao(avisos);
@@ -177,8 +177,8 @@ export default function FormEditarPerfil({
           <span className={styles.eyebrow}>Dados principais</span>
           <h2 className={styles.title}>Editar perfil</h2>
           <p className={styles.subtitle}>
-            Atualize nome, contato e endereco. Servicos, agenda, valores
-            e descricoes profissionais ficam nas abas proprias.
+            Atualize seus dados principais. As informacoes profissionais ficam
+            nas outras abas do perfil.
           </p>
         </div>
       </header>
@@ -238,9 +238,9 @@ export default function FormEditarPerfil({
       {isPrestador && (
         <p className={styles.statusInfo}>
           Bio, experiencia, valores, disponibilidade e especialidades nao
-          ficam neste formulario para evitar alteracoes acidentais. Use as
-          abas de servicos e dados profissionais quando precisar revisar
-          essas informacoes.
+          ficam nesta tela para evitar mudancas por engano. Use as abas de
+          servicos e dados profissionais quando precisar revisar essas
+          informacoes.
         </p>
       )}
 

@@ -16,7 +16,7 @@ interface AbaFinanceiroProProps {
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: 'Pendente',
-  aguardando_confirmacao: 'Pagamento em anÃ¡lise',
+  aguardando_confirmacao: 'Aguardando pagamento',
   ativa: 'Ativa',
   atrasada: 'Atrasada',
   bloqueada: 'Bloqueada',
@@ -74,6 +74,10 @@ function classeStatus(status: string) {
   }
 
   return '';
+}
+
+function rotuloStatusAssinatura(status: string) {
+  return STATUS_LABEL[status] || 'Em andamento';
 }
 
 export default function AbaFinanceiroPro({
@@ -182,12 +186,12 @@ export default function AbaFinanceiroPro({
         <div>
           <h2 className={styles.title}>Financeiro</h2>
           <p className={styles.subtitle}>
-            Gerencie a assinatura mensal que libera seu perfil profissional nas
-            buscas e nos pedidos.
+            Cuide da mensalidade que mantem seu perfil profissional visivel para
+            os clientes.
           </p>
         </div>
         <span className={`${styles.statusBadge} ${classeStatus(status)}`}>
-          {STATUS_LABEL[status] || status}
+          {rotuloStatusAssinatura(status)}
         </span>
       </header>
 
@@ -199,7 +203,7 @@ export default function AbaFinanceiroPro({
           </p>
         </article>
         <article className={styles.card}>
-          <span className={styles.label}>Limite de confirmaÃ§Ã£o</span>
+          <span className={styles.label}>Prazo para confirmar</span>
           <p className={styles.value}>{formatarData(dataLimite)}</p>
         </article>
         <article className={styles.card}>
@@ -209,15 +213,20 @@ export default function AbaFinanceiroPro({
           </p>
         </article>
         <article className={styles.card}>
-          <span className={styles.label}>Gateway</span>
-          <p className={styles.value}>{assinatura?.gateway || 'asaas'}</p>
+          <span className={styles.label}>Pagamento</span>
+          <p className={styles.value}>
+            {assinatura?.gateway === 'asaas' || !assinatura?.gateway
+              ? 'Asaas'
+              : 'Parceiro de pagamento'}
+          </p>
         </article>
       </div>
 
       {aguardandoConfirmacao && (
         <div className={styles.notice}>
-          Pagamento em anÃ¡lise. A confirmaÃ§Ã£o pode levar atÃ© 72 horas. Enquanto
-          isso, seu perfil nÃ£o aparece nas buscas e vocÃª nÃ£o recebe pedidos.
+          Estamos aguardando a confirmacao do pagamento. Isso pode levar ate 72
+          horas. Enquanto isso, seu perfil nao aparece nas buscas e voce nao
+          recebe pedidos.
         </div>
       )}
 
@@ -230,7 +239,7 @@ export default function AbaFinanceiroPro({
 
       {!perfil.perfil_profissional_ativo && (
         <div className={styles.notice}>
-          Prestador inativo nÃ£o aparece nas buscas e nÃ£o recebe pedidos.
+          Seu perfil profissional ainda nao esta aparecendo nas buscas.
         </div>
       )}
 
@@ -283,7 +292,7 @@ export default function AbaFinanceiroPro({
               onClick={() => abrirModalPagamento('gerenciar')}
               disabled={carregando || planoInvalido}
             >
-              Gerenciar pagamento
+              Ver pagamento
             </button>
           )}
 
@@ -296,7 +305,7 @@ export default function AbaFinanceiroPro({
               }
               disabled={carregando || planoInvalido}
             >
-              Regularizar assinatura
+              Pagar mensalidade
             </button>
           )}
 
@@ -307,7 +316,7 @@ export default function AbaFinanceiroPro({
               onClick={() => abrirModalPagamento('regularizar')}
               disabled={carregando || planoInvalido}
             >
-              Abrir/gerar nova cobranÃ§a
+              Ver opcoes de pagamento
             </button>
           )}
 

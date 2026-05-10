@@ -6,7 +6,7 @@ const secoes = [
   {
     titulo: 'Dados coletados',
     texto:
-      'Podemos tratar dados cadastrais, contato, CPF, endereco, perfil profissional, documentos enviados para verificacao, agendamentos, avaliacoes, logs tecnicos e status financeiro de assinatura.',
+      'Podemos usar dados de cadastro, contato, CPF, endereco, perfil profissional, documentos enviados para verificacao, localizacao, agendamentos, cancelamentos, avaliacoes e assinatura do prestador.',
   },
   {
     titulo: 'Finalidades',
@@ -14,14 +14,29 @@ const secoes = [
       'Os dados sao usados para criar contas, autenticar usuarios, validar prestadores, exibir perfis, processar assinaturas, viabilizar agendamentos, prevenir fraude, prestar suporte e cumprir obrigacoes legais.',
   },
   {
-    titulo: 'Pagamentos',
+    titulo: 'Assinatura do prestador',
     texto:
-      'Pagamentos sao processados por gateway externo. Numero completo de cartao e CVV nao devem ser armazenados pelo NossoZelo. Webhooks financeiros sao registrados apenas com resumo operacional e identificadores necessarios.',
+      'Dados necessarios para cobranca da assinatura mensal do prestador podem ser compartilhados com o Asaas. O NossoZelo nao deve guardar numero completo de cartao nem codigo de seguranca.',
+  },
+  {
+    titulo: 'Pagamento de atendimentos',
+    texto:
+      'Os pagamentos de servicos entre cliente e prestador sao realizados fora da plataforma. O NossoZelo nao solicita nem armazena dados de pagamento referentes ao servico contratado, salvo se futuramente for disponibilizado recurso especifico mediante atualizacao desta politica.',
+  },
+  {
+    titulo: 'Agendamentos, cancelamentos e avaliacoes',
+    texto:
+      'O NossoZelo pode tratar data, horario, tipo de servico, cliente, prestador, status da solicitacao, historico de cancelamento e avaliacoes para funcionamento, seguranca, suporte e melhoria da experiencia.',
+  },
+  {
+    titulo: 'Cookies e logs de seguranca',
+    texto:
+      'Podemos usar cookies essenciais para login e seguranca da sessao, alem de logs tecnicos para proteger contas, investigar erros e evitar uso indevido.',
   },
   {
     titulo: 'Documentos',
     texto:
-      'Documentos privados devem ser armazenados em bucket privado, validados por tipo, verificados por scanner quando uploads estiverem habilitados em producao e acessados apenas por fluxo autorizado.',
+      'Documentos privados devem ficar protegidos e acessiveis apenas quando forem necessarios para verificacao ou suporte.',
   },
   {
     titulo: 'Direitos do titular',
@@ -31,7 +46,7 @@ const secoes = [
   {
     titulo: 'Aviso importante',
     texto:
-      'Esta politica e uma base operacional para MVP e deve ser revisada por assessoria juridica e adequada a LGPD antes de lancamento publico.',
+      'Este documento e uma base operacional para MVP e deve ser revisado por assessoria juridica antes do lancamento publico.',
   },
 ];
 

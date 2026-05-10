@@ -26,7 +26,7 @@ const ImagesCard: CategoriaCard[] = [
     tipo: 'enfermeiro',
     titulo: 'Enfermeiros',
     descricao:
-      'Busque profissionais de enfermagem para cuidados técnicos e acompanhamento especializado.',
+      'Busque profissionais de enfermagem para cuidados de saude e acompanhamento especializado.',
     cta: 'Ver enfermeiros',
   },
   {

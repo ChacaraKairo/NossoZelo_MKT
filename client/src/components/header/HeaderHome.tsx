@@ -65,7 +65,7 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({
             <>
               <span className={styles.greeting}>Ola, {usuario.nome}</span>
               <Link href="/dashboard" className={styles.primaryLink}>
-                Dashboard
+                Minha area
               </Link>
             </>
           ) : (

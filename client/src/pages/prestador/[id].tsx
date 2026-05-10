@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Carregando from '@/components/common/Carregando';
 import ErroComRetry from '@/components/common/ErroComRetry';
+import HeaderMain from '@/components/header/HeaderMain';
 import ModalContratarPrestador from '@/components/prestador/ModalContratarPrestador';
 import { extrairErroApi } from '@/service/api';
 import { perfilService } from '@/service/perfilService';
@@ -217,36 +218,44 @@ const PrestadorVitrinePage: React.FC = () => {
       prestadorId,
     });
     setMensagemAcao(
-      'Contato liberado pelo backend. O fluxo de contato será conectado na próxima etapa.',
+      'Em breve voce podera falar com este profissional por aqui.',
     );
   };
 
   if (loading) {
     return (
-      <main className={styles.page}>
+      <>
+        <HeaderMain />
+        <main className={styles.page}>
         <section className={styles.centerBox}>
           <Carregando mensagem="Carregando vitrine do prestador..." />
         </section>
-      </main>
+        </main>
+      </>
     );
   }
 
   if (erro) {
     return (
-      <main className={styles.page}>
+      <>
+        <HeaderMain />
+        <main className={styles.page}>
         <ErroComRetry
           titulo="Não foi possível carregar a vitrine"
           mensagem="Tente novamente em alguns instantes."
           detalhes={erro}
           onRetry={carregarVitrine}
         />
-      </main>
+        </main>
+      </>
     );
   }
 
   if (naoEncontrado || !prestador) {
     return (
-      <main className={styles.page}>
+      <>
+        <HeaderMain />
+        <main className={styles.page}>
         <section className={styles.centerBox}>
           <h1 className={styles.title}>Prestador não encontrado</h1>
           <p className={styles.muted}>
@@ -260,7 +269,8 @@ const PrestadorVitrinePage: React.FC = () => {
             Voltar para prestadores
           </button>
         </section>
-      </main>
+        </main>
+      </>
     );
   }
 
@@ -276,7 +286,9 @@ const PrestadorVitrinePage: React.FC = () => {
     : [];
 
   return (
-    <main className={styles.page}>
+    <>
+      <HeaderMain />
+      <main className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.avatarArea}>
           {prestador.url_foto_perfil ? (
@@ -426,7 +438,8 @@ const PrestadorVitrinePage: React.FC = () => {
         </article>
       </section>
 
-    </main>
+      </main>
+    </>
   );
 };
 

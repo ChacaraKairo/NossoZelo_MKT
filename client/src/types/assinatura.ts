@@ -1,3 +1,5 @@
+import type { AssinaturaAtual } from '@/types/perfil';
+
 export type ModoModalPagamentoAssinatura =
   | 'iniciar'
   | 'regularizar'

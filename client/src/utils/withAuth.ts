@@ -60,6 +60,15 @@ export function withAuth<P extends object>(
             return;
           }
 
+          if (usuario.email_confirmado === false) {
+            logger.warn(CONTEXTO, 'E-mail pendente de confirmacao', {
+              usuarioId: usuario.id,
+              rota: asPath,
+            });
+            replace('/confirmar-email?pendente=1');
+            return;
+          }
+
           logger.debug(CONTEXTO, 'Usuario autorizado', {
             usuarioId: usuario.id,
             rota: asPath,

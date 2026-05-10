@@ -15,8 +15,8 @@ const etapas = [
   ['confirmar_email', 'Confirmar e-mail'],
   ['completar_perfil', 'Completar perfil'],
   ['escolher_plano', 'Escolher plano'],
-  ['pagar_assinatura', 'Gerar pagamento'],
-  ['aguardando_confirmacao_pagamento', 'Aguardar confirmacao'],
+  ['pagar_assinatura', 'Fazer pagamento'],
+  ['aguardando_confirmacao_pagamento', 'Aguardar pagamento'],
   ['ativo', 'Perfil ativo'],
 ] as const;
 
@@ -132,7 +132,7 @@ export default function OnboardingPrestadorPage() {
     }
   }
 
-  if (loading) return <Carregando mensagem="Carregando onboarding..." />;
+  if (loading) return <Carregando mensagem="Carregando sua ativacao..." />;
 
   return (
     <div className={styles.page}>
@@ -146,7 +146,7 @@ export default function OnboardingPrestadorPage() {
               abaixo para liberar seu perfil profissional.
             </p>
           </div>
-          <span className={styles.statusBadge}>{status?.etapaAtual || 'carregando'}</span>
+          <span className={styles.statusBadge}>Em andamento</span>
         </section>
 
         <section className={styles.stepper} aria-label="Etapas do onboarding">
@@ -226,7 +226,7 @@ export default function OnboardingPrestadorPage() {
                     disabled={!planoId || planos.length === 0}
                     onClick={() => setModalAberto(true)}
                   >
-                    Gerar pagamento da assinatura
+                    Fazer pagamento da mensalidade
                   </button>
                 </div>
               </>
@@ -234,8 +234,8 @@ export default function OnboardingPrestadorPage() {
 
             {etapaAtual === 'aguardando_confirmacao_pagamento' && (
               <div className={styles.notice}>
-                Pagamento em analise. Se voce ainda nao concluiu o pagamento, gere uma nova
-                cobranca pela area financeira ou selecione um plano nesta tela.
+                Estamos aguardando a confirmacao do pagamento. Se voce ainda nao
+                pagou, escolha um plano e abra as opcoes de pagamento novamente.
               </div>
             )}
 
@@ -253,8 +253,8 @@ export default function OnboardingPrestadorPage() {
             <div className={styles.summary}>
               <div className={styles.summaryItem}><span>E-mail confirmado</span><strong>{boolTexto(Boolean(status?.emailConfirmado))}</strong></div>
               <div className={styles.summaryItem}><span>Perfil completo</span><strong>{boolTexto(Boolean(status?.possuiDadosProfissionais))}</strong></div>
-              <div className={styles.summaryItem}><span>Assinatura</span><strong>{status?.assinaturaStatus || 'sem assinatura'}</strong></div>
-              <div className={styles.summaryItem}><span>Status cadastro</span><strong>{status?.statusCadastro || '-'}</strong></div>
+              <div className={styles.summaryItem}><span>Mensalidade</span><strong>{status?.assinaturaStatus || 'nao iniciada'}</strong></div>
+              <div className={styles.summaryItem}><span>Situacao do cadastro</span><strong>{status?.statusCadastro || '-'}</strong></div>
               <div className={styles.summaryItem}><span>Aparece nas buscas</span><strong>{boolTexto(Boolean(status?.podeAparecerNaBusca))}</strong></div>
               <div className={styles.summaryItem}><span>Recebe pedidos</span><strong>{boolTexto(Boolean(status?.podeReceberPedidos))}</strong></div>
             </div>

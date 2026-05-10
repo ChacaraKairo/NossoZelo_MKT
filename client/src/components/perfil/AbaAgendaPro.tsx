@@ -13,7 +13,7 @@ const CONTEXTO = 'AbaAgendaPro';
 
 function formatarData(valor: string | Date) {
   const data = new Date(valor);
-  if (Number.isNaN(data.getTime())) return 'Data inválida';
+  if (Number.isNaN(data.getTime())) return 'Data invalida';
 
   return data.toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -31,30 +31,33 @@ function formatarHora(valor?: string | Date | null) {
   return data.toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
+  });
+}
+
+function formatarValor(valor?: number | string | null) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return null;
+
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
   });
 }
 
 function obterObservacao(item: AgendaPerfil) {
-  const itemComObservacoes = item as AgendaPerfil & {
-    observacoes?: string | null;
-  };
-
-  return item.observacao || itemComObservacoes.observacoes;
+  return item.observacao || item.observacoes;
 }
 
 function horarioCompleto(item: AgendaPerfil) {
-  const itemComHorario = item as AgendaPerfil & {
-    hora_inicio?: string | Date | null;
-    hora_fim?: string | Date | null;
-  };
-  const inicio = formatarHora(itemComHorario.hora_inicio);
-  const fim = formatarHora(itemComHorario.hora_fim);
+  const inicio = formatarHora(item.hora_inicio);
+  const fim = formatarHora(item.hora_fim);
 
   if (inicio && fim) return `${inicio} - ${fim}`;
   if (inicio) return inicio;
   if (fim) return fim;
 
-  return 'Horário não informado';
+  return 'Horario a combinar';
 }
 
 export default function AbaAgendaPro({
@@ -64,7 +67,7 @@ export default function AbaAgendaPro({
   const dadosInvalidos = !Array.isArray(agenda);
 
   useEffect(() => {
-    logger.info(CONTEXTO, 'Renderização da agenda', {
+    logger.info(CONTEXTO, 'Renderizacao da agenda', {
       perfilId: perfil.dados_usuario?.id || perfil.id,
     });
     logger.info(CONTEXTO, 'Quantidade de itens da agenda', {
@@ -73,21 +76,19 @@ export default function AbaAgendaPro({
   }, [perfil, agenda]);
 
   const handleBloquearHorario = () => {
-    logger.info(CONTEXTO, 'Clique em bloquear horário');
+    logger.info(CONTEXTO, 'Clique em bloquear horario');
   };
 
   if (dadosInvalidos) {
     logger.error(
       CONTEXTO,
-      'Erro de dados inválidos na agenda',
+      'Erro de dados invalidos na agenda',
       { agenda },
     );
 
     return (
       <div className={styles.errorBox}>
-        <p>
-          Não foi possível exibir a agenda.
-        </p>
+        <p>Nao foi possivel exibir a agenda.</p>
       </div>
     );
   }
@@ -96,28 +97,26 @@ export default function AbaAgendaPro({
     <section className={styles.section}>
       <header className={styles.header}>
         <div>
-          <h2 className={styles.title}>
-            Agenda
-          </h2>
+          <h2 className={styles.title}>Agenda</h2>
           <p className={styles.subtitle}>
-            Horários recebidos do seu perfil.
+            Proximos atendimentos marcados a partir de hoje.
           </p>
         </div>
         <button
           type="button"
           disabled
           onClick={handleBloquearHorario}
-          title="Bloqueio manual será ativado após integração da agenda."
+          title="Em breve voce podera reservar horarios por aqui."
           className={styles.disabledButton}
         >
-          Bloqueio manual será ativado após integração da agenda.
+          Reservar horario em breve
         </button>
       </header>
 
       {agenda.length === 0 ? (
         <EstadoVazio
           titulo="Nenhum item de agenda encontrado."
-          descricao="Quando houver horários ou contratações na sua agenda, eles aparecerão aqui."
+          descricao="Quando houver pedidos ou atendimentos futuros, eles aparecerao aqui."
         />
       ) : (
         <div className={styles.list}>
@@ -131,10 +130,20 @@ export default function AbaAgendaPro({
                   <p className={styles.date}>
                     {formatarData(item.data)}
                   </p>
+                  {item.cliente?.nome && (
+                    <p className={styles.client}>
+                      Cliente: {item.cliente.nome}
+                    </p>
+                  )}
                   <p className={styles.time}>
                     <FaClock className={styles.timeIcon} />
                     {horarioCompleto(item)}
                   </p>
+                  {formatarValor(item.preco) && (
+                    <p className={styles.price}>
+                      Valor: {formatarValor(item.preco)}
+                    </p>
+                  )}
                   {obterObservacao(item) && (
                     <p className={styles.observation}>
                       {obterObservacao(item)}
@@ -143,7 +152,7 @@ export default function AbaAgendaPro({
                 </div>
 
                 <span className={styles.badge}>
-                  {item.status || 'Status não informado'}
+                  {item.status || 'A combinar'}
                 </span>
               </div>
             </article>

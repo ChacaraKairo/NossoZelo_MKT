@@ -9,8 +9,13 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
+  min-width: 0;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: var(--space-4);
+}
+
+.header > div {
+  min-width: 0;
 }
 
 .title {
@@ -29,6 +34,7 @@
 
 .statusBadge {
   flex: 0 0 auto;
+  max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface-muted);
@@ -37,6 +43,7 @@
   font-weight: 900;
   padding: 0.45rem 0.75rem;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .statusActive {
@@ -119,6 +126,7 @@
 .form {
   display: grid;
   gap: var(--space-4);
+  min-width: 0;
   border: 1px solid var(--color-primary-100);
   border-radius: var(--radius-lg);
   background: var(--color-primary-50);
@@ -151,6 +159,7 @@
 .planCard {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
   min-height: 112px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -187,6 +196,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.actions button {
+  min-width: 0;
 }
 
 .primaryButton,
@@ -237,6 +250,11 @@
 @media (max-width: 720px) {
   .header {
     flex-direction: column;
+  }
+
+  .statusBadge {
+    align-self: stretch;
+    text-align: center;
   }
 
   .grid {

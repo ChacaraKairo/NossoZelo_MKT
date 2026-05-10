@@ -37,7 +37,7 @@ export default function RedefinirSenhaPage() {
     if (!router.isReady) return;
 
     if (!token) {
-      setError('Token de recuperacao ausente.');
+      setError('Nao encontramos o link de recuperacao. Peca um novo e-mail e tente novamente.');
       setValidando(false);
       return;
     }
@@ -93,7 +93,7 @@ export default function RedefinirSenhaPage() {
           </div>
 
           {validando ? (
-            <p className={styles.hint}>Validando link de recuperacao...</p>
+            <p className={styles.hint}>Conferindo seu link...</p>
           ) : (
             <form className={styles.form} onSubmit={handleSubmit}>
               {error && <div className={styles.error}>{error}</div>}

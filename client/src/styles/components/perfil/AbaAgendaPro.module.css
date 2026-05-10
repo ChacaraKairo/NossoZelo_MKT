@@ -94,6 +94,19 @@
   flex: 0 0 auto;
 }
 
+.client,
+.price {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.price {
+  color: var(--color-text-muted);
+}
+
 .observation {
   margin: var(--space-2) 0 0;
   color: var(--color-text-muted);

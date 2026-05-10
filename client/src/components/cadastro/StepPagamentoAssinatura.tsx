@@ -10,7 +10,7 @@ export default function StepPagamentoAssinatura() {
   const router = useRouter();
   const [estado, setEstado] = useState<Estado>('aguardando_email');
   const [mensagem, setMensagem] = useState(
-    'Apos confirmar seu e-mail, entre na sua conta e continue a ativacao em /onboarding/prestador.',
+    'Depois de confirmar seu e-mail, entre na sua conta e continue a ativação do seu perfil profissional.',
   );
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function StepPagamentoAssinatura() {
     if (!token) {
       setEstado('aguardando_email');
       setMensagem(
-        'Enviamos um link para o e-mail informado. Apos confirmar seu e-mail, entre na sua conta e continue a ativacao em /onboarding/prestador.',
+        'Enviamos um link para o e-mail informado. Depois de confirmar, entre na sua conta e continue a ativação do perfil profissional.',
       );
       return;
     }
@@ -38,7 +38,7 @@ export default function StepPagamentoAssinatura() {
         setEstado('confirmado');
         setMensagem(
           resposta.proximo_passo ||
-            'E-mail confirmado. Entre na sua conta e continue a ativacao em /onboarding/prestador.',
+            'E-mail confirmado. Entre na sua conta e continue a ativação do perfil profissional.',
         );
       })
       .catch((error) => {
@@ -71,8 +71,8 @@ export default function StepPagamentoAssinatura() {
       </div>
 
       <p className={Style.fieldHelpText}>
-        O pagamento nao e feito nesta tela. A cobranca sera gerada no Asaas pelo
-        onboarding do perfil profissional, sem coleta de cartao no NossoZelo.
+        O pagamento será feito com segurança pelo Asaas. O NossoZelo não guarda
+        os dados completos do seu cartão.
       </p>
     </div>
   );

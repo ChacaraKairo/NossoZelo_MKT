@@ -13,7 +13,31 @@ export type StatusContratacao =
   | 'concluido'
   | 'concluida'
   | 'cancelado'
+  | 'nao_realizado'
   | 'negado';
+
+export interface RespostaCancelamentoContratacao {
+  contratacao: {
+    id: number;
+    status: string;
+    data: string;
+    hora_inicio: string;
+    hora_fim: string;
+    preco: number;
+    cancelado_por: 'cliente' | 'prestador' | 'admin';
+    cancelado_em: string;
+    motivo_cancelamento: string | null;
+    cancelamento_tardio: boolean;
+  };
+  cancelamento: {
+    permitido: boolean;
+    houve_cobranca_plataforma: false;
+    aplica_multa: boolean;
+    valor_multa: number;
+    horas_ate_servico: number;
+    mensagem_usuario: string;
+  };
+}
 
 export interface SolicitarContratacaoPayload {
   cliente_id?: string;
@@ -83,6 +107,7 @@ export const contratacaoService = {
   atualizarStatusContratacao: async (
     contratacaoId: number,
     status: StatusContratacao,
+    dados?: { motivo?: string },
   ): Promise<ContratacaoPerfil> => {
     const statusNormalizado =
       status === 'aceito' || status === 'confirmado'
@@ -96,6 +121,8 @@ export const contratacaoService = {
         ? `/agendamentos/aceitar/${contratacaoId}`
         : statusNormalizado === 'concluido'
           ? `/agendamentos/finalizar/${contratacaoId}`
+          : statusNormalizado === 'nao_realizado'
+            ? `/agendamentos/nao-realizado/${contratacaoId}`
           : statusNormalizado === 'cancelado' ||
               statusNormalizado === 'negado'
             ? `/agendamentos/cancelar/${contratacaoId}`
@@ -104,7 +131,7 @@ export const contratacaoService = {
     if (!endpoint) {
       const error = criarErroRotaInexistente(
         `Nao existe rota real no backend para atualizar contratacao ${contratacaoId} para status "${status}". ` +
-          'As rotas confirmadas hoje sao PATCH /agendamentos/aceitar/:id, PATCH /agendamentos/cancelar/:id e PATCH /agendamentos/finalizar/:id.',
+          'As rotas confirmadas hoje sao PATCH /agendamentos/aceitar/:id, PATCH /agendamentos/cancelar/:id, PATCH /agendamentos/nao-realizado/:id e PATCH /agendamentos/finalizar/:id.',
       );
       logger.error(CONTEXTO, 'Erro com status HTTP', {
         endpoint: '/contratacoes/:id/status',
@@ -122,7 +149,7 @@ export const contratacaoService = {
       logarEndpoint(endpoint, { contratacaoId, status });
 
       const response =
-        await api.patch<ContratacaoPerfil>(endpoint);
+        await api.patch<ContratacaoPerfil>(endpoint, dados);
 
       logarResposta(endpoint, response.status);
       return response.data;
@@ -130,6 +157,30 @@ export const contratacaoService = {
       logarErro(endpoint, error);
       throw error;
     }
+  },
+
+  cancelarContratacao: async (
+    contratacaoId: number,
+    motivo?: string,
+  ): Promise<RespostaCancelamentoContratacao> => {
+    const endpoint = `/agendamentos/cancelar/${contratacaoId}`;
+    const response = await api.patch<RespostaCancelamentoContratacao>(
+      endpoint,
+      { motivo },
+    );
+    return response.data;
+  },
+
+  marcarNaoRealizado: async (
+    contratacaoId: number,
+    motivo: string,
+  ): Promise<{ contratacao: ContratacaoPerfil; mensagem_usuario: string }> => {
+    const endpoint = `/agendamentos/nao-realizado/${contratacaoId}`;
+    const response = await api.patch<{
+      contratacao: ContratacaoPerfil;
+      mensagem_usuario: string;
+    }>(endpoint, { motivo });
+    return response.data;
   },
 
   listarMinhasSolicitacoes: async (

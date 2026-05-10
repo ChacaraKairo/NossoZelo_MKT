@@ -68,6 +68,30 @@ const Footer = () => {
             </ul>
           </div>
 
+          <div className={Style.navColumn}>
+            <h3>Informacoes legais</h3>
+            <ul>
+              <li>
+                <Link href="/termos-de-uso">Termos de Uso</Link>
+              </li>
+              <li>
+                <Link href="/politica-de-privacidade/nossozelo">
+                  Politica de Privacidade
+                </Link>
+              </li>
+              <li>
+                <Link href="/politica-de-cookies">
+                  Politica de Cookies
+                </Link>
+              </li>
+              <li>
+                <Link href="/politica-de-cancelamento">
+                  Politica de Cancelamento
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           <div className={Style.contactColumn}>
             <h3>Contatos</h3>
             <div className={Style.contactItem}>

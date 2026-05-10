@@ -40,8 +40,8 @@ function ListaContratacoes({
   if (contratacoes.length === 0) {
     return (
       <EstadoVazio
-        titulo="Nenhuma contratação recente."
-        descricao="Quando houver contratações reais, elas aparecerão aqui."
+        titulo="Nenhum pedido recente."
+        descricao="Quando houver pedidos de atendimento, eles aparecerao aqui."
       />
     );
   }
@@ -54,10 +54,10 @@ function ListaContratacoes({
           className={styles.recentCard}
         >
           <p className={styles.recentTitle}>
-            Contratação #{contratacao.id}
+            Pedido #{contratacao.id}
           </p>
           <p className={styles.recentMeta}>
-            Status: {contratacao.status || 'Não informado'}
+            Situacao: {contratacao.status || 'Nao informado'}
           </p>
         </article>
       ))}
@@ -147,9 +147,9 @@ function DashboardPage() {
       <HeaderMain />
       <main className={styles.main}>
         <header>
-          <h1 className={styles.title}>Dashboard</h1>
+          <h1 className={styles.title}>Minha area</h1>
           <p className={styles.subtitle}>
-            Dados carregados do seu perfil real.
+            Acompanhe seus pedidos, perfil e atendimentos.
           </p>
         </header>
 
@@ -163,7 +163,7 @@ function DashboardPage() {
                 Buscar prestadores
               </Link>
               <CardResumo
-                titulo="Contratações"
+                titulo="Pedidos"
                 valor={contratacoesCliente.length}
               />
               <CardResumo titulo="Avaliações pendentes" valor="-" />
@@ -171,7 +171,7 @@ function DashboardPage() {
 
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>
-                Contratações recentes
+                Pedidos recentes
               </h2>
               <ListaContratacoes contratacoes={contratacoesCliente} />
             </section>
@@ -199,7 +199,7 @@ function DashboardPage() {
                     </span>
                   </h2>
                   <p className={styles.pendingText}>
-                    Telegram/email devem ser disparados no backend após mudança de status da contratação.
+                    Novos pedidos aparecem aqui para voce aceitar ou recusar.
                   </p>
                 </div>
                 <Link
@@ -219,7 +219,7 @@ function DashboardPage() {
             <section className={styles.summaryGrid}>
               <CardResumo titulo="Pendentes" valor={pendentes.length} />
               <CardResumo
-                titulo="Contratações"
+                titulo="Pedidos"
                 valor={contratacoesPrestador.length}
               />
               <CardResumo
@@ -235,8 +235,8 @@ function DashboardPage() {
 
         {!isCliente && !isPrestador && (
           <EstadoVazio
-            titulo="Tipo de usuário não reconhecido."
-            descricao="Não foi possível decidir quais blocos do dashboard exibir."
+            titulo="Nao conseguimos abrir sua area."
+            descricao="Tente sair e entrar novamente. Se o problema continuar, fale com o suporte."
           />
         )}
       </main>

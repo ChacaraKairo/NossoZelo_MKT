@@ -100,6 +100,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
 }
 
 .primaryButton,
@@ -109,7 +110,8 @@
   border-radius: var(--radius-md);
   font-weight: 800;
   cursor: pointer;
-  white-space: nowrap;
+  text-align: center;
+  white-space: normal;
   transition:
     transform 0.18s ease,
     background-color 0.18s ease,
@@ -162,6 +164,7 @@
 }
 
 .panel {
+  min-width: 0;
   padding: var(--space-6);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -211,10 +214,15 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
+  min-width: 0;
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-muted);
+}
+
+.listItem > div {
+  min-width: 0;
 }
 
 .itemTitle {
@@ -237,6 +245,7 @@
 }
 
 .price {
+  flex: 0 0 auto;
   color: var(--color-primary-700);
   font-weight: 900;
   white-space: nowrap;

@@ -49,14 +49,33 @@ export interface ServicoPerfil {
 }
 
 export interface AgendaPerfil {
-  id: number;
+  id: number | string;
+  contratacao_id?: number;
+  origem?: 'agenda' | 'contratacao' | string;
   data: string | Date;
   status: string;
   observacao?: string | null;
+  observacoes?: string | null;
+  hora_inicio?: string | Date | null;
+  hora_fim?: string | Date | null;
+  preco?: number | string | null;
+  cliente?: {
+    id?: string | null;
+    nome?: string | null;
+    url_foto_perfil?: string | null;
+  } | null;
 }
 
 export interface AvaliacaoPerfil {
   id: number;
+  contratacao_id?: number;
+  autor_id?: string;
+  avaliado_id?: string;
+  tipo_autor?: 'cliente' | 'prestador' | string;
+  tipo_avaliacao?:
+    | 'cliente_para_prestador'
+    | 'prestador_para_cliente'
+    | string;
   nota: number | null;
   comentario?: string | null;
   data_avaliacao: string | Date | null;
@@ -78,6 +97,12 @@ export interface ContratacaoPerfil {
   hora_fim?: string | Date | null;
   preco?: number | string | null;
   observacoes?: string | null;
+  cancelado_por?: 'cliente' | 'prestador' | 'admin' | string | null;
+  motivo_cancelamento?: string | null;
+  cancelado_em?: string | Date | null;
+  cancelamento_tardio?: boolean | null;
+  nao_realizado_motivo?: string | null;
+  nao_realizado_em?: string | Date | null;
   servico_id?: number | null;
   servico?: Partial<ServicoPerfil> | null;
   servicos?: Partial<ServicoPerfil> | null;
@@ -90,6 +115,8 @@ export interface ContratacaoPerfil {
     url_foto_perfil?: string | null;
   };
   avaliacao?: AvaliacaoPerfil | null;
+  avaliacoes?: AvaliacaoPerfil[];
+  mensagem_usuario?: string;
 }
 
 export interface PerfilUsuario extends PerfilBase {

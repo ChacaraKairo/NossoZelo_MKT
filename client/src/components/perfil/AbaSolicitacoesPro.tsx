@@ -193,11 +193,15 @@ export default function AbaSolicitacoesPro({
   }, [prestadorId]);
 
   const executarAcao = async (
-    tipoAcao: 'aceitar' | 'negar',
+    tipoAcao: 'aceitar' | 'negar' | 'cancelar',
     contratacao: ContratacaoPerfil,
   ) => {
     const statusEnviado =
       tipoAcao === 'aceitar' ? 'confirmado' : 'cancelado';
+    const motivo =
+      tipoAcao === 'negar' || tipoAcao === 'cancelar'
+        ? window.prompt('Informe o motivo para o cliente.') || ''
+        : undefined;
 
     logger.info(CONTEXTO, `Clique em ${tipoAcao}`, {
       contratacaoId: contratacao.id,
@@ -212,11 +216,20 @@ export default function AbaSolicitacoesPro({
     setProcessandoId(contratacao.id);
 
     try {
-      const resultado =
-        await contratacaoService.atualizarStatusContratacao(
+      const resposta =
+        tipoAcao === 'aceitar'
+          ? await contratacaoService.atualizarStatusContratacao(
           contratacao.id,
           statusEnviado,
-        );
+          )
+          : await contratacaoService.cancelarContratacao(
+            contratacao.id,
+            motivo,
+          );
+      const resultado =
+        'contratacao' in resposta
+          ? ({ ...contratacao, ...resposta.contratacao } as ContratacaoPerfil)
+          : resposta;
 
       logger.info(CONTEXTO, `Sucesso ao ${tipoAcao}`, {
         contratacaoId: contratacao.id,
@@ -280,6 +293,7 @@ export default function AbaSolicitacoesPro({
       <div className={styles.list}>
         {solicitacoes.map((contratacao) => {
           const pendente = contratacao.status === 'pendente';
+          const confirmado = contratacao.status === 'confirmado';
           const contatoPodeSerConsultado = [
             'confirmado',
             'aceito',
@@ -372,7 +386,7 @@ export default function AbaSolicitacoesPro({
                     <FaCheck aria-hidden="true" />
                   </span>
                   <span>
-                    <span className={styles.metaLabel}>Status</span>
+                    <span className={styles.metaLabel}>Situacao</span>
                     <span className={styles.metaValue}>
                       {labelStatus(contratacao.status)}
                     </span>
@@ -409,6 +423,18 @@ export default function AbaSolicitacoesPro({
                       Negar pedido
                     </button>
                   </>
+                )}
+
+                {confirmado && (
+                  <button
+                    type="button"
+                    disabled={processando}
+                    onClick={() => executarAcao('cancelar', contratacao)}
+                    className={`${styles.actionButton} ${styles.denyButton}`}
+                  >
+                    <FaTimes aria-hidden="true" />
+                    Cancelar atendimento
+                  </button>
                 )}
 
                 {contatoPodeSerConsultado && (

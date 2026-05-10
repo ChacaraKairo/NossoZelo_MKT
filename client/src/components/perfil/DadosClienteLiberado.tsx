@@ -93,7 +93,7 @@ export default function DadosClienteLiberado({
       <p>Telefone: {texto(dados.telefone)}</p>
       <p>Email: {texto(dados.email)}</p>
       <p>Endereço: {texto(dados.endereco)}</p>
-      <p>Status da contratação: {texto(dados.status_contratacao)}</p>
+      <p>Situação do pedido: {texto(dados.status_contratacao)}</p>
     </div>
   );
 }

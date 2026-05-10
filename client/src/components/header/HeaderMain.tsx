@@ -110,7 +110,7 @@ const HeaderMain: React.FC = () => {
             Prestadores
           </Link>
           <Link href="/dashboard" className={styles.navLink}>
-            Dashboard
+            Minha area
           </Link>
         </nav>
 

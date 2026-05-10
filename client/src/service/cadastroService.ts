@@ -8,6 +8,8 @@
 import { getNossoZeloApiUrl } from '@/config/api';
 
 export interface CadastroPayload {
+  aceitouTermos: boolean;
+  aceitouCookies?: boolean;
   usuario: {
     nome: string;
     email: string;

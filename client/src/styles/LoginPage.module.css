@@ -161,7 +161,8 @@
 }
 .forgotPasswordLink:hover,
 .terms a:hover {
-  text-decoration: underline;
+  color: var(--color-primary-800);
+  text-decoration: none;
 }
 
 .footer {

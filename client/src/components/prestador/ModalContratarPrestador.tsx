@@ -125,10 +125,10 @@ export default function ModalContratarPrestador({
 
     if (!usuario?.id) {
       erros.usuario =
-        'Voce precisa estar logado para enviar uma proposta.';
+        'Entre na sua conta para enviar um pedido.';
     } else if (usuario.email_confirmado === false) {
       erros.usuario =
-        'Confirme seu e-mail para solicitar servicos.';
+        'Confirme seu e-mail para pedir um atendimento.';
     }
 
     if (!data) {
@@ -143,14 +143,14 @@ export default function ModalContratarPrestador({
 
     if (servicos.length === 0) {
       erros.servicoId =
-        'Este prestador ainda nao possui servicos cadastrados.';
+        'Este profissional ainda não possui serviços disponíveis.';
     } else if (!servicoId) {
-      erros.servicoId = 'Selecione o tipo de servico.';
+      erros.servicoId = 'Escolha o serviço desejado.';
     }
 
     if (descricao.length < DESCRICAO_MINIMA) {
       erros.observacao =
-        'Descreva a necessidade com pelo menos 10 caracteres.';
+        'Escreva um pouco mais sobre o que você precisa.';
     }
 
     setFieldErrors(erros);
@@ -171,12 +171,12 @@ export default function ModalContratarPrestador({
       logger.info(CONTEXTO, 'Envio de solicitacao', payload);
       await contratacaoService.solicitarContratacao(payload);
       logger.info(CONTEXTO, 'Solicitacao criada com sucesso');
-      setSucesso('Solicitacao enviada com sucesso.');
+      setSucesso('Pedido enviado com sucesso.');
       setTimeout(onClose, 1100);
     } catch (error: unknown) {
       const mensagem = extrairMensagemErro(error);
       const mensagemFinal = mensagem.includes('[TODO tecnico]')
-        ? 'Fluxo de contratacao ainda nao esta disponivel no servidor.'
+        ? 'Ainda não foi possível enviar sua solicitação. Tente novamente em alguns instantes.'
         : mensagem;
       logger.error(CONTEXTO, 'Erro ao solicitar contratacao', {
         mensagem: mensagemFinal,
@@ -200,11 +200,11 @@ export default function ModalContratarPrestador({
           <div>
             <p className={styles.kicker}>Proposta de atendimento</p>
             <h2 id="modal-contratar-titulo" className={styles.title}>
-              Solicitar contratacao
+              Solicitar atendimento
             </h2>
             <p className={styles.subtitle}>
-              Informe data, horario, servico e detalhes para o prestador
-              avaliar sua solicitacao.
+              Conte quando precisa do serviço e explique os principais cuidados
+              para o profissional avaliar seu pedido.
             </p>
           </div>
           <button
@@ -212,7 +212,7 @@ export default function ModalContratarPrestador({
             onClick={onClose}
             className={styles.closeButton}
           >
-            {presentation === 'inline' ? 'Fechar formulario' : 'Fechar'}
+            {presentation === 'inline' ? 'Fechar pedido' : 'Fechar'}
           </button>
         </header>
 
@@ -247,7 +247,7 @@ export default function ModalContratarPrestador({
             </label>
 
             <label className={styles.field}>
-              <span className={styles.label}>Horario desejado</span>
+              <span className={styles.label}>Horário desejado</span>
               <input
                 type="time"
                 value={hora}
@@ -271,7 +271,7 @@ export default function ModalContratarPrestador({
           </div>
 
           <label className={styles.field}>
-            <span className={styles.label}>Tipo de servico</span>
+            <span className={styles.label}>Serviço desejado</span>
             <select
               value={servicoId}
               disabled={servicos.length === 0}
@@ -289,11 +289,11 @@ export default function ModalContratarPrestador({
               <option value="">
                 {servicos.length === 0
                   ? 'Nenhum servico cadastrado'
-                  : 'Selecione um servico'}
+                  : 'Selecione um serviço'}
               </option>
               {servicos.map((servico) => (
                 <option key={servico.id} value={servico.id}>
-                  {servico.nome || servico.tipo || `Servico #${servico.id}`}
+                  {servico.nome || servico.tipo || `Serviço ${servico.id}`}
                 </option>
               ))}
             </select>
@@ -308,7 +308,7 @@ export default function ModalContratarPrestador({
             <div className={styles.servicePreview}>
               <div>
                 <span className={styles.previewLabel}>
-                  Servico selecionado
+                  Serviço escolhido
                 </span>
                 <strong>
                   {texto(servicoSelecionado.nome || servicoSelecionado.tipo)}
@@ -326,7 +326,7 @@ export default function ModalContratarPrestador({
           )}
 
           <label className={styles.field}>
-            <span className={styles.label}>Descricao da necessidade</span>
+            <span className={styles.label}>O que você precisa?</span>
             <textarea
               value={observacao}
               maxLength={500}
@@ -340,7 +340,7 @@ export default function ModalContratarPrestador({
               className={`${styles.textarea} ${
                 fieldErrors.observacao ? styles.inputError : ''
               }`}
-              placeholder="Descreva a necessidade do atendimento"
+              placeholder="Descreva o atendimento desejado"
             />
             <div className={styles.helperRow}>
               {fieldErrors.observacao ? (
@@ -349,8 +349,8 @@ export default function ModalContratarPrestador({
                 </span>
               ) : (
                 <span>
-                  Explique o cuidado necessario, local, restricoes ou
-                  observacoes importantes.
+                  Informe o cuidado necessário, local, restrições ou outros
+                  detalhes importantes.
                 </span>
               )}
               <span>{observacao.trim().length}/500</span>
@@ -374,11 +374,11 @@ export default function ModalContratarPrestador({
               disabled={loading || servicos.length === 0}
               className={styles.primaryButton}
             >
-              {loading ? 'Enviando...' : 'Enviar solicitacao'}
+              {loading ? 'Enviando...' : 'Enviar pedido'}
             </button>
           </div>
 
-          {loading && <Carregando mensagem="Enviando solicitacao..." />}
+          {loading && <Carregando mensagem="Enviando seu pedido..." />}
         </form>
       </section>
   );

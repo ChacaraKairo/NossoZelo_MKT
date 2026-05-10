@@ -7,10 +7,28 @@ const CONTEXTO = 'avaliacaoService';
 
 export interface RegistrarAvaliacaoPayload {
   contratacao_id: number;
-  prestador_id: string;
+  prestador_id?: string;
   tipo_prestador?: string;
   nota: number;
   comentario?: string;
+}
+
+export interface DisponibilidadeAvaliacao {
+  contratacao_id: number;
+  pode_avaliar: boolean;
+  tipo_avaliacao:
+    | 'cliente_para_prestador'
+    | 'prestador_para_cliente'
+    | null;
+  avaliacao_existente: boolean;
+  avaliacao_disponivel_em: string | null;
+  motivo_bloqueio: string | null;
+  mensagem_usuario: string;
+}
+
+export interface RegistrarAvaliacaoResposta {
+  avaliacao: AvaliacaoPerfil;
+  disponibilidade: DisponibilidadeAvaliacao;
 }
 
 function logarErro(endpoint: string, error: unknown) {
@@ -55,7 +73,7 @@ export const avaliacaoService = {
 
   registrarAvaliacao: async (
     payload: RegistrarAvaliacaoPayload,
-  ): Promise<AvaliacaoPerfil> => {
+  ): Promise<RegistrarAvaliacaoResposta> => {
     const endpoint = '/avaliacoes';
 
     try {
@@ -64,7 +82,7 @@ export const avaliacaoService = {
         prestador_id: payload.prestador_id,
       });
 
-      const response = await api.post<AvaliacaoPerfil>(
+      const response = await api.post<RegistrarAvaliacaoResposta>(
         endpoint,
         payload,
       );
@@ -73,7 +91,7 @@ export const avaliacaoService = {
         CONTEXTO,
         'Avaliação registrada com sucesso',
         {
-          avaliacaoId: response.data.id,
+          avaliacaoId: response.data.avaliacao?.id,
           contratacao_id: payload.contratacao_id,
         },
       );
@@ -83,6 +101,28 @@ export const avaliacaoService = {
       logarErro(endpoint, error);
       throw error;
     }
+  },
+
+  consultarDisponibilidade: async (
+    contratacaoId: number,
+  ): Promise<DisponibilidadeAvaliacao> => {
+    const endpoint = `/avaliacoes/disponibilidade/${contratacaoId}`;
+    const response = await api.get<DisponibilidadeAvaliacao>(endpoint);
+    return response.data;
+  },
+
+  listarMinhasPendentes: async (): Promise<{
+    pendentes: Array<{
+      contratacao_id: number;
+      nome_avaliado: string;
+      tipo_avaliacao: string;
+      data_servico: string;
+      pode_avaliar: boolean;
+      avaliacao_disponivel_em: string | null;
+    }>;
+  }> => {
+    const response = await api.get('/avaliacoes/minhas-pendentes');
+    return response.data;
   },
 };
 

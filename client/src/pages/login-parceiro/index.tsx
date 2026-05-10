@@ -49,6 +49,11 @@ const LoginPage = () => {
       // O token já foi salvo nos cookies pelo serviço.
       // Apenas redirecionamos o usuário para a página principal.
       logger.info('LoginParceiroPage', 'Login concluído com sucesso');
+      if (response.onboardingStatus?.emailConfirmado === false) {
+        router.push('/confirmar-email?pendente=1');
+        return;
+      }
+
       if (
         response.onboardingStatus?.isPrestador &&
         response.onboardingStatus.etapaAtual !== 'ativo'

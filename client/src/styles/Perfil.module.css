@@ -91,12 +91,17 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  min-width: 0;
   margin-bottom: var(--space-5);
   border: 1px solid #f59e0b;
   border-radius: var(--radius-lg);
   background: #fffbeb;
   color: #78350f;
   padding: var(--space-5);
+}
+
+.emailAlert > div {
+  min-width: 0;
 }
 
 .emailAlert strong {
@@ -107,6 +112,7 @@
 .emailAlert p {
   margin: var(--space-1) 0 0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .emailAlert button,
@@ -274,6 +280,17 @@
     min-height: auto;
     border-radius: var(--radius-lg);
     padding: var(--space-5);
+  }
+
+  .emailAlert {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .emailAlert button,
+  .emailAction,
+  .emailActionSecondary {
+    width: 100%;
   }
 }
 

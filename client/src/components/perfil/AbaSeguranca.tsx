@@ -71,8 +71,7 @@ export default function AbaSeguranca() {
         <div>
           <h2 className={styles.title}>Segurança</h2>
           <p className={styles.subtitle}>
-            Atualize sua senha com validação da senha atual e sessão
-            autenticada.
+            Atualize sua senha para manter sua conta protegida.
           </p>
         </div>
       </header>
@@ -80,10 +79,10 @@ export default function AbaSeguranca() {
       <ul className={styles.securityList}>
         <li>Use uma senha única, que não seja usada em outros serviços.</li>
         <li>
-          A plataforma nunca salva sua senha em texto puro no frontend.
+          Evite senhas fáceis, como datas de nascimento ou sequências simples.
         </li>
         <li>
-          Tokens e credenciais sensíveis devem permanecer somente no backend.
+          Nunca compartilhe sua senha com outras pessoas.
         </li>
       </ul>
 

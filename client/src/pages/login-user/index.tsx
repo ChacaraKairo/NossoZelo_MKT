@@ -99,6 +99,11 @@ const LoginPage = () => {
       }
 
       setLoading(false);
+      if (response.onboardingStatus?.emailConfirmado === false) {
+        router.push('/confirmar-email?pendente=1');
+        return;
+      }
+
       if (
         response.onboardingStatus?.isPrestador &&
         response.onboardingStatus.etapaAtual !== 'ativo'

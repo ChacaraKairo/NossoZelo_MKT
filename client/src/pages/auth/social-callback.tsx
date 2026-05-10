@@ -36,6 +36,11 @@ export default function SocialCallbackPage() {
       )
       .then(({ sessao, onboarding }) => {
         const usuario = sessao.user || sessao.usuario;
+        if (!onboarding.emailConfirmado) {
+          router.replace('/confirmar-email?pendente=1');
+          return;
+        }
+
         if (onboarding.isPrestador && onboarding.etapaAtual !== 'ativo') {
           router.replace('/onboarding/prestador');
           return;

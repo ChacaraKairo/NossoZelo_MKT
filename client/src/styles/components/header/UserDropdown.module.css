@@ -3,6 +3,7 @@
 .container {
   position: relative;
   display: inline-block;
+  max-width: 100%;
   text-align: left;
 }
 
@@ -12,12 +13,13 @@
   justify-content: space-between;
   padding: 0.5rem 1rem;
   min-width: 140px; /* Ajustado para acomodar o texto com folga */
+  max-width: 100%;
   border-radius: 9999px;
   background: transparent;
   border: none;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  margin-right: 20px;
+  margin-right: 0;
 }
 
 .triggerButton:hover {
@@ -30,6 +32,7 @@
   align-items: flex-start;
   text-align: left;
   margin-right: 1rem;
+  min-width: 0;
 }
 
 .userName {
@@ -37,6 +40,9 @@
   font-weight: 600;
   color: #0f172a;
   line-height: 1.25;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -45,6 +51,9 @@
   font-weight: 500;
   color: #64748b;
   line-height: 1.25;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -92,7 +101,7 @@
   right: 0;
   top: 100%;
   margin-top: 0.75rem;
-  width: 20rem;
+  width: min(20rem, calc(100vw - 24px));
   background-color: #ffffff;
   border-radius: 1rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
@@ -217,12 +226,14 @@
 .itemInfo {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .itemTitle {
   font-size: 0.875rem;
   font-weight: 700;
   color: #1f2937;
+  overflow-wrap: anywhere;
 }
 
 .dangerText {
@@ -232,6 +243,23 @@
 .itemDesc {
   font-size: 0.75rem;
   color: #9ca3af;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .triggerButton {
+    min-width: 0;
+    padding-inline: 0.75rem;
+  }
+
+  .textContainer {
+    margin-right: 0.5rem;
+  }
+
+  .userName,
+  .userRole {
+    max-width: 8rem;
+  }
 }
 
 .menuFooter {

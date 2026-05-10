@@ -6,10 +6,10 @@ import Style from '@/styles/SobrePage.module.css';
 const passos = [
   'Crie seu cadastro como cuidador, enfermeiro ou acompanhante.',
   'Confirme seu e-mail pelo link enviado automaticamente.',
-  'Acesse a aba Financeiro no perfil profissional.',
+  'Entre na área Financeiro do seu perfil profissional.',
   'Escolha um plano ativo e gere a cobrança no Asaas.',
-  'Pague por Pix, boleto/link ou opções disponíveis no ambiente do Asaas.',
-  'Aguarde a confirmação automática do webhook.',
+  'Pague por Pix, boleto ou pelas opções mostradas na área segura do Asaas.',
+  'Aguarde a confirmação automática do pagamento.',
   'Com e-mail confirmado e assinatura ativa, seu perfil aparece nas buscas e pode receber pedidos.',
 ];
 
@@ -17,7 +17,7 @@ const perguntas = [
   {
     titulo: 'O NossoZelo coleta cartão?',
     texto:
-      'Não nesta etapa. A cobrança é gerada no Asaas e o pagamento acontece no ambiente do Asaas.',
+      'Não. O pagamento é feito na área segura do Asaas. O NossoZelo não guarda os dados completos do seu cartão.',
   },
   {
     titulo: 'Quando meu perfil fica ativo?',
@@ -27,12 +27,12 @@ const perguntas = [
   {
     titulo: 'O que acontece se atrasar?',
     texto:
-      'A assinatura pode ficar atrasada, inadimplente ou bloqueada. Enquanto estiver fora do status ativo, o prestador não aparece nas buscas e não recebe pedidos.',
+      'Enquanto o pagamento não estiver em dia, seu perfil profissional fica pausado nas buscas e não recebe novos pedidos.',
   },
   {
     titulo: 'Posso reativar depois?',
     texto:
-      'Sim. Ao regularizar o pagamento e o sistema receber a confirmação do Asaas, o perfil profissional volta a ficar disponível.',
+      'Sim. Depois que o pagamento for confirmado, seu perfil profissional volta a aparecer para os clientes.',
   },
 ];
 
@@ -63,7 +63,7 @@ export default function AssinaturaPage() {
 
         <section className={Style.band}>
           <div className={Style.bandText}>
-            <p className={Style.eyebrow}>Fluxo de ativação</p>
+            <p className={Style.eyebrow}>Ativação do perfil</p>
             <h2>Do cadastro até o perfil ativo.</h2>
           </div>
           <ol className={Style.steps}>
@@ -75,13 +75,12 @@ export default function AssinaturaPage() {
 
         <section className={Style.section}>
           <div className={Style.sectionHeader}>
-            <p className={Style.eyebrow}>Política operacional</p>
+            <p className={Style.eyebrow}>Pagamentos</p>
             <h2>Atraso, cancelamento e reativação.</h2>
             <p>
-              Prestadores com assinatura pendente, atrasada, bloqueada,
-              cancelada, expirada ou falha ficam temporariamente fora das buscas
-              e não recebem pedidos. A reativação ocorre após confirmação de
-              pagamento pelo Asaas.
+              Quando a assinatura não está em dia, o perfil profissional fica
+              temporariamente fora das buscas e não recebe novos pedidos. Depois
+              da confirmação do pagamento, a conta volta a funcionar normalmente.
             </p>
           </div>
 

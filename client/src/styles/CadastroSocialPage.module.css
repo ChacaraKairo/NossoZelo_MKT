@@ -246,6 +246,26 @@
   align-items: center;
 }
 
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.checkboxRow input {
+  margin-top: 0.2rem;
+  accent-color: var(--color-primary);
+}
+
+.checkboxRow a {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .secondaryLink,
 .backLink {
   min-height: 44px;

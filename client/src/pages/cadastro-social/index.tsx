@@ -89,6 +89,7 @@ export default function CadastroSocialPage() {
   const [error, setError] = useState<string | null>(null);
   const [dadosSociais, setDadosSociais] = useState<SocialPayload | null>(null);
   const [carregandoCadastroSocial, setCarregandoCadastroSocial] = useState(true);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   const tokenInvalido =
     router.isReady &&
@@ -187,6 +188,10 @@ export default function CadastroSocialPage() {
       return 'Informe o COREN.';
     }
 
+    if (!aceitouTermos) {
+      return 'Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para criar sua conta.';
+    }
+
     return null;
   }
 
@@ -226,6 +231,7 @@ export default function CadastroSocialPage() {
         cidade,
         estado,
         tipo,
+        aceitouTermos,
         url_foto_perfil: dadosSociais?.url_foto_perfil || '',
         ...(isPrestador ? { [tipo]: perfilProfissional } : {}),
       });
@@ -252,8 +258,8 @@ export default function CadastroSocialPage() {
         <section className={styles.errorCard}>
           <h1>Link de cadastro invalido</h1>
           <p>
-            O token social esta ausente, expirado ou invalido. Inicie o login
-            social novamente.
+            Nao conseguimos confirmar este link. Volte para o login e tente
+            entrar novamente com sua conta social.
           </p>
           <Link className={styles.backLink} href="/login-user">
             Voltar ao login
@@ -268,7 +274,7 @@ export default function CadastroSocialPage() {
       <section className={styles.card}>
         <header className={styles.header}>
           <div>
-            <span className={styles.kicker}>Cadastro social</span>
+            <span className={styles.kicker}>Cadastro com rede social</span>
             <h1>Complete sua conta NossoZelo</h1>
             <p>
               Seu e-mail ja veio do provedor. Complete apenas os dados
@@ -422,6 +428,23 @@ export default function CadastroSocialPage() {
               </div>
             </fieldset>
           )}
+
+          <label className={styles.checkboxRow}>
+            <input
+              type="checkbox"
+              checked={aceitouTermos}
+              onChange={(event) => setAceitouTermos(event.target.checked)}
+              disabled={loading}
+            />
+            <span>
+              Li e aceito os{' '}
+              <Link href="/termos-de-uso">Termos de Uso</Link> e a{' '}
+              <Link href="/politica-de-privacidade/nossozelo">
+                Politica de Privacidade
+              </Link>
+              .
+            </span>
+          </label>
 
           <footer className={styles.actions}>
             <Link className={styles.secondaryLink} href="/login-user">

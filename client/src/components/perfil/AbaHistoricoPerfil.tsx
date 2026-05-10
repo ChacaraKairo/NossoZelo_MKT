@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import EstadoVazio from '@/components/common/EstadoVazio';
 import avaliacaoService from '@/service/avaliacaoService';
-import { ContratacaoPerfil } from '@/types/perfil';
+import contratacaoService from '@/service/contratacaoService';
+import { AvaliacaoPerfil, ContratacaoPerfil } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import styles from '@/styles/components/perfil/PerfilOperacional.module.css';
 
@@ -18,16 +19,41 @@ type FormAvaliacao = {
 
 function texto(valor: unknown) {
   if (valor === null || valor === undefined || valor === '') {
-    return 'Não informado';
+    return 'Nao informado';
   }
   return String(valor);
 }
 
 function formatarData(valor?: string | Date | null) {
-  if (!valor) return 'Não informado';
+  if (!valor) return 'Nao informado';
   const data = new Date(valor);
   if (Number.isNaN(data.getTime())) return texto(valor);
   return data.toLocaleDateString('pt-BR');
+}
+
+function formatarHora(valor?: string | Date | null) {
+  if (!valor) return 'A combinar';
+  const valorTexto = String(valor);
+  const matchIso = valorTexto.match(/T(\d{2}:\d{2})/);
+  const matchSimples = valorTexto.match(/^(\d{2}:\d{2})/);
+  if (matchIso?.[1]) return matchIso[1];
+  if (matchSimples?.[1]) return matchSimples[1];
+
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return texto(valor);
+  return data.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatarMoeda(valor?: string | number | null) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return 'Valor nao informado';
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 }
 
 function nomeRelacionado(
@@ -37,13 +63,13 @@ function nomeRelacionado(
   if (modo === 'cliente') {
     return (
       contratacao.usuarios_contratacoes_prestador_idTousuarios?.nome ||
-      'Prestador não informado'
+      'Profissional nao informado'
     );
   }
 
   return (
     contratacao.usuarios_contratacoes_cliente_idTousuarios?.nome ||
-    'Cliente não informado'
+    'Cliente nao informado'
   );
 }
 
@@ -52,51 +78,93 @@ function servico(contratacao: ContratacaoPerfil) {
     contratacao.servico?.nome ||
     contratacao.servicos?.nome ||
     (contratacao.servico_id
-      ? `Serviço #${contratacao.servico_id}`
-      : 'Serviço não informado')
+      ? `Servico ${contratacao.servico_id}`
+      : 'Servico nao informado')
   );
 }
 
 function statusNormalizado(contratacao: ContratacaoPerfil) {
-  return String(contratacao.status || '')
-    .trim()
-    .toLowerCase();
+  return String(contratacao.status || '').trim().toLowerCase();
 }
 
-function contratacaoConcluida(contratacao: ContratacaoPerfil) {
-  const status = statusNormalizado(contratacao);
+function dataHoraFim(contratacao: ContratacaoPerfil) {
+  if (!contratacao.data || !contratacao.hora_fim) return null;
+  const data = new Date(contratacao.data);
+  const hora = new Date(contratacao.hora_fim);
+  if (Number.isNaN(data.getTime()) || Number.isNaN(hora.getTime())) {
+    return null;
+  }
+  const fim = new Date(data);
+  fim.setUTCHours(hora.getUTCHours(), hora.getUTCMinutes(), 0, 0);
+  return fim;
+}
+
+function avaliacaoDoUsuario(
+  contratacao: ContratacaoPerfil,
+  modo: 'cliente' | 'prestador',
+): AvaliacaoPerfil | null {
+  const tipo =
+    modo === 'cliente'
+      ? 'cliente_para_prestador'
+      : 'prestador_para_cliente';
   return (
-    status === 'concluido' ||
-    status === 'concluida' ||
-    status === 'finalizado' ||
-    status === 'finalizada'
+    contratacao.avaliacoes?.find(
+      (avaliacao) => avaliacao.tipo_avaliacao === tipo,
+    ) ||
+    (contratacao.avaliacao?.tipo_avaliacao === tipo
+      ? contratacao.avaliacao
+      : null)
   );
 }
 
-function contratacaoJaAvaliada(
-  contratacao: ContratacaoPerfil,
-) {
-  return Boolean(contratacao.avaliacao?.id);
-}
-
-function podeAvaliar(
+function estadoAvaliacao(
   contratacao: ContratacaoPerfil,
   modo: 'cliente' | 'prestador',
 ) {
-  return (
-    modo === 'cliente' &&
-    contratacaoConcluida(contratacao) &&
-    !contratacaoJaAvaliada(contratacao)
-  );
+  const status = statusNormalizado(contratacao);
+  const enviada = avaliacaoDoUsuario(contratacao, modo);
+  if (enviada) return { pode: false, texto: 'Avaliacao enviada.' };
+  if (status === 'cancelado') {
+    return {
+      pode: false,
+      texto: 'Atendimento cancelado nao pode ser avaliado.',
+    };
+  }
+  if (status === 'nao_realizado') {
+    return {
+      pode: false,
+      texto: 'Atendimento nao realizado nao pode ser avaliado.',
+    };
+  }
+  if (!['confirmado', 'concluido'].includes(status)) {
+    return {
+      pode: false,
+      texto: 'A avaliacao fica disponivel apos o atendimento confirmado.',
+    };
+  }
+
+  const fim = dataHoraFim(contratacao);
+  if (!fim || new Date() <= fim) {
+    return {
+      pode: false,
+      texto: 'A avaliacao ficara disponivel apos o horario final do atendimento.',
+    };
+  }
+
+  return {
+    pode: true,
+    texto:
+      modo === 'cliente'
+        ? 'Disponivel para avaliar o profissional.'
+        : 'Disponivel para avaliar o cliente.',
+  };
 }
 
 function renderEstrelas(
   contratacao: ContratacaoPerfil,
-  formularios: Record<number, FormAvaliacao>,
+  formulario: FormAvaliacao,
   onNotaChange: (contratacaoId: number, nota: number) => void,
 ) {
-  const notaAtual = formularios[contratacao.id]?.nota || 5;
-
   return (
     <div className={styles.ratingGroup} aria-label="Nota">
       {[1, 2, 3, 4, 5].map((nota) => (
@@ -104,12 +172,12 @@ function renderEstrelas(
           key={nota}
           type="button"
           className={`${styles.starButton} ${
-            nota <= notaAtual ? styles.starButtonActive : ''
+            nota <= formulario.nota ? styles.starButtonActive : ''
           }`}
           onClick={() => onNotaChange(contratacao.id, nota)}
           aria-label={`${nota} estrela${nota > 1 ? 's' : ''}`}
         >
-          ★
+          *
         </button>
       ))}
     </div>
@@ -124,11 +192,20 @@ export default function AbaHistoricoPerfil({
   const [formularios, setFormularios] = useState<
     Record<number, FormAvaliacao>
   >({});
-  const [enviandoId, setEnviandoId] = useState<number | null>(
-    null,
-  );
+  const [enviandoId, setEnviandoId] = useState<number | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
+
+  const formulariosComPadrao = useMemo(() => {
+    const mapa: Record<number, FormAvaliacao> = {};
+    contratacoes.forEach((contratacao) => {
+      mapa[contratacao.id] = formularios[contratacao.id] || {
+        nota: 5,
+        comentario: '',
+      };
+    });
+    return mapa;
+  }, [contratacoes, formularios]);
 
   const atualizarFormulario = (
     contratacaoId: number,
@@ -144,37 +221,8 @@ export default function AbaHistoricoPerfil({
     }));
   };
 
-  const contratacoesElegiveis = useMemo(
-    () =>
-      contratacoes.reduce<Record<number, FormAvaliacao>>(
-        (acumulado, contratacao) => {
-          if (!podeAvaliar(contratacao, modo)) return acumulado;
-
-          acumulado[contratacao.id] = {
-            nota: formularios[contratacao.id]?.nota || 5,
-            comentario:
-              formularios[contratacao.id]?.comentario || '',
-          };
-
-          return acumulado;
-        },
-        {},
-      ),
-    [contratacoes, formularios, modo],
-  );
-
-  const enviarAvaliacao = async (
-    contratacao: ContratacaoPerfil,
-  ) => {
-    const formulario = formularios[contratacao.id] || {
-      nota: 5,
-      comentario: '',
-    };
-
-    if (!contratacao.prestador_id) {
-      setErro('Prestador nao identificado para esta contratacao.');
-      return;
-    }
+  const enviarAvaliacao = async (contratacao: ContratacaoPerfil) => {
+    const formulario = formulariosComPadrao[contratacao.id];
 
     setEnviandoId(contratacao.id);
     setErro(null);
@@ -183,13 +231,11 @@ export default function AbaHistoricoPerfil({
     try {
       await avaliacaoService.registrarAvaliacao({
         contratacao_id: contratacao.id,
-        prestador_id: contratacao.prestador_id,
-        tipo_prestador: contratacao.tipo_prestador || undefined,
         nota: formulario.nota,
         comentario: formulario.comentario.trim() || undefined,
       });
 
-      setSucesso('Avaliacao registrada com sucesso.');
+      setSucesso('Avaliacao enviada com sucesso.');
       onAvaliacaoRegistrada?.();
     } catch (error: unknown) {
       setErro(extrairMensagemErro(error));
@@ -198,14 +244,39 @@ export default function AbaHistoricoPerfil({
     }
   };
 
+  const cancelar = async (contratacao: ContratacaoPerfil) => {
+    const motivo =
+      window.prompt('Conte rapidamente o motivo do cancelamento.') || '';
+
+    const avisoPagamento =
+      'O NossoZelo nao processa o pagamento deste atendimento. Nenhuma multa sera cobrada pela plataforma. Caso algum valor tenha sido combinado diretamente entre cliente e prestador, a resolucao deve ser feita entre as partes.';
+
+    if (!window.confirm(`${avisoPagamento}\n\nConfirmar cancelamento?`)) {
+      return;
+    }
+
+    try {
+      setErro(null);
+      setSucesso(null);
+      const resposta = await contratacaoService.cancelarContratacao(
+        contratacao.id,
+        motivo,
+      );
+      setSucesso(resposta.cancelamento.mensagem_usuario);
+      onAvaliacaoRegistrada?.();
+    } catch (error) {
+      setErro(extrairMensagemErro(error));
+    }
+  };
+
   if (contratacoes.length === 0) {
     return (
       <EstadoVazio
-        titulo="Histórico vazio."
+        titulo="Historico vazio."
         descricao={
           modo === 'cliente'
-            ? 'Quando você solicitar atendimentos, eles aparecerão aqui.'
-            : 'Quando clientes solicitarem ou concluírem atendimentos, eles aparecerão aqui.'
+            ? 'Quando voce solicitar atendimentos, eles aparecerao aqui.'
+            : 'Quando clientes solicitarem ou concluirem atendimentos, eles aparecerao aqui.'
         }
       />
     );
@@ -215,9 +286,9 @@ export default function AbaHistoricoPerfil({
     <section className={styles.section}>
       <header className={styles.header}>
         <div>
-          <h2 className={styles.title}>Histórico</h2>
+          <h2 className={styles.title}>Historico</h2>
           <p className={styles.subtitle}>
-            Serviços passados, ativos e solicitações em andamento.
+            Pedidos, cancelamentos e avaliacoes.
           </p>
         </div>
       </header>
@@ -226,63 +297,86 @@ export default function AbaHistoricoPerfil({
         {erro && <div className={styles.error}>{erro}</div>}
         {sucesso && <div className={styles.success}>{sucesso}</div>}
 
-        {contratacoes.map((contratacao) => (
-          <article key={contratacao.id} className={styles.card}>
-            <h3 className={styles.cardTitle}>
-              {nomeRelacionado(contratacao, modo)}
-            </h3>
-            <p className={styles.muted}>{servico(contratacao)}</p>
-            <div className={styles.meta}>
-              <span className={styles.badge}>
-                {texto(contratacao.status)}
-              </span>
-              <span className={styles.badge}>
-                {formatarData(contratacao.data)}
-              </span>
-              {contratacaoJaAvaliada(contratacao) && (
-                <span className={styles.badgeSuccess}>
-                  Nota {contratacao.avaliacao?.nota ?? '-'}
-                </span>
-              )}
-            </div>
+        {contratacoes.map((contratacao) => {
+          const avaliacao = avaliacaoDoUsuario(contratacao, modo);
+          const estado = estadoAvaliacao(contratacao, modo);
+          const podeCancelar = ![
+            'cancelado',
+            'concluido',
+            'nao_realizado',
+          ].includes(statusNormalizado(contratacao));
+          const formulario = formulariosComPadrao[contratacao.id];
 
-            {modo === 'cliente' &&
-              !contratacaoConcluida(contratacao) && (
+          return (
+            <article key={contratacao.id} className={styles.card}>
+              <h3 className={styles.cardTitle}>
+                {nomeRelacionado(contratacao, modo)}
+              </h3>
+              <p className={styles.muted}>{servico(contratacao)}</p>
+              <div className={styles.meta}>
+                <span className={styles.badge}>
+                  Situacao: {texto(contratacao.status)}
+                </span>
+                <span className={styles.badge}>
+                  {formatarData(contratacao.data)} -{' '}
+                  {formatarHora(contratacao.hora_inicio)} ate{' '}
+                  {formatarHora(contratacao.hora_fim)}
+                </span>
+                <span className={styles.badge}>
+                  Valor: {formatarMoeda(contratacao.preco)}
+                </span>
+                {avaliacao && (
+                  <span className={styles.badgeSuccess}>
+                    Nota enviada: {avaliacao.nota ?? '-'}
+                  </span>
+                )}
+              </div>
+
+              <p className={styles.hint}>{estado.texto}</p>
+              {contratacao.motivo_cancelamento && (
                 <p className={styles.hint}>
-                  A avaliacao fica disponivel apos a conclusao do atendimento.
+                  Motivo do cancelamento: {contratacao.motivo_cancelamento}
+                </p>
+              )}
+              {contratacao.cancelamento_tardio && (
+                <p className={styles.hint}>
+                  Cancelamento proximo ao horario do atendimento.
                 </p>
               )}
 
-            {modo === 'cliente' && contratacaoJaAvaliada(contratacao) && (
-              <p className={styles.hint}>
-                Avaliacao enviada em{' '}
-                {formatarData(contratacao.avaliacao?.data_avaliacao)}.
-              </p>
-            )}
+              {podeCancelar && (
+                <div className={styles.actions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => cancelar(contratacao)}
+                  >
+                    Cancelar pedido
+                  </button>
+                </div>
+              )}
 
-            {podeAvaliar(contratacao, modo) && (
+              {estado.pode && (
                 <div className={styles.inlineForm}>
                   <p className={styles.hint}>
-                    Avalie este atendimento para registrar sua experiencia com o prestador.
+                    {modo === 'cliente'
+                      ? 'Avalie o profissional deste atendimento.'
+                      : 'Avalie o cliente deste atendimento.'}
                   </p>
                   <label className={styles.label}>Nota</label>
                   {renderEstrelas(
                     contratacao,
-                    contratacoesElegiveis,
+                    formulario,
                     (contratacaoId, nota) =>
                       atualizarFormulario(contratacaoId, { nota }),
                   )}
 
-                  <label className={styles.label}>
-                    Comentario
-                  </label>
+                  <label className={styles.label}>Comentario</label>
                   <textarea
                     className={styles.textarea}
                     maxLength={500}
-                    placeholder="Conte como foi o atendimento."
-                    value={
-                      formularios[contratacao.id]?.comentario || ''
-                    }
+                    placeholder="Conte como foi a experiencia."
+                    value={formulario.comentario}
                     onChange={(event) =>
                       atualizarFormulario(contratacao.id, {
                         comentario: event.target.value,
@@ -299,13 +393,16 @@ export default function AbaHistoricoPerfil({
                     >
                       {enviandoId === contratacao.id
                         ? 'Enviando...'
-                        : 'Enviar avaliacao'}
+                        : modo === 'cliente'
+                          ? 'Avaliar prestador'
+                          : 'Avaliar cliente'}
                     </button>
                   </div>
                 </div>
               )}
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

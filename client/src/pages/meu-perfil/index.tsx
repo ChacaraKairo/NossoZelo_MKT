@@ -121,7 +121,7 @@ const DashboardPerfil = () => {
     return (
       <div className={styles.container}>
         <div className={styles.loadingState}>
-          Sincronizando seu painel de controle...
+          Carregando seu perfil...
         </div>
       </div>
     );
@@ -134,7 +134,7 @@ const DashboardPerfil = () => {
         <main className={styles.mainContent}>
           <ErroComRetry
             titulo="Não foi possível carregar o perfil"
-            mensagem="Tente novamente para sincronizar seus dados com o servidor."
+            mensagem="Tente novamente para atualizar seus dados."
             detalhes={erro}
             onRetry={carregarDadosDashboard}
           />
