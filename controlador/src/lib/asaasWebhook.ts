@@ -422,6 +422,7 @@ export async function processarWebhookAsaasControlador(input: AsaasWebhookInput)
       gateway: "asaas",
       gateway_customer_id: customerId || assinaturaAtual.gateway_customer_id,
       gateway_subscription_id: subscriptionId || assinaturaAtual.gateway_subscription_id,
+      gateway_payment_id: payment?.id ? limitar(payment.id, 120) : assinaturaAtual.gateway_payment_id,
       gateway_status: limitar(
         `${event}:${payment?.status || subscription?.status || statusAssinatura}`,
         60

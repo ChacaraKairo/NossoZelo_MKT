@@ -88,6 +88,13 @@ export default async function UsuarioDetalhePage({ params }: UsuarioDetalheProps
               endpoint={`/api/usuarios/${usuario.id}/confirmar-email`}
               label="Confirmar e-mail"
             />
+            {assinatura ? (
+              <AdminActionButton
+                confirmMessage="Consultar o Asaas e reprocessar o pagamento desta assinatura?"
+                endpoint={`/api/assinaturas/${assinatura.id}/reprocessar`}
+                label="Reprocessar pagamento"
+              />
+            ) : null}
           </div>
         </aside>
       </section>

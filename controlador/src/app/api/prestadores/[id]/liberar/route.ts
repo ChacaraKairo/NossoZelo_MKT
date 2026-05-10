@@ -30,8 +30,8 @@ export async function POST(_request: Request, { params }: Params) {
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "usuarios" });
     return NextResponse.json({
       message: resultado.assinatura?.status === "ativa"
-        ? "Prestador liberado porque ja possui assinatura ativa confirmada pelo Asaas."
-        : "E-mail do prestador confirmado. A ativacao profissional depende da confirmacao real de pagamento do Asaas.",
+        ? "Prestador liberado manualmente. Assinatura marcada como ativa e perfil habilitado para uso."
+        : "E-mail do prestador confirmado. Nao ha assinatura para ativar automaticamente.",
       prestador: resultado.usuario,
       assinatura: resultado.assinatura
     });

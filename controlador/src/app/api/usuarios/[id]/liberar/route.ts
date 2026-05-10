@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: Params) {
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "usuarios" });
     return NextResponse.json({
       message: resultado.assinatura
-        ? "Usuario com e-mail confirmado. Assinatura profissional segue o status real do Asaas."
+        ? "Usuario liberado manualmente. Assinatura profissional marcada como ativa."
         : "Usuario liberado e e-mail confirmado.",
       ...resultado
     });

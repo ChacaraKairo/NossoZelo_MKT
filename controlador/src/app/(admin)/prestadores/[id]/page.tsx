@@ -96,6 +96,13 @@ export default async function PrestadorDetalhePage({ params }: PrestadorDetalheP
               label="Liberar perfil"
               variant="primary"
             />
+            {assinatura ? (
+              <AdminActionButton
+                confirmMessage="Consultar o Asaas e reprocessar o pagamento desta assinatura?"
+                endpoint={`/api/assinaturas/${assinatura.id}/reprocessar`}
+                label="Reprocessar pagamento"
+              />
+            ) : null}
           </div>
         </aside>
       </section>

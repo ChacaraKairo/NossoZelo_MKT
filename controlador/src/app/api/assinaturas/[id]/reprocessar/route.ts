@@ -28,6 +28,23 @@ function statusLocalPorStatusAsaas(status?: string | null) {
   return null;
 }
 
+function dataAsaas(valor?: string | null) {
+  if (!valor) return null;
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
+function adicionarDias(data: Date, dias: number) {
+  const nova = new Date(data);
+  nova.setDate(nova.getDate() + dias);
+  return nova;
+}
+
+function statusPagamentoRecebido(status?: string | null) {
+  const normalizado = String(status || "").toUpperCase();
+  return normalizado === "RECEIVED" || normalizado === "CONFIRMED";
+}
+
 async function consultarAssinaturaAsaas(gatewaySubscriptionId?: string | null) {
   const apiKey = process.env.ASAAS_API_KEY?.trim();
   if (!apiKey || !gatewaySubscriptionId) return null;
@@ -60,6 +77,64 @@ async function consultarAssinaturaAsaas(gatewaySubscriptionId?: string | null) {
   };
 }
 
+async function consultarPagamentoRecebidoAsaas(gatewaySubscriptionId?: string | null) {
+  const apiKey = process.env.ASAAS_API_KEY?.trim();
+  if (!apiKey || !gatewaySubscriptionId) return null;
+
+  const baseUrl = obterBaseUrlAsaas();
+  const resposta = await fetch(
+    `${baseUrl}/subscriptions/${encodeURIComponent(gatewaySubscriptionId)}/payments?limit=20`,
+    { headers: { access_token: apiKey } }
+  );
+
+  if (!resposta.ok) {
+    return {
+      erro: `asaas_payments_${resposta.status}`,
+      pagamento: null
+    };
+  }
+
+  const dados = await resposta.json() as {
+    data?: Array<{
+      id?: string;
+      status?: string;
+      paymentDate?: string;
+      clientPaymentDate?: string;
+      confirmedDate?: string;
+      dueDate?: string;
+      value?: number | string;
+    }>;
+  };
+  const pagamentos = dados.data || [];
+  const pagamentoRecebido = pagamentos.find((pagamento) =>
+    statusPagamentoRecebido(pagamento.status)
+  );
+
+  if (!pagamentoRecebido) {
+    return {
+      erro: null,
+      pagamento: null,
+      total_consultado: pagamentos.length
+    };
+  }
+
+  return {
+    erro: null,
+    pagamento: {
+      id: pagamentoRecebido.id || null,
+      status: pagamentoRecebido.status || null,
+      data_pagamento:
+        dataAsaas(pagamentoRecebido.paymentDate) ||
+        dataAsaas(pagamentoRecebido.clientPaymentDate) ||
+        dataAsaas(pagamentoRecebido.confirmedDate) ||
+        new Date(),
+      data_vencimento: dataAsaas(pagamentoRecebido.dueDate),
+      valor: pagamentoRecebido.value ?? null
+    },
+    total_consultado: pagamentos.length
+  };
+}
+
 export async function POST(_request: Request, { params }: Params) {
   const { admin, response } = await exigirAdminApi();
   if (response) return response;
@@ -73,8 +148,14 @@ export async function POST(_request: Request, { params }: Params) {
 
     if (!assinatura) return NextResponse.json({ error: "Assinatura nao encontrada." }, { status: 404 });
 
-    const consultaAsaas = await consultarAssinaturaAsaas(assinatura.gateway_subscription_id);
-    const statusReprocessado = consultaAsaas?.status_local || assinatura.status;
+    const [consultaAsaas, consultaPagamento] = await Promise.all([
+      consultarAssinaturaAsaas(assinatura.gateway_subscription_id),
+      consultarPagamentoRecebidoAsaas(assinatura.gateway_subscription_id)
+    ]);
+    const pagamentoRecebido = consultaPagamento?.pagamento;
+    const statusReprocessado = pagamentoRecebido
+      ? "ativa"
+      : consultaAsaas?.status_local || assinatura.status;
     const statusCadastro =
       statusReprocessado === "ativa" && !assinatura.usuarios.email_confirmado
         ? "pendente_pagamento"
@@ -82,7 +163,22 @@ export async function POST(_request: Request, { params }: Params) {
     const payloadResumo = {
       adminId: admin.id,
       status_cadastro: statusCadastro,
-      consulta_asaas: consultaAsaas
+      consulta_asaas: consultaAsaas,
+      consulta_pagamento: consultaPagamento
+        ? {
+            ...consultaPagamento,
+            pagamento: consultaPagamento.pagamento
+              ? {
+                  ...consultaPagamento.pagamento,
+                  data_pagamento:
+                    consultaPagamento.pagamento.data_pagamento.toISOString(),
+                  data_vencimento:
+                    consultaPagamento.pagamento.data_vencimento?.toISOString() ||
+                    null
+                }
+              : null
+          }
+        : null
     };
 
     const assinaturaAtualizada = await prisma.$transaction(async (tx) => {
@@ -90,10 +186,33 @@ export async function POST(_request: Request, { params }: Params) {
         where: { id: assinatura.id },
         data: {
           status: statusReprocessado,
-          gateway_status: consultaAsaas?.status || assinatura.gateway_status,
-          data_proximo_vencimento: consultaAsaas?.nextDueDate
-            ? new Date(`${consultaAsaas.nextDueDate}T00:00:00`)
-            : assinatura.data_proximo_vencimento
+          gateway_status: pagamentoRecebido
+            ? `PAYMENT_REPROCESS:${pagamentoRecebido.status || "RECEIVED"}`
+            : consultaAsaas?.status || assinatura.gateway_status,
+          gateway_payment_id: pagamentoRecebido?.id || assinatura.gateway_payment_id,
+          data_ultimo_pagamento:
+            pagamentoRecebido?.data_pagamento || assinatura.data_ultimo_pagamento,
+          data_proximo_vencimento: pagamentoRecebido
+            ? consultaAsaas?.nextDueDate
+              ? new Date(`${consultaAsaas.nextDueDate}T00:00:00`)
+              : pagamentoRecebido.data_vencimento
+                ? adicionarDias(pagamentoRecebido.data_vencimento, 30)
+                : adicionarDias(pagamentoRecebido.data_pagamento, 30)
+            : consultaAsaas?.nextDueDate
+              ? new Date(`${consultaAsaas.nextDueDate}T00:00:00`)
+              : assinatura.data_proximo_vencimento,
+          periodo_tolerancia_ate: pagamentoRecebido
+            ? adicionarDias(
+                consultaAsaas?.nextDueDate
+                  ? new Date(`${consultaAsaas.nextDueDate}T00:00:00`)
+                  : pagamentoRecebido.data_vencimento
+                    ? adicionarDias(pagamentoRecebido.data_vencimento, 30)
+                    : adicionarDias(pagamentoRecebido.data_pagamento, 30),
+                15
+              )
+            : assinatura.periodo_tolerancia_ate,
+          confirmacao_expira_em: statusReprocessado === "ativa" ? null : assinatura.confirmacao_expira_em,
+          cancelada_em: statusReprocessado === "ativa" ? null : assinatura.cancelada_em
         }
       });
 
@@ -110,9 +229,11 @@ export async function POST(_request: Request, { params }: Params) {
           tipo: "reprocessamento_admin",
           origem: "admin",
           gateway: assinatura.gateway,
+          gateway_payment_id: pagamentoRecebido?.id || assinatura.gateway_payment_id,
           gateway_subscription_id: assinatura.gateway_subscription_id,
           status_anterior: assinatura.status,
           status_novo: assinaturaAtualizada.status,
+          valor: pagamentoRecebido?.valor ?? undefined,
           payload_hash: hashPayload(payloadResumo),
           payload_resumo: payloadResumo,
           processado_em: new Date()
@@ -124,7 +245,9 @@ export async function POST(_request: Request, { params }: Params) {
     await registrarLogAdministrativo({ adminId: admin.id, tabela: "assinaturas" });
 
     return NextResponse.json({
-      message: "Assinatura reprocessada.",
+      message: pagamentoRecebido
+        ? "Pagamento recebido encontrado no Asaas. Assinatura ativada e prestador liberado."
+        : "Assinatura reprocessada.",
       assinatura: assinaturaAtualizada,
       status_cadastro: statusCadastro
     });
