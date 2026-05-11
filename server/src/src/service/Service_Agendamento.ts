@@ -30,6 +30,10 @@ type CriarAgendamentoInput = {
   observacao?: string;
 };
 
+type CancelarContratacaoInput = {
+  motivo?: string | null;
+};
+
 type ContratacaoComUsuarios =
   Prisma.contratacoesGetPayload<{
     include: {
@@ -142,6 +146,88 @@ function formatarHora(valor: Date) {
   }).format(valor);
 }
 
+function dataHoraInicioServico(
+  contratacao: Pick<ContratacaoComUsuarios, 'data' | 'hora_inicio'>,
+) {
+  const data = new Date(contratacao.data);
+  const hora = new Date(contratacao.hora_inicio);
+  const inicio = new Date(data);
+  inicio.setUTCHours(
+    hora.getUTCHours(),
+    hora.getUTCMinutes(),
+    hora.getUTCSeconds(),
+    0,
+  );
+  return inicio;
+}
+
+export function calcularCancelamentoMvp(
+  contratacao: Pick<ContratacaoComUsuarios, 'status' | 'data' | 'hora_inicio'>,
+  agora = new Date(),
+) {
+  const inicioServico = dataHoraInicioServico(contratacao as ContratacaoComUsuarios);
+  const horasAteServico =
+    (inicioServico.getTime() - agora.getTime()) / (1000 * 60 * 60);
+
+  if (horasAteServico <= 0) {
+    return {
+      pode_cancelar: false,
+      aplica_multa: false,
+      valor_multa: 0,
+      houve_cobranca_plataforma: false,
+      cancelamento_tardio: false,
+      horas_ate_servico: Math.round(horasAteServico * 100) / 100,
+      motivo:
+        "Este atendimento ja passou do horario de inicio. Use a opcao 'marcar como nao realizado' ou finalize o servico.",
+    };
+  }
+
+  return {
+    pode_cancelar: true,
+    aplica_multa: false,
+    valor_multa: 0,
+    houve_cobranca_plataforma: false,
+    cancelamento_tardio: horasAteServico <= 36,
+    horas_ate_servico: Math.round(horasAteServico * 100) / 100,
+    motivo: null,
+  };
+}
+
+function respostaCancelamento(
+  contratacao: any,
+  politica: ReturnType<typeof calcularCancelamentoMvp>,
+  canceladoPor: 'cliente' | 'prestador' | 'admin',
+) {
+  const mensagemBase =
+    'Servico cancelado com sucesso. O NossoZelo nao processa pagamentos deste atendimento. Caso algum valor tenha sido combinado diretamente entre cliente e prestador, a resolucao deve ser feita entre as partes.';
+  const mensagemTardia =
+    ' Voce esta cancelando proximo ao horario do atendimento. Nenhuma multa sera cobrada pelo NossoZelo nesta versao, mas o cancelamento ficara registrado no historico.';
+
+  return {
+    contratacao: {
+      id: contratacao.id,
+      status: contratacao.status,
+      data: contratacao.data,
+      hora_inicio: contratacao.hora_inicio,
+      hora_fim: contratacao.hora_fim,
+      cancelado_por: canceladoPor,
+      cancelado_em: contratacao.cancelado_em,
+      motivo_cancelamento: contratacao.motivo_cancelamento,
+      cancelamento_tardio: Boolean(contratacao.cancelamento_tardio),
+    },
+    cancelamento: {
+      permitido: politica.pode_cancelar,
+      houve_cobranca_plataforma: false,
+      aplica_multa: false,
+      valor_multa: 0,
+      horas_ate_servico: politica.horas_ate_servico,
+      mensagem_usuario: politica.cancelamento_tardio
+        ? `${mensagemBase}${mensagemTardia}`
+        : mensagemBase,
+    },
+  };
+}
+
 function htmlBase(titulo: string, corpo: string) {
   return `
     <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
@@ -230,6 +316,8 @@ async function notificarMudancaStatus(
         ? 'negada'
         : status === STATUS_CONTRATACAO.concluido
           ? 'concluida'
+          : status === STATUS_CONTRATACAO.nao_realizado
+            ? 'nao realizada'
           : String(status);
 
   const detalhes = `
@@ -487,22 +575,197 @@ class ServiceAgendamento {
     contratacaoId: number,
     usuario: UsuarioAutenticado,
   ) {
-    return this.atualizarStatusContratacao(
-      contratacaoId,
-      usuario,
+    if (!usuario?.id) {
+      throw erroNegocio('Prestador nao identificado na sessao.', 401);
+    }
+
+    const contratacaoAtual = await prisma.contratacoes.findUnique({
+      where: { id: contratacaoId },
+      select: {
+        id: true,
+        prestador_id: true,
+        cliente_id: true,
+        status: true,
+        preco: true,
+      },
+    });
+
+    if (!contratacaoAtual) {
+      throw erroNegocio('Contratacao nao encontrada.', 404);
+    }
+
+    if (contratacaoAtual.prestador_id !== usuario.id) {
+      throw erroNegocio(
+        'Apenas o profissional deste pedido pode aceitar.',
+        403,
+      );
+    }
+
+    await this.validarPrestadorOperacional(usuario.id);
+
+    if (contratacaoAtual.status !== STATUS_CONTRATACAO.pendente) {
+      throw erroNegocio(
+        'Somente pedidos pendentes podem ser aceitos.',
+        409,
+      );
+    }
+
+    const contratacao = await prisma.contratacoes.update({
+      where: { id: contratacaoId },
+      data: { status: STATUS_CONTRATACAO.confirmado },
+    });
+
+    const completa = await buscarContratacaoCompleta(contratacao.id);
+    if (!completa) throw erroNegocio('Contratacao nao encontrada.', 404);
+
+    const email_status = await notificarMudancaStatus(
+      completa,
       STATUS_CONTRATACAO.confirmado,
     );
+
+    return {
+      ...completa,
+      email_status,
+      mensagem_usuario:
+        'Pedido aceito. O atendimento esta confirmado. O pagamento do servico, se houver, deve ser combinado diretamente entre cliente e prestador.',
+    };
   }
 
   static async cancelarContratacao(
     contratacaoId: number,
     usuario: UsuarioAutenticado,
+    input: CancelarContratacaoInput = {},
   ) {
-    return this.atualizarStatusContratacao(
-      contratacaoId,
-      usuario,
-      STATUS_CONTRATACAO.cancelado,
+    if (!usuario?.id) {
+      throw erroNegocio('Usuario nao identificado na sessao.', 401);
+    }
+
+    const contratacaoAtual = await buscarContratacaoCompleta(contratacaoId);
+
+    if (!contratacaoAtual) {
+      throw erroNegocio('Contratacao nao encontrada.', 404);
+    }
+
+    const ehPrestador = contratacaoAtual.prestador_id === usuario.id;
+    const ehCliente = contratacaoAtual.cliente_id === usuario.id;
+    const ehAdmin = usuario.tipo === 'admin';
+
+    if (!ehPrestador && !ehCliente && !ehAdmin) {
+      throw erroNegocio(
+        'Apenas envolvidos neste pedido podem cancelar.',
+        403,
+      );
+    }
+
+    const canceladoPor = ehAdmin
+      ? 'admin'
+      : ehPrestador
+        ? 'prestador'
+        : 'cliente';
+
+    if (contratacaoAtual.status === STATUS_CONTRATACAO.cancelado) {
+      throw erroNegocio('Este pedido ja foi cancelado.', 409);
+    }
+
+    if (contratacaoAtual.status === STATUS_CONTRATACAO.concluido) {
+      throw erroNegocio('Este servico ja foi concluido e nao pode ser cancelado.', 409);
+    }
+
+    if (contratacaoAtual.status === STATUS_CONTRATACAO.nao_realizado) {
+      throw erroNegocio('Este atendimento ja foi marcado como nao realizado.', 409);
+    }
+
+    const politica = calcularCancelamentoMvp(contratacaoAtual);
+
+    if (!politica.pode_cancelar) {
+      throw erroNegocio(politica.motivo || 'Cancelamento nao permitido.', 409);
+    }
+
+    const contratacaoCancelada = await prisma.contratacoes.update({
+      where: { id: contratacaoId },
+      data: {
+        status: STATUS_CONTRATACAO.cancelado,
+        cancelado_por: canceladoPor,
+        motivo_cancelamento: input.motivo || null,
+        cancelado_em: new Date(),
+        cancelamento_tardio: politica.cancelamento_tardio,
+      },
+    });
+
+    return respostaCancelamento(
+      contratacaoCancelada,
+      politica,
+      canceladoPor,
     );
+  }
+
+  static async marcarNaoRealizado(
+    contratacaoId: number,
+    usuario: UsuarioAutenticado,
+    input: CancelarContratacaoInput = {},
+  ) {
+    if (!usuario?.id) {
+      throw erroNegocio('Usuario nao identificado na sessao.', 401);
+    }
+
+    const contratacao = await prisma.contratacoes.findUnique({
+      where: { id: contratacaoId },
+    });
+
+    if (!contratacao) {
+      throw erroNegocio('Contratacao nao encontrada.', 404);
+    }
+
+    const ehPrestador = contratacao.prestador_id === usuario.id;
+    const ehCliente = contratacao.cliente_id === usuario.id;
+    const ehAdmin = usuario.tipo === 'admin';
+
+    if (!ehPrestador && !ehCliente && !ehAdmin) {
+      throw erroNegocio(
+        'Apenas envolvidos neste pedido podem marcar como nao realizado.',
+        403,
+      );
+    }
+
+    if (contratacao.status !== STATUS_CONTRATACAO.confirmado) {
+      throw erroNegocio('Somente atendimentos confirmados podem ser marcados como nao realizados.', 409);
+    }
+
+    const inicioServico = dataHoraInicioServico(contratacao as ContratacaoComUsuarios);
+    if (new Date().getTime() < inicioServico.getTime()) {
+      throw erroNegocio('Esta opcao fica disponivel apenas depois do horario de inicio do atendimento.', 409);
+    }
+
+    const motivosPermitidos = new Set([
+      'prestador_nao_compareceu',
+      'cliente_nao_compareceu',
+      'cancelado_por_acordo',
+      'problema_de_comunicacao',
+      'outro',
+    ]);
+    const motivo = String(input.motivo || '').trim();
+    const motivoFinal = motivosPermitidos.has(motivo) ? motivo : 'outro';
+
+    const atualizada = await prisma.contratacoes.update({
+      where: { id: contratacaoId },
+      data: {
+        status: STATUS_CONTRATACAO.nao_realizado,
+        nao_realizado_motivo: motivoFinal,
+        nao_realizado_em: new Date(),
+      },
+    });
+
+    const completa = await buscarContratacaoCompleta(contratacaoId);
+    await notificarMudancaStatus(
+      completa || (atualizada as ContratacaoComUsuarios),
+      STATUS_CONTRATACAO.nao_realizado,
+    );
+
+    return {
+      contratacao: completa || atualizada,
+      mensagem_usuario:
+        'Atendimento marcado como nao realizado. Ele ficara no historico e nao podera ser avaliado.',
+    };
   }
 
   static async finalizarContratacao(
@@ -680,17 +943,29 @@ class ServiceAgendamento {
       );
     }
 
-    const hoje = new Date();
     const dataInicial = new Date();
-    dataInicial.setDate(hoje.getDate() - tempoEmDias);
+    dataInicial.setHours(0, 0, 0, 0);
+    const dataFinal = new Date(dataInicial);
+    dataFinal.setDate(dataFinal.getDate() + Math.max(tempoEmDias, 1));
 
     return prisma.contratacoes.findMany({
       where: {
         prestador_id: prestadorId,
-        data: { gte: dataInicial },
+        data: {
+          gte: dataInicial,
+          lte: dataFinal,
+        },
+        status: {
+          in: [
+            STATUS_CONTRATACAO.pendente,
+            STATUS_CONTRATACAO.confirmado,
+            STATUS_CONTRATACAO.manual,
+          ],
+        },
       },
-      orderBy: [{ data: 'desc' }, { hora_inicio: 'desc' }],
+      orderBy: [{ data: 'asc' }, { hora_inicio: 'asc' }],
       include: {
+        avaliacoes: true,
         usuarios_contratacoes_cliente_idTousuarios: {
           select: {
             id: true,
@@ -720,6 +995,7 @@ class ServiceAgendamento {
       where: { cliente_id: clienteId },
       orderBy: [{ data: 'desc' }, { hora_inicio: 'desc' }],
       include: {
+        avaliacoes: true,
         usuarios_contratacoes_prestador_idTousuarios: {
           select: {
             id: true,

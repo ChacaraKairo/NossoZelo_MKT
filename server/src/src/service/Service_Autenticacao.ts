@@ -156,6 +156,12 @@ function validarComplementoCadastroSocial(data: any) {
     throw new Error('CEP invalido.');
   }
 
+  if (data?.aceitouTermos !== true && data?.aceitou_termos !== true) {
+    throw new Error(
+      'Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para criar sua conta.',
+    );
+  }
+
   if (tipo !== 'cliente') {
     const perfil = montarPerfilProfissional(data, tipo);
     if (!valorObrigatorio(perfil.bio)) {
@@ -322,6 +328,8 @@ export class ServiceAuth {
 
     const resultado = await ServiceUser.criarUsuarioComTipo({
       emailConfirmadoInicial: true,
+      aceitouTermos: true,
+      aceitouCookies: data.aceitouCookies === true || data.aceitou_cookies === true,
       usuario: {
         nome: data.nome || decoded.nome || 'Usuario NossoZelo',
         email: decoded.email,

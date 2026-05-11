@@ -11,7 +11,10 @@ import {
 } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import prisma from '../lib/prisma';
-import { STATUS_PRIVACY_GATE_CLIENTE } from '../constants/dominio';
+import {
+  STATUS_CONTRATACAO,
+  STATUS_PRIVACY_GATE_CLIENTE,
+} from '../constants/dominio';
 import ServiceAssinatura from './Service_Assinatura';
 
 async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {
@@ -47,6 +50,39 @@ async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {
     avaliacao:
       avaliacoesPorContratacao.get(contratacao.id) ?? null,
   }));
+}
+
+function inicioHoje() {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return hoje;
+}
+
+function montarAgendaFutura(contratacoes: any[]) {
+  return contratacoes.map((contratacao) => {
+    const cliente =
+      contratacao.usuarios_contratacoes_cliente_idTousuarios;
+
+    return {
+      id: `contratacao-${contratacao.id}`,
+      contratacao_id: contratacao.id,
+      origem: 'contratacao',
+      data: contratacao.data,
+      hora_inicio: contratacao.hora_inicio,
+      hora_fim: contratacao.hora_fim,
+      status: contratacao.status,
+      observacao: contratacao.observacoes,
+      observacoes: contratacao.observacoes,
+      preco: contratacao.preco,
+      cliente: cliente
+        ? {
+            id: cliente.id,
+            nome: cliente.nome,
+            url_foto_perfil: cliente.url_foto_perfil,
+          }
+        : null,
+    };
+  });
 }
 
 export class ServicePerfil {
@@ -146,11 +182,31 @@ export class ServicePerfil {
             // 🔥 CORREÇÃO: Nomes das relações de contratações
             contratacoes_contratacoes_prestador_idTousuarios:
               {
-                take: 5,
-                orderBy: { data: 'desc' },
+                take: 50,
+                where: {
+                  data: { gte: inicioHoje() },
+                  status: {
+                    in: [
+                      STATUS_CONTRATACAO.pendente,
+                      STATUS_CONTRATACAO.confirmado,
+                      STATUS_CONTRATACAO.manual,
+                    ],
+                  },
+                },
+                orderBy: [
+                  { data: 'asc' },
+                  { hora_inicio: 'asc' },
+                ],
                 include: {
+                  avaliacoes: true,
                   usuarios_contratacoes_cliente_idTousuarios:
-                    { select: { nome: true } },
+                    {
+                      select: {
+                        id: true,
+                        nome: true,
+                        url_foto_perfil: true,
+                      },
+                    },
                 },
               },
             contratacoes_contratacoes_cliente_idTousuarios:
@@ -158,6 +214,7 @@ export class ServicePerfil {
                 take: 5,
                 orderBy: { data: 'desc' },
                 include: {
+                  avaliacoes: true,
                   usuarios_contratacoes_prestador_idTousuarios:
                     { select: { nome: true } },
                 },
@@ -199,6 +256,9 @@ export class ServicePerfil {
         await anexarAvaliacoesEmContratacoes(
           contratacoes_contratacoes_prestador_idTousuarios,
         );
+      const agendaFutura = montarAgendaFutura(
+        contratacoes_contratacoes_prestador_idTousuarios,
+      );
 
       if (!ehPrestador) {
         return {
@@ -230,7 +290,7 @@ export class ServicePerfil {
         dados_usuario: dadosUsuario,
         dados_profissionais: dadosProfissionais,
         servicos,
-        agenda,
+        agenda: agendaFutura.length ? agendaFutura : agenda,
         avaliacoes_recebidas:
           avaliacoes_avaliacoes_prestador_idTousuarios,
         contratacoes:

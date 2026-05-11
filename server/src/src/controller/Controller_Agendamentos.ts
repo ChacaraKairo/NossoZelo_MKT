@@ -67,6 +67,30 @@ class AgendamentoController {
         await ServiceAgendamento.cancelarContratacao(
           Number(req.params.id),
           req.user,
+          req.body,
+        );
+
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      return res
+        .status(statusErro(error))
+        .json({ error: mensagemErro(error) });
+    }
+  }
+
+  static async naoRealizado(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.id) {
+        return res
+          .status(401)
+          .json({ error: 'Usuario nao identificado na sessao.' });
+      }
+
+      const resultado =
+        await ServiceAgendamento.marcarNaoRealizado(
+          Number(req.params.id),
+          req.user,
+          req.body,
         );
 
       return res.status(200).json(resultado);

@@ -166,7 +166,7 @@ export class ServiceConfirmacaoEmail {
       where: { token: tokenNormalizado },
       include: {
         usuarios: {
-          select: { id: true, email_confirmado: true },
+          select: { id: true, tipo: true, email_confirmado: true },
         },
       },
     });
@@ -209,8 +209,9 @@ export class ServiceConfirmacaoEmail {
     return {
       email_confirmado: true,
       message: 'E-mail confirmado com sucesso.',
-      proximo_passo:
-        'Continue o onboarding para ativar sua assinatura profissional.',
+      proximo_passo: TIPOS_PRESTADOR.includes(confirmacao.usuarios.tipo as any)
+        ? 'Continue o onboarding para ativar sua assinatura profissional.'
+        : 'Sua conta foi liberada. Voce ja pode usar o NossoZelo.',
     };
   }
 

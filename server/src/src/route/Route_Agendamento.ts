@@ -31,6 +31,13 @@ AgendamentoRouter.patch(
   authMiddleware,
   AgendamentoController.cancelar as any,
 );/**
+ * Marcar atendimento confirmado como nao realizado apos o horario de inicio.
+ */
+AgendamentoRouter.patch(
+  '/nao-realizado/:id',
+  authMiddleware,
+  AgendamentoController.naoRealizado as any,
+);/**
  * Finalizar um serviço (Status: Concluído).
  * Habilita a contratação para receber avaliações de desempenho na Etapa 4.
  */

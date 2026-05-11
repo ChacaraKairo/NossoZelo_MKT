@@ -93,6 +93,19 @@ function statusCadastroInicial(tipo?: string) {
   return STATUS_CADASTRO_USUARIO.ativo;
 }
 
+const TERMOS_VERSAO = '2026-05-mvp';
+const PRIVACIDADE_VERSAO = '2026-05-mvp';
+const COOKIES_VERSAO = '2026-05-mvp';
+
+function validouAceiteLegal(data: any) {
+  return (
+    data?.aceitouTermos === true ||
+    data?.aceitou_termos === true ||
+    data?.usuario?.aceitouTermos === true ||
+    data?.usuario?.aceitou_termos === true
+  );
+}
+
 class ServiceUser {
   /**
    * Cria um usuário completo, incluindo geolocalização, perfil específico e envio de e-mail.
@@ -133,6 +146,15 @@ class ServiceUser {
         );
       }
 
+      if (!criacaoAdminAutorizada && !validouAceiteLegal(data)) {
+        throw criarErroCadastro(
+          'Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para criar sua conta.',
+          400,
+        );
+      }
+
+      const dataAceiteLegal = new Date();
+
       // 1. CRIAÇÃO DO USUÁRIO BASE
       const usuarioData = {
         ...usuario,
@@ -143,6 +165,18 @@ class ServiceUser {
           ? STATUS_CADASTRO_USUARIO.pendente_pagamento
           : usuario.status_cadastro || statusCadastroInicial(usuario.tipo),
         data_nascimento: dataNascimentoObj,
+        termos_aceitos_em: dataAceiteLegal,
+        termos_versao: TERMOS_VERSAO,
+        privacidade_aceita_em: dataAceiteLegal,
+        privacidade_versao: PRIVACIDADE_VERSAO,
+        cookies_aceitos_em:
+          data.aceitouCookies === true || data.aceitou_cookies === true
+            ? dataAceiteLegal
+            : null,
+        cookies_versao:
+          data.aceitouCookies === true || data.aceitou_cookies === true
+            ? COOKIES_VERSAO
+            : null,
       };      await ServiceCrud.create('usuarios', usuarioData);      // 2. GEOLOCALIZAÇÃO (Resiliente a falhas)
       try {        const geolocalizacao =
           await GeolocalizacaoService.buscarCoordenadasPorCep(

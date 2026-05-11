@@ -48,7 +48,15 @@ const mocks = vi.hoisted(() => {
     },
     contratacoes: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
+    },
+    avaliacoes: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      aggregate: vi.fn(),
     },
     $queryRaw: vi.fn(),
     $transaction: vi.fn(),

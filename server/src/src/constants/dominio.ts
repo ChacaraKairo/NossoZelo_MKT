@@ -17,6 +17,7 @@ export const STATUS_CONTRATACAO = {
   concluido: 'concluido',
   paga: 'paga',
   cancelado: 'cancelado',
+  nao_realizado: 'nao_realizado',
   manual: 'manual',
 } satisfies Record<string, contratacoes_status>;
 
