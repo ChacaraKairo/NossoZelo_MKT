@@ -96,3 +96,60 @@ Todas exigem autenticação.
 ## Upload
 
 - `POST /upload/completar-cadastro`: multipart com token temporário de cadastro/upload.
+
+## MVP - escopo financeiro, aceite, cancelamento e avaliacoes
+
+No MVP, o NossoZelo processa apenas a assinatura mensal dos prestadores. O pagamento dos servicos contratados e realizado diretamente entre cliente e prestador, fora da plataforma. O cancelamento de atendimento nao gera cobranca, multa ou reembolso pela plataforma.
+
+O cadastro publico deve enviar `aceitouTermos: true`. O backend registra data e versao dos Termos de Uso e da Politica de Privacidade.
+
+### Cancelamento
+
+- `PATCH /agendamentos/cancelar/:id`
+- `PATCH /agendamentos/nao-realizado/:id`
+
+Resposta de cancelamento:
+
+```json
+{
+  "contratacao": {
+    "id": 123,
+    "status": "cancelado",
+    "data": "2026-05-20",
+    "hora_inicio": "10:00",
+    "hora_fim": "12:00",
+    "cancelado_por": "cliente",
+    "cancelado_em": "2026-05-10T10:00:00.000Z",
+    "motivo_cancelamento": "Nao poderei comparecer.",
+    "cancelamento_tardio": false
+  },
+  "cancelamento": {
+    "permitido": true,
+    "houve_cobranca_plataforma": false,
+    "aplica_multa": false,
+    "valor_multa": 0,
+    "horas_ate_servico": 240,
+    "mensagem_usuario": "Servico cancelado com sucesso. O NossoZelo nao processa pagamentos deste atendimento."
+  }
+}
+```
+
+### Avaliacoes
+
+- `POST /avaliacoes`
+- `GET /avaliacoes/prestador/:id`
+- `GET /avaliacoes/cliente/:id`
+- `GET /avaliacoes/minhas-pendentes`
+- `GET /avaliacoes/disponibilidade/:contratacaoId`
+
+`POST /avaliacoes` aceita:
+
+```json
+{
+  "contratacao_id": 123,
+  "nota": 5,
+  "comentario": "Atendimento muito cuidadoso."
+}
+```
+
+O backend deriva automaticamente quem avalia e quem e avaliado. Cliente e prestador podem avaliar uma vez por contratacao, apenas depois da data e horario final do atendimento. Contratacoes canceladas ou marcadas como nao realizadas nao podem ser avaliadas.

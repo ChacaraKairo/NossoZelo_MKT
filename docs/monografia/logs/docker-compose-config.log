@@ -1,0 +1,88 @@
+﻿name: nossozelo_mkt
+services:
+  backend:
+    build:
+      context: D:\Projetos\TG\NossoZelo_MKT\server
+      dockerfile: Dockerfile
+    command:
+      - sh
+      - -c
+      - npx prisma migrate deploy && npx prisma db seed && node dist/server.js
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: true
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3000
+      BACKEND_PUBLIC_URL: http://localhost:4000
+      DATABASE_URL: [REDACTED]
+      ENABLE_ADMIN_CRUD: "false"
+      FRONTEND_URL: http://localhost:3000
+      HOST: 0.0.0.0
+      JWT_SECRET: [REDACTED]
+      NODE_ENV: development
+      PAYMENT_GATEWAY: disabled
+      PORT: "4000"
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 4000
+        published: "4000"
+        protocol: tcp
+  frontend:
+    build:
+      context: D:\Projetos\TG\NossoZelo_MKT\client
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    depends_on:
+      backend:
+        condition: service_started
+        required: true
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3000
+        published: "3000"
+        protocol: tcp
+  mysql:
+    environment:
+      MYSQL_DATABASE: nossozelo
+      MYSQL_PASSWORD: [REDACTED]
+      MYSQL_ROOT_PASSWORD: [REDACTED]
+      MYSQL_USER: nossozelo
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -proot
+      timeout: 5s
+      interval: 10s
+      retries: 10
+    image: mysql:8.4
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3306"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: mysql_data
+        target: /var/lib/mysql
+        volume: {}
+networks:
+  default:
+    name: nossozelo_mkt_default
+volumes:
+  mysql_data:
+    name: nossozelo_mkt_mysql_data
+
