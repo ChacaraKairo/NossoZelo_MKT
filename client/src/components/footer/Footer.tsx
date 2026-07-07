@@ -24,6 +24,9 @@ const iconesRedes: Record<RedeSocialNossoZelo['nome'], React.ReactNode> = {
   Facebook: <FaFacebook />,
 };
 
+const ANO_ATUAL = new Date().getFullYear();
+const KORU_COMPANY_URL = 'https://korucode.com/';
+
 const Footer = () => {
   const redesSociais = obterRedesSociaisAtivas();
 
@@ -147,8 +150,16 @@ const Footer = () => {
         </div>
 
         <p className={Style.copyright}>
-          Copyright ©2026 Todos os direitos reservados |
-          Block foi criado por KORU Company
+          Copyright ©{ANO_ATUAL} NossoZelo. Todos os direitos
+          reservados | Desenvolvido por{' '}
+          <a
+            href={KORU_COMPANY_URL}
+            className={Style.developerLink}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            KORU Company
+          </a>
         </p>
 
         {redesSociais.length > 0 && (

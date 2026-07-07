@@ -121,6 +121,18 @@
   margin-bottom: 20px;
 }
 
+.developerLink {
+  color: #333;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.2s;
+}
+
+.developerLink:hover {
+  opacity: 0.7;
+}
+
 /* Redes Sociais Inferiores */
 .socialWrapper {
   display: flex;
