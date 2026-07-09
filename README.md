@@ -95,4 +95,4 @@ Rotas principais:
 
 ## Antes De Produção
 
-Veja [docs/PRODUCAO.md](docs/PRODUCAO.md) e [docs/SEGURANCA.md](docs/SEGURANCA.md). O MVP está mais seguro e testável, mas ainda não deve ser anunciado como pronto para produção sem Redis/rate limit distribuído, hardening de uploads, revisão completa do painel admin, observabilidade e testes end-to-end.
+Veja [docs/PRODUCAO.md](docs/PRODUCAO.md), [docs/seguranca.md](docs/seguranca.md) e [docs/PENDENCIAS_PRODUCAO.md](docs/PENDENCIAS_PRODUCAO.md). O MVP está mais seguro e testável, mas ainda não deve ser anunciado como pronto para produção sem Redis/rate limit distribuído, hardening de uploads, revisão completa do painel admin, observabilidade e testes end-to-end.

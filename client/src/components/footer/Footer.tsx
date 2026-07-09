@@ -18,14 +18,18 @@ import {
   FaHeadset,
 } from 'react-icons/fa';
 
-const iconesRedes: Record<RedeSocialNossoZelo['nome'], React.ReactNode> = {
+const iconesRedes: Record<
+  RedeSocialNossoZelo['nome'],
+  React.ReactNode
+> = {
   LinkedIn: <FaLinkedin />,
   Instagram: <FaInstagram />,
   Facebook: <FaFacebook />,
 };
 
 const ANO_ATUAL = new Date().getFullYear();
-const KORU_COMPANY_URL = 'https://korucode.com/';
+const KORU_COMPANY_URL =
+  'https://site-koru-company.vercel.app';
 
 const Footer = () => {
   const redesSociais = obterRedesSociaisAtivas();
@@ -75,7 +79,9 @@ const Footer = () => {
             <h3>Informacoes legais</h3>
             <ul>
               <li>
-                <Link href="/termos-de-uso">Termos de Uso</Link>
+                <Link href="/termos-de-uso">
+                  Termos de Uso
+                </Link>
               </li>
               <li>
                 <Link href="/politica-de-privacidade/nossozelo">
@@ -150,8 +156,8 @@ const Footer = () => {
         </div>
 
         <p className={Style.copyright}>
-          Copyright ©{ANO_ATUAL} NossoZelo. Todos os direitos
-          reservados | Desenvolvido por{' '}
+          Copyright ©{ANO_ATUAL} NossoZelo. Todos os
+          direitos reservados | Desenvolvido por{' '}
           <a
             href={KORU_COMPANY_URL}
             className={Style.developerLink}

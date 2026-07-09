@@ -52,6 +52,7 @@ model assinaturas {
   gateway                 String              @default("asaas") @db.VarChar(30)
   gateway_customer_id     String?             @db.VarChar(120)
   gateway_subscription_id String?             @db.VarChar(120)
+  gateway_payment_id      String?             @db.VarChar(120)
   gateway_status          String?             @db.VarChar(60)
   data_ultimo_pagamento   DateTime?           @db.Timestamp(0)
   data_proximo_vencimento DateTime?           @db.Timestamp(0)
@@ -65,6 +66,7 @@ model assinaturas {
   eventos_assinatura      eventos_assinatura[]
 
   @@index([prestador_id], map: "prestador_id")
+  @@index([prestador_id, status], map: "assinaturas_prestador_status_idx")
   @@index([plano_id], map: "plano_id")
 }
 

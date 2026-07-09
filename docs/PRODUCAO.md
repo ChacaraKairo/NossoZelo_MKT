@@ -2,6 +2,8 @@
 
 Este projeto esta mais proximo de um MVP operavel, mas producao exige que os itens abaixo estejam configurados e testados em staging antes do lancamento publico.
 
+Para a lista consolidada de pendencias, use tambem [PENDENCIAS_PRODUCAO.md](PENDENCIAS_PRODUCAO.md).
+
 ## Variaveis criticas
 
 Backend em producao nao deve iniciar sem:

@@ -77,6 +77,29 @@ class ServiceCrud {
     return entidade;
   }
 
+  static validarCampoCrud(field: string) {
+    const campo = String(field || '').trim();
+
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(campo)) {
+      throw new Error('Campo invalido para CRUD generico.');
+    }
+
+    return campo;
+  }
+
+  static async validarEntidadeExistenteCrud(entity: string) {
+    const entidade = this.validarEntidadeCrud(entity);
+    const exists = await this.checkIfEntityExists(entidade);
+
+    if (!exists) {
+      throw new Error(
+        `Entidade ${entidade} não existe no banco de dados.`,
+      );
+    }
+
+    return entidade;
+  }
+
   static normalizarId(entity: string, id: string) {
     if (!entidadesComIdNumerico.has(entity)) {
       return id;
@@ -150,12 +173,9 @@ class ServiceCrud {
     entity: string,
     id: string,
   ): Promise<any> {    try {
-      const exists = await this.checkIfEntityExists(entity);
-      if (!exists) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[entity].findUnique({
-        where: { id: this.normalizarId(entity, id) },
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[entidade].findUnique({
+        where: { id: this.normalizarId(entidade, id) },
       });      return result;
     } catch (error: any) {      throw error;
     }
@@ -173,13 +193,9 @@ class ServiceCrud {
     field: string,
     value: any,
   ): Promise<any[]> {    try {
-      const exists = await this.checkIfEntityExists(entity);
-      const isBlocked = await this.bloqueia_user(entity);
-
-      if (!exists && isBlocked !== true) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const where = { [field]: value };      const result = await (prisma as any)[entity].findMany(
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const campo = this.validarCampoCrud(field);
+      const where = { [campo]: value };      const result = await (prisma as any)[entidade].findMany(
         {
           where,
         },
@@ -197,14 +213,9 @@ class ServiceCrud {
     entity: string,
     where: object,
   ): Promise<any> {    try {
-      const exists = await this.checkIfEntityExists(entity);
-      const isBlocked = await this.bloqueia_user(entity);
-
-      if (!exists && isBlocked !== true) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[
-        entity
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[
+        entidade
       ].findFirst({
         where,
       });      return result;
@@ -217,14 +228,9 @@ class ServiceCrud {
    * @param {string} entity - Nome da tabela.
    */
   static async findAll(entity: string): Promise<any[]> {    try {
-      const exists = await this.checkIfEntityExists(entity);
-      const isBlocked = await this.bloqueia_user(entity);
-
-      if (!exists && isBlocked !== true) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[
-        entity
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[
+        entidade
       ].findMany();      return result;
     } catch (error: any) {      throw error;
     }
@@ -239,10 +245,8 @@ class ServiceCrud {
     entity: string,
     data: object,
   ): Promise<any> {    try {
-      if (!(await this.checkIfEntityExists(entity))) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[entity].create({
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[entidade].create({
         data,
       });      return result;
     } catch (error: any) {      throw error;
@@ -260,12 +264,9 @@ class ServiceCrud {
     data: object[],
     skipDuplicates: boolean = false,
   ): Promise<{ count: number }> {    try {
-      const exists = await this.checkIfEntityExists(entity);
-      if (!exists) {        throw new Error(
-          `Entidade "${entity}" não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[
-        entity
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[
+        entidade
       ].createMany({
         data,
         skipDuplicates,
@@ -287,11 +288,9 @@ class ServiceCrud {
     id: string,
     data: object,
   ): Promise<any> {    try {
-      if (!(await this.checkIfEntityExists(entity))) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[entity].update({
-        where: { id: this.normalizarId(entity, id) },
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[entidade].update({
+        where: { id: this.normalizarId(entidade, id) },
         data,
       });      return result;
     } catch (error: any) {      throw error;
@@ -307,14 +306,9 @@ class ServiceCrud {
     entity: string,
     id: string,
   ): Promise<any> {    try {
-      const exists = await this.checkIfEntityExists(entity);
-      const isBlocked = await this.bloqueia_user(entity);
-
-      if (!exists && isBlocked !== true) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[entity].delete({
-        where: { id: this.normalizarId(entity, id) },
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[entidade].delete({
+        where: { id: this.normalizarId(entidade, id) },
       });      return result;
     } catch (error: any) {      throw error;
     }
@@ -329,10 +323,8 @@ class ServiceCrud {
     entity: string,
     options: any,
   ): Promise<any[]> {    try {
-      if (!(await this.checkIfEntityExists(entity))) {        throw new Error(
-          `Entidade ${entity} não existe no banco de dados.`,
-        );
-      }      const result = await (prisma as any)[entity].findMany(
+      const entidade = await this.validarEntidadeExistenteCrud(entity);
+      const result = await (prisma as any)[entidade].findMany(
         options,
       );      return result;
     } catch (error: any) {      throw error;
