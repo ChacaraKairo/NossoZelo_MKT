@@ -5,6 +5,10 @@ const METODOS_MUTAVEIS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const ROTAS_PUBLICAS = ["/login", "/api/auth/login", "/api/webhooks/asaas"];
 const ROTAS_SEM_CSRF = ["/api/webhooks/asaas", "/api/assinaturas/sincronizar"];
 
+/**
+ * Converte qualquer URL configurada em uma origem comparavel (`scheme://host[:port]`).
+ * Retorna `null` quando a entrada vem vazia ou malformada para impedir liberações acidentais.
+ */
 function normalizarOrigem(valor?: string | null) {
   if (!valor) return null;
 
@@ -15,6 +19,11 @@ function normalizarOrigem(valor?: string | null) {
   }
 }
 
+/**
+ * Monta a lista de origens aceitas para ações administrativas mutáveis.
+ * A origem da própria requisição cobre desenvolvimento local; as variáveis cobrem deploy,
+ * domínios customizados, Vercel e proxies explícitos.
+ */
 function origensConfiguradas(request: NextRequest) {
   const origens = new Set<string>([request.nextUrl.origin]);
   const origemControlador = normalizarOrigem(process.env.CONTROLADOR_PUBLIC_URL);
@@ -33,6 +42,9 @@ function origensConfiguradas(request: NextRequest) {
   return origens;
 }
 
+/**
+ * Detecta assets estáticos que não precisam validar sessão, origem ou CSRF.
+ */
 export function isAsset(pathname: string) {
   return (
     pathname.startsWith("/_next") ||
@@ -41,15 +53,27 @@ export function isAsset(pathname: string) {
   );
 }
 
+/**
+ * Indica rotas públicas do controlador. Login e webhook precisam ficar fora do bloqueio
+ * de sessão; demais telas e APIs administrativas passam pelo proxy autenticado.
+ */
 export function isRotaPublica(pathname: string) {
   return ROTAS_PUBLICAS.some((rota) => pathname === rota || pathname.startsWith(`${rota}/`));
 }
 
+/**
+ * Define quando uma requisição precisa de validação de origem.
+ * Métodos de leitura são idempotentes; métodos mutáveis podem alterar dados sensíveis.
+ */
 export function exigeProtecaoCsrf(pathname: string, method: string) {
   if (!METODOS_MUTAVEIS.has(method.toUpperCase())) return false;
   return !ROTAS_SEM_CSRF.some((rota) => pathname === rota || pathname.startsWith(`${rota}/`));
 }
 
+/**
+ * Valida `Origin`/`Referer` contra as origens administrativas conhecidas.
+ * Em produção, requisições sem origem/referer são rejeitadas para reduzir superfície CSRF.
+ */
 export function origemPermitida(request: NextRequest) {
   const origem = normalizarOrigem(request.headers.get("origin"));
   const referer = normalizarOrigem(request.headers.get("referer"));
@@ -61,6 +85,10 @@ export function origemPermitida(request: NextRequest) {
   return process.env.NODE_ENV !== "production";
 }
 
+/**
+ * Aplica headers defensivos em todas as respostas atravessadas pelo proxy.
+ * A política é intencionalmente conservadora porque o controlador é um painel administrativo.
+ */
 export function aplicarHeadersSeguranca(response: NextResponse) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -72,6 +100,9 @@ export function aplicarHeadersSeguranca(response: NextResponse) {
   return response;
 }
 
+/**
+ * Resposta padronizada para tentativa de mutação administrativa vindo de origem externa.
+ */
 export function bloquearOrigemInvalida() {
   return aplicarHeadersSeguranca(
     NextResponse.json({ error: "Origem da requisicao nao permitida." }, { status: 403 })

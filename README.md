@@ -96,3 +96,10 @@ Rotas principais:
 ## Antes De Produção
 
 Veja [docs/PRODUCAO.md](docs/PRODUCAO.md), [docs/seguranca.md](docs/seguranca.md) e [docs/PENDENCIAS_PRODUCAO.md](docs/PENDENCIAS_PRODUCAO.md). O MVP está mais seguro e testável, mas ainda não deve ser anunciado como pronto para produção sem Redis/rate limit distribuído, hardening de uploads, revisão completa do painel admin, observabilidade e testes end-to-end.
+
+## Branches de entrega
+
+- `release/limpa-controlador-seguro`: branch limpa para deploy, sem a camada extra de documentacao desta branch.
+- `docs/documentacao-completa`: branch documentada, com comentarios nas camadas criticas e referencias tecnicas completas.
+
+Nesta branch documentada, comece por [docs/INDICE_DOCUMENTACAO_COMPLETA.md](docs/INDICE_DOCUMENTACAO_COMPLETA.md).

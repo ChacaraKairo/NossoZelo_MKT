@@ -20,6 +20,10 @@ export function adminEhMestre(admin: AdminSession | null | undefined) {
   return admin?.email.toLowerCase() === (emailMestre || "master@master.master").toLowerCase();
 }
 
+/**
+ * Autentica somente usuários do tipo `admin`.
+ * O login aceita e-mail ou CPF porque a base administrativa pode operar com ambos.
+ */
 export async function autenticarAdmin(login: string, senha: string) {
   const usuario = await prisma.usuarios.findFirst({
     where: {
@@ -46,6 +50,10 @@ export async function autenticarAdmin(login: string, senha: string) {
   };
 }
 
+/**
+ * Lê o cookie de sessão, valida o JWT administrativo e confirma no banco que o usuário
+ * ainda existe e continua com perfil de administrador.
+ */
 export async function obterSessaoAdmin(): Promise<AdminSession | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
@@ -66,12 +74,18 @@ export async function obterSessaoAdmin(): Promise<AdminSession | null> {
   };
 }
 
+/**
+ * Guarda para páginas server-side: redireciona para login quando não há sessão admin.
+ */
 export async function exigirAdminPagina() {
   const admin = await obterSessaoAdmin();
   if (!admin) redirect("/login");
   return admin;
 }
 
+/**
+ * Guarda para APIs: retorna uma resposta 401 pronta quando não há sessão admin.
+ */
 export async function exigirAdminApi() {
   const admin = await obterSessaoAdmin();
   if (!admin) {
@@ -83,6 +97,9 @@ export async function exigirAdminApi() {
   return { admin, response: null };
 }
 
+/**
+ * Grava o cookie administrativo como HttpOnly, Secure em produção e SameSite Strict.
+ */
 export function aplicarCookieSessao(response: NextResponse, token: string) {
   response.cookies.set(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
@@ -93,6 +110,9 @@ export function aplicarCookieSessao(response: NextResponse, token: string) {
   });
 }
 
+/**
+ * Remove o cookie administrativo no logout.
+ */
 export function limparCookieSessao(response: NextResponse) {
   response.cookies.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,

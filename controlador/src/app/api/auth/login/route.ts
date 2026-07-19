@@ -12,6 +12,10 @@ const tentativas = new Map<string, { total: number; resetEm: number }>();
 const JANELA_MS = 15 * 60 * 1000;
 const MAX_TENTATIVAS = 5;
 
+/**
+ * Gera a chave do rate limit de login usando IP e identificador informado.
+ * Isso limita ataques contra uma conta sem bloquear todo o escritório em um único erro.
+ */
 function chaveRateLimit(request: Request, login?: string) {
   const forwardedFor = request.headers.get("x-forwarded-for") || "";
   const ip = forwardedFor.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "ip_desconhecido";
@@ -19,6 +23,9 @@ function chaveRateLimit(request: Request, login?: string) {
   return `admin_login:${ip}:${identificador}`;
 }
 
+/**
+ * Verifica se a combinação IP+login já ultrapassou o limite da janela atual.
+ */
 function bloquearPorRateLimit(request: Request, login?: string) {
   const agora = Date.now();
   const chave = chaveRateLimit(request, login);
@@ -39,6 +46,10 @@ function bloquearPorRateLimit(request: Request, login?: string) {
   return null;
 }
 
+/**
+ * Registra somente falhas reais de autenticação.
+ * Requisições válidas não consomem limite, reduzindo bloqueios falsos positivos.
+ */
 function registrarFalhaLogin(request: Request, login?: string) {
   const agora = Date.now();
   const chave = chaveRateLimit(request, login);
@@ -53,10 +64,17 @@ function registrarFalhaLogin(request: Request, login?: string) {
   tentativas.set(chave, atual);
 }
 
+/**
+ * Remove o contador quando o administrador autentica corretamente.
+ */
 function limparFalhasLogin(request: Request, login?: string) {
   tentativas.delete(chaveRateLimit(request, login));
 }
 
+/**
+ * Endpoint de login do controlador.
+ * Valida payload, aplica limite de tentativas, autentica usuário admin e grava cookie HttpOnly.
+ */
 export async function POST(request: Request) {
   try {
     const input = LoginSchema.parse(await request.json());
