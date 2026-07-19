@@ -8,13 +8,21 @@
 
 import { Router } from 'express';
 import AgendamentoController from '../controller/Controller_Agendamentos';
-import { authMiddleware } from '../middleware/autenticacao';const AgendamentoRouter = Router();/**
+import { authMiddleware } from '../middleware/autenticacao';
+import { validarEntrada } from '../middleware/validacaoEntrada';
+import {
+  agendamentoCancelarSchema,
+  agendamentoCriarSchema,
+  agendamentoManualSchema,
+  agendamentoNaoRealizadoSchema,
+} from '../validator/schemas/rotasSensiveis';const AgendamentoRouter = Router();/**
  * Criar um novo agendamento (Status inicial: Pendente).
  * Requer autenticação para vincular o autor da solicitação.
  */
 AgendamentoRouter.post(
   '/',
   authMiddleware,
+  validarEntrada(agendamentoCriarSchema),
   AgendamentoController.criar as any,
 );/**
  * Aceitar uma contratação (Status: Confirmado).
@@ -29,6 +37,7 @@ AgendamentoRouter.patch(
 AgendamentoRouter.patch(
   '/cancelar/:id',
   authMiddleware,
+  validarEntrada(agendamentoCancelarSchema),
   AgendamentoController.cancelar as any,
 );/**
  * Marcar atendimento confirmado como nao realizado apos o horario de inicio.
@@ -36,6 +45,7 @@ AgendamentoRouter.patch(
 AgendamentoRouter.patch(
   '/nao-realizado/:id',
   authMiddleware,
+  validarEntrada(agendamentoNaoRealizadoSchema),
   AgendamentoController.naoRealizado as any,
 );/**
  * Finalizar um serviço (Status: Concluído).
@@ -51,6 +61,7 @@ AgendamentoRouter.patch(
 AgendamentoRouter.post(
   '/manual',
   authMiddleware,
+  validarEntrada(agendamentoManualSchema),
   AgendamentoController.registroManual as any,
 );/**
  * Recupera a agenda cronológica de um prestador.

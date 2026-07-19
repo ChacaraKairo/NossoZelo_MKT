@@ -43,26 +43,26 @@ model agenda_recorrente {
 }
 
 model assinaturas {
-  id                      Int                 @id @default(autoincrement())
-  prestador_id            String              @db.VarChar(20)
+  id                      Int                  @id @default(autoincrement())
+  prestador_id            String               @db.VarChar(20)
   plano_id                Int
-  data_inicio             DateTime?           @default(now()) @db.Timestamp(0)
-  data_fim                DateTime?           @db.Timestamp(0)
-  status                  assinaturas_status  @default(pendente)
-  gateway                 String              @default("asaas") @db.VarChar(30)
-  gateway_customer_id     String?             @db.VarChar(120)
-  gateway_subscription_id String?             @db.VarChar(120)
-  gateway_payment_id      String?             @db.VarChar(120)
-  gateway_status          String?             @db.VarChar(60)
-  data_ultimo_pagamento   DateTime?           @db.Timestamp(0)
-  data_proximo_vencimento DateTime?           @db.Timestamp(0)
-  periodo_tolerancia_ate  DateTime?           @db.Timestamp(0)
-  confirmacao_expira_em   DateTime?           @db.Timestamp(0)
-  cancelada_em            DateTime?           @db.Timestamp(0)
-  criado_em               DateTime            @default(now()) @db.Timestamp(0)
-  atualizado_em           DateTime            @updatedAt @db.Timestamp(0)
-  usuarios                usuarios            @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  planos                  planos              @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
+  data_inicio             DateTime?            @default(now()) @db.Timestamp(0)
+  data_fim                DateTime?            @db.Timestamp(0)
+  status                  assinaturas_status   @default(pendente)
+  gateway                 String               @default("asaas") @db.VarChar(30)
+  gateway_customer_id     String?              @db.VarChar(120)
+  gateway_subscription_id String?              @db.VarChar(120)
+  gateway_payment_id      String?              @db.VarChar(120)
+  gateway_status          String?              @db.VarChar(60)
+  data_ultimo_pagamento   DateTime?            @db.Timestamp(0)
+  data_proximo_vencimento DateTime?            @db.Timestamp(0)
+  periodo_tolerancia_ate  DateTime?            @db.Timestamp(0)
+  confirmacao_expira_em   DateTime?            @db.Timestamp(0)
+  cancelada_em            DateTime?            @db.Timestamp(0)
+  criado_em               DateTime             @default(now()) @db.Timestamp(0)
+  atualizado_em           DateTime             @updatedAt @db.Timestamp(0)
+  usuarios                usuarios             @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planos                  planos               @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
   eventos_assinatura      eventos_assinatura[]
 
   @@index([prestador_id], map: "prestador_id")
@@ -71,25 +71,25 @@ model assinaturas {
 }
 
 model eventos_assinatura {
-  id                       Int       @id @default(autoincrement())
-  assinatura_id            Int?
-  prestador_id             String?   @db.VarChar(20)
-  plano_id                 Int?
-  tipo                     String    @db.VarChar(80)
-  origem                   String    @default("sistema") @db.VarChar(40)
-  gateway                  String?   @db.VarChar(30)
-  gateway_event_id         String?   @unique @db.VarChar(191)
-  gateway_payment_id       String?   @db.VarChar(120)
-  gateway_subscription_id  String?   @db.VarChar(120)
-  status_anterior          String?   @db.VarChar(40)
-  status_novo              String?   @db.VarChar(40)
-  valor                    Decimal?  @db.Decimal(10, 2)
-  payload_hash             String?   @db.VarChar(64)
-  payload_resumo           Json?
-  processado_em            DateTime? @db.Timestamp(0)
-  criado_em                DateTime  @default(now()) @db.Timestamp(0)
-  assinaturas              assinaturas? @relation(fields: [assinatura_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  usuarios                 usuarios?    @relation(fields: [prestador_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  id                      Int          @id @default(autoincrement())
+  assinatura_id           Int?
+  prestador_id            String?      @db.VarChar(20)
+  plano_id                Int?
+  tipo                    String       @db.VarChar(80)
+  origem                  String       @default("sistema") @db.VarChar(40)
+  gateway                 String?      @db.VarChar(30)
+  gateway_event_id        String?      @unique @db.VarChar(191)
+  gateway_payment_id      String?      @db.VarChar(120)
+  gateway_subscription_id String?      @db.VarChar(120)
+  status_anterior         String?      @db.VarChar(40)
+  status_novo             String?      @db.VarChar(40)
+  valor                   Decimal?     @db.Decimal(10, 2)
+  payload_hash            String?      @db.VarChar(64)
+  payload_resumo          Json?
+  processado_em           DateTime?    @db.Timestamp(0)
+  criado_em               DateTime     @default(now()) @db.Timestamp(0)
+  assinaturas             assinaturas? @relation(fields: [assinatura_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  usuarios                usuarios?    @relation(fields: [prestador_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([assinatura_id])
   @@index([prestador_id])
@@ -124,19 +124,30 @@ model asaas_webhook_logs {
 }
 
 model avaliacoes {
-  id                                           Int                       @id @default(autoincrement())
-  contratacao_id                               Int                       @unique
-  cliente_id                                   String                    @db.VarChar(20)
-  prestador_id                                 String                    @db.VarChar(20)
-  tipo_prestador                               avaliacoes_tipo_prestador
-  nota                                         Int?
-  comentario                                   String?                   @db.Text
-  data_avaliacao                               DateTime?                 @default(now()) @db.Timestamp(0)
-  usuarios_avaliacoes_cliente_idTousuarios     usuarios                  @relation("avaliacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_1")
-  usuarios_avaliacoes_prestador_idTousuarios   usuarios                  @relation("avaliacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_2")
+  id                                         Int                       @id @default(autoincrement())
+  contratacao_id                             Int
+  cliente_id                                 String                    @db.VarChar(20)
+  prestador_id                               String                    @db.VarChar(20)
+  autor_id                                   String                    @db.VarChar(20)
+  avaliado_id                                String                    @db.VarChar(20)
+  tipo_autor                                 avaliacoes_tipo_autor
+  tipo_avaliacao                             avaliacoes_tipo_avaliacao
+  tipo_prestador                             avaliacoes_tipo_prestador
+  nota                                       Int?
+  comentario                                 String?                   @db.Text
+  data_avaliacao                             DateTime?                 @default(now()) @db.Timestamp(0)
+  contratacoes                               contratacoes              @relation(fields: [contratacao_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios_avaliacoes_cliente_idTousuarios   usuarios                  @relation("avaliacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_1")
+  usuarios_avaliacoes_prestador_idTousuarios usuarios                  @relation("avaliacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "avaliacoes_ibfk_2")
+  usuarios_avaliacoes_autor_idTousuarios     usuarios                  @relation("avaliacoes_autor_idTousuarios", fields: [autor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios_avaliacoes_avaliado_idTousuarios  usuarios                  @relation("avaliacoes_avaliado_idTousuarios", fields: [avaliado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([contratacao_id, autor_id], map: "avaliacoes_contratacao_autor_unique")
+  @@index([contratacao_id], map: "avaliacoes_contratacao_id_idx")
   @@index([cliente_id], map: "cliente_id")
   @@index([prestador_id], map: "prestador_id")
+  @@index([autor_id], map: "avaliacoes_autor_id_idx")
+  @@index([avaliado_id], map: "avaliacoes_avaliado_id_idx")
 }
 
 model contratacoes {
@@ -150,9 +161,16 @@ model contratacoes {
   preco                                        Decimal                     @db.Decimal(10, 2)
   status                                       contratacoes_status?        @default(pendente)
   observacoes                                  String?                     @db.Text
+  cancelado_por                                contratacoes_cancelado_por?
+  motivo_cancelamento                          String?                     @db.Text
+  cancelado_em                                 DateTime?                   @db.Timestamp(0)
+  cancelamento_tardio                          Boolean                     @default(false)
+  nao_realizado_motivo                         String?                     @db.VarChar(80)
+  nao_realizado_em                             DateTime?                   @db.Timestamp(0)
   usuarios_contratacoes_cliente_idTousuarios   usuarios                    @relation("contratacoes_cliente_idTousuarios", fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contratacoes_ibfk_1")
   usuarios_contratacoes_prestador_idTousuarios usuarios                    @relation("contratacoes_prestador_idTousuarios", fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contratacoes_ibfk_2")
   pagamentos                                   pagamentos[]
+  avaliacoes                                   avaliacoes[]
 
   @@index([cliente_id], map: "cliente_id")
   @@index([prestador_id], map: "prestador_id")
@@ -183,7 +201,6 @@ model cuidadores {
   conta_bancaria         String?                  @db.VarChar(50)
   cuidador_especialidade cuidador_especialidade[]
   usuarios               usuarios                 @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cuidadores_ibfk_1")
-
 }
 
 model denuncias {
@@ -197,12 +214,12 @@ model denuncias {
 }
 
 model documentos_cuidadores {
-  id          Int      @id @default(autoincrement())
-  usuario_id  String   @db.VarChar(20)
-  tipo        String   @db.VarChar(100)
-  url_arquivo String   @db.VarChar(255)
+  id          Int    @id @default(autoincrement())
+  usuario_id  String @db.VarChar(20)
+  tipo        String @db.VarChar(100)
+  url_arquivo String @db.VarChar(255)
 
-  usuarios    usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "documentos_prestadores_ibfk_1")
+  usuarios usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "documentos_prestadores_ibfk_1")
 
   @@index([usuario_id], map: "usuario_id_idx")
 }
@@ -297,16 +314,16 @@ model pagamentos {
 }
 
 model planos {
-  id          Int           @id @default(autoincrement())
-  nome        String        @db.VarChar(100)
-  descricao   String?       @db.Text
-  valor       Decimal       @db.Decimal(10, 2)
-  beneficios  String?       @db.Text
-  ativo       Boolean       @default(true)
-  ordem       Int           @default(0)
-  criado_em   DateTime      @default(now()) @db.Timestamp(0)
-  atualizado_em DateTime    @updatedAt @db.Timestamp(0)
-  assinaturas assinaturas[]
+  id            Int           @id @default(autoincrement())
+  nome          String        @db.VarChar(100)
+  descricao     String?       @db.Text
+  valor         Decimal       @db.Decimal(10, 2)
+  beneficios    String?       @db.Text
+  ativo         Boolean       @default(true)
+  ordem         Int           @default(0)
+  criado_em     DateTime      @default(now()) @db.Timestamp(0)
+  atualizado_em DateTime      @updatedAt @db.Timestamp(0)
+  assinaturas   assinaturas[]
 }
 
 model recuperacao_senhas {
@@ -347,40 +364,48 @@ model servicos {
 }
 
 model usuarios {
-  id                                               String               @id @db.VarChar(20)
-  nome                                             String               @db.VarChar(100)
-  email                                            String               @unique(map: "email") @db.VarChar(100)
-  senha                                            String               @db.VarChar(255)
-  telefone                                         String?              @db.VarChar(20)
-  cpf                                              String               @unique(map: "cpf") @db.VarChar(14)
-  sexo                                             usuarios_sexo?       @default(outro)
-  data_nascimento                                  DateTime?            @db.Date
-  cep                                              String               @db.VarChar(10)
-  endereco                                         String?              @db.VarChar(255)
-  bairro                                           String?              @db.VarChar(100)
-  cidade                                           String?              @db.VarChar(100)
-  estado                                           String?              @db.VarChar(50)
-  pais                                             String?              @default("Brasil") @db.VarChar(50)
-  url_foto_perfil                                  String?              @db.VarChar(255)
-  tipo                                             usuarios_tipo
-  status_cadastro                                  usuarios_status_cadastro @default(ativo)
-  email_confirmado                                 Boolean              @default(false)
-  criado_em                                        DateTime?            @default(now()) @db.Timestamp(0)
-  avaliacao_media                                  Decimal?             @default(0.00) @db.Decimal(3, 2)
+  id                    String                   @id @db.VarChar(20)
+  nome                  String                   @db.VarChar(100)
+  email                 String                   @unique(map: "email") @db.VarChar(100)
+  senha                 String                   @db.VarChar(255)
+  telefone              String?                  @db.VarChar(20)
+  cpf                   String                   @unique(map: "cpf") @db.VarChar(14)
+  sexo                  usuarios_sexo?           @default(outro)
+  data_nascimento       DateTime?                @db.Date
+  cep                   String                   @db.VarChar(10)
+  endereco              String?                  @db.VarChar(255)
+  bairro                String?                  @db.VarChar(100)
+  cidade                String?                  @db.VarChar(100)
+  estado                String?                  @db.VarChar(50)
+  pais                  String?                  @default("Brasil") @db.VarChar(50)
+  url_foto_perfil       String?                  @db.VarChar(255)
+  tipo                  usuarios_tipo
+  status_cadastro       usuarios_status_cadastro @default(ativo)
+  email_confirmado      Boolean                  @default(false)
+  termos_aceitos_em     DateTime?                @db.Timestamp(0)
+  termos_versao         String?                  @db.VarChar(30)
+  privacidade_aceita_em DateTime?                @db.Timestamp(0)
+  privacidade_versao    String?                  @db.VarChar(30)
+  cookies_aceitos_em    DateTime?                @db.Timestamp(0)
+  cookies_versao        String?                  @db.VarChar(30)
+  criado_em             DateTime?                @default(now()) @db.Timestamp(0)
+  avaliacao_media       Decimal?                 @default(0.00) @db.Decimal(3, 2)
 
-  documentos_prestadores                           documentos_cuidadores[]
-  confirmacoes_email                               confirmacoes_email[]
+  documentos_prestadores documentos_cuidadores[]
+  confirmacoes_email     confirmacoes_email[]
 
   admins                                           admins?
   agenda                                           agenda[]
   agenda_recorrente                                agenda_recorrente[]
   assinaturas                                      assinaturas[]
-  eventos_assinatura                              eventos_assinatura[]
-  avaliacoes_avaliacoes_cliente_idTousuarios       avaliacoes[]            @relation("avaliacoes_cliente_idTousuarios")
-  avaliacoes_avaliacoes_prestador_idTousuarios     avaliacoes[]            @relation("avaliacoes_prestador_idTousuarios")
+  eventos_assinatura                               eventos_assinatura[]
+  avaliacoes_avaliacoes_cliente_idTousuarios       avaliacoes[]         @relation("avaliacoes_cliente_idTousuarios")
+  avaliacoes_avaliacoes_prestador_idTousuarios     avaliacoes[]         @relation("avaliacoes_prestador_idTousuarios")
+  avaliacoes_avaliacoes_autor_idTousuarios         avaliacoes[]         @relation("avaliacoes_autor_idTousuarios")
+  avaliacoes_avaliacoes_avaliado_idTousuarios      avaliacoes[]         @relation("avaliacoes_avaliado_idTousuarios")
   cartoes                                          cartoes[]
-  contratacoes_contratacoes_cliente_idTousuarios   contratacoes[]          @relation("contratacoes_cliente_idTousuarios")
-  contratacoes_contratacoes_prestador_idTousuarios contratacoes[]          @relation("contratacoes_prestador_idTousuarios")
+  contratacoes_contratacoes_cliente_idTousuarios   contratacoes[]       @relation("contratacoes_cliente_idTousuarios")
+  contratacoes_contratacoes_prestador_idTousuarios contratacoes[]       @relation("contratacoes_prestador_idTousuarios")
   cuidadores                                       cuidadores?
   enfermeiros                                      enfermeiros?
   acompanhantes                                    acompanhantes?
@@ -394,7 +419,6 @@ model usuarios {
   relatorios                                       relatorios[]
   servicos                                         servicos[]
 }
-
 
 model cartoes {
   id               Int          @id @default(autoincrement())
@@ -431,6 +455,7 @@ model localizacoes {
   longitude  Decimal? @db.Decimal(9, 6)
   usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_localizacoes_usuario")
 }
+
 model aiven_keep_alive {
   id        Int      @id @default(1)
   last_ping DateTime @default(now()) @db.Timestamp(0)
@@ -438,15 +463,14 @@ model aiven_keep_alive {
   @@map("_aiven_keep_alive")
 }
 
-
 enum agenda_recorrente_dia_semana {
   domingo
   segunda
-  ter_a   @map("terÃ§a")
+  terca   @map("terça")
   quarta
   quinta
   sexta
-  s_bado  @map("sÃ¡bado")
+  sabado  @map("sábado")
 }
 
 enum relatorios_tipo {
@@ -460,6 +484,22 @@ enum avaliacoes_tipo_prestador {
   cuidador
   enfermeiro
   acompanhante
+}
+
+enum avaliacoes_tipo_autor {
+  cliente
+  prestador
+}
+
+enum avaliacoes_tipo_avaliacao {
+  cliente_para_prestador
+  prestador_para_cliente
+}
+
+enum contratacoes_cancelado_por {
+  cliente
+  prestador
+  admin
 }
 
 enum denuncias_status {
@@ -511,7 +551,7 @@ model confirmacoes_email {
   usado      Boolean  @default(false)
   criado_em  DateTime @default(now()) @db.Timestamp(0)
 
-  usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  usuarios usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
 
   @@index([usuario_id])
   @@index([token])
@@ -574,5 +614,6 @@ enum contratacoes_status {
   concluido
   paga
   cancelado
+  nao_realizado
   manual
 }

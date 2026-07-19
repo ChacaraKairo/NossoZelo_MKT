@@ -225,6 +225,40 @@ describe('AsaasPagamentoGateway', () => {
     );
   });
 
+  it('cria assinatura com boleto e retorna link do boleto quando disponivel', async () => {
+    mocks.client.post.mockResolvedValue({
+      data: { id: 'sub_boleto', customer: 'cus_1', status: 'ACTIVE' },
+    });
+    mocks.client.get.mockResolvedValueOnce({
+      data: {
+        data: [
+          {
+            id: 'pay_boleto',
+            invoiceUrl: 'https://asaas.test/invoice-boleto',
+            bankSlipUrl: 'https://asaas.test/boleto.pdf',
+          },
+        ],
+      },
+    });
+
+    const resultado = await new AsaasPagamentoGateway().criarAssinaturaMensal({
+      ...assinaturaInput,
+      dadosPagamento: { metodoPagamento: 'boleto' },
+    });
+
+    expect(resultado.sucesso).toBe(true);
+    expect(resultado.status).toBe('pendente');
+    expect(resultado.bankSlipUrl).toContain('boleto.pdf');
+    expect(mocks.client.post).toHaveBeenCalledWith(
+      '/subscriptions',
+      expect.objectContaining({ billingType: 'BOLETO' }),
+    );
+    expect(mocks.client.get).toHaveBeenCalledWith(
+      '/subscriptions/sub_boleto/payments',
+      { params: { limit: 1 } },
+    );
+  });
+
   it('avisa quando o Asaas ainda nao retornou link ou Pix da primeira cobranca', async () => {
     mocks.client.post.mockResolvedValue({
       data: { id: 'sub_sem_link', customer: 'cus_1', status: 'ACTIVE' },

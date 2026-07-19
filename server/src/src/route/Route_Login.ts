@@ -11,6 +11,13 @@ import { Router } from 'express';
 import { AuthController } from '../controller/Controller_Login';
 import { authMiddleware } from '../middleware/autenticacao';
 import { rateLimit } from '../middleware/rateLimit';
+import { validarEntrada } from '../middleware/validacaoEntrada';
+import {
+  loginSchema,
+  redefinirSenhaSchema,
+  solicitarRecuperacaoSenhaSchema,
+  validarTokenRecuperacaoQuerySchema,
+} from '../validator/schemas/rotasSensiveis';
 import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenha';const LoginRouter = Router();
 const provedoresSociais = ['google', 'facebook'] as const;
 type ProvedorSocial = (typeof provedoresSociais)[number];
@@ -31,7 +38,7 @@ function isProvedorSocial(provider: string): provider is ProvedorSocial {
  * Rota pública para autenticação de usuários.
  * Recebe identificador (E-mail/CPF) e senha para geração de token JWT.
  */
-LoginRouter.post('/login', loginRateLimit, AuthController.login);
+LoginRouter.post('/login', loginRateLimit, validarEntrada(loginSchema), AuthController.login);
 LoginRouter.get('/me', authMiddleware, AuthController.me as any);
 LoginRouter.post('/logout', AuthController.logout);
 LoginRouter.get(
@@ -73,15 +80,18 @@ LoginRouter.get(
 LoginRouter.post(
   '/recuperar-senha',
   recuperacaoRateLimit,
+  validarEntrada(solicitarRecuperacaoSenhaSchema),
   RecuperacaoSenhaController.enviarEmail,
 );
 LoginRouter.get(
   '/recuperar-senha/validar-token',
   recuperacaoRateLimit,
+  validarEntrada(validarTokenRecuperacaoQuerySchema, 'query'),
   RecuperacaoSenhaController.validarToken,
 );
 LoginRouter.post(
   '/redefinir-senha',
   recuperacaoRateLimit,
+  validarEntrada(redefinirSenhaSchema),
   RecuperacaoSenhaController.redefinirSenha,
 );export default LoginRouter;

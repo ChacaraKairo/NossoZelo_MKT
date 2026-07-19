@@ -2,12 +2,18 @@ import { Router } from 'express';
 import ControllerAssinatura from '../controller/Controller_Assinatura';
 import { authMiddleware } from '../middleware/autenticacao';
 import { permitirTipos } from '../middleware/permitirTipos';
+import { validarEntrada } from '../middleware/validacaoEntrada';
+import {
+  assinaturaSchema,
+  webhookAsaasSchema,
+} from '../validator/schemas/rotasSensiveis';
 
 const AssinaturaRouter = Router();
 const tiposPrestador = ['cuidador', 'enfermeiro', 'acompanhante'];
 
 AssinaturaRouter.post(
   '/webhook/asaas',
+  validarEntrada(webhookAsaasSchema),
   ControllerAssinatura.webhookAsaas as any,
 );
 
@@ -33,6 +39,7 @@ AssinaturaRouter.post(
   '/iniciar',
   authMiddleware,
   permitirTipos(tiposPrestador),
+  validarEntrada(assinaturaSchema),
   ControllerAssinatura.iniciar as any,
 );
 
@@ -40,6 +47,7 @@ AssinaturaRouter.post(
   '/regularizar',
   authMiddleware,
   permitirTipos(tiposPrestador),
+  validarEntrada(assinaturaSchema),
   ControllerAssinatura.regularizar as any,
 );
 

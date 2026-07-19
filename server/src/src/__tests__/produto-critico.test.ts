@@ -13,9 +13,14 @@ const mocks = vi.hoisted(() => {
       findUnique: vi.fn(),
     },
     usuarios: {
+      create: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
+    },
+    localizacoes: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
     },
     assinaturas: {
       findFirst: vi.fn(),
@@ -32,14 +37,17 @@ const mocks = vi.hoisted(() => {
       create: vi.fn(),
     },
     cuidadores: {
+      create: vi.fn(),
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
     enfermeiros: {
+      create: vi.fn(),
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
     acompanhantes: {
+      create: vi.fn(),
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
@@ -80,6 +88,7 @@ const mocks = vi.hoisted(() => {
     },
     confirmacaoEmailService: {
       confirmarEmail: vi.fn(),
+      enviarEmailConfirmacao: vi.fn(),
       reenviarConfirmacao: vi.fn(),
       obterStatusEmail: vi.fn(),
     },
@@ -117,6 +126,7 @@ import RecuperacaoSenhaController from '../controller/Controller_RecuperacaoSenh
 import ServiceAgendamento from '../service/Service_Agendamento';
 import ServiceAssinatura from '../service/Service_Assinatura';
 import ServiceOnboarding from '../service/Service_Onboarding';
+import { GeolocalizacaoService } from '../service/Service_Localizacao';
 import CrudRouter from '../route/Route_Crud';
 import UserRouter from '../route/Route_User';
 import LoginRouter from '../route/Route_Login';
@@ -203,8 +213,40 @@ const dadosPagamentoCredito = {
 describe('fluxos criticos do produto', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ASAAS_WEBHOOK_TOKEN = 'asaas-test-token';
+    process.env.ASAAS_WEBHOOK_TOKEN = 'asaas-webhook-token-valido-para-testes-2026';
     process.env.JWT_SECRET = 'segredo-de-teste-com-mais-de-32-caracteres';
+    mocks.prisma.usuarios.create.mockImplementation(({ data }) =>
+      Promise.resolve(data),
+    );
+    mocks.prisma.localizacoes.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.prisma.cuidadores.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.prisma.enfermeiros.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.prisma.acompanhantes.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.confirmacaoEmailService.enviarEmailConfirmacao.mockResolvedValue({
+      message: 'E-mail de confirmacao enviado.',
+    });
+  });
+
+  it('bloqueia webhook Asaas quando o token configurado e fraco', async () => {
+    process.env.ASAAS_WEBHOOK_TOKEN = 'curto';
+
+    await expect(
+      ServiceAssinatura.processarWebhookAsaas({
+        token: 'curto',
+        payload: {
+          id: 'evt_token_fraco',
+          event: 'PAYMENT_CONFIRMED',
+        },
+      }),
+    ).rejects.toMatchObject({ status: 500 });
   });
 
   it('bloqueia CRUD generico para usuario anonimo', async () => {
@@ -265,7 +307,7 @@ describe('fluxos criticos do produto', () => {
           nome: 'Admin Publico',
           email: 'admin-publico@test.com',
           senha: 'Senha!123',
-          telefone: '11999999999',
+          telefone: '1132345678',
           cpf: '52998224725',
           cep: '01001000',
           tipo: 'admin',
@@ -279,6 +321,96 @@ describe('fluxos criticos do produto', () => {
     expect(response.status).toBe(400);
     expect(response.body.erros.tipo).toContain(
       'Tipo de usuario nao permitido no cadastro publico.',
+    );
+  });
+
+  it('cadastra cliente com cookie legal aceito e sem exigir assinatura', async () => {
+    vi.spyOn(GeolocalizacaoService, 'buscarCoordenadasPorCep').mockResolvedValue({
+      latitude: -23.55,
+      longitude: -46.63,
+    });
+
+    const response = await request(appComRotasProtegidas())
+      .post('/create-users/usuario')
+      .send({
+        usuario: {
+          nome: 'Cliente Teste',
+          email: 'cliente-cadastro@test.com',
+          senha: 'SenhaForte!123',
+          telefone: '1132345678',
+          cpf: '52998224725',
+          cep: '01001000',
+          tipo: 'cliente',
+          aceitouTermos: true,
+        },
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.data).toEqual(
+      expect.objectContaining({
+        email: 'cliente-cadastro@test.com',
+        tipo: 'cliente',
+        status_cadastro: 'ativo',
+        email_confirmado: false,
+      }),
+    );
+    expect(response.body.data.data.senha).toBeUndefined();
+    expect(response.body.data.uploadToken).toEqual(expect.any(String));
+    expect(mocks.prisma.usuarios.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tipo: 'cliente',
+          termos_aceitos_em: expect.any(Date),
+        }),
+      }),
+    );
+    expect(mocks.confirmacaoEmailService.enviarEmailConfirmacao).toHaveBeenCalled();
+  });
+
+  it('cadastra prestador como pendente ate confirmar e-mail e assinatura', async () => {
+    vi.spyOn(GeolocalizacaoService, 'buscarCoordenadasPorCep').mockResolvedValue({
+      latitude: -23.55,
+      longitude: -46.63,
+    });
+
+    const response = await request(appComRotasProtegidas())
+      .post('/create-users/usuario')
+      .send({
+        usuario: {
+          nome: 'Cuidador Teste',
+          email: 'cuidador-cadastro@test.com',
+          senha: 'SenhaForte!123',
+          telefone: '1132345679',
+          cpf: '39053344705',
+          cep: '01001000',
+          tipo: 'cuidador',
+          aceitouTermos: true,
+        },
+        cuidador: {
+          bio: 'Experiencia com idosos',
+          experiencia: 5,
+          valorHora: 80,
+          disponibilidade: 'Dias uteis',
+          especialidades: 'Idosos',
+        },
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.data).toEqual(
+      expect.objectContaining({
+        tipo: 'cuidador',
+        status_cadastro: 'pendente_pagamento',
+        email_confirmado: false,
+      }),
+    );
+    expect(mocks.prisma.cuidadores.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          usuario_id: expect.any(String),
+          bio: 'Experiencia com idosos',
+          disponibilidade: 'Dias uteis',
+        }),
+      }),
     );
   });
 
@@ -297,6 +429,7 @@ describe('fluxos criticos do produto', () => {
     expect(response.headers['set-cookie']?.join(';')).toContain(
       'zelo_token=jwt',
     );
+    expect(response.headers['set-cookie']?.join(';')).toContain('HttpOnly');
     expect(response.body.user.senha).toBeUndefined();
   });
 
@@ -331,6 +464,24 @@ describe('fluxos criticos do produto', () => {
     const response = await request(appComRotasProtegidas()).get('/login/me');
 
     expect(response.status).toBe(401);
+  });
+
+  it('/login/me retorna usuario autenticado por cookie HttpOnly', async () => {
+    mocks.authService.obterUsuarioAutenticado.mockResolvedValue({
+      id: 'u1',
+      email: 'user@test.com',
+      tipo: 'cliente',
+    });
+
+    const response = await request(appComRotasProtegidas())
+      .get('/login/me')
+      .set('Cookie', [`zelo_token=${tokenTeste({ id: 'u1' })}`]);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({ id: 'u1', email: 'user@test.com' }),
+    );
+    expect(mocks.authService.obterUsuarioAutenticado).toHaveBeenCalledWith('u1');
   });
 
   it('logout limpa cookie de sessao', async () => {
@@ -657,7 +808,7 @@ describe('fluxos criticos do produto', () => {
     mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 1 });
 
     const resultado = await ServiceAssinatura.processarWebhookAsaas({
-      token: 'asaas-test-token',
+      token: 'asaas-webhook-token-valido-para-testes-2026',
       payload: {
         id: 'evt_1',
         event: 'PAYMENT_CONFIRMED',
@@ -696,7 +847,7 @@ describe('fluxos criticos do produto', () => {
     mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 2 });
 
     await ServiceAssinatura.processarWebhookAsaas({
-      token: 'asaas-test-token',
+      token: 'asaas-webhook-token-valido-para-testes-2026',
       payload: {
         id: 'evt_2',
         event: 'PAYMENT_OVERDUE',
@@ -723,7 +874,7 @@ describe('fluxos criticos do produto', () => {
     });
 
     const resultado = await ServiceAssinatura.processarWebhookAsaas({
-      token: 'asaas-test-token',
+      token: 'asaas-webhook-token-valido-para-testes-2026',
       payload: {
         id: 'evt_duplicado',
         event: 'PAYMENT_CONFIRMED',
@@ -768,7 +919,7 @@ describe('fluxos criticos do produto', () => {
     mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 4 });
 
     const resultado = await ServiceAssinatura.processarWebhookAsaas({
-      token: 'asaas-test-token',
+      token: 'asaas-webhook-token-valido-para-testes-2026',
       payload: {
         id: 'evt_received',
         event: 'PAYMENT_RECEIVED',
@@ -813,7 +964,7 @@ describe('fluxos criticos do produto', () => {
     mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 5 });
 
     const resultado = await ServiceAssinatura.processarWebhookAsaas({
-      token: 'asaas-test-token',
+      token: 'asaas-webhook-token-valido-para-testes-2026',
       payload: {
         id: 'evt_cancelada',
         event: 'SUBSCRIPTION_CANCELLED',
@@ -841,7 +992,7 @@ describe('fluxos criticos do produto', () => {
     mocks.prisma.eventos_assinatura.create.mockResolvedValue({ id: 3 });
 
     const resultado = await ServiceAssinatura.processarWebhookAsaas({
-      token: 'asaas-test-token',
+      token: 'asaas-webhook-token-valido-para-testes-2026',
       payload: {
         id: 'evt_antigo',
         event: 'PAYMENT_OVERDUE',
@@ -953,6 +1104,50 @@ describe('fluxos criticos do produto', () => {
     });
   });
 
+  it.each([
+    ['ativa', 'ativo', 'ativo', true],
+    [
+      'aguardando_confirmacao',
+      'aguardando_confirmacao_pagamento',
+      'aguardando_confirmacao_pagamento',
+      false,
+    ],
+    ['atrasada', 'inadimplente', 'inadimplente', false],
+    ['bloqueada', 'bloqueado', 'bloqueado', false],
+    ['cancelada', 'cancelado', 'inadimplente', false],
+  ])(
+    'onboarding reflete assinatura %s',
+    async (assinaturaStatus, statusCadastro, etapaAtual, podeAparecerNaBusca) => {
+      mocks.prisma.usuarios.findUnique.mockResolvedValue({
+        id: 'prestador-1',
+        tipo: 'cuidador',
+        email_confirmado: true,
+        status_cadastro: statusCadastro,
+        cuidadores: {
+          bio: 'Bio profissional',
+          disponibilidade: 'Dias uteis',
+          especialidades: 'Idosos',
+        },
+        enfermeiros: null,
+        acompanhantes: null,
+        assinaturas: [
+          {
+            ...assinaturaBase,
+            status: assinaturaStatus,
+          },
+        ],
+      });
+
+      const status = await ServiceOnboarding.obterStatus('prestador-1');
+
+      expect(status).toMatchObject({
+        etapaAtual,
+        assinaturaStatus,
+        podeAparecerNaBusca,
+      });
+    },
+  );
+
   it('prestador sem e-mail confirmado nao inicia pagamento', async () => {
     mocks.prisma.usuarios.findUnique
       .mockResolvedValueOnce({
@@ -1015,6 +1210,23 @@ describe('fluxos criticos do produto', () => {
     ).resolves.toBe(false);
   });
 
+  it('busca prestadores somente com cadastro ativo e assinatura ativa', async () => {
+    mocks.prisma.$queryRaw.mockResolvedValue([
+      { id: 'prestador-1', nome: 'Prestador apto' },
+    ]);
+
+    const resultado = await GeolocalizacaoService.buscarPrestadores({
+      tipo: 'cuidador',
+      limit: 10,
+    });
+
+    const query = mocks.prisma.$queryRaw.mock.calls[0]?.[0];
+    const querySerializada = JSON.stringify(query);
+    expect(resultado).toHaveLength(1);
+    expect(querySerializada).toContain("u.status_cadastro = 'ativo'");
+    expect(querySerializada).toContain("ass.status = 'ativa'");
+  });
+
   it('agendamento bloqueia prestador sem assinatura ativa', async () => {
     mocks.prisma.usuarios.findUnique
       .mockResolvedValueOnce({ id: 'cliente-1', email_confirmado: true })
@@ -1040,6 +1252,137 @@ describe('fluxos criticos do produto', () => {
         { id: 'cliente-1', tipo: 'cliente' },
       ),
     ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('agendamento bloqueia conflito de horario para o mesmo prestador', async () => {
+    const assinaturaSpy = vi
+      .spyOn(ServiceAssinatura, 'prestadorPodeReceberPedidos')
+      .mockResolvedValue(true);
+    mocks.prisma.usuarios.findUnique
+      .mockResolvedValueOnce({ id: 'cliente-1', email_confirmado: true })
+      .mockResolvedValueOnce({
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'pro@test.com',
+        tipo: 'cuidador',
+        email_confirmado: true,
+      });
+    mocks.prisma.servicos.findFirst.mockResolvedValue({
+      id: 1,
+      prestador_id: 'prestador-1',
+      valor: 120,
+    });
+    mocks.prisma.contratacoes.findFirst.mockResolvedValue({ id: 77 });
+
+    await expect(
+      ServiceAgendamento.criarAgendamento(
+        {
+          prestador_id: 'prestador-1',
+          servico_id: 1,
+          data: '2026-08-10',
+          hora_inicio: '10:00',
+          hora_fim: '11:00',
+        },
+        { id: 'cliente-1', tipo: 'cliente' },
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.prisma.contratacoes.create).not.toHaveBeenCalled();
+    assinaturaSpy.mockRestore();
+  });
+
+  it('cancelamento registra status cancelado sem cobranca da plataforma', async () => {
+    const contratacao = {
+      id: 1,
+      cliente_id: 'cliente-1',
+      prestador_id: 'prestador-1',
+      status: 'confirmado',
+      data: new Date('2026-08-10T00:00:00.000Z'),
+      hora_inicio: new Date(Date.UTC(1970, 0, 1, 10, 0, 0)),
+      hora_fim: new Date(Date.UTC(1970, 0, 1, 11, 0, 0)),
+      preco: 120,
+      usuarios_contratacoes_cliente_idTousuarios: {
+        id: 'cliente-1',
+        nome: 'Cliente',
+        email: 'cliente@test.com',
+      },
+      usuarios_contratacoes_prestador_idTousuarios: {
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'prestador@test.com',
+      },
+    };
+    mocks.prisma.contratacoes.findUnique.mockResolvedValue(contratacao);
+    mocks.prisma.contratacoes.update.mockResolvedValue({
+      ...contratacao,
+      status: 'cancelado',
+      cancelado_por: 'cliente',
+      motivo_cancelamento: 'imprevisto',
+      cancelado_em: new Date(),
+      cancelamento_tardio: false,
+    });
+
+    const resultado = await ServiceAgendamento.cancelarContratacao(
+      1,
+      { id: 'cliente-1', tipo: 'cliente' },
+      { motivo: 'imprevisto' },
+    );
+
+    expect(resultado.contratacao.status).toBe('cancelado');
+    expect(resultado.cancelamento.houve_cobranca_plataforma).toBe(false);
+  });
+
+  it('marca atendimento confirmado como nao realizado depois do horario', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-10T13:00:00.000Z'));
+    const contratacao = {
+      id: 1,
+      cliente_id: 'cliente-1',
+      prestador_id: 'prestador-1',
+      status: 'confirmado',
+      data: new Date('2026-08-10T00:00:00.000Z'),
+      hora_inicio: new Date(Date.UTC(1970, 0, 1, 10, 0, 0)),
+      hora_fim: new Date(Date.UTC(1970, 0, 1, 11, 0, 0)),
+      preco: 120,
+      usuarios_contratacoes_cliente_idTousuarios: {
+        id: 'cliente-1',
+        nome: 'Cliente',
+        email: 'cliente@test.com',
+      },
+      usuarios_contratacoes_prestador_idTousuarios: {
+        id: 'prestador-1',
+        nome: 'Prestador',
+        email: 'prestador@test.com',
+      },
+    };
+    mocks.prisma.contratacoes.findUnique
+      .mockResolvedValueOnce(contratacao)
+      .mockResolvedValueOnce({
+        ...contratacao,
+        status: 'nao_realizado',
+      });
+    mocks.prisma.contratacoes.update.mockResolvedValue({
+      ...contratacao,
+      status: 'nao_realizado',
+      nao_realizado_motivo: 'prestador_nao_compareceu',
+      nao_realizado_em: new Date(),
+    });
+
+    const resultado = await ServiceAgendamento.marcarNaoRealizado(
+      1,
+      { id: 'cliente-1', tipo: 'cliente' },
+      { motivo: 'prestador_nao_compareceu' },
+    );
+
+    expect(resultado.contratacao.status).toBe('nao_realizado');
+    expect(mocks.prisma.contratacoes.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'nao_realizado',
+          nao_realizado_motivo: 'prestador_nao_compareceu',
+        }),
+      }),
+    );
+    vi.useRealTimers();
   });
 
   it('migration de eventos financeiros contem hash e data de processamento', () => {

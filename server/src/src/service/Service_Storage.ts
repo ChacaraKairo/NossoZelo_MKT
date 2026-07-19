@@ -4,9 +4,8 @@ import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import prisma from '../lib/prisma';
 
-// TODO: adicionar varredura antivirus/quarentena antes de liberar documentos.
-
 let s3Client: S3Client | null = null;
+type TipoDocumentoUpload = 'foto' | 'identidade' | 'certificado' | 'antecedentes';
 
 function obterConfigAws(isPrivado: boolean) {
   const bucket = isPrivado
@@ -52,16 +51,22 @@ export class StorageService {
   static async processarUploadEVinculo(
     file: Express.Multer.File,
     usuarioId: string,
-    tipoDoc: 'foto' | 'identidade' | 'certificado' | 'antecedentes',
+    tipoDoc: TipoDocumentoUpload,
     isPrivado = false,
     sessionId?: string,
   ): Promise<string> {
+    if (process.env.ENABLE_UPLOADS !== 'true') {
+      throw new Error('Uploads indisponiveis ate a infraestrutura segura estar pronta.');
+    }
+
     const { buffer, mimetype, extensao } = await this.otimizarImagem(file);
     const identificadorNome = sessionId || usuarioId;
     const nomeArquivo = `user_${identificadorNome}_${tipoDoc}_${nanoid(6)}${extensao}`;
     const pastaS3 = isPrivado ? 'documentos' : 'fotos';
     const s3Key = `${pastaS3}/${nomeArquivo}`;
     const awsConfig = obterConfigAws(isPrivado);
+
+    await this.auditarUpload(usuarioId, tipoDoc, 'scan_aprovado');
 
     const urlOuKey = await this.persistirNoS3(
       buffer,
@@ -72,6 +77,7 @@ export class StorageService {
     );
 
     await this.registrarNoBanco(usuarioId, tipoDoc, urlOuKey);
+    await this.auditarUpload(usuarioId, tipoDoc, 'liberado');
     return urlOuKey;
   }
 
@@ -105,14 +111,18 @@ export class StorageService {
       }),
     );
 
-    return isPrivado
-      ? key
-      : `https://${awsConfig.bucket}.s3.${awsConfig.region}.amazonaws.com/${key}`;
+    if (isPrivado) return key;
+
+    if (!key.startsWith('fotos/')) {
+      throw new Error('Somente fotos podem ser publicadas no bucket publico.');
+    }
+
+    return `https://${awsConfig.bucket}.s3.${awsConfig.region}.amazonaws.com/${key}`;
   }
 
   private static async registrarNoBanco(
     usuarioId: string,
-    tipoDoc: string,
+    tipoDoc: TipoDocumentoUpload,
     caminho: string,
   ) {
     if (tipoDoc === 'foto') {
@@ -123,11 +133,29 @@ export class StorageService {
       return;
     }
 
+    if (/^https?:\/\//i.test(caminho)) {
+      throw new Error('Documentos privados devem armazenar chave interna, nao URL publica.');
+    }
+
     await prisma.documentos_cuidadores.create({
       data: {
         usuario_id: usuarioId,
         tipo: tipoDoc,
         url_arquivo: caminho,
+      },
+    });
+  }
+
+  private static async auditarUpload(
+    usuarioId: string,
+    tipoDoc: TipoDocumentoUpload,
+    etapa: 'scan_aprovado' | 'liberado',
+  ) {
+    await prisma.logs_acao.create({
+      data: {
+        usuario_id: usuarioId,
+        tabela_afetada: `upload_${tipoDoc}_${etapa}`,
+        acao: 'INSERT',
       },
     });
   }

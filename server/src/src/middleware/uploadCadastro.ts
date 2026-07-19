@@ -16,6 +16,21 @@ type UploadTokenPayload = JwtPayload & {
   purpose?: string;
 };
 
+export function exigirUploadsHabilitados(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (process.env.ENABLE_UPLOADS !== 'true') {
+    return res.status(503).json({
+      error: 'Uploads indisponiveis.',
+      message: 'Uploads indisponiveis ate a infraestrutura segura estar pronta.',
+    });
+  }
+
+  return next();
+}
+
 export function validarTokenUploadCadastro(
   req: CadastroUploadRequest,
   res: Response,

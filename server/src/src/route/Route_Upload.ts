@@ -4,9 +4,12 @@ import { Router } from 'express';
 import multer from 'multer';
 import { UploadController } from '../controller/Controller_Upload';
 import {
+  exigirUploadsHabilitados,
   validarArquivosUploadCadastro,
   validarTokenUploadCadastro,
 } from '../middleware/uploadCadastro';
+import { validarEntrada } from '../middleware/validacaoEntrada';
+import { uploadCadastroBodySchema } from '../validator/schemas/rotasSensiveis';
 
 const UploadRouter = Router();
 
@@ -45,8 +48,10 @@ const camposCadastro = [
 // Rota integrada
 UploadRouter.post(
   '/completar-cadastro',
+  exigirUploadsHabilitados,
   validarTokenUploadCadastro,
   upload.fields(camposCadastro),
+  validarEntrada(uploadCadastroBodySchema),
   validarArquivosUploadCadastro,
   UploadController.fazerUpload,
 );

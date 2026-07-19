@@ -140,31 +140,33 @@ Controlador:
 
 ### 10. Jobs operacionais
 
-- [ ] Configurar job para verificar assinaturas:
+- [ ] Configurar job no provedor para verificar assinaturas:
   `cd server && npm run assinaturas:verificar`
-- [ ] Configurar job para expirar pendencias:
+- [ ] Configurar job no provedor para expirar pendencias:
   `cd server && npm run assinaturas:expirar-pendentes`
-- [ ] Configurar job para limpar tokens:
+- [ ] Configurar job no provedor para limpar tokens:
   `cd server && npm run tokens:limpar`
-- [ ] Alertar quando job retornar exit code diferente de zero.
-- [ ] Documentar horario e responsavel operacional.
+- [x] Garantir que os scripts retornem exit code diferente de zero em falhas.
+- [ ] Habilitar alerta no provedor quando job retornar exit code diferente de zero.
+- [x] Documentar horario sugerido e responsavel operacional a preencher em `docs/operacao/jobs.md`.
+- [ ] Preencher responsavel, horario real e evidencia apos configurar o provedor.
 
 ## Testes
 
 ### 11. Testes automatizados essenciais
 
-- [ ] Login, logout e `/me` com cookie HttpOnly.
-- [ ] Cadastro de cliente.
-- [ ] Cadastro de prestador.
-- [ ] Confirmacao de e-mail.
-- [ ] Onboarding do prestador.
-- [ ] Assinatura ativa, pendente, atrasada, bloqueada e cancelada.
-- [ ] Busca exibindo somente prestadores aptos.
-- [ ] Agendamento com conflito de horario.
-- [ ] Cancelamento e marcacao de nao realizado.
-- [ ] Upload de documento privado.
-- [ ] Webhook Asaas idempotente.
-- [ ] Rotas administrativas protegidas.
+- [x] Login, logout e `/me` com cookie HttpOnly.
+- [x] Cadastro de cliente.
+- [x] Cadastro de prestador.
+- [x] Confirmacao de e-mail.
+- [x] Onboarding do prestador.
+- [x] Assinatura ativa, pendente, atrasada, bloqueada e cancelada.
+- [x] Busca exibindo somente prestadores aptos.
+- [x] Agendamento com conflito de horario.
+- [x] Cancelamento e marcacao de nao realizado.
+- [x] Upload de documento privado.
+- [x] Webhook Asaas idempotente.
+- [x] Rotas administrativas protegidas.
 
 ### 12. Testes end-to-end
 

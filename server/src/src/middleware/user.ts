@@ -9,6 +9,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { validarCreateUsuarioDto } from '../validator/create/Validator_User';
+import { cadastroTopLevelSchema } from '../validator/schemas/rotasSensiveis';
 
 /**
  * Realiza a validação do corpo da requisição utilizando o DTO de criação de usuário.
@@ -22,6 +23,20 @@ export function validarUsuario(
   res: Response,
   next: NextFunction,
 ) {  try {    // Execução da validação lógica mantendo nomes de variáveis originais
+    if (req.body?.usuario) {
+      const resultadoTopLevel = cadastroTopLevelSchema.safeParse(req.body);
+      if (!resultadoTopLevel.success) {
+        return res.status(400).json({
+          error: 'Erro de validacao',
+          message: 'Dados enviados invalidos.',
+          details: resultadoTopLevel.error.issues.map((issue) => ({
+            campo: issue.path.join('.') || 'payload',
+            mensagem: issue.message,
+          })),
+        });
+      }
+    }
+
     const { valid, erros } = validarCreateUsuarioDto(
       req.body,
     );

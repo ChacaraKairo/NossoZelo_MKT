@@ -55,6 +55,10 @@ const entidadesComIdNumerico = new Set([
   'aiven_keep_alive',
 ]);
 
+const softDeletePorEntidade: Record<string, Record<string, unknown>> = {
+  planos: { ativo: false },
+};
+
 class ServiceCrud {
   static normalizarEntidade(entity: string) {
     return String(entity || '').trim();
@@ -298,7 +302,8 @@ class ServiceCrud {
   }
 
   /**
-   * Remove um registro fisicamente do banco de dados.
+   * Desativa um registro quando a entidade suporta soft delete.
+   * Entidades sem campo de desativacao nao podem ser removidas pelo CRUD generico.
    * @param {string} entity - Nome da tabela.
    * @param {string} id - ID do registro.
    */
@@ -307,8 +312,17 @@ class ServiceCrud {
     id: string,
   ): Promise<any> {    try {
       const entidade = await this.validarEntidadeExistenteCrud(entity);
-      const result = await (prisma as any)[entidade].delete({
+      const data = softDeletePorEntidade[entidade];
+
+      if (!data) {
+        throw new Error(
+          `Delete fisico desabilitado para ${entidade}. Configure soft delete antes de remover registros via CRUD generico.`,
+        );
+      }
+
+      const result = await (prisma as any)[entidade].update({
         where: { id: this.normalizarId(entidade, id) },
+        data,
       });      return result;
     } catch (error: any) {      throw error;
     }

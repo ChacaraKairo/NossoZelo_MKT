@@ -44,11 +44,26 @@ function erroWebhook(message: string, status = 400) {
   return error;
 }
 
+function tokenWebhookAsaasForte(token?: string | null) {
+  if (!token || token.length < 32) return false;
+
+  const normalizado = token.toLowerCase();
+  return ![
+    "secret",
+    "segredo",
+    "changeme",
+    "change-me",
+    "troque",
+    "placeholder",
+    "asaas-test-token"
+  ].some((valorFraco) => normalizado.includes(valorFraco));
+}
+
 function validarToken(token?: string | null) {
   const esperado = process.env.ASAAS_WEBHOOK_TOKEN?.trim();
 
-  if (!esperado) {
-    throw erroWebhook("ASAAS_WEBHOOK_TOKEN nao configurado.", 500);
+  if (!tokenWebhookAsaasForte(esperado)) {
+    throw erroWebhook("ASAAS_WEBHOOK_TOKEN ausente ou fraco.", 500);
   }
 
   if (!token || token !== esperado) {

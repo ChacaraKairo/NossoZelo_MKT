@@ -106,6 +106,10 @@ function validouAceiteLegal(data: any) {
   );
 }
 
+async function criarRegistroInterno(entity: string, data: object) {
+  return (prisma as any)[entity].create({ data });
+}
+
 class ServiceUser {
   /**
    * Cria um usuário completo, incluindo geolocalização, perfil específico e envio de e-mail.
@@ -177,11 +181,11 @@ class ServiceUser {
           data.aceitouCookies === true || data.aceitou_cookies === true
             ? COOKIES_VERSAO
             : null,
-      };      await ServiceCrud.create('usuarios', usuarioData);      // 2. GEOLOCALIZAÇÃO (Resiliente a falhas)
+      };      await criarRegistroInterno('usuarios', usuarioData);      // 2. GEOLOCALIZAÇÃO (Resiliente a falhas)
       try {        const geolocalizacao =
           await GeolocalizacaoService.buscarCoordenadasPorCep(
             usuario.cep,
-          );        await ServiceCrud.create('localizacoes', {
+          );        await criarRegistroInterno('localizacoes', {
           usuario_id: id,
           latitude: geolocalizacao.latitude,
           longitude: geolocalizacao.longitude,
@@ -193,7 +197,7 @@ class ServiceUser {
           );
         }
 
-        await ServiceCrud.create('enfermeiros', {
+        await criarRegistroInterno('enfermeiros', {
           ...montarDadosProfissionais(enfermeiro),
           usuario_id: id,
           coren: docCoren,
@@ -201,17 +205,17 @@ class ServiceUser {
             enfermeiro?.especialidade ||
             enfermeiro?.especialidades ||
             null,
-        });      } else if (usuario.tipo === 'cuidador') {        await ServiceCrud.create('cuidadores', {
+        });      } else if (usuario.tipo === 'cuidador') {        await criarRegistroInterno('cuidadores', {
           ...montarDadosProfissionais(cuidador),
           usuario_id: id,
           documento_profissional:
             cuidador?.documento_profissional ||
             cuidador?.documento_professional ||
             null,
-        });      } else if (usuario.tipo === 'acompanhante') {        await ServiceCrud.create('acompanhantes', {
+        });      } else if (usuario.tipo === 'acompanhante') {        await criarRegistroInterno('acompanhantes', {
           ...montarDadosProfissionais(acompanhante),
           usuario_id: id,
-        });      } else if (usuario.tipo === 'admin') {        await ServiceCrud.create('admins', {
+        });      } else if (usuario.tipo === 'admin') {        await criarRegistroInterno('admins', {
           usuario_id: id,
           ...admin,
         });      } else if (usuario.tipo !== 'cliente') {        throw criarErroCadastro(

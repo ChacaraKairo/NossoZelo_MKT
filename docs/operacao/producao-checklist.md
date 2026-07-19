@@ -32,7 +32,13 @@ cd server && npm run assinaturas:expirar-pendentes
 cd server && npm run tokens:limpar
 ```
 
-Os scripts registram resumo no log e retornam exit code diferente de zero em falhas.
+Agenda sugerida em `docs/operacao/jobs.md`:
+
+- `assinaturas:verificar`: `*/30 * * * *`.
+- `assinaturas:expirar-pendentes`: `15,45 * * * *`.
+- `tokens:limpar`: `20 3 * * *`.
+
+Os scripts registram resumo no log e retornam exit code diferente de zero em falhas. O provedor precisa alertar o responsavel operacional quando isso acontecer.
 
 ## Backup e restore
 
@@ -113,4 +119,3 @@ https://SEU_CONTROLADOR/api/webhooks/asaas
 ```
 
 O token do painel Asaas deve bater com `ASAAS_WEBHOOK_TOKEN`.
-

@@ -95,6 +95,21 @@ function erroNegocio(mensagem: string, status = 400) {
   return error;
 }
 
+function tokenWebhookAsaasForte(token?: string | null) {
+  if (!token || token.length < 32) return false;
+
+  const normalizado = token.toLowerCase();
+  return ![
+    'secret',
+    'segredo',
+    'changeme',
+    'change-me',
+    'troque',
+    'placeholder',
+    'asaas-test-token',
+  ].some((valorFraco) => normalizado.includes(valorFraco));
+}
+
 function adicionarDias(data: Date, dias: number) {
   const novaData = new Date(data);
   novaData.setDate(novaData.getDate() + dias);
@@ -1200,8 +1215,8 @@ export class ServiceAssinatura {
   static validarTokenWebhookAsaas(token?: string) {
     const tokenEsperado = process.env.ASAAS_WEBHOOK_TOKEN?.trim();
 
-    if (!tokenEsperado) {
-      throw erroNegocio('Token do webhook Asaas nao configurado.', 500);
+    if (!tokenWebhookAsaasForte(tokenEsperado)) {
+      throw erroNegocio('Token do webhook Asaas ausente ou fraco.', 500);
     }
 
     if (!token || token !== tokenEsperado) {
