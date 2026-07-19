@@ -1,31 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, validarTokenAdmin } from "@/lib/sessionToken";
-
-const rotasPublicas = ["/login", "/api/auth/login", "/api/webhooks/asaas"];
-
-function isAsset(pathname: string) {
-  return (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  );
-}
+import {
+  aplicarHeadersSeguranca,
+  bloquearOrigemInvalida,
+  exigeProtecaoCsrf,
+  isAsset,
+  isRotaPublica,
+  origemPermitida
+} from "@/lib/security";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (isAsset(pathname)) return NextResponse.next();
+  if (isAsset(pathname)) return aplicarHeadersSeguranca(NextResponse.next());
+
+  if (exigeProtecaoCsrf(pathname, request.method) && !origemPermitida(request)) {
+    return bloquearOrigemInvalida();
+  }
 
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   const sessao = await validarTokenAdmin(token);
-  const publica = rotasPublicas.some((rota) => pathname === rota || pathname.startsWith(`${rota}/`));
 
-  if (publica) return NextResponse.next();
+  if (isRotaPublica(pathname)) {
+    if (sessao && pathname === "/login") {
+      return aplicarHeadersSeguranca(NextResponse.redirect(new URL("/dashboard", request.url)));
+    }
 
-  if (!sessao) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return aplicarHeadersSeguranca(NextResponse.next());
   }
 
-  return NextResponse.next();
+  if (!sessao) {
+    if (pathname.startsWith("/api/")) {
+      return aplicarHeadersSeguranca(
+        NextResponse.json({ error: "Nao autorizado." }, { status: 401 })
+      );
+    }
+
+    return aplicarHeadersSeguranca(NextResponse.redirect(new URL("/login", request.url)));
+  }
+
+  return aplicarHeadersSeguranca(NextResponse.next());
 }
 
 export const config = {

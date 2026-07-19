@@ -86,7 +86,7 @@ export async function exigirAdminApi() {
 export function aplicarCookieSessao(response: NextResponse, token: string) {
   response.cookies.set(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 60 * 8
@@ -96,7 +96,7 @@ export function aplicarCookieSessao(response: NextResponse, token: string) {
 export function limparCookieSessao(response: NextResponse) {
   response.cookies.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 0

@@ -50,3 +50,33 @@ jobs:
       - run: npm run build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4000
+
+  controlador:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: controlador
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: controlador/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+        env:
+          JWT_ADMIN_SECRET: segredo-admin-de-ci-com-mais-de-32-caracteres
+          MASTER_ADMIN_EMAIL: master@master.master
+          CRON_SECRET: segredo-cron-de-ci-com-mais-de-32-caracteres
+      - run: npm test
+        env:
+          JWT_ADMIN_SECRET: segredo-admin-de-ci-com-mais-de-32-caracteres
+          MASTER_ADMIN_EMAIL: master@master.master
+          CRON_SECRET: segredo-cron-de-ci-com-mais-de-32-caracteres
+      - run: npm run build
+        env:
+          JWT_ADMIN_SECRET: segredo-admin-de-ci-com-mais-de-32-caracteres
+          MASTER_ADMIN_EMAIL: master@master.master
+          CRON_SECRET: segredo-cron-de-ci-com-mais-de-32-caracteres
+          DATABASE_URL: mysql://usuario:senha@localhost:3306/nossozelo
