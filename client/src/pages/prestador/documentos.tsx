@@ -8,14 +8,12 @@ import {
 } from '@/service/documentosService';
 import styles from '@/styles/DocumentosPrestadorPage.module.css';
 
-const OPCOES_DOCUMENTO = [
-  { value: 'documento_identidade', label: 'Documento de identidade' },
-  { value: 'cnh', label: 'CNH' },
-  { value: 'cpf', label: 'CPF' },
-  { value: 'comprovante_residencia', label: 'Comprovante de residencia' },
-  { value: 'certificado_curso', label: 'Certificado de curso' },
-  { value: 'coren', label: 'COREN' },
-  { value: 'selfie', label: 'Selfie' },
+const OPCOES_DOCUMENTO_FALLBACK = [
+  { codigo: 'documento_identidade', nome: 'Documento de identidade', permite_pdf: false, permite_imagem: true },
+  { codigo: 'cpf', nome: 'CPF', permite_pdf: true, permite_imagem: true },
+  { codigo: 'selfie', nome: 'Selfie', permite_pdf: false, permite_imagem: true },
+  { codigo: 'comprovante_residencia', nome: 'Comprovante de residencia', permite_pdf: true, permite_imagem: true },
+  { codigo: 'antecedentes_criminais_pf', nome: 'Antecedentes criminais PF', permite_pdf: true, permite_imagem: true },
 ];
 
 function formatarData(valor?: string | null) {
@@ -29,10 +27,11 @@ function DocumentoItem({ documento }: { documento: DocumentoVerificacao }) {
   return (
     <div className={styles.document}>
       <div>
-        <strong>{documento.tipo_documento}</strong>
+        <strong>{documento.tipoDocumentoNome || documento.tipo_documento}</strong>
         <span className={styles.muted}>
           Enviado em {formatarData(documento.criado_em)}
           {documento.motivo_recusa ? ` · ${documento.motivo_recusa}` : ''}
+          {documento.analise ? ` · sinal ${documento.analise.sinal}` : ''}
         </span>
       </div>
       <span className={styles.badge}>{documento.status}</span>
@@ -42,7 +41,7 @@ function DocumentoItem({ documento }: { documento: DocumentoVerificacao }) {
 
 export default function DocumentosPrestadorPage() {
   const [status, setStatus] = useState<StatusDocumental | null>(null);
-  const [tipoDocumento, setTipoDocumento] = useState(OPCOES_DOCUMENTO[0].value);
+  const [tipoDocumento, setTipoDocumento] = useState(OPCOES_DOCUMENTO_FALLBACK[0].codigo);
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
@@ -69,6 +68,21 @@ export default function DocumentosPrestadorPage() {
     () => [...(status?.documentos || [])].sort((a, b) => b.id - a.id),
     [status?.documentos],
   );
+  const tiposDocumentos = useMemo(
+    () => status?.tiposDocumentos?.length ? status.tiposDocumentos : OPCOES_DOCUMENTO_FALLBACK,
+    [status],
+  );
+  const tipoSelecionado = tiposDocumentos.find((tipo) => tipo.codigo === tipoDocumento);
+  const accept = [
+    tipoSelecionado?.permite_imagem ? 'image/jpeg,image/png,image/webp' : '',
+    tipoSelecionado?.permite_pdf ? 'application/pdf' : '',
+  ].filter(Boolean).join(',');
+
+  useEffect(() => {
+    if (tiposDocumentos.length > 0 && !tiposDocumentos.some((tipo) => tipo.codigo === tipoDocumento)) {
+      setTipoDocumento(tiposDocumentos[0].codigo);
+    }
+  }, [tipoDocumento, tiposDocumentos]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,10 +143,17 @@ export default function DocumentosPrestadorPage() {
                   value={tipoDocumento}
                   onChange={(event) => setTipoDocumento(event.target.value)}
                 >
-                  {OPCOES_DOCUMENTO.map((opcao) => (
-                    <option key={opcao.value} value={opcao.value}>{opcao.label}</option>
+                  {tiposDocumentos.map((opcao) => (
+                    <option key={opcao.codigo} value={opcao.codigo}>
+                      {opcao.nome}
+                    </option>
                   ))}
                 </select>
+                {tipoSelecionado && 'obrigatorio_busca' in tipoSelecionado && (
+                  <span className={styles.muted}>
+                    {tipoSelecionado.obrigatorio_busca ? 'Obrigatorio para aparecer na busca.' : 'Opcional para complementar seu perfil.'}
+                  </span>
+                )}
               </div>
               <div className={styles.field}>
                 <label htmlFor="arquivo">Arquivo</label>
@@ -141,7 +162,7 @@ export default function DocumentosPrestadorPage() {
                   id="arquivo"
                   name="arquivo"
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  accept={accept || 'image/jpeg,image/png,image/webp,application/pdf'}
                   onChange={(event) => setArquivo(event.target.files?.[0] || null)}
                 />
               </div>

@@ -30,6 +30,7 @@ Armazena cada documento enviado.
 model documentos_verificacao {
   id                Int      @id @default(autoincrement())
   usuario_id        String   @db.VarChar(20)
+  tipo_documento_id Int?
   tipo_documento    String   @db.VarChar(60)
   arquivo_chave     String   @db.VarChar(255)
   arquivo_nome      String?  @db.VarChar(255)
@@ -53,6 +54,142 @@ model documentos_verificacao {
   @@index([status])
   @@index([tipo_documento])
   @@index([provider_request_id])
+}
+```
+
+## Catálogo `tipos_documentos`
+
+Implementado como catálogo interno oficial. Ele define quais documentos existem, quem precisa enviar, campos esperados, regras de validação, validade, nível de risco, se exige revisão manual e se bloqueia a busca.
+
+O sistema não usa modelos visuais de RG/CNH e não deve armazenar imagens de exemplo copiáveis. Para teste, usar arquivos fictícios claramente marcados como sem valor documental.
+
+Campos principais:
+
+```text
+codigo
+nome
+descricao
+categoria
+obrigatorio_cuidador
+obrigatorio_enfermeiro
+obrigatorio_acompanhante
+obrigatorio_baba
+obrigatorio_diarista
+obrigatorio_motorista_assistencial
+obrigatorio_busca
+requer_upload
+exige_frente
+exige_verso
+exige_selfie
+exige_validade
+exige_numero_documento
+exige_orgao_emissor
+exige_uf_emissor
+exige_data_emissao
+exige_revisao_manual
+permite_pdf
+permite_imagem
+tamanho_maximo_mb
+validade_dias
+nivel_risco
+provider_sugerido
+campos_esperados
+regras_validacao
+ativo
+```
+
+Catálogo inicial:
+
+```text
+documento_identidade
+cpf
+cnh
+selfie
+comprovante_residencia
+antecedentes_criminais_pf
+antecedentes_criminais_estadual
+coren
+certificado_curso
+comprovante_experiencia
+documento_profissional
+termo_responsabilidade
+```
+
+Obrigatórios para busca no MVP:
+
+- Todos os prestadores: documento de identidade, CPF, selfie, comprovante de residência e antecedentes criminais PF.
+- Enfermeiro: COREN.
+- Motorista assistencial: CNH.
+- Certificado, experiência, documento profissional complementar e certidão estadual ficam no catálogo, mas não bloqueiam a busca por padrão.
+- Termo de responsabilidade fica no catálogo como aceite digital futuro; não exige upload e não bloqueia a busca nesta primeira versão.
+
+## Tabela `documentos_campos_extraidos`
+
+Armazena campos obtidos por OCR/API futuramente, sem acoplar o documento a um provider específico.
+
+```prisma
+model documentos_campos_extraidos {
+  id           Int      @id @default(autoincrement())
+  documento_id Int
+  campo        String   @db.VarChar(80)
+  valor        String?  @db.Text
+  valor_mascarado String? @db.Text
+  confianca    Decimal? @db.Decimal(5, 2)
+  origem       String?  @db.VarChar(40)
+  criado_em    DateTime @default(now()) @db.Timestamp(0)
+}
+```
+
+## Tabela `documentos_analises`
+
+Registra a esteira de análise automática/manual por documento. A primeira versão cria sinal amarelo quando OCR/provider externo ainda não está configurado; a estrutura já permite evoluir para OCR, regras e KYC.
+
+```prisma
+model documentos_analises {
+  id                  Int      @id @default(autoincrement())
+  documento_id         Int
+  usuario_id           String   @db.VarChar(20)
+  tipo_detectado       String?  @db.VarChar(80)
+  sinal                String   @db.VarChar(20)
+  score                Decimal? @db.Decimal(5, 2)
+  status               String   @db.VarChar(40)
+  arquivo_legivel      Boolean  @default(false)
+  tipo_confere         Boolean  @default(false)
+  nome_confere         Boolean  @default(false)
+  cpf_confere          Boolean  @default(false)
+  validade_confere     Boolean?
+  precisa_revisao      Boolean  @default(true)
+  dados_extraidos      Json?
+  validacoes           Json?
+  pendencias           Json?
+  motivo               String?  @db.Text
+  provider             String?  @db.VarChar(80)
+  provider_request_id  String?  @db.VarChar(120)
+  criado_em            DateTime @default(now()) @db.Timestamp(0)
+  atualizado_em        DateTime @updatedAt @db.Timestamp(0)
+}
+```
+
+Sinais:
+
+```text
+verde = aprovado automaticamente apenas quando provider/OCR e regras forem confiáveis
+amarelo = precisa revisão manual
+vermelho = recusado ou inconsistente
+```
+
+## Tabela `tipos_documentos_regras`
+
+Permite versionar e ativar/desativar regras sem espalhar decisões no código.
+
+```prisma
+model tipos_documentos_regras {
+  id                 Int     @id @default(autoincrement())
+  tipo_documento_id  Int
+  codigo             String  @db.VarChar(80)
+  descricao          String  @db.Text
+  severidade         String  @default("ERRO") @db.VarChar(20)
+  ativo              Boolean @default(true)
 }
 ```
 
@@ -115,18 +252,12 @@ model revisoes_documentos {
 
 ## Tipos de documento
 
-Valores iniciais recomendados:
+Valores legados substituídos pelo catálogo:
 
 ```text
-identidade_frente
-identidade_verso
-cpf
-cnh
-selfie
-comprovante_profissional
-coren
-certificado_curso
-outro
+identidade_frente -> documento_identidade
+identidade_verso -> documento_identidade com exige_verso=true
+comprovante_profissional -> documento_profissional
 ```
 
 ## Dados que não devem ser salvos diretamente

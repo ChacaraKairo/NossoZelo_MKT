@@ -37,12 +37,19 @@ export default async function DocumentosPage() {
                   </span>
                 </td>
                 <td>
-                  {documento.tipo_documento}
+                  {documento.tipoDocumento?.nome || documento.tipo_documento}
                   <span className={styles.tableSubtext}>
+                    {documento.tipo_documento} · {documento.tipoDocumento?.categoria || "sem categoria"} ·{" "}
                     Enviado em {documento.criado_em.toLocaleString("pt-BR")}
                   </span>
                 </td>
-                <td><BadgeStatus status={documento.status} /></td>
+                <td>
+                  <BadgeStatus status={documento.status} />
+                  <span className={styles.tableSubtext}>
+                    Sinal: {documento.analises[0]?.sinal || "sem analise"}
+                    {documento.analises[0]?.score ? ` · score ${documento.analises[0].score}` : ""}
+                  </span>
+                </td>
                 <td>
                   <code>{documento.arquivo_chave}</code>
                   <span className={styles.tableSubtext}>Arquivo privado, sem URL publica.</span>

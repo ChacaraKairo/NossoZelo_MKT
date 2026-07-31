@@ -21,8 +21,11 @@ Implementado nesta fase como MVP manual:
 
 ```http
 POST /nossozelo/documentos/upload
+POST /nossozelo/documentos/analisar
 GET /nossozelo/documentos/status
 POST /nossozelo/documentos/:id/reprocessar
+POST /nossozelo/documentos/:id/reanalisar
+GET /nossozelo/documentos/:id/analise
 GET /nossozelo/documentos/admin/pendentes
 GET /nossozelo/documentos/admin/:id
 POST /nossozelo/documentos/admin/:id/aprovar
@@ -48,6 +51,14 @@ O front publico de prestador usa `/prestador/documentos`, e o painel administrat
 POST /nossozelo/documentos/upload
 ```
 
+Alias com esteira de análise:
+
+```http
+POST /nossozelo/documentos/analisar
+```
+
+Nesta fase, `/analisar` salva o arquivo, cria `documentos_verificacao`, registra `documentos_analises` e retorna sinal/score. Sem OCR/provider externo configurado, o sinal esperado é `amarelo`, com revisão manual obrigatória.
+
 Tipo:
 
 ```text
@@ -68,6 +79,9 @@ Exemplo de resposta:
   "documentoId": 123,
   "tipoDocumento": "identidade_frente",
   "status": "enviado",
+  "sinal": "amarelo",
+  "score": 70,
+  "precisaRevisaoManual": true,
   "message": "Documento recebido para validação."
 }
 ```
@@ -138,6 +152,13 @@ Resposta:
 
 ```http
 POST /nossozelo/documentos/:id/verificar
+```
+
+Endpoint implementado para reanálise:
+
+```http
+POST /nossozelo/documentos/:id/reanalisar
+GET /nossozelo/documentos/:id/analise
 ```
 
 Uso:

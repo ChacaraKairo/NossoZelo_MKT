@@ -31,6 +31,7 @@ O logger mascara campos sensiveis por chave, incluindo senha, token, CPF, cookie
 - Documentos privados retornam chave interna, nao URL publica.
 - Variaveis AWS sao validadas antes de upload.
 - A API `/nossozelo/documentos` salva documentos de verificacao em area privada e registra apenas a chave interna em `documentos_verificacao`.
+- O catálogo `tipos_documentos` define permissões de PDF/imagem, tamanho máximo, nível de risco, campos esperados e regras; o sistema não deve armazenar modelos visuais copiáveis de RG, CNH ou documentos oficiais.
 - Prestadores so aparecem na busca quando `documentos_status=aprovado`, `identidade_status=aprovada` e `profissional_status` estiver `aprovado` ou `nao_aplicavel`, alem das regras de e-mail, cadastro e assinatura.
 - A primeira versao usa provider manual; KYC/OCR externo e links temporarios assinados continuam pendentes para uma etapa posterior.
 - Pendente: politica formal de retencao e quarentena operacional fora do processo web.

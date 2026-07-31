@@ -27,6 +27,31 @@ export class DocumentosController {
     }
   }
 
+  static async analisar(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      const documento = await ServiceDocumentos.uploadDocumento(
+        req.user,
+        req.body?.tipo_documento,
+        req.file,
+      );
+      return res.status(201).json({
+        documentoId: documento.id,
+        tipoDocumentoDetectado: documento.analise?.tipo_detectado,
+        status: documento.status,
+        sinal: documento.analise?.sinal,
+        score: documento.analise?.score,
+        dadosExtraidos: documento.analise?.dados_extraidos,
+        validacoes: documento.analise?.validacoes,
+        pendencias: documento.analise?.pendencias,
+        precisaRevisaoManual: documento.analise?.precisa_revisao,
+        analise: documento.analise,
+      });
+    } catch (error) {
+      return responderErro(res, error);
+    }
+  }
+
   static async status(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return res.status(401).json({ error: 'Usuario nao autenticado.' });
@@ -84,6 +109,40 @@ export class DocumentosController {
       return res.json({ message: 'Documento reenviado para revisao.', documento });
     } catch (error) {
       return responderErro(res, error);
+    }
+  }
+
+  static async reanalisar(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      const analise = await ServiceDocumentos.reanalisar(req.user, Number(req.params.id));
+      return res.json({
+        documentoId: Number(req.params.id),
+        sinal: analise.sinal,
+        score: analise.score,
+        precisaRevisaoManual: analise.precisa_revisao,
+        motivo: analise.motivo,
+        analise,
+      });
+    } catch (error) {
+      return responderErro(res, error);
+    }
+  }
+
+  static async obterAnalise(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Usuario nao autenticado.' });
+      const analise = await ServiceDocumentos.obterAnalise(req.user, Number(req.params.id));
+      return res.json({
+        documentoId: Number(req.params.id),
+        sinal: analise.sinal,
+        score: analise.score,
+        precisaRevisaoManual: analise.precisa_revisao,
+        motivo: analise.motivo,
+        analise,
+      });
+    } catch (error) {
+      return responderErro(res, error, 404);
     }
   }
 }

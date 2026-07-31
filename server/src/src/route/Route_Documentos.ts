@@ -18,7 +18,17 @@ DocumentosRouter.post(
   validarArquivoDocumento,
   DocumentosController.upload,
 );
+DocumentosRouter.post(
+  '/analisar',
+  exigirAutenticacao,
+  permitirTipos([...TIPOS_PRESTADOR]),
+  uploadDocumentoVerificacao.single('arquivo'),
+  validarArquivoDocumento,
+  DocumentosController.analisar,
+);
 DocumentosRouter.post('/:id/reprocessar', exigirAutenticacao, DocumentosController.reprocessar);
+DocumentosRouter.post('/:id/reanalisar', exigirAutenticacao, DocumentosController.reanalisar);
+DocumentosRouter.get('/:id/analise', exigirAutenticacao, DocumentosController.obterAnalise);
 
 DocumentosRouter.get('/admin/pendentes', exigirAutenticacao, permitirTipos(['admin']), DocumentosController.listarPendentes);
 DocumentosRouter.get('/admin/:id', exigirAutenticacao, permitirTipos(['admin']), DocumentosController.detalhar);

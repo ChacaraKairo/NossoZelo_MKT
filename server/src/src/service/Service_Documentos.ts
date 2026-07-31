@@ -6,36 +6,40 @@ import prisma from '../lib/prisma';
 import { TIPOS_PRESTADOR } from '../constants/dominio';
 import { UsuarioAutenticado } from '../types/auth';
 import { ManualDocumentVerificationProvider } from './ManualDocumentVerificationProvider';
+import DocumentAnalysisService from './DocumentAnalysisService';
 
 export const TIPOS_DOCUMENTO_PERMITIDOS = [
   'documento_identidade',
-  'identidade_frente',
-  'identidade_verso',
   'cpf',
   'cnh',
   'comprovante_residencia',
-  'comprovante_profissional',
+  'antecedentes_criminais_pf',
+  'antecedentes_criminais_estadual',
+  'comprovante_experiencia',
+  'documento_profissional',
   'certificado_curso',
   'coren',
   'selfie',
-  'outro',
+  'termo_responsabilidade',
 ] as const;
 
-type TipoDocumento = (typeof TIPOS_DOCUMENTO_PERMITIDOS)[number];
+type TipoDocumento = string;
 
-const TIPOS_IDENTIDADE = new Set<TipoDocumento>([
+const TIPOS_IDENTIDADE = new Set<string>([
   'documento_identidade',
-  'identidade_frente',
-  'identidade_verso',
   'cpf',
   'cnh',
   'selfie',
+  'comprovante_residencia',
+  'antecedentes_criminais_pf',
+  'antecedentes_criminais_estadual',
 ]);
 
-const TIPOS_PROFISSIONAIS = new Set<TipoDocumento>([
-  'comprovante_profissional',
+const TIPOS_PROFISSIONAIS = new Set<string>([
+  'documento_profissional',
   'certificado_curso',
   'coren',
+  'comprovante_experiencia',
 ]);
 
 function usuarioEhPrestador(tipo?: string) {
@@ -44,9 +48,8 @@ function usuarioEhPrestador(tipo?: string) {
 
 function normalizarTipoDocumento(tipo: unknown): TipoDocumento | null {
   if (typeof tipo !== 'string') return null;
-  return TIPOS_DOCUMENTO_PERMITIDOS.includes(tipo as TipoDocumento)
-    ? (tipo as TipoDocumento)
-    : null;
+  const codigo = tipo.trim();
+  return codigo ? codigo : null;
 }
 
 export function sanitizeDocumentAuditPayload(input: unknown): unknown {
@@ -113,6 +116,27 @@ function extensaoSegura(arquivo: Express.Multer.File) {
   return '.jpg';
 }
 
+function campoObrigatorioPorTipo(tipo: string) {
+  const campos: Record<string, string> = {
+    cuidador: 'obrigatorio_cuidador',
+    enfermeiro: 'obrigatorio_enfermeiro',
+    acompanhante: 'obrigatorio_acompanhante',
+    baba: 'obrigatorio_baba',
+    diarista: 'obrigatorio_diarista',
+    motorista_assistencial: 'obrigatorio_motorista_assistencial',
+  };
+
+  return campos[tipo];
+}
+
+function arquivoEhImagem(arquivo: Express.Multer.File) {
+  return arquivo.mimetype.startsWith('image/');
+}
+
+function arquivoEhPdf(arquivo: Express.Multer.File) {
+  return arquivo.mimetype === 'application/pdf';
+}
+
 async function salvarArquivoPrivado(usuarioId: string, tipoDocumento: TipoDocumento, arquivo: Express.Multer.File) {
   const baseDir = diretorioDocumentos();
   const usuarioDir = path.join(baseDir, usuarioId);
@@ -147,25 +171,52 @@ async function recalcularStatusUsuario(usuarioId: string) {
 
   if (!usuario) return null;
 
-  const documentos = await prisma.documentos_verificacao.findMany({
-    where: { usuario_id: usuarioId },
-    select: { tipo_documento: true, status: true },
-  });
+  const campoObrigatorio = campoObrigatorioPorTipo(usuario.tipo);
+  const [documentos, obrigatorios] = await Promise.all([
+    prisma.documentos_verificacao.findMany({
+      where: { usuario_id: usuarioId },
+      select: { tipo_documento: true, status: true },
+    }),
+    campoObrigatorio
+      ? prisma.tipos_documentos.findMany({
+          where: {
+            ativo: true,
+            requer_upload: true,
+            obrigatorio_busca: true,
+            [campoObrigatorio]: true,
+          },
+          select: { codigo: true, categoria: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
-  const identidadeAprovada = documentos.some(
-    (doc) => TIPOS_IDENTIDADE.has(doc.tipo_documento as TipoDocumento) && doc.status === 'aprovado',
+  const documentosAprovados = new Set(
+    documentos.filter((doc) => doc.status === 'aprovado').map((doc) => doc.tipo_documento),
   );
-  const profissionalExigido = usuario.tipo === 'enfermeiro';
-  const profissionalAprovado = documentos.some(
-    (doc) => TIPOS_PROFISSIONAIS.has(doc.tipo_documento as TipoDocumento) && doc.status === 'aprovado',
+  const obrigatoriosAtendidos = obrigatorios.every((tipo) =>
+    documentosAprovados.has(tipo.codigo),
   );
+  const obrigatoriosIdentidade = obrigatorios.filter(
+    (tipo) => tipo.categoria !== 'profissional' && tipo.categoria !== 'formacao',
+  );
+  const obrigatoriosProfissionais = obrigatorios.filter(
+    (tipo) => tipo.categoria === 'profissional' || tipo.categoria === 'formacao',
+  );
+
+  const identidadeAprovada =
+    obrigatoriosIdentidade.length > 0 &&
+    obrigatoriosIdentidade.every((tipo) => documentosAprovados.has(tipo.codigo));
+  const profissionalExigido = obrigatoriosProfissionais.length > 0;
+  const profissionalAprovado =
+    !profissionalExigido ||
+    obrigatoriosProfissionais.every((tipo) => documentosAprovados.has(tipo.codigo));
   const temRecusado = documentos.some((doc) => doc.status === 'recusado');
   const temPendente = documentos.some((doc) =>
     ['enviado', 'em_validacao', 'pendente_revisao'].includes(doc.status),
   );
 
   let documentosStatus: documentos_verificacao_status = 'nao_enviado';
-  if (identidadeAprovada && (!profissionalExigido || profissionalAprovado)) {
+  if (obrigatorios.length > 0 && obrigatoriosAtendidos) {
     documentosStatus = 'aprovado';
   } else if (temRecusado) {
     documentosStatus = 'recusado';
@@ -207,6 +258,36 @@ async function recalcularStatusUsuario(usuarioId: string) {
 export class ServiceDocumentos {
   private static provider = new ManualDocumentVerificationProvider();
 
+  static async listarTiposParaPrestador(tipo: string) {
+    const campoObrigatorio = campoObrigatorioPorTipo(tipo);
+    if (!campoObrigatorio) return [];
+
+    return prisma.tipos_documentos.findMany({
+      where: {
+        ativo: true,
+        requer_upload: true,
+        OR: [{ [campoObrigatorio]: true }, { obrigatorio_busca: false }],
+      },
+      orderBy: [{ obrigatorio_busca: 'desc' }, { categoria: 'asc' }, { nome: 'asc' }],
+      select: {
+        id: true,
+        codigo: true,
+        nome: true,
+        descricao: true,
+        categoria: true,
+        obrigatorio_busca: true,
+        exige_revisao_manual: true,
+        permite_pdf: true,
+        permite_imagem: true,
+        tamanho_maximo_mb: true,
+        validade_dias: true,
+        nivel_risco: true,
+        campos_esperados: true,
+        regras_validacao: true,
+      },
+    });
+  }
+
   static async uploadDocumento(usuario: UsuarioAutenticado, tipo: unknown, arquivo?: Express.Multer.File) {
     if (!usuarioEhPrestador(usuario.tipo)) {
       throw new Error('Documentos de verificacao estao disponiveis apenas para prestadores.');
@@ -221,12 +302,38 @@ export class ServiceDocumentos {
       throw new Error('Arquivo nao informado.');
     }
 
+    const tipoCatalogo = await prisma.tipos_documentos.findUnique({
+      where: { codigo: tipoDocumento },
+    });
+
+    if (!tipoCatalogo?.ativo) {
+      throw new Error('Tipo de documento invalido ou inativo.');
+    }
+
+    if (!tipoCatalogo.requer_upload) {
+      throw new Error('Este tipo de documento usa aceite digital e nao aceita upload.');
+    }
+
+    if (arquivoEhPdf(arquivo) && !tipoCatalogo.permite_pdf) {
+      throw new Error('Este tipo de documento nao aceita PDF.');
+    }
+
+    if (arquivoEhImagem(arquivo) && !tipoCatalogo.permite_imagem) {
+      throw new Error('Este tipo de documento nao aceita imagem.');
+    }
+
+    const maxBytes = tipoCatalogo.tamanho_maximo_mb * 1024 * 1024;
+    if (maxBytes > 0 && arquivo.size > maxBytes) {
+      throw new Error(`Arquivo excede o limite de ${tipoCatalogo.tamanho_maximo_mb}MB para este documento.`);
+    }
+
     await auditar(usuario.id, 'documento_upload_iniciado', 'INSERT');
     const arquivoChave = await salvarArquivoPrivado(usuario.id, tipoDocumento, arquivo);
 
     const documento = await prisma.documentos_verificacao.create({
       data: {
         usuario_id: usuario.id,
+        tipo_documento_id: tipoCatalogo.id,
         tipo_documento: tipoDocumento,
         arquivo_chave: arquivoChave,
         mime_type: arquivo.mimetype,
@@ -254,6 +361,7 @@ export class ServiceDocumentos {
         resultado_resumo: sanitizeDocumentAuditPayload(resultado.resultadoResumo) as Prisma.InputJsonValue,
       },
     });
+    const analise = await DocumentAnalysisService.analisarDocumento(documento.id);
 
     await prisma.usuarios.update({
       where: { id: usuario.id },
@@ -267,11 +375,11 @@ export class ServiceDocumentos {
     await auditar(usuario.id, 'documento_upload_concluido', 'INSERT');
     await auditar(usuario.id, 'documento_enviado_para_revisao', 'UPDATE');
 
-    return atualizado;
+    return { ...atualizado, analise };
   }
 
   static async obterStatus(usuario: UsuarioAutenticado) {
-    const [prestador, documentos] = await Promise.all([
+    const [prestador, documentos, tiposDocumentos] = await Promise.all([
       prisma.usuarios.findUnique({
         where: { id: usuario.id },
         select: {
@@ -294,8 +402,30 @@ export class ServiceDocumentos {
           motivo_recusa: true,
           criado_em: true,
           atualizado_em: true,
+          tipoDocumento: {
+            select: {
+              codigo: true,
+              nome: true,
+              categoria: true,
+              obrigatorio_busca: true,
+            },
+          },
+          analises: {
+            orderBy: { criado_em: 'desc' },
+            take: 1,
+            select: {
+              sinal: true,
+              score: true,
+              status: true,
+              precisa_revisao: true,
+              motivo: true,
+              pendencias: true,
+              criado_em: true,
+            },
+          },
         },
       }),
+      this.listarTiposParaPrestador(usuario.tipo),
     ]);
 
     if (!prestador) throw new Error('Usuario nao encontrado.');
@@ -307,9 +437,12 @@ export class ServiceDocumentos {
       identidadeStatus: prestador.identidade_status,
       profissionalStatus: prestador.profissional_status,
       podeAparecerNaBusca: prestadorPodeAparecerNaBusca(prestador),
+      tiposDocumentos,
       documentos: documentos.map((documento) => ({
         ...documento,
         tipoDocumento: documento.tipo_documento,
+        tipoDocumentoNome: documento.tipoDocumento?.nome || documento.tipo_documento,
+        analise: documento.analises[0] || null,
         criadoEm: documento.criado_em,
         atualizadoEm: documento.atualizado_em,
       })),
@@ -321,6 +454,9 @@ export class ServiceDocumentos {
       where: { status: { in: ['enviado', 'em_validacao', 'pendente_revisao'] } },
       orderBy: { criado_em: 'asc' },
       include: {
+        tipoDocumento: {
+          select: { codigo: true, nome: true, categoria: true, obrigatorio_busca: true },
+        },
         usuarios: {
           select: { id: true, nome: true, email: true, tipo: true, documentos_status: true },
         },
@@ -342,6 +478,20 @@ export class ServiceDocumentos {
             identidade_status: true,
             profissional_status: true,
           },
+        },
+        tipoDocumento: {
+          select: {
+            codigo: true,
+            nome: true,
+            categoria: true,
+            obrigatorio_busca: true,
+            campos_esperados: true,
+            regras_validacao: true,
+          },
+        },
+        analises: {
+          orderBy: { criado_em: 'desc' },
+          take: 1,
         },
         revisoes: { orderBy: { criado_em: 'desc' } },
       },
@@ -419,6 +569,43 @@ export class ServiceDocumentos {
     });
     await auditar(usuario.id, 'documento_reprocessado');
     return atualizado;
+  }
+
+  static async reanalisar(usuario: UsuarioAutenticado, documentoId: number) {
+    const documento = await prisma.documentos_verificacao.findUnique({
+      where: { id: documentoId },
+    });
+
+    if (!documento || (documento.usuario_id !== usuario.id && usuario.tipo !== 'admin')) {
+      throw new Error('Documento nao encontrado.');
+    }
+
+    const analise = await DocumentAnalysisService.analisarDocumento(documentoId);
+    await prisma.documentos_verificacao.update({
+      where: { id: documentoId },
+      data: { status: analise.status as documentos_verificacao_status },
+    });
+    await prisma.usuarios.update({
+      where: { id: documento.usuario_id },
+      data: { documentos_status: 'pendente_revisao' },
+    });
+    await auditar(usuario.id, 'documento_reanalisado');
+    return analise;
+  }
+
+  static async obterAnalise(usuario: UsuarioAutenticado, documentoId: number) {
+    const documento = await prisma.documentos_verificacao.findUnique({
+      where: { id: documentoId },
+      select: { id: true, usuario_id: true },
+    });
+
+    if (!documento || (documento.usuario_id !== usuario.id && usuario.tipo !== 'admin')) {
+      throw new Error('Documento nao encontrado.');
+    }
+
+    const analise = await DocumentAnalysisService.obterAnaliseMaisRecente(documentoId);
+    if (!analise) throw new Error('Analise nao encontrada.');
+    return analise;
   }
 }
 

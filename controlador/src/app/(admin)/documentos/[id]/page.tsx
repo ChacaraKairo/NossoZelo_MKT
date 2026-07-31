@@ -24,12 +24,17 @@ export default async function DocumentoDetalhePage({ params }: PageProps) {
 
       <section className={styles.panel}>
         <div className={styles.fieldList}>
-          <div className={styles.field}><span>Tipo</span><strong>{documento.tipo_documento}</strong></div>
+          <div className={styles.field}><span>Tipo</span><strong>{documento.tipoDocumento?.nome || documento.tipo_documento}</strong></div>
+          <div className={styles.field}><span>Codigo</span><strong>{documento.tipo_documento}</strong></div>
+          <div className={styles.field}><span>Categoria</span><strong>{documento.tipoDocumento?.categoria || "-"}</strong></div>
           <div className={styles.field}><span>Arquivo privado</span><strong>{documento.arquivo_chave}</strong></div>
           <div className={styles.field}><span>MIME</span><strong>{documento.mime_type || "-"}</strong></div>
           <div className={styles.field}><span>Tamanho</span><strong>{documento.tamanho_bytes || 0} bytes</strong></div>
           <div className={styles.field}><span>Identidade</span><strong>{documento.usuarios.identidade_status}</strong></div>
           <div className={styles.field}><span>Profissional</span><strong>{documento.usuarios.profissional_status}</strong></div>
+          <div className={styles.field}><span>Sinal</span><strong>{documento.analises[0]?.sinal || "sem analise"}</strong></div>
+          <div className={styles.field}><span>Score</span><strong>{documento.analises[0]?.score?.toString() || "-"}</strong></div>
+          <div className={styles.field}><span>Motivo da analise</span><strong>{documento.analises[0]?.motivo || "-"}</strong></div>
         </div>
       </section>
 
