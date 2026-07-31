@@ -30,6 +30,7 @@ O logger mascara campos sensiveis por chave, incluindo senha, token, CPF, cookie
 - O backend envia o buffer do upload ao clamd via protocolo `INSTREAM` antes de persistir no storage.
 - Documentos privados retornam chave interna, nao URL publica.
 - Variaveis AWS sao validadas antes de upload.
+- A primeira versao usa provider manual; KYC/OCR externo e links temporarios assinados continuam pendentes para uma etapa posterior.
 - Pendente: politica formal de retencao e quarentena operacional fora do processo web.
 
 ## Rate limit

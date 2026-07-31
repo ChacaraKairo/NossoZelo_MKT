@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import logger from './src/lib/logger';
 import helmet from 'helmet';
+import requestIdMiddleware from './src/middleware/requestId';
 
 dotenv.config();
 
@@ -106,6 +107,7 @@ const allowedOrigins = (
 logger.info('App: CORS configurado', { allowedOrigins });
 
 app.use(helmet());
+app.use(requestIdMiddleware);
 app.use(
   cors({
     origin(origin, callback) {
@@ -131,12 +133,45 @@ app.use(
       'DELETE',
       'OPTIONS',
     ],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
   }),
 );
 
 app.use(cookieParser());
-app.use(morgan('dev'));
+if (isProduction) {
+  morgan.token(
+    'request-id',
+    (_req, res) =>
+      (res as typeof res & { locals?: { requestId?: string } }).locals
+        ?.requestId || '-',
+  );
+  app.use(
+    morgan((tokens, req, res) => {
+      const httpLog = {
+        requestId: tokens['request-id'](req, res),
+        method: tokens.method(req, res),
+        url: tokens.url(req, res),
+        status: Number(tokens.status(req, res)),
+        responseTimeMs: Number(tokens['response-time'](req, res)),
+        contentLength: tokens.res(req, res, 'content-length') || null,
+      };
+
+      return JSON.stringify(httpLog);
+    }, {
+      stream: {
+        write(message) {
+          try {
+            logger.info('HTTP request', JSON.parse(message));
+          } catch {
+            logger.info('HTTP request', { raw: message.trim() });
+          }
+        },
+      },
+    }),
+  );
+} else {
+  app.use(morgan('dev'));
+}
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {

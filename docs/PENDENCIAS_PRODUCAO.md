@@ -6,7 +6,7 @@ Este documento consolida o que ainda falta para o NossoZelo sair de MVP controla
 
 O projeto ja possui uma boa base para MVP:
 
-- Backend Express/TypeScript com Prisma e MySQL.
+- Backend Express/TypeScript com Prisma e PostgreSQL.
 - Frontend Next.js.
 - Painel administrativo separado em `controlador/`.
 - Autenticacao com cookie HttpOnly.
@@ -102,6 +102,7 @@ Controlador:
 - [ ] Validar ClamAV com arquivo limpo e EICAR em staging.
 - [ ] Registrar auditoria de upload, scan e liberacao.
 - [ ] Garantir que documentos privados retornem chave interna, nao URL publica.
+- [ ] Configurar storage privado definitivo para documentos em staging/producao.
 
 ### 7. CRUD administrativo
 
@@ -162,6 +163,7 @@ Controlador:
 - [x] Onboarding do prestador.
 - [x] Assinatura ativa, pendente, atrasada, bloqueada e cancelada.
 - [x] Busca exibindo somente prestadores aptos.
+- [x] Regra central de elegibilidade documental para busca de prestadores.
 - [x] Agendamento com conflito de horario.
 - [x] Cancelamento e marcacao de nao realizado.
 - [x] Upload de documento privado.
@@ -179,8 +181,8 @@ Controlador:
 
 ### 13. Logs, metricas e alertas
 
-- [ ] Usar logs JSON em producao.
-- [ ] Adicionar request id por requisicao.
+- [x] Usar logs JSON em producao.
+- [x] Adicionar request id por requisicao.
 - [ ] Evitar CPF completo, senha, token, cartao, CVV e payload completo de webhook em logs.
 - [ ] Criar alertas para erro 5xx.
 - [ ] Criar alertas para falha em webhook.

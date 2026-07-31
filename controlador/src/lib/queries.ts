@@ -2,7 +2,14 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { limitePagina, normalizarBusca, paginaAtual } from "@/lib/sanitize";
 
-export const tiposPrestador = ["cuidador", "enfermeiro", "acompanhante"] as const;
+export const tiposPrestador = [
+  "cuidador",
+  "enfermeiro",
+  "acompanhante",
+  "baba",
+  "diarista",
+  "motorista_assistencial"
+] as const;
 
 export const usuarioAdminResumoSelect = {
   id: true,

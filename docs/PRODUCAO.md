@@ -2,7 +2,7 @@
 
 Este projeto esta mais proximo de um MVP operavel, mas producao exige que os itens abaixo estejam configurados e testados em staging antes do lancamento publico.
 
-Para a lista consolidada de pendencias, use tambem [PENDENCIAS_PRODUCAO.md](PENDENCIAS_PRODUCAO.md).
+Para a lista consolidada de pendencias, use tambem [PENDENCIAS_PRODUCAO.md](PENDENCIAS_PRODUCAO.md). Para registrar validacoes de staging e producao, preencha [operacao/evidencias-lancamento.md](operacao/evidencias-lancamento.md).
 
 ## Variaveis criticas
 
@@ -53,6 +53,7 @@ Use HTTPS para frontend e backend. Se estiverem em dominios diferentes, confirme
 - Revisar `ENABLE_ADMIN_CRUD`; mantenha `false` em producao salvo janela controlada.
 - Validar ClamAV com arquivo limpo e arquivo EICAR em staging.
 - Validar bloqueio de rate limit em staging.
+- Registrar evidencias de banco, build, seguranca, pagamentos, jobs e E2E em `docs/operacao/evidencias-lancamento.md`.
 
 ## Pendencias antes de producao publica
 

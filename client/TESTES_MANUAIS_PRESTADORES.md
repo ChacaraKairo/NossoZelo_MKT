@@ -38,3 +38,9 @@
 9. Build.
    - Rodar `npm run lint`.
    - Rodar `npm run build`.
+
+10. Cadastro profissional.
+   - Deve permitir selecionar no máximo 2 categorias.
+   - Deve exibir COREN quando `enfermeiro` estiver selecionado.
+   - Deve exibir placa quando `motorista_assistencial` estiver selecionado.
+   - Documentos devem mudar por categoria: motorista pede CNH; outras categorias pedem identidade; certificado só aparece para cuidador/enfermeiro.

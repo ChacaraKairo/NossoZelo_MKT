@@ -58,7 +58,7 @@ export class UploadController {
 
       /**
        * 🔥 LÓGICA DE ORQUESTRAÇÃO PARALELA:
-       * Mapeamos os campos (foto, identidade, certificado, antecedentes) enviados.
+       * Mapeamos os campos (foto, identidade, cnh, certificado, antecedentes) enviados.
        */
       const promises = Object.keys(arquivos).map(
         async (campo) => {

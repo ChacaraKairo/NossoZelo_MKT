@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -27,7 +27,7 @@ model agenda {
   status            agenda_status?        @default(disponivel)
   usuarios          usuarios              @relation(fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "agenda_ibfk_1")
 
-  @@index([prestador_id], map: "prestador_id")
+  @@index([prestador_id], map: "agenda_prestador_id_idx")
 }
 
 model agenda_recorrente {
@@ -39,7 +39,7 @@ model agenda_recorrente {
   ativo        Boolean?                      @default(true)
   usuarios     usuarios                      @relation(fields: [prestador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([prestador_id], map: "prestador_id")
+  @@index([prestador_id], map: "agenda_recorrente_prestador_id_idx")
 }
 
 model assinaturas {
@@ -65,7 +65,7 @@ model assinaturas {
   planos                  planos               @relation(fields: [plano_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "assinaturas_ibfk_2")
   eventos_assinatura      eventos_assinatura[]
 
-  @@index([prestador_id], map: "prestador_id")
+  @@index([prestador_id], map: "assinaturas_prestador_id_idx")
   @@index([prestador_id, status], map: "assinaturas_prestador_status_idx")
   @@index([plano_id], map: "plano_id")
 }
@@ -144,8 +144,8 @@ model avaliacoes {
 
   @@unique([contratacao_id, autor_id], map: "avaliacoes_contratacao_autor_unique")
   @@index([contratacao_id], map: "avaliacoes_contratacao_id_idx")
-  @@index([cliente_id], map: "cliente_id")
-  @@index([prestador_id], map: "prestador_id")
+  @@index([cliente_id], map: "avaliacoes_cliente_id_idx")
+  @@index([prestador_id], map: "avaliacoes_prestador_id_idx")
   @@index([autor_id], map: "avaliacoes_autor_id_idx")
   @@index([avaliado_id], map: "avaliacoes_avaliado_id_idx")
 }
@@ -172,8 +172,8 @@ model contratacoes {
   pagamentos                                   pagamentos[]
   avaliacoes                                   avaliacoes[]
 
-  @@index([cliente_id], map: "cliente_id")
-  @@index([prestador_id], map: "prestador_id")
+  @@index([cliente_id], map: "contratacoes_cliente_id_idx")
+  @@index([prestador_id], map: "contratacoes_prestador_id_idx")
 }
 
 model cuidador_especialidade {
@@ -210,7 +210,7 @@ model denuncias {
   status     denuncias_status? @default(pendente)
   usuarios   usuarios          @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "denuncias_ibfk_1")
 
-  @@index([usuario_id], map: "usuario_id")
+  @@index([usuario_id], map: "denuncias_usuario_id_idx")
 }
 
 model documentos_cuidadores {
@@ -252,6 +252,46 @@ model acompanhantes {
   usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "acompanhantes_ibfk_1")
 }
 
+model babas {
+  usuario_id       String   @id @db.VarChar(20)
+  bio              String?  @db.Text
+  anos_experiencia Int?
+  valor_hora       Decimal? @db.Decimal(10, 2)
+  valor_diaria     Decimal? @db.Decimal(10, 2)
+  disponibilidade  String?  @db.VarChar(255)
+  especialidades   String?  @db.Text
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)
+  documentos       String?  @db.VarChar(255)
+  usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "babas_ibfk_1")
+}
+
+model diaristas {
+  usuario_id       String   @id @db.VarChar(20)
+  bio              String?  @db.Text
+  anos_experiencia Int?
+  valor_hora       Decimal? @db.Decimal(10, 2)
+  valor_diaria     Decimal? @db.Decimal(10, 2)
+  disponibilidade  String?  @db.VarChar(255)
+  especialidades   String?  @db.Text
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)
+  documentos       String?  @db.VarChar(255)
+  usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "diaristas_ibfk_1")
+}
+
+model motoristas_assistenciais {
+  usuario_id       String   @id @db.VarChar(20)
+  bio              String?  @db.Text
+  anos_experiencia Int?
+  valor_hora       Decimal? @db.Decimal(10, 2)
+  valor_diaria     Decimal? @db.Decimal(10, 2)
+  disponibilidade  String?  @db.VarChar(255)
+  especialidades   String?  @db.Text
+  avaliacao_media  Decimal? @default(0.00) @db.Decimal(3, 2)
+  documentos       String?  @db.VarChar(255)
+  placa            String   @db.VarChar(10)
+  usuarios         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "motoristas_assistenciais_ibfk_1")
+}
+
 model especialidades {
   id                     Int                      @id @default(autoincrement())
   nome                   String                   @db.VarChar(100)
@@ -269,7 +309,7 @@ model faturas {
   data_pagamento DateTime? @db.Timestamp(0)
   usuarios       usuarios  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "faturas_ibfk_1")
 
-  @@index([usuario_id], map: "usuario_id")
+  @@index([usuario_id], map: "faturas_usuario_id_idx")
 }
 
 model logs_acao {
@@ -280,7 +320,7 @@ model logs_acao {
   data           DateTime?       @default(now()) @db.Timestamp(0)
   usuarios       usuarios?       @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "logs_acao_ibfk_1")
 
-  @@index([usuario_id], map: "usuario_id")
+  @@index([usuario_id], map: "logs_acao_usuario_id_idx")
 }
 
 model logs_acesso {
@@ -290,7 +330,7 @@ model logs_acesso {
   ip         String?   @db.VarChar(45)
   usuarios   usuarios  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "logs_acesso_ibfk_1")
 
-  @@index([usuario_id], map: "usuario_id")
+  @@index([usuario_id], map: "logs_acesso_usuario_id_idx")
 }
 
 model metodos_pagamento {
@@ -335,7 +375,7 @@ model recuperacao_senhas {
   criado_em  DateTime? @default(now()) @db.Timestamp(0)
   usuarios   usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "recuperacao_senhas_ibfk_1")
 
-  @@index([usuario_id], map: "usuario_id")
+  @@index([usuario_id], map: "recuperacao_senhas_usuario_id_idx")
 }
 
 model relatorios {
@@ -360,7 +400,7 @@ model servicos {
   tipo_cobranca  servicos_tipo_cobranca
   usuarios       usuarios                @relation(fields: [prestador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "servicos_ibfk_1")
 
-  @@index([prestador_id], map: "prestador_id")
+  @@index([prestador_id], map: "servicos_prestador_id_idx")
 }
 
 model usuarios {
@@ -409,6 +449,9 @@ model usuarios {
   cuidadores                                       cuidadores?
   enfermeiros                                      enfermeiros?
   acompanhantes                                    acompanhantes?
+  babas                                            babas?
+  diaristas                                        diaristas?
+  motoristas_assistenciais                         motoristas_assistenciais?
   dados_bancarios                                  dados_bancarios?
   denuncias                                        denuncias[]
   faturas                                          faturas[]
@@ -433,7 +476,7 @@ model cartoes {
   ativo            Boolean?     @default(true)
   usuarios         usuarios     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cartoes_ibfk_1")
 
-  @@index([usuario_id], map: "usuario_id")
+  @@index([usuario_id], map: "cartoes_usuario_id_idx")
 }
 
 model dados_bancarios {
@@ -484,6 +527,9 @@ enum avaliacoes_tipo_prestador {
   cuidador
   enfermeiro
   acompanhante
+  baba
+  diarista
+  motorista_assistencial
 }
 
 enum avaliacoes_tipo_autor {
@@ -540,6 +586,9 @@ enum usuarios_tipo {
   cuidador
   enfermeiro
   acompanhante
+  baba
+  diarista
+  motorista_assistencial
   admin
 }
 
@@ -594,18 +643,27 @@ enum agenda_tipo_prestador {
   cuidador
   enfermeiro
   acompanhante
+  baba
+  diarista
+  motorista_assistencial
 }
 
 enum servicos_tipo_prestador {
   cuidador
   enfermeiro
   acompanhante
+  baba
+  diarista
+  motorista_assistencial
 }
 
 enum contratacoes_tipo_prestador {
   cuidador
   enfermeiro
   acompanhante
+  baba
+  diarista
+  motorista_assistencial
 }
 
 enum contratacoes_status {

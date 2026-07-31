@@ -5,7 +5,12 @@ import sharp from 'sharp';
 import prisma from '../lib/prisma';
 
 let s3Client: S3Client | null = null;
-type TipoDocumentoUpload = 'foto' | 'identidade' | 'certificado' | 'antecedentes';
+type TipoDocumentoUpload =
+  | 'foto'
+  | 'identidade'
+  | 'cnh'
+  | 'certificado'
+  | 'antecedentes';
 
 function obterConfigAws(isPrivado: boolean) {
   const bucket = isPrivado

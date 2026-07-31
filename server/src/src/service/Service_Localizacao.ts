@@ -9,10 +9,34 @@
 
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
 
 export interface Coordenadas {
   latitude: number;
   longitude: number;
+}
+
+function tiposPrestadorSql() {
+  return Prisma.join(
+    TIPOS_PRESTADOR.map((tipo) => Prisma.sql`${tipo}::usuarios_tipo`),
+  );
+}
+
+function tipoPrestadorSql(tipo: string) {
+  return Prisma.sql`${tipo}::usuarios_tipo`;
+}
+
+function filtroPerfilPrestadorSql(tipo: string) {
+  const filtros: Record<string, Prisma.Sql> = {
+    cuidador: Prisma.sql`c.usuario_id IS NOT NULL`,
+    enfermeiro: Prisma.sql`e.usuario_id IS NOT NULL`,
+    acompanhante: Prisma.sql`a.usuario_id IS NOT NULL`,
+    baba: Prisma.sql`b.usuario_id IS NOT NULL`,
+    diarista: Prisma.sql`d.usuario_id IS NOT NULL`,
+    motorista_assistencial: Prisma.sql`ma.usuario_id IS NOT NULL`,
+  };
+
+  return filtros[tipo] || Prisma.sql`u.tipo = ${tipoPrestadorSql(tipo)}`;
 }
 
 const ESTADOS_BRASIL: Record<string, string> = {
@@ -269,30 +293,25 @@ export class GeolocalizacaoService {
     } = params;
 
     try {
-      const tiposPermitidos = [
-        'cuidador',
-        'enfermeiro',
-        'acompanhante',
-      ];
       const tipoFiltro =
-        tipo && tiposPermitidos.includes(tipo)
+        tipo && TIPOS_PRESTADOR.includes(tipo as any)
           ? tipo
           : null;
 
       const conditions = [];
       conditions.push(Prisma.sql`u.email_confirmado = true`);
-      conditions.push(Prisma.sql`u.status_cadastro = 'ativo'`);
+      conditions.push(Prisma.sql`u.status_cadastro = 'ativo'::usuarios_status_cadastro`);
       conditions.push(Prisma.sql`EXISTS (
         SELECT 1
         FROM assinaturas ass
         WHERE ass.prestador_id = u.id
-          AND ass.status = 'ativa'
+          AND ass.status = 'ativa'::assinaturas_status
       )`);
 
       // Filtro de Tipo
-      if (tipoFiltro) {        conditions.push(Prisma.sql`u.tipo = ${tipoFiltro}`);
+      if (tipoFiltro) {        conditions.push(filtroPerfilPrestadorSql(tipoFiltro));
       } else {        conditions.push(
-          Prisma.sql`u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')`,
+          Prisma.sql`(u.tipo IN (${tiposPrestadorSql()}) OR c.usuario_id IS NOT NULL OR e.usuario_id IS NOT NULL OR a.usuario_id IS NOT NULL OR b.usuario_id IS NOT NULL OR d.usuario_id IS NOT NULL OR ma.usuario_id IS NOT NULL)`,
         );
       }
 
@@ -349,11 +368,12 @@ export class GeolocalizacaoService {
           const loc = await this.obterLocalizacaoUsuario(
             idUsuario,
           );
-          selectDistancia = Prisma.sql`, ${this.getSqlDistancia(
+          const distanciaSql = this.getSqlDistancia(
             loc.latitude,
             loc.longitude,
-          )} AS distancia`;
-          havingClause = Prisma.sql`HAVING distancia <= ${Number(
+          );
+          selectDistancia = Prisma.sql`, ${distanciaSql} AS distancia`;
+          havingClause = Prisma.sql`HAVING ${distanciaSql} <= ${Number(
             raioKm,
           )}`;
           orderClause = Prisma.sql`ORDER BY distancia ASC`;        } catch (error) {        }
@@ -364,13 +384,15 @@ export class GeolocalizacaoService {
           raioKm || (localizacao ? 100 : undefined),
         );
 
-        selectDistancia = Prisma.sql`, ${this.getSqlDistancia(
+        const distanciaSql = this.getSqlDistancia(
           origemBusca.latitude,
           origemBusca.longitude,
-        )} AS distancia`;
+        );
+
+        selectDistancia = Prisma.sql`, ${distanciaSql} AS distancia`;
 
         if (raioEfetivo && !Number.isNaN(raioEfetivo)) {
-          havingClause = Prisma.sql`HAVING distancia <= ${raioEfetivo}`;
+          havingClause = Prisma.sql`HAVING ${distanciaSql} <= ${raioEfetivo}`;
         }
 
         orderClause = Prisma.sql`ORDER BY distancia ASC`;
@@ -397,8 +419,8 @@ export class GeolocalizacaoService {
           u.email_confirmado,
           MIN(s.valor) AS preco,
           COUNT(DISTINCT s.id) AS total_servicos,
-          COALESCE(c.disponibilidade, e.disponibilidade, a.disponibilidade) AS disponibilidade,
-          COALESCE(c.especialidades, e.especialidades, a.especialidades) AS especialidades
+          COALESCE(c.disponibilidade, e.disponibilidade, a.disponibilidade, b.disponibilidade, d.disponibilidade, ma.disponibilidade) AS disponibilidade,
+          COALESCE(c.especialidades, e.especialidades, a.especialidades, b.especialidades, d.especialidades, ma.especialidades) AS especialidades
           ${selectDistancia}
         FROM usuarios u
         LEFT JOIN localizacoes l ON u.id = l.usuario_id
@@ -406,6 +428,9 @@ export class GeolocalizacaoService {
         LEFT JOIN cuidadores c ON c.usuario_id = u.id
         LEFT JOIN enfermeiros e ON e.usuario_id = u.id
         LEFT JOIN acompanhantes a ON a.usuario_id = u.id
+        LEFT JOIN babas b ON b.usuario_id = u.id
+        LEFT JOIN diaristas d ON d.usuario_id = u.id
+        LEFT JOIN motoristas_assistenciais ma ON ma.usuario_id = u.id
         ${whereClause}
         GROUP BY
           u.id,
@@ -422,9 +447,15 @@ export class GeolocalizacaoService {
           c.disponibilidade,
           e.disponibilidade,
           a.disponibilidade,
+          b.disponibilidade,
+          d.disponibilidade,
+          ma.disponibilidade,
           c.especialidades,
           e.especialidades,
-          a.especialidades
+          a.especialidades,
+          b.especialidades,
+          d.especialidades,
+          ma.especialidades
         ${havingClause}
         ${orderClause}
         LIMIT ${Number(limit)};
@@ -450,14 +481,14 @@ export class GeolocalizacaoService {
         SELECT u.id
         FROM usuarios u
         JOIN localizacoes l ON u.id = l.usuario_id
-        WHERE u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        WHERE u.tipo IN (${tiposPrestadorSql()})
         AND u.email_confirmado = true
-        AND u.status_cadastro = 'ativo'
+        AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
           WHERE ass.prestador_id = u.id
-            AND ass.status = 'ativa'
+            AND ass.status = 'ativa'::assinaturas_status
         )
         AND ${this.getSqlDistancia(
           loc.latitude,
@@ -486,14 +517,14 @@ export class GeolocalizacaoService {
         )} AS distancia
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
-        WHERE u.id != ${usuarioId} AND u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        WHERE u.id != ${usuarioId} AND u.tipo IN (${tiposPrestadorSql()})
         AND u.email_confirmado = true
-        AND u.status_cadastro = 'ativo'
+        AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
           WHERE ass.prestador_id = u.id
-            AND ass.status = 'ativa'
+            AND ass.status = 'ativa'::assinaturas_status
         )
         ORDER BY distancia ASC
         LIMIT 20;
@@ -511,12 +542,7 @@ export class GeolocalizacaoService {
     usuarioId: string,
     tipo: string,
   ): Promise<string[]> {    try {
-      const tiposPermitidos = [
-        'cuidador',
-        'enfermeiro',
-        'acompanhante',
-      ];
-      if (!tiposPermitidos.includes(tipo)) {        throw new Error('Tipo inválido.');
+      if (!TIPOS_PRESTADOR.includes(tipo as any)) {        throw new Error('Tipo inválido.');
       }
 
       const loc = await this.obterLocalizacaoUsuario(
@@ -530,14 +556,20 @@ export class GeolocalizacaoService {
         )} AS distancia
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
-        WHERE u.id != ${usuarioId} AND u.tipo = ${tipo}
+        LEFT JOIN cuidadores c ON c.usuario_id = u.id
+        LEFT JOIN enfermeiros e ON e.usuario_id = u.id
+        LEFT JOIN acompanhantes a ON a.usuario_id = u.id
+        LEFT JOIN babas b ON b.usuario_id = u.id
+        LEFT JOIN diaristas d ON d.usuario_id = u.id
+        LEFT JOIN motoristas_assistenciais ma ON ma.usuario_id = u.id
+        WHERE u.id != ${usuarioId} AND ${filtroPerfilPrestadorSql(tipo)}
         AND u.email_confirmado = true
-        AND u.status_cadastro = 'ativo'
+        AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
           WHERE ass.prestador_id = u.id
-            AND ass.status = 'ativa'
+            AND ass.status = 'ativa'::assinaturas_status
         )
         ORDER BY distancia ASC
         LIMIT 20;
@@ -560,23 +592,25 @@ export class GeolocalizacaoService {
       const loc = await this.obterLocalizacaoUsuario(
         usuarioId,
       );
-      const nomeBusca = `%${nome}%`;      const resultados = await prisma.$queryRaw<any[]>`
-        SELECT u.id, u.nome, u.tipo, ${this.getSqlDistancia(
-          loc.latitude,
-          loc.longitude,
-        )} AS distancia
+      const nomeBusca = `%${nome}%`;
+      const distanciaSql = this.getSqlDistancia(
+        loc.latitude,
+        loc.longitude,
+      );
+      const resultados = await prisma.$queryRaw<any[]>`
+        SELECT u.id, u.nome, u.tipo, ${distanciaSql} AS distancia
         FROM usuarios u
         INNER JOIN localizacoes l ON u.id = l.usuario_id
-        WHERE u.nome LIKE ${nomeBusca} AND u.tipo IN ('cuidador', 'enfermeiro', 'acompanhante')
+        WHERE u.nome LIKE ${nomeBusca} AND u.tipo IN (${tiposPrestadorSql()})
         AND u.email_confirmado = true
-        AND u.status_cadastro = 'ativo'
+        AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
           WHERE ass.prestador_id = u.id
-            AND ass.status = 'ativa'
+            AND ass.status = 'ativa'::assinaturas_status
         )
-        HAVING distancia <= ${raioKm}
+        AND ${distanciaSql} <= ${raioKm}
         ORDER BY distancia ASC
         LIMIT 20;
       `;      return resultados;

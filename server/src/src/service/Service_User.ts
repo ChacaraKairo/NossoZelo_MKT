@@ -9,7 +9,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import ServiceCrud from './Service_Crud';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
 import { sign } from 'jsonwebtoken';
@@ -17,6 +16,7 @@ import { EmailService } from './Service_Email';
 import { GeolocalizacaoService } from './Service_Localizacao';
 import ServiceConfirmacaoEmail from './Service_ConfirmacaoEmail';
 import { STATUS_CADASTRO_USUARIO } from '../constants/financeiro';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
 import { senhaForte } from '../validator/create/Validator_User';
 import prisma from '../lib/prisma';
 import { UsuarioAutenticado } from '../types/auth';
@@ -64,8 +64,49 @@ function montarDadosProfissionais(dados: any = {}) {
   };
 }
 
+const PERFIS_PRESTADOR: Record<string, string> = {
+  cuidador: 'cuidadores',
+  enfermeiro: 'enfermeiros',
+  acompanhante: 'acompanhantes',
+  baba: 'babas',
+  diarista: 'diaristas',
+  motorista_assistencial: 'motoristas_assistenciais',
+};
+
 function ehTipoPrestador(tipo?: string) {
-  return ['cuidador', 'enfermeiro', 'acompanhante'].includes(tipo || '');
+  return TIPOS_PRESTADOR.includes(tipo as any);
+}
+
+function normalizarPlaca(valor: unknown) {
+  return String(valor || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function placaValida(placa: string) {
+  return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa);
+}
+
+function normalizarCategoriasPrestador(usuario: Record<string, any>) {
+  const categoriasInformadas = Array.isArray(usuario.categorias)
+    ? usuario.categorias
+    : usuario.tipo
+      ? [usuario.tipo]
+      : [];
+  const categorias = Array.from(
+    new Set(categoriasInformadas.map((tipo) => String(tipo).toLowerCase())),
+  );
+
+  if (categorias.length > 2) {
+    throw criarErroCadastro(
+      'Selecione no maximo 2 categorias profissionais.',
+      400,
+    );
+  }
+
+  if (categorias.some((tipo) => !ehTipoPrestador(tipo))) {
+    throw criarErroCadastro('Categoria profissional invalida.', 400);
+  }
+
+  return categorias;
 }
 
 function sanitizarAtualizacaoUsuario(
@@ -110,11 +151,95 @@ async function criarRegistroInterno(entity: string, data: object) {
   return (prisma as any)[entity].create({ data });
 }
 
+async function criarPerfilPrestador(
+  id: string,
+  tipo: string,
+  dadosPorTipo: Record<string, any>,
+) {
+  if (tipo === 'enfermeiro') {
+    const enfermeiro = dadosPorTipo.enfermeiro;
+    const docCoren =
+      enfermeiro?.coren || enfermeiro?.documento_professional;
+    if (!docCoren) {
+      throw criarErroCadastro(
+        'COREN/Registro obrigatório para enfermeiros.',
+      );
+    }
+
+    await criarRegistroInterno('enfermeiros', {
+      ...montarDadosProfissionais(enfermeiro),
+      usuario_id: id,
+      coren: docCoren,
+      especialidade:
+        enfermeiro?.especialidade || enfermeiro?.especialidades || null,
+    });
+    return;
+  }
+
+  if (tipo === 'cuidador') {
+    const cuidador = dadosPorTipo.cuidador;
+    await criarRegistroInterno('cuidadores', {
+      ...montarDadosProfissionais(cuidador),
+      usuario_id: id,
+      documento_profissional:
+        cuidador?.documento_profissional ||
+        cuidador?.documento_professional ||
+        null,
+    });
+    return;
+  }
+
+  if (tipo === 'acompanhante') {
+    await criarRegistroInterno('acompanhantes', {
+      ...montarDadosProfissionais(dadosPorTipo.acompanhante),
+      usuario_id: id,
+    });
+    return;
+  }
+
+  if (tipo === 'baba') {
+    await criarRegistroInterno('babas', {
+      ...montarDadosProfissionais(dadosPorTipo.baba),
+      usuario_id: id,
+    });
+    return;
+  }
+
+  if (tipo === 'diarista') {
+    await criarRegistroInterno('diaristas', {
+      ...montarDadosProfissionais(dadosPorTipo.diarista),
+      usuario_id: id,
+    });
+    return;
+  }
+
+  if (tipo === 'motorista_assistencial') {
+    const motorista = dadosPorTipo.motorista_assistencial;
+    const placa = normalizarPlaca(motorista?.placa);
+    if (!placaValida(placa)) {
+      throw criarErroCadastro(
+        'Placa obrigatoria para motorista assistencial. Use o formato ABC1234 ou ABC1D23.',
+      );
+    }
+
+    await criarRegistroInterno('motoristas_assistenciais', {
+      ...montarDadosProfissionais(motorista),
+      usuario_id: id,
+      placa,
+    });
+  }
+}
+
+function perfilPrestadorDelegate(tipo: string) {
+  const tabela = PERFIS_PRESTADOR[tipo];
+  return tabela ? (prisma as any)[tabela] : null;
+}
+
 class ServiceUser {
   /**
    * Cria um usuário completo, incluindo geolocalização, perfil específico e envio de e-mail.
    * Implementa lógica de rollback em caso de falha.
-   * * @param {any} data - Objeto contendo dados do usuário e perfis específicos (enfermeiro, cuidador, acompanhante, admin).
+   * * @param {any} data - Objeto contendo dados do usuário e perfis específicos (enfermeiro, cuidador, acompanhante, baba, diarista, motorista_assistencial, admin).
    * @returns {Promise<any>} - Retorna o objeto do usuário criado e perfis associados.
    * @throws {Error} - Lança erro em caso de falha na validação, persistência ou violação de constraints.
    */
@@ -123,6 +248,9 @@ class ServiceUser {
       enfermeiro,
       cuidador,
       acompanhante,
+      baba,
+      diarista,
+      motorista_assistencial,
       admin,
     } = data;
     const emailConfirmadoInicial = data.emailConfirmadoInicial === true;
@@ -143,6 +271,12 @@ class ServiceUser {
         if (isNaN(dataNascimentoObj.getTime())) {          throw criarErroCadastro('data_nascimento invalida');
         }      }
 
+      const categoriasPrestador = ehTipoPrestador(usuario.tipo)
+        ? normalizarCategoriasPrestador(usuario)
+        : [];
+      const usuarioSemCamposVirtuais = { ...usuario };
+      delete usuarioSemCamposVirtuais.categorias;
+
       if (usuario.tipo === 'admin' && !criacaoAdminAutorizada) {
         throw criarErroCadastro(
           'Cadastro de administrador nao permitido por este fluxo.',
@@ -161,7 +295,7 @@ class ServiceUser {
 
       // 1. CRIAÇÃO DO USUÁRIO BASE
       const usuarioData = {
-        ...usuario,
+        ...usuarioSemCamposVirtuais,
         id,
         senha: senhaCriptografada,
         email_confirmado: emailConfirmadoInicial,
@@ -189,33 +323,20 @@ class ServiceUser {
           usuario_id: id,
           latitude: geolocalizacao.latitude,
           longitude: geolocalizacao.longitude,
-        });      } catch (geoError: any) {      }      if (usuario.tipo === 'enfermeiro') {
-        const docCoren =
-          enfermeiro?.coren ||
-          enfermeiro?.documento_professional;        if (!docCoren) {          throw criarErroCadastro(
-            'COREN/Registro obrigatório para enfermeiros.',
-          );
-        }
+        });      } catch (geoError: any) {      }      if (categoriasPrestador.length > 0) {
+        const dadosPorTipo = {
+          enfermeiro,
+          cuidador,
+          acompanhante,
+          baba,
+          diarista,
+          motorista_assistencial,
+        };
 
-        await criarRegistroInterno('enfermeiros', {
-          ...montarDadosProfissionais(enfermeiro),
-          usuario_id: id,
-          coren: docCoren,
-          especialidade:
-            enfermeiro?.especialidade ||
-            enfermeiro?.especialidades ||
-            null,
-        });      } else if (usuario.tipo === 'cuidador') {        await criarRegistroInterno('cuidadores', {
-          ...montarDadosProfissionais(cuidador),
-          usuario_id: id,
-          documento_profissional:
-            cuidador?.documento_profissional ||
-            cuidador?.documento_professional ||
-            null,
-        });      } else if (usuario.tipo === 'acompanhante') {        await criarRegistroInterno('acompanhantes', {
-          ...montarDadosProfissionais(acompanhante),
-          usuario_id: id,
-        });      } else if (usuario.tipo === 'admin') {        await criarRegistroInterno('admins', {
+        for (const tipoPrestador of categoriasPrestador) {
+          await criarPerfilPrestador(id, tipoPrestador, dadosPorTipo);
+        }
+      } else if (usuario.tipo === 'admin') {        await criarRegistroInterno('admins', {
           usuario_id: id,
           ...admin,
         });      } else if (usuario.tipo !== 'cliente') {        throw criarErroCadastro(
@@ -282,6 +403,9 @@ class ServiceUser {
         enfermeiro,
         cuidador,
         acompanhante,
+        baba,
+        diarista,
+        motorista_assistencial,
         admin,
         aviso_confirmacao_email: avisoConfirmacaoEmail,
       };
@@ -310,7 +434,7 @@ class ServiceUser {
 
       // Lógica de Rollback Manual para garantir consistência em caso de erro no meio do processo
       if (id) {        try {
-          await ServiceCrud.delete('usuarios', id);        } catch (rollbackError: any) {
+          await prisma.usuarios.delete({ where: { id } });        } catch (rollbackError: any) {
           if (rollbackError.code !== 'P2025') {          } else {          }
         }
       }
@@ -332,27 +456,18 @@ class ServiceUser {
    * @returns {Promise<any>} - Objeto com dados básicos e perfil detalhado enriquecido.
    * @throws {Error} - Lança erro caso usuário não seja localizado.
    */
-  static async buscarUsuarioCompleto(id: string) {    try {      const usuarioBase = await ServiceCrud.findById(
-        'usuarios',
-        id,
-      );
+  static async buscarUsuarioCompleto(id: string) {    try {      const usuarioBase = await prisma.usuarios.findUnique({
+        where: { id },
+      });
 
       if (!usuarioBase) {        throw new Error('Usuário não encontrado.');
       }      let dadosExtras = null;
 
       // Verificação condicional de tabelas satélites baseada no tipo
-      if (usuarioBase.tipo === 'enfermeiro') {        dadosExtras = await ServiceCrud.findFirst(
-          'enfermeiros',
-          { usuario_id: id },
-        );
-      } else if (usuarioBase.tipo === 'cuidador') {        dadosExtras = await ServiceCrud.findFirst(
-          'cuidadores',
-          { usuario_id: id },
-        );
-      } else if (usuarioBase.tipo === 'acompanhante') {        dadosExtras = await ServiceCrud.findFirst(
-          'acompanhantes',
-          { usuario_id: id },
-        );
+      const perfilDelegate = perfilPrestadorDelegate(usuarioBase.tipo);
+      if (perfilDelegate) {        dadosExtras = await perfilDelegate.findUnique({
+          where: { usuario_id: id },
+        });
       }      // LGPD: Remoção de dados sensíveis antes de retornar ao controller
       const { senha, ...usuarioSemSenha } = usuarioBase;      return {
         ...usuarioSemSenha,
@@ -380,31 +495,35 @@ class ServiceUser {
         ? sanitizarAtualizacaoUsuario(usuario, ator)
         : null;
 
-      if (usuarioSeguro && Object.keys(usuarioSeguro).length > 0) {        await ServiceCrud.update('usuarios', id, usuarioSeguro);      }      const usuarioAtual = await ServiceCrud.findById(
-        'usuarios',
-        id,
-      );
+      if (usuarioSeguro && Object.keys(usuarioSeguro).length > 0) {        await prisma.usuarios.update({
+          where: { id },
+          data: usuarioSeguro,
+        });      }      const usuarioAtual = await prisma.usuarios.findUnique({
+        where: { id },
+      });
+
+      if (!usuarioAtual) {
+        throw new Error('Usuário não encontrado.');
+      }
+
       const tipo = usuarioAtual.tipo;
 
       if (perfil) {
-        let tabelaExtra = '';
-        if (tipo === 'enfermeiro')
-          tabelaExtra = 'enfermeiros';
-        else if (tipo === 'cuidador')
-          tabelaExtra = 'cuidadores';
-        else if (tipo === 'acompanhante')
-          tabelaExtra = 'acompanhantes';
+        const perfilDelegate = perfilPrestadorDelegate(tipo);
 
-        if (tabelaExtra) {          const registroExtra = await ServiceCrud.findFirst(
-            tabelaExtra,
-            { usuario_id: id },
-          );
+        if (perfilDelegate) {          const registroExtra = await perfilDelegate.findUnique({
+            where: { usuario_id: id },
+          });
 
-          if (registroExtra) {            await ServiceCrud.update(
-              tabelaExtra,
-              id,
-              perfil,
-            );          } else {          }
+          if (registroExtra) {            await perfilDelegate.update({
+              where: { usuario_id: id },
+              data: perfil,
+            });          } else {            await perfilDelegate.create({
+              data: {
+                usuario_id: id,
+                ...perfil,
+              },
+            });          }
         }
       }      return this.buscarUsuarioCompleto(id);
     } catch (error: any) {      throw error;
@@ -454,11 +573,10 @@ class ServiceUser {
       }      const senhaCriptografada = await bcrypt.hash(
         novaSenha,
         10,
-      );      const result = await ServiceCrud.update(
-        'usuarios',
-        id,
-        { senha: senhaCriptografada },
-      );      return result;
+      );      const result = await prisma.usuarios.update({
+        where: { id },
+        data: { senha: senhaCriptografada },
+      });      return result;
     } catch (error: any) {      throw error;
     }
   }
@@ -468,10 +586,9 @@ class ServiceUser {
    * * @param {string} id - Identificador do usuário.
    * @returns {Promise<any>} - Resultado da operação de deleção.
    */
-  static async deletarUsuario(id: string) {    try {      const result = await ServiceCrud.delete(
-        'usuarios',
-        id,
-      );      return result;
+  static async deletarUsuario(id: string) {    try {      const result = await prisma.usuarios.delete({
+        where: { id },
+      });      return result;
     } catch (error: any) {      throw error;
     }
   }
