@@ -20,6 +20,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
         cuidadores: true,
         enfermeiros: true,
         acompanhantes: true,
+        babas: true,
+        diaristas: true,
+        motoristas_assistenciais: true,
         avaliacoes_avaliacoes_prestador_idTousuarios: true
       }
     });

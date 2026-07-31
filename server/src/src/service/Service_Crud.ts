@@ -136,7 +136,7 @@ class ServiceCrud {
    * @throws {Error} - Falha na execução da query bruta de metadados.
    */
   static async listar_entidades(): Promise<any[]> {    try {      const result =
-        await prisma.$queryRaw`SELECT table_name AS TABLE_NAME FROM information_schema.tables WHERE table_schema = DATABASE()`;      return (result as any[]).filter((table) =>
+        await prisma.$queryRaw`SELECT table_name AS "TABLE_NAME" FROM information_schema.tables WHERE table_schema = current_schema()`;      return (result as any[]).filter((table) =>
         ENTIDADES_CRUD_PERMITIDAS.has(String(table.TABLE_NAME || table.table_name || '')),
       );
     } catch (error: any) {      throw error;
@@ -144,7 +144,7 @@ class ServiceCrud {
   }
 
   static async listar_todas_entidades(): Promise<any[]> {    try {      const result =
-        await prisma.$queryRaw`SELECT table_name AS TABLE_NAME FROM information_schema.tables WHERE table_schema = DATABASE()`;      return result as any[];
+        await prisma.$queryRaw`SELECT table_name AS "TABLE_NAME" FROM information_schema.tables WHERE table_schema = current_schema()`;      return result as any[];
     } catch (error: any) {      throw error;
     }
   }

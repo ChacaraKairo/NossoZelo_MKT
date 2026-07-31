@@ -2,11 +2,12 @@
 
 1. Abrir `/`.
    - Categorias devem aparecer com visual profissional.
-   - Clicar em `Cuidador` deve navegar para `/prestadores?tipo=cuidador`.
+   - Clicar em qualquer categoria deve navegar para `/prestadores?tipo=<categoria>`.
 
-2. Abrir `/prestadores?tipo=enfermeiro`.
-   - Filtro de enfermeiro deve ficar ativo.
+2. Abrir `/prestadores?tipo=enfermeiro`, `/prestadores?tipo=baba`, `/prestadores?tipo=diarista` e `/prestadores?tipo=motorista_assistencial`.
+   - O filtro correspondente deve ficar ativo.
    - A busca deve usar dados reais da API.
+   - Com seed local, devem aparecer `Marina Souza`, `Patricia Lima` e `Roberto Almeida` nas respectivas categorias.
 
 3. Alterar localização, serviço, distância e preço.
    - Busca deve refazer com debounce.
@@ -29,6 +30,8 @@
    - Deve navegar para `/prestador/[id]?acao=contratar`.
    - A vitrine deve abrir o modal.
    - O modal deve chamar API real e não simular sucesso.
+   - Com seed local, entre como `cliente.demo@nossozelo.local` / `Demo@12345`.
+   - O payload não deve enviar `tipo_prestador`; a API deve salvar esse campo a partir do prestador escolhido.
 
 8. Mobile.
    - Header não deve gerar overflow horizontal.

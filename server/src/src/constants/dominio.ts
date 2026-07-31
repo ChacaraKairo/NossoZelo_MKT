@@ -9,6 +9,9 @@ export const TIPOS_PRESTADOR = [
   'cuidador',
   'enfermeiro',
   'acompanhante',
+  'baba',
+  'diarista',
+  'motorista_assistencial',
 ] satisfies usuarios_tipo[];
 
 export const STATUS_CONTRATACAO = {

@@ -58,7 +58,10 @@ export interface PerfilCompleto {
     | 'cliente'
     | 'cuidador'
     | 'enfermeiro'
-    | 'acompanhante';
+    | 'acompanhante'
+    | 'baba'
+    | 'diarista'
+    | 'motorista_assistencial';
   telefone?: string;
   endereco?: string;
   bairro?: string;
@@ -79,4 +82,5 @@ export interface PerfilCompleto {
   bio?: string;
   anos_experiencia?: number;
   coren?: string; // Específico para Enfermeiros
+  placa?: string; // Especifico para Motoristas assistenciais
 }

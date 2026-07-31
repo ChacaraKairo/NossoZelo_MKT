@@ -27,22 +27,22 @@ async function executarBackup() {
   );
 
   const args = [
-    '--single-transaction',
-    '--quick',
-    '--routines',
-    '--triggers',
-    '--default-character-set=utf8mb4',
-    '-h',
+    '--format=plain',
+    '--no-owner',
+    '--no-privileges',
+    '--clean',
+    '--if-exists',
+    '--host',
     conexao.host,
-    '-P',
+    '--port',
     conexao.port,
-    '-u',
+    '--username',
     conexao.user,
-    `-p${conexao.password}`,
+    '--dbname',
     conexao.database,
   ];
 
-  logger.info('BackupDB: iniciando backup MySQL', {
+  logger.info('BackupDB: iniciando backup PostgreSQL', {
     host: conexao.host,
     database: conexao.database,
     arquivo,
@@ -53,9 +53,13 @@ async function executarBackup() {
       flags: 'w',
       encoding: 'utf8',
     });
-    const processo = spawn('mysqldump', args, {
+    const processo = spawn('pg_dump', args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
+      env: {
+        ...process.env,
+        PGPASSWORD: conexao.password,
+      },
     });
 
     processo.stdout.pipe(output);
@@ -76,7 +80,7 @@ async function executarBackup() {
 
       reject(
         new Error(
-          `mysqldump finalizou com código ${code}. ${stderr.trim()}`,
+          `pg_dump finalizou com código ${code}. ${stderr.trim()}`,
         ),
       );
     });

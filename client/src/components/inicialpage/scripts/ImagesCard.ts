@@ -2,7 +2,13 @@ export interface CategoriaCard {
   id: number;
   imageUrl: string;
   alt: string;
-  tipo: 'acompanhante' | 'enfermeiro' | 'cuidador';
+  tipo:
+    | 'acompanhante'
+    | 'enfermeiro'
+    | 'cuidador'
+    | 'baba'
+    | 'diarista'
+    | 'motorista_assistencial';
   titulo: string;
   descricao: string;
   cta: string;
@@ -38,6 +44,36 @@ const ImagesCard: CategoriaCard[] = [
     descricao:
       'Encontre profissionais para apoio diário, cuidado domiciliar e bem-estar contínuo.',
     cta: 'Ver cuidadores',
+  },
+  {
+    id: 4,
+    imageUrl: '/home/baba.png',
+    alt: 'Babá profissional',
+    tipo: 'baba',
+    titulo: 'Babás',
+    descricao:
+      'Encontre apoio confiável para cuidado infantil, rotina e acompanhamento.',
+    cta: 'Ver babás',
+  },
+  {
+    id: 5,
+    imageUrl: '/home/diarista.png',
+    alt: 'Diarista profissional',
+    tipo: 'diarista',
+    titulo: 'Diaristas/Faxineiras',
+    descricao:
+      'Busque profissionais para limpeza, organização e apoio doméstico.',
+    cta: 'Ver diaristas',
+  },
+  {
+    id: 6,
+    imageUrl: '/home/motorista-assistencial.png',
+    alt: 'Motorista assistencial',
+    tipo: 'motorista_assistencial',
+    titulo: 'Motoristas assistenciais',
+    descricao:
+      'Transporte acompanhado para idosos em consultas, exames e compromissos.',
+    cta: 'Ver motoristas',
   },
 ];
 

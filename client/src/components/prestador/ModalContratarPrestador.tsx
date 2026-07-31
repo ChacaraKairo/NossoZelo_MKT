@@ -10,7 +10,6 @@ import styles from '@/styles/components/prestador/ModalContratarPrestador.module
 interface ModalContratarPrestadorProps {
   aberto: boolean;
   prestadorId: string;
-  tipoPrestador?: string;
   servicos?: ServicoPerfil[];
   onClose: () => void;
   presentation?: 'modal' | 'inline';
@@ -55,7 +54,6 @@ function texto(valor?: string | number | null) {
 export default function ModalContratarPrestador({
   aberto,
   prestadorId,
-  tipoPrestador,
   servicos = [],
   onClose,
   presentation = 'modal',
@@ -94,7 +92,6 @@ export default function ModalContratarPrestador({
     return {
       cliente_id: usuario?.id,
       prestador_id: prestadorId,
-      tipo_prestador: tipoPrestador,
       servico_id: servicoId ? Number(servicoId) : undefined,
       data,
       hora_inicio: hora || undefined,
@@ -113,7 +110,6 @@ export default function ModalContratarPrestador({
     prestadorId,
     servicoId,
     servicoSelecionado,
-    tipoPrestador,
   ]);
 
   if (!aberto) return null;

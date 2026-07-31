@@ -4,6 +4,7 @@ import {
   emailValido,
   telefoneValido,
 } from '@/utils/validators';
+import { TIPOS_PRESTADOR } from '@/constants/prestadores';
 
 export type ErrosCadastro = Record<string, string>;
 
@@ -43,15 +44,12 @@ const SEXOS_PERMITIDOS = new Set([
   'outro',
 ]);
 
-const CATEGORIAS_PRESTADOR = new Set([
-  'cuidador',
-  'enfermeiro',
-  'acompanhante',
-]);
+const CATEGORIAS_PRESTADOR_VALIDAS = new Set<string>(TIPOS_PRESTADOR);
 
 const NOME_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/;
 const TEXTO_ENDERECO_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9'.,ºª -]+$/;
 const COREN_REGEX = /^COREN[-\s]?[A-Z]{2}\s?\d{4,10}$/i;
+const PLACA_REGEX = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/i;
 
 function somenteDigitos(valor: string) {
   return valor.replace(/\D/g, '');
@@ -322,6 +320,7 @@ export function validarEnderecoCadastro(
 export interface DadosProfissionaisPrestador {
   categoria: string;
   registro: string;
+  placa: string;
   experiencia: number;
   valorHora: number;
   valorDiaria: number;
@@ -335,7 +334,7 @@ export function validarDadosProfissionaisPrestador(
 ): ErrosCadastro {
   const erros: ErrosCadastro = {};
 
-  if (!CATEGORIAS_PRESTADOR.has(dados.categoria)) {
+  if (!CATEGORIAS_PRESTADOR_VALIDAS.has(dados.categoria)) {
     erros.categoria = 'Selecione uma categoria profissional válida.';
   }
 
@@ -344,6 +343,13 @@ export function validarDadosProfissionaisPrestador(
     !COREN_REGEX.test(dados.registro.trim())
   ) {
     erros.registro = 'Informe um COREN válido, por exemplo COREN-SP 123456.';
+  }
+
+  if (
+    dados.categoria === 'motorista_assistencial' &&
+    !PLACA_REGEX.test(dados.placa.trim().replace(/[^A-Za-z0-9]/g, ''))
+  ) {
+    erros.placa = 'Informe uma placa válida, por exemplo ABC1234 ou ABC1D23.';
   }
 
   if (
@@ -461,7 +467,10 @@ export function validarDocumentosPrestador(
     documentos.certificado,
     ['application/pdf'],
     10,
-    categoria === 'cuidador' || categoria === 'enfermeiro',
+    categoria === 'cuidador' ||
+      categoria === 'enfermeiro' ||
+      categoria === 'baba' ||
+      categoria === 'motorista_assistencial',
   );
 
   return erros;

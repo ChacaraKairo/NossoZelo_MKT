@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaCheckCircle, FaStar } from 'react-icons/fa';
+import { formatarTipoPrestador } from '@/constants/prestadores';
 import styles from '@/styles/components/perfil/HeaderPro.module.css';
 
 interface HeaderProProps {
@@ -45,7 +46,7 @@ const HeaderPro: React.FC<HeaderProProps> = ({
       </div>
 
       {/* Tipo de Profissional */}
-      <span className={styles.userType}>{perfil.tipo}</span>
+      <span className={styles.userType}>{formatarTipoPrestador(perfil.tipo)}</span>
 
       {/* Box de Avaliação (Estilo Dashboard) */}
       <div className={styles.ratingBox}>

@@ -51,6 +51,21 @@ const mocks = vi.hoisted(() => {
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
+    babas: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    diaristas: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    motoristas_assistenciais: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
     servicos: {
       findFirst: vi.fn(),
     },
@@ -228,6 +243,15 @@ describe('fluxos criticos do produto', () => {
       Promise.resolve({ id: 1, ...data }),
     );
     mocks.prisma.acompanhantes.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.prisma.babas.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.prisma.diaristas.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 1, ...data }),
+    );
+    mocks.prisma.motoristas_assistenciais.create.mockImplementation(({ data }) =>
       Promise.resolve({ id: 1, ...data }),
     );
     mocks.confirmacaoEmailService.enviarEmailConfirmacao.mockResolvedValue({
@@ -409,6 +433,89 @@ describe('fluxos criticos do produto', () => {
           usuario_id: expect.any(String),
           bio: 'Experiencia com idosos',
           disponibilidade: 'Dias uteis',
+        }),
+      }),
+    );
+  });
+
+  it.each([
+    {
+      tipo: 'baba',
+      perfil: 'baba',
+      delegate: 'babas',
+      dados: {
+        bio: 'Experiencia com criancas e rotina familiar',
+        experiencia: 4,
+        valorHora: 65,
+        disponibilidade: 'Tardes',
+        especialidades: 'Cuidados infantis',
+      },
+    },
+    {
+      tipo: 'diarista',
+      perfil: 'diarista',
+      delegate: 'diaristas',
+      dados: {
+        bio: 'Limpeza residencial e organizacao',
+        experiencia: 6,
+        valorHora: 55,
+        disponibilidade: 'Segundas e quartas',
+        especialidades: 'Faxina e organizacao',
+      },
+    },
+    {
+      tipo: 'motorista_assistencial',
+      perfil: 'motorista_assistencial',
+      delegate: 'motoristas_assistenciais',
+      dados: {
+        bio: 'Transporte assistencial para idosos',
+        experiencia: 8,
+        valorHora: 90,
+        disponibilidade: 'Dias uteis',
+        especialidades: 'Consultas e exames',
+        placa: 'abc1d23',
+      },
+      esperado: {
+        placa: 'ABC1D23',
+      },
+    },
+  ])('cadastra prestador da nova categoria $tipo', async ({ tipo, perfil, delegate, dados, esperado }) => {
+    vi.spyOn(GeolocalizacaoService, 'buscarCoordenadasPorCep').mockResolvedValue({
+      latitude: -23.55,
+      longitude: -46.63,
+    });
+
+    const response = await request(appComRotasProtegidas())
+      .post('/create-users/usuario')
+      .send({
+        usuario: {
+          nome: `Prestador ${tipo}`,
+          email: `${tipo}@cadastro.test`,
+          senha: 'SenhaForte!123',
+          telefone: '1132345679',
+          cpf: '39053344705',
+          cep: '01001000',
+          tipo,
+          aceitouTermos: true,
+        },
+        [perfil]: dados,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.data).toEqual(
+      expect.objectContaining({
+        tipo,
+        status_cadastro: 'pendente_pagamento',
+        email_confirmado: false,
+      }),
+    );
+    expect(mocks.prisma[delegate].create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          usuario_id: expect.any(String),
+          bio: dados.bio,
+          disponibilidade: dados.disponibilidade,
+          ...(esperado ?? {}),
         }),
       }),
     );
@@ -1388,7 +1495,7 @@ describe('fluxos criticos do produto', () => {
   it('migration de eventos financeiros contem hash e data de processamento', () => {
     const migrationPath = path.resolve(
       process.cwd(),
-      'prisma/migrations/20260502170000_add_hash_to_eventos_assinatura/migration.sql',
+      'prisma/migrations/20260731174000_postgresql_baseline/migration.sql',
     );
 
     expect(existsSync(migrationPath)).toBe(true);

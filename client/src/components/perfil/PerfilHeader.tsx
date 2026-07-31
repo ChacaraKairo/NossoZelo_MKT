@@ -1,4 +1,5 @@
 import styles from '@/styles/components/perfil/PerfilHeader.module.css';
+import { formatarTipoPrestador } from '@/constants/prestadores';
 
 interface PerfilHeaderProps {
   nome: string;
@@ -68,7 +69,7 @@ export default function PerfilHeader({
             {texto(nome)}
           </h1>
           <p className={styles.type}>
-            {texto(tipo)}
+            {formatarTipoPrestador(tipo)}
           </p>
           {subtitulo && (
             <p className={styles.subtitle}>

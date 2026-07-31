@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { FaCheckCircle, FaStar } from 'react-icons/fa';
+import { formatarTipoPrestador } from '@/constants/prestadores';
 
 interface PerfilHeaderProProps {
   perfil: any;
@@ -41,7 +42,7 @@ const PerfilHeaderPro: React.FC<PerfilHeaderProProps> = ({
       </div>
 
       <p className="text-blue-600 font-bold text-xs uppercase tracking-wider mt-1 bg-blue-50 px-3 py-1 rounded-full">
-        {perfil?.tipo}
+        {formatarTipoPrestador(perfil?.tipo)}
       </p>
 
       {/* Avaliação Suave */}

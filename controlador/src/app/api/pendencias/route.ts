@@ -65,7 +65,10 @@ export async function GET() {
           tipo: { in: [...tiposPrestador] },
           cuidadores: null,
           enfermeiros: null,
-          acompanhantes: null
+          acompanhantes: null,
+          babas: null,
+          diaristas: null,
+          motoristas_assistenciais: null
         },
         take: 50,
         orderBy: { criado_em: "desc" },

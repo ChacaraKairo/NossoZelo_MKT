@@ -2,8 +2,7 @@ import { NextFunction, RequestHandler, Response } from 'express';
 import { authMiddleware } from './autenticacao';
 import logger from '../lib/logger';
 import { AuthRequest } from '../types/auth';
-
-const TIPOS_PRESTADOR = ['cuidador', 'enfermeiro', 'acompanhante'];
+import { TIPOS_PRESTADOR } from '../constants/dominio';
 
 export const exigirAutenticacao = authMiddleware;
 
@@ -63,7 +62,7 @@ export function garantirPrestadorOperacional(
     return res.status(401).json({ error: 'Usuario nao autenticado.' });
   }
 
-  if (!TIPOS_PRESTADOR.includes(tipo)) {
+  if (!TIPOS_PRESTADOR.includes(tipo as any)) {
     return res.status(403).json({
       error: 'Recurso disponivel apenas para prestadores.',
     });

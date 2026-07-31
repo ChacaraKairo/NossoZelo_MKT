@@ -56,7 +56,7 @@ const compromissos = [
   {
     titulo: 'Profissionais especializados',
     texto:
-      'Cuidadores, enfermeiros e acompanhantes possuem areas especificas de perfil para apresentar experiencia e disponibilidade.',
+      'Cuidadores, enfermeiros, acompanhantes, babás, diaristas e motoristas assistenciais possuem áreas específicas de perfil para apresentar experiência e disponibilidade.',
     icone: <FaUserNurse />,
   },
 ];

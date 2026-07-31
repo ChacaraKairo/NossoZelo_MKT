@@ -4,11 +4,12 @@ import { useRouter } from 'next/router';
 import Carregando from '@/components/common/Carregando';
 import { loginService } from '@/service/Login';
 import { onboardingService } from '@/service/onboardingService';
+import { ehTipoPrestador } from '@/constants/prestadores';
 import styles from '@/styles/CadastroSocialPage.module.css';
 
 function destinoPorTipo(tipo: string) {
   if (tipo === 'admin') return '/dashboard';
-  if (tipo === 'cuidador' || tipo === 'enfermeiro' || tipo === 'acompanhante') {
+  if (ehTipoPrestador(tipo)) {
     return '/perfil';
   }
   return '/prestadores';

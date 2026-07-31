@@ -59,6 +59,15 @@ export const useFinalizarCadastro = () => {
       payload.cuidador = dadosProfissionais;
     } else if (categoria === 'acompanhante') {
       payload.acompanhante = dadosProfissionais;
+    } else if (categoria === 'baba') {
+      payload.baba = dadosProfissionais;
+    } else if (categoria === 'diarista') {
+      payload.diarista = dadosProfissionais;
+    } else if (categoria === 'motorista_assistencial') {
+      payload.motorista_assistencial = {
+        ...dadosProfissionais,
+        placa: profissional.placa,
+      };
     }
 
     return payload;

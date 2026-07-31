@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { usePerfilEditor } from '@/hooks/usePerfilEditor';
+import { ehTipoPrestador } from '@/constants/prestadores';
 import { PerfilUsuario, TipoUsuario } from '@/types/perfil';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 import logger from '@/utils/logger';
@@ -83,9 +84,7 @@ export default function FormEditarPerfil({
       perfil.dados_usuario?.tipo,
     [perfil, tipoUsuario],
   );
-  const isPrestador = ['cuidador', 'enfermeiro', 'acompanhante'].includes(
-    String(tipo),
-  );
+  const isPrestador = ehTipoPrestador(String(tipo));
 
   useEffect(() => {
     logger.info(CONTEXTO, 'Abertura do formulario', {

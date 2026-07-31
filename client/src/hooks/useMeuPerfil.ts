@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { perfilService } from '@/service/perfilService';
+import { ehTipoPrestador } from '@/constants/prestadores';
 import { PerfilUsuario, TipoUsuario } from '@/types/perfil';
 import logger from '@/utils/logger';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
 
 const CONTEXTO = 'useMeuPerfil';
-const TIPOS_PRESTADOR = [
-  'cuidador',
-  'enfermeiro',
-  'acompanhante',
-];
 
 function obterTipoUsuario(
   perfil: PerfilUsuario | null,
@@ -88,7 +84,7 @@ export function useMeuPerfil() {
 
   const isCliente = tipoUsuario === 'cliente';
   const isPrestador = Boolean(
-    tipoUsuario && TIPOS_PRESTADOR.includes(tipoUsuario),
+    tipoUsuario && ehTipoPrestador(tipoUsuario),
   );
 
   return {

@@ -32,18 +32,17 @@ async function executarRestore() {
   const arquivo = obterArquivoBackup();
 
   const args = [
-    '--default-character-set=utf8mb4',
-    '-h',
+    '--host',
     conexao.host,
-    '-P',
+    '--port',
     conexao.port,
-    '-u',
+    '--username',
     conexao.user,
-    `-p${conexao.password}`,
+    '--dbname',
     conexao.database,
   ];
 
-  logger.warn('RestoreDB: iniciando restauração MySQL', {
+  logger.warn('RestoreDB: iniciando restauração PostgreSQL', {
     host: conexao.host,
     database: conexao.database,
     arquivo,
@@ -51,9 +50,13 @@ async function executarRestore() {
 
   await new Promise<void>((resolve, reject) => {
     const input = fs.createReadStream(arquivo, { encoding: 'utf8' });
-    const processo = spawn('mysql', args, {
+    const processo = spawn('psql', args, {
       stdio: ['pipe', 'ignore', 'pipe'],
       shell: false,
+      env: {
+        ...process.env,
+        PGPASSWORD: conexao.password,
+      },
     });
 
     input.pipe(processo.stdin);
@@ -72,7 +75,7 @@ async function executarRestore() {
 
       reject(
         new Error(
-          `mysql finalizou com código ${code}. ${stderr.trim()}`,
+          `psql finalizou com código ${code}. ${stderr.trim()}`,
         ),
       );
     });

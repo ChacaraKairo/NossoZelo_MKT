@@ -4,7 +4,7 @@ import Footer from '@/components/footer/Footer';
 import Style from '@/styles/SobrePage.module.css';
 
 const passos = [
-  'Crie seu cadastro como cuidador, enfermeiro ou acompanhante.',
+  'Crie seu cadastro como prestador profissional.',
   'Confirme seu e-mail pelo link enviado automaticamente.',
   'Entre na área Financeiro do seu perfil profissional.',
   'Escolha um plano ativo e gere a cobrança no Asaas.',
@@ -99,4 +99,3 @@ export default function AssinaturaPage() {
     </div>
   );
 }
-

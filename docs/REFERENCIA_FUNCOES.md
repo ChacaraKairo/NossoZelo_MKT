@@ -1,1039 +1,1364 @@
-# Referencia de funcoes e handlers
+# Referencia de Funcoes
 
-Arquivo gerado para a branch documentada. Ele lista funcoes, metodos, componentes e handlers detectados por varredura estatica simples em `server/src`, `client/src` e `controlador/src`.
-
-Esta referencia nao substitui leitura do codigo, mas serve como mapa completo para auditoria e onboarding.
-
-Total detectado: 634.
-
-## client
+Inventario gerado automaticamente a partir de arquivos TS/TSX/JS/JSX atuais. Serve como mapa rapido e nao substitui a leitura do codigo.
 
 ### client/src/components/btn/BtnCadastrar.tsx
 
-- Linha 4: `BtnCadastrar` (const function) - `const BtnCadastrar = () => {`
+- Linha 4: `BtnCadastrar` (const function)
+
 ### client/src/components/btn/BtnLogin.tsx
 
-- Linha 5: `LoginButton` (const function) - `const LoginButton = () => {`
+- Linha 5: `LoginButton` (const function)
+
 ### client/src/components/cadastro/StepDocumentos.tsx
 
-- Linha 7: `StepDocumentos` (const function) - `const StepDocumentos = () => {`
+- Linha 7: `StepDocumentos` (const function)
+
 ### client/src/components/cadastro/StepEndereco.tsx
 
-- Linha 6: `StepEndereco` (const function) - `const StepEndereco = () => {`
+- Linha 6: `StepEndereco` (const function)
+- Linha 14: `mascaraCep` (const function)
+- Linha 21: `handleBuscaCep` (const function)
+
 ### client/src/components/cadastro/StepPessoais.tsx
 
-- Linha 10: `StepPessoais` (const function) - `const StepPessoais = () => {`
+- Linha 10: `StepPessoais` (const function)
+
 ### client/src/components/cadastro/StepProfissional.tsx
 
-- Linha 6: `StepProfissional` (const function) - `const StepProfissional = () => {`
+- Linha 7: `StepProfissional` (const function)
+
+### client/src/components/common/ErroComRetry.tsx
+
+- Linha 18: `handleRetry` (const function)
+
 ### client/src/components/footer/Footer.tsx
 
-- Linha 34: `Footer` (const function) - `const Footer = () => {`
+- Linha 34: `Footer` (const function)
+
+### client/src/components/header/HeaderMain.tsx
+
+- Linha 43: `handleBuscar` (const function)
+- Linha 54: `handleSubmit` (const function)
+
 ### client/src/components/header/UserDropdown.tsx
 
-- Linha 17: `UserDropdown` (const function) - `const UserDropdown = () => {`
+- Linha 17: `UserDropdown` (const function)
+- Linha 28: `handleClickOutside` (const function)
+
+### client/src/components/header/scripts/busca.ts
+
+- Linha 12: `BuscaService` (class)
+
 ### client/src/components/inicialpage/CardGrid.tsx
 
-- Linha 5: `CardGrid` (const function) - `const CardGrid = () => {`
+- Linha 5: `CardGrid` (const function)
+
+### client/src/components/inicialpage/Cards.tsx
+
+- Linha 18: `navegar` (const function)
+- Linha 25: `handleKeyDown` (const function)
+
 ### client/src/components/inicialpage/Escrita.tsx
 
-- Linha 2: `Escrita` (const function) - `const Escrita = () => {`
+- Linha 2: `Escrita` (const function)
+
+### client/src/components/inputs/InputPassword.tsx
+
+- Linha 31: `toggleVisibility` (const function)
+
 ### client/src/components/logos/LogoLink.tsx
 
-- Linha 4: `Logo` (const function) - `const Logo = () => {`
+- Linha 4: `Logo` (const function)
+
 ### client/src/components/logos/LogoNoLink.tsx
 
-- Linha 2: `Logo` (const function) - `const Logo = () => {`
+- Linha 2: `Logo` (const function)
+
 ### client/src/components/logos/OnlyLogo.tsx
 
-- Linha 2: `Logo` (const function) - `const Logo = () => {`
+- Linha 2: `Logo` (const function)
+
 ### client/src/components/main-page/filter/Filtro.tsx
 
-- Linha 14: `Filtro` (const function) - `const Filtro = () => {`
+- Linha 11: `Filtro` (const function)
+- Linha 24: `handlePreco` (const function)
+- Linha 34: `handleAplicar` (const function)
+- Linha 42: `handleLimpar` (const function)
+
 ### client/src/components/main-page/prestadores-grid/PrestadoresGrid.tsx
 
-- Linha 20: `PrestadoresGrid` (const function) - `const PrestadoresGrid = () => {`
+- Linha 20: `PrestadoresGrid` (const function)
+
 ### client/src/components/main-page/prestadores-grid/ResultadosHeader.tsx
 
-- Linha 11: `montarFiltros` (function) - `function montarFiltros({`
+- Linha 11: `montarFiltros` (function)
+
 ### client/src/components/main-page/prestadores-grid/card/UserCard.tsx
 
-- Linha 15: `formatarPreco` (function) - `function formatarPreco(valor?: number) {`
+- Linha 15: `formatarPreco` (function)
+- Linha 36: `navegarParaPerfil` (const function)
+- Linha 43: `navegarParaContratacao` (const function)
+- Linha 50: `handleKeyDown` (const function)
+- Linha 57: `handleContratar` (const function)
+
 ### client/src/components/perfil/AbaAgendaPro.tsx
 
-- Linha 14: `formatarData` (function) - `function formatarData(valor: string | Date) {`
-- Linha 25: `formatarHora` (function) - `function formatarHora(valor?: string | Date | null) {`
-- Linha 38: `formatarValor` (function) - `function formatarValor(valor?: number | string | null) {`
-- Linha 48: `obterObservacao` (function) - `function obterObservacao(item: AgendaPerfil) {`
-- Linha 52: `horarioCompleto` (function) - `function horarioCompleto(item: AgendaPerfil) {`
+- Linha 14: `formatarData` (function)
+- Linha 25: `formatarHora` (function)
+- Linha 38: `formatarValor` (function)
+- Linha 48: `obterObservacao` (function)
+- Linha 52: `horarioCompleto` (function)
+- Linha 78: `handleBloquearHorario` (const function)
+
 ### client/src/components/perfil/AbaAvaliacoesPro.tsx
 
-- Linha 13: `obterAvaliacoes` (function) - `function obterAvaliacoes(perfil: PerfilUsuario) {`
-- Linha 21: `formatarData` (function) - `function formatarData(valor?: string | Date | null) {`
-- Linha 30: `renderEstrelas` (function) - `function renderEstrelas(nota: number | null) {`
-- Linha 42: `obterCliente` (function) - `function obterCliente(avaliacao: AvaliacaoPerfil) {`
+- Linha 13: `obterAvaliacoes` (function)
+- Linha 21: `formatarData` (function)
+- Linha 30: `renderEstrelas` (function)
+- Linha 42: `obterCliente` (function)
+
 ### client/src/components/perfil/AbaFinanceiroPro.tsx
 
-- Linha 37: `formatarData` (function) - `function formatarData(valor?: string | Date | null) {`
-- Linha 51: `formatarValor` (function) - `function formatarValor(valor?: number | string | null) {`
-- Linha 61: `classeStatus` (function) - `function classeStatus(status: string) {`
-- Linha 79: `rotuloStatusAssinatura` (function) - `function rotuloStatusAssinatura(status: string) {`
+- Linha 37: `formatarData` (function)
+- Linha 51: `formatarValor` (function)
+- Linha 61: `classeStatus` (function)
+- Linha 79: `rotuloStatusAssinatura` (function)
+- Linha 144: `abrirModalPagamento` (const function)
+- Linha 151: `fecharModalPagamento` (const function)
+- Linha 155: `sucessoModalPagamento` (const function)
+- Linha 160: `cancelar` (const function)
+
 ### client/src/components/perfil/AbaHistoricoPerfil.tsx
 
-- Linha 20: `texto` (function) - `function texto(valor: unknown) {`
-- Linha 27: `formatarData` (function) - `function formatarData(valor?: string | Date | null) {`
-- Linha 34: `formatarHora` (function) - `function formatarHora(valor?: string | Date | null) {`
-- Linha 50: `formatarMoeda` (function) - `function formatarMoeda(valor?: string | number | null) {`
-- Linha 59: `nomeRelacionado` (function) - `function nomeRelacionado(`
-- Linha 76: `servico` (function) - `function servico(contratacao: ContratacaoPerfil) {`
-- Linha 86: `statusNormalizado` (function) - `function statusNormalizado(contratacao: ContratacaoPerfil) {`
-- Linha 90: `dataHoraFim` (function) - `function dataHoraFim(contratacao: ContratacaoPerfil) {`
-- Linha 102: `avaliacaoDoUsuario` (function) - `function avaliacaoDoUsuario(`
-- Linha 120: `estadoAvaliacao` (function) - `function estadoAvaliacao(`
-- Linha 163: `renderEstrelas` (function) - `function renderEstrelas(`
+- Linha 20: `texto` (function)
+- Linha 27: `formatarData` (function)
+- Linha 34: `formatarHora` (function)
+- Linha 50: `formatarMoeda` (function)
+- Linha 59: `nomeRelacionado` (function)
+- Linha 76: `servico` (function)
+- Linha 86: `statusNormalizado` (function)
+- Linha 90: `dataHoraFim` (function)
+- Linha 102: `avaliacaoDoUsuario` (function)
+- Linha 120: `estadoAvaliacao` (function)
+- Linha 163: `renderEstrelas` (function)
+- Linha 224: `enviarAvaliacao` (const function)
+- Linha 247: `cancelar` (const function)
+
 ### client/src/components/perfil/AbaSeguranca.tsx
 
-- Linha 9: `senhaForte` (function) - `function senhaForte(senha: string) {`
+- Linha 9: `senhaForte` (function)
+- Linha 28: `alterarSenha` (const function)
+
 ### client/src/components/perfil/AbaServicosOperacionais.tsx
 
-- Linha 26: `formatarValor` (function) - `function formatarValor(valor?: number | string | null) {`
-- Linha 35: `validarForm` (function) - `function validarForm(form: ServicoPayload) {`
+- Linha 26: `formatarValor` (function)
+- Linha 35: `validarForm` (function)
+- Linha 77: `sincronizarServicos` (const function)
+- Linha 82: `carregarServicos` (const function)
+- Linha 95: `cancelarEdicao` (const function)
+- Linha 101: `salvarServico` (const function)
+- Linha 145: `editarServico` (const function)
+- Linha 159: `removerServico` (const function)
+
 ### client/src/components/perfil/AbaSolicitacoesPro.tsx
 
-- Linha 27: `texto` (function) - `function texto(valor: unknown) {`
-- Linha 34: `formatarData` (function) - `function formatarData(valor?: string | Date | null) {`
-- Linha 41: `formatarHora` (function) - `function formatarHora(valor?: string | Date | null) {`
-- Linha 60: `formatarMoeda` (function) - `function formatarMoeda(valor?: number | string | null) {`
-- Linha 74: `labelStatus` (function) - `function labelStatus(status?: string | null) {`
-- Linha 91: `statusClassName` (function) - `function statusClassName(status?: string | null) {`
-- Linha 108: `nomeCliente` (function) - `function nomeCliente(contratacao: ContratacaoPerfil) {`
-- Linha 115: `nomeServico` (function) - `function nomeServico(contratacao: ContratacaoPerfil) {`
-- Linha 128: `iniciaisCliente` (function) - `function iniciaisCliente(nome: string) {`
+- Linha 27: `texto` (function)
+- Linha 34: `formatarData` (function)
+- Linha 41: `formatarHora` (function)
+- Linha 60: `formatarMoeda` (function)
+- Linha 74: `labelStatus` (function)
+- Linha 91: `statusClassName` (function)
+- Linha 108: `nomeCliente` (function)
+- Linha 115: `nomeServico` (function)
+- Linha 128: `iniciaisCliente` (function)
+
 ### client/src/components/perfil/AlertaPerfilIncompleto.tsx
 
-- Linha 14: `vazio` (function) - `function vazio(valor: unknown) {`
-- Linha 19: `calcularCamposAusentes` (function) - `function calcularCamposAusentes(`
+- Linha 14: `vazio` (function)
+- Linha 19: `calcularCamposAusentes` (function)
+- Linha 66: `handleCompletar` (const function)
+
 ### client/src/components/perfil/DadosClienteLiberado.tsx
 
-- Linha 15: `texto` (function) - `function texto(valor?: string | null) {`
+- Linha 15: `texto` (function)
+- Linha 31: `carregarCliente` (function)
+
 ### client/src/components/perfil/FormEditarPerfil.tsx
 
-- Linha 29: `valorCampo` (function) - `function valorCampo(valor: unknown) {`
-- Linha 35: `CampoTexto` (function) - `function CampoTexto({`
+- Linha 30: `valorCampo` (function)
+- Linha 36: `CampoTexto` (function)
+- Linha 96: `alterarCampo` (const function)
+- Linha 101: `validar` (const function)
+- Linha 138: `handleSubmit` (const function)
+- Linha 164: `handleCancel` (const function)
+
 ### client/src/components/perfil/ModalPagamentoAssinatura.tsx
 
-- Linha 41: `rotuloAcao` (function) - `function rotuloAcao(modo: ModoModalPagamentoAssinatura) {`
-- Linha 47: `rotuloSituacao` (function) - `function rotuloSituacao(status: string) {`
-- Linha 64: `mensagemPorStatus` (function) - `function mensagemPorStatus(resultado: RespostaAssinatura) {`
+- Linha 41: `rotuloAcao` (function)
+- Linha 47: `rotuloSituacao` (function)
+- Linha 64: `mensagemPorStatus` (function)
+- Linha 113: `onSubmit` (function)
+
 ### client/src/components/perfil/PerfilCliente.tsx
 
-- Linha 39: `texto` (function) - `function texto(valor: unknown) {`
-- Linha 46: `formatarData` (function) - `function formatarData(valor?: string | Date | null) {`
-- Linha 53: `CampoInfo` (function) - `function CampoInfo({ label, valor }: { label: string; valor: unknown }) {`
-- Linha 64: `VisaoGeral` (function) - `function VisaoGeral({`
-- Linha 88: `DadosPessoais` (function) - `function DadosPessoais({ usuario }: { usuario: PerfilUsuario }) {`
-- Linha 102: `MinhasContratacoes` (function) - `function MinhasContratacoes({`
-- Linha 143: `AvaliacoesCliente` (function) - `function AvaliacoesCliente({`
+- Linha 39: `texto` (function)
+- Linha 46: `formatarData` (function)
+- Linha 53: `CampoInfo` (function)
+- Linha 64: `VisaoGeral` (function)
+- Linha 88: `DadosPessoais` (function)
+- Linha 102: `MinhasContratacoes` (function)
+- Linha 143: `AvaliacoesCliente` (function)
+- Linha 214: `selecionarAba` (const function)
+- Linha 220: `handlePerfilAtualizado` (const function)
+
 ### client/src/components/perfil/PerfilHeader.tsx
 
-- Linha 13: `texto` (function) - `function texto(valor: unknown, fallback = 'Não informado') {`
-- Linha 21: `inicialNome` (function) - `function inicialNome(nome: string) {`
-- Linha 25: `formatarAvaliacao` (function) - `function formatarAvaliacao(valor?: number | string | null) {`
+- Linha 14: `texto` (function)
+- Linha 22: `inicialNome` (function)
+- Linha 26: `formatarAvaliacao` (function)
+
 ### client/src/components/perfil/PerfilPrestador.tsx
 
-- Linha 51: `texto` (function) - `function texto(valor: unknown) {`
-- Linha 61: `CampoInfo` (function) - `function CampoInfo({ label, valor }: { label: string; valor: unknown }) {`
-- Linha 93: `AlertaAssinaturaInativa` (function) - `function AlertaAssinaturaInativa({`
-- Linha 122: `VisaoGeral` (function) - `function VisaoGeral({`
-- Linha 163: `DadosProfissionais` (function) - `function DadosProfissionais({ perfil }: { perfil: PerfilUsuario }) {`
+- Linha 51: `texto` (function)
+- Linha 61: `CampoInfo` (function)
+- Linha 93: `AlertaAssinaturaInativa` (function)
+- Linha 122: `VisaoGeral` (function)
+- Linha 163: `DadosProfissionais` (function)
+- Linha 243: `selecionarAba` (const function)
+- Linha 249: `handlePerfilAtualizado` (const function)
+- Linha 254: `handleContratacaoAtualizada` (const function)
+- Linha 262: `handleServicosAtualizados` (const function)
+
 ### client/src/components/perfil/PerfilSidebar.tsx
 
-- Linha 8: `PerfilSidebar` (const function) - `const PerfilSidebar = ({ perfil }: { perfil: any }) => {`
+- Linha 8: `PerfilSidebar` (const function)
+
 ### client/src/components/perfil/script/usePerfilEditor.ts
 
-- Linha 6: `usePerfilEditor` (const function) - `export const usePerfilEditor = (`
+- Linha 24: `iniciarEdicao` (const function)
+- Linha 28: `cancelarEdicao` (const function)
+- Linha 32: `salvarEdicao` (const function)
+
 ### client/src/components/prestador/CardPrestador.tsx
 
-- Linha 30: `texto` (function) - `function texto(valor: unknown) {`
-- Linha 37: `obterPreco` (function) - `function obterPreco(servicos?: ServicoPerfil[]) {`
+- Linha 31: `texto` (function)
+- Linha 38: `obterPreco` (function)
+- Linha 57: `navegar` (const function)
+
 ### client/src/components/prestador/ModalContratarPrestador.tsx
 
-- Linha 30: `hojeIsoLocal` (function) - `function hojeIsoLocal() {`
-- Linha 38: `formatarMoeda` (function) - `function formatarMoeda(valor?: string | number | null) {`
-- Linha 48: `texto` (function) - `function texto(valor?: string | number | null) {`
+- Linha 30: `hojeIsoLocal` (function)
+- Linha 38: `formatarMoeda` (function)
+- Linha 48: `texto` (function)
+- Linha 121: `validarFormulario` (const function)
+- Linha 160: `handleSubmit` (const function)
+
 ### client/src/config/api.ts
 
-- Linha 3: `getApiUrl` (function) - `export function getApiUrl() {`
-- Linha 17: `getNossoZeloApiUrl` (function) - `export function getNossoZeloApiUrl() {`
+- Linha 3: `getApiUrl` (function)
+- Linha 17: `getNossoZeloApiUrl` (function)
+
 ### client/src/config/contatosNossoZelo.ts
 
-- Linha 36: `criarLinkEmail` (function) - `export function criarLinkEmail(email: string) {`
-- Linha 40: `criarLinkTelefone` (function) - `export function criarLinkTelefone(telefone: string) {`
-- Linha 44: `criarLinkWhatsApp` (function) - `export function criarLinkWhatsApp(telefone: string) {`
-- Linha 48: `obterRedesSociaisAtivas` (function) - `export function obterRedesSociaisAtivas() {`
+- Linha 36: `criarLinkEmail` (function)
+- Linha 40: `criarLinkTelefone` (function)
+- Linha 44: `criarLinkWhatsApp` (function)
+- Linha 48: `obterRedesSociaisAtivas` (function)
+
+### client/src/constants/prestadores.ts
+
+- Linha 30: `ehTipoPrestador` (function)
+- Linha 34: `formatarTipoPrestador` (function)
+
 ### client/src/hooks/useGeolocalizacao.ts
 
-- Linha 14: `salvarCoordenadas` (function) - `function salvarCoordenadas(latitude: number, longitude: number) {`
-- Linha 28: `useGeolocalizacao` (function) - `export function useGeolocalizacao() {`
+- Linha 14: `salvarCoordenadas` (function)
+- Linha 28: `useGeolocalizacao` (function)
+
 ### client/src/hooks/useMeuPerfil.ts
 
-- Linha 14: `obterTipoUsuario` (function) - `function obterTipoUsuario(`
-- Linha 24: `useMeuPerfil` (function) - `export function useMeuPerfil() {`
+- Linha 10: `obterTipoUsuario` (function)
+- Linha 20: `useMeuPerfil` (function)
+
 ### client/src/hooks/useOnboardingGuard.ts
 
-- Linha 23: `useOnboardingGuard` (function) - `export function useOnboardingGuard(ativo = true) {`
+- Linha 23: `useOnboardingGuard` (function)
+
 ### client/src/hooks/usePerfilEditor.ts
 
-- Linha 42: `extrairCamposEditaveis` (function) - `function extrairCamposEditaveis(`
-- Linha 69: `montarPayloadAlterado` (function) - `function montarPayloadAlterado(`
-- Linha 91: `usePerfilEditor` (function) - `export function usePerfilEditor() {`
+- Linha 42: `extrairCamposEditaveis` (function)
+- Linha 69: `montarPayloadAlterado` (function)
+- Linha 91: `usePerfilEditor` (function)
+
 ### client/src/pages/auth/social-callback.tsx
 
-- Linha 9: `destinoPorTipo` (function) - `function destinoPorTipo(tipo: string) {`
+- Linha 10: `destinoPorTipo` (function)
+
 ### client/src/pages/cadastro-prestador/index.tsx
 
-- Linha 25: `WizardCadastroPrestador` (const function) - `const WizardCadastroPrestador = () => {`
+- Linha 25: `WizardCadastroPrestador` (const function)
+- Linha 39: `nextStep` (const function)
+
 ### client/src/pages/cadastro-social/index.tsx
 
-- Linha 35: `decodificarToken` (function) - `function decodificarToken(token?: string): SocialPayload | null {`
-- Linha 56: `limparDigitos` (function) - `function limparDigitos(valor: string) {`
-- Linha 60: `destinoPorTipo` (function) - `function destinoPorTipo(tipo: string) {`
+- Linha 37: `decodificarToken` (function)
+- Linha 58: `limparDigitos` (function)
+- Linha 62: `destinoPorTipo` (function)
+- Linha 137: `buscarCep` (function)
+- Linha 160: `validarFormulario` (function)
+- Linha 210: `handleSubmit` (function)
+
 ### client/src/pages/cadastro-user/index.tsx
 
-- Linha 43: `CadastroPage` (const function) - `const CadastroPage = () => {`
+- Linha 43: `CadastroPage` (const function)
+- Linha 82: `erroDoCampo` (const function)
+- Linha 85: `mapearCampoApi` (const function)
+- Linha 94: `buscarCep` (const function)
+- Linha 125: `handleSubmit` (const function)
+
+### client/src/pages/confirmar-email/index.tsx
+
+- Linha 79: `reenviarConfirmacao` (function)
+
 ### client/src/pages/dashboard/index.tsx
 
-- Linha 20: `CardResumo` (function) - `function CardResumo({`
-- Linha 35: `ListaContratacoes` (function) - `function ListaContratacoes({`
-- Linha 68: `DashboardPage` (function) - `function DashboardPage() {`
+- Linha 20: `CardResumo` (function)
+- Linha 35: `ListaContratacoes` (function)
+- Linha 68: `DashboardPage` (function)
+
 ### client/src/pages/login-parceiro/index.tsx
 
-- Linha 20: `LoginPage` (const function) - `const LoginPage = () => {`
+- Linha 20: `LoginPage` (const function)
+- Linha 31: `iniciarSocial` (const function)
+- Linha 38: `handleSubmit` (const function)
+
 ### client/src/pages/login-user/index.tsx
 
-- Linha 21: `LoginPage` (const function) - `const LoginPage = () => {`
+- Linha 21: `LoginPage` (const function)
+- Linha 35: `iniciarSocial` (const function)
+- Linha 71: `handleSubmit` (const function)
+
 ### client/src/pages/meu-perfil/index.tsx
 
-- Linha 20: `normalizarTipoUsuario` (function) - `function normalizarTipoUsuario(`
-- Linha 38: `normalizarPerfilDashboard` (function) - `function normalizarPerfilDashboard(dados: any): PerfilCompleto {`
-- Linha 94: `DashboardPerfil` (const function) - `const DashboardPerfil = () => {`
+- Linha 21: `normalizarTipoUsuario` (function)
+- Linha 35: `normalizarPerfilDashboard` (function)
+- Linha 92: `DashboardPerfil` (const function)
+- Linha 99: `carregarDadosDashboard` (const function)
+
 ### client/src/pages/onboarding/prestador.tsx
 
-- Linha 23: `moeda` (function) - `function moeda(valor: number | string) {`
-- Linha 30: `boolTexto` (function) - `function boolTexto(valor: boolean) {`
+- Linha 23: `moeda` (function)
+- Linha 30: `boolTexto` (function)
+- Linha 74: `iniciarPagina` (function)
+- Linha 124: `reenviarConfirmacao` (function)
+
 ### client/src/pages/perfil/index.tsx
 
-- Linha 18: `AlertaEmailNaoConfirmado` (function) - `function AlertaEmailNaoConfirmado({`
-- Linha 57: `LoadingPerfil` (function) - `function LoadingPerfil() {`
-- Linha 69: `PerfilPage` (function) - `function PerfilPage() {`
+- Linha 18: `AlertaEmailNaoConfirmado` (function)
+- Linha 26: `reenviar` (const function)
+- Linha 57: `LoadingPerfil` (function)
+- Linha 69: `PerfilPage` (function)
+
 ### client/src/pages/prestador/[id].tsx
 
-- Linha 28: `normalizarId` (function) - `function normalizarId(id: string | string[] | undefined) {`
-- Linha 33: `formatarTexto` (function) - `function formatarTexto(valor?: string | number | null) {`
-- Linha 41: `formatarMoeda` (function) - `function formatarMoeda(valor?: string | number | null) {`
-- Linha 55: `formatarData` (function) - `function formatarData(valor?: string | Date | null) {`
-- Linha 64: `obterAvaliacoes` (function) - `function obterAvaliacoes(prestador: VitrinePrestador | null) {`
-- Linha 86: `obterEspecialidades` (function) - `function obterEspecialidades(`
+- Linha 29: `normalizarId` (function)
+- Linha 34: `formatarTexto` (function)
+- Linha 42: `formatarMoeda` (function)
+- Linha 56: `formatarData` (function)
+- Linha 65: `obterAvaliacoes` (function)
+- Linha 87: `obterEspecialidades` (function)
+- Linha 200: `handleSolicitarContratacao` (const function)
+- Linha 207: `fecharContratacao` (const function)
+- Linha 217: `handleEntrarEmContato` (const function)
+
 ### client/src/pages/prestadores/index.tsx
 
-- Linha 15: `queryString` (function) - `function queryString(valor: string | string[] | undefined) {`
-- Linha 19: `PrestadoresPage` (const function) - `const PrestadoresPage = () => {`
+- Linha 15: `queryString` (function)
+- Linha 19: `PrestadoresPage` (const function)
+
+### client/src/pages/recuperar-senha/index.tsx
+
+- Linha 16: `handleSubmit` (const function)
+
 ### client/src/pages/redefinir-senha/index.tsx
 
-- Linha 8: `validarSenha` (function) - `function validarSenha(senha: string) {`
+- Linha 8: `validarSenha` (function)
+- Linha 52: `handleSubmit` (const function)
+
 ### client/src/service/Login.ts
 
-- Linha 33: `mascararIdentificador` (function) - `function mascararIdentificador(identificador: string) {`
-- Linha 48: `armazenarUsuarioSessao` (function) - `function armazenarUsuarioSessao(responseData: LoginResponse) {`
+- Linha 33: `mascararIdentificador` (function)
+- Linha 48: `armazenarUsuarioSessao` (function)
+- Linha 56: `LoginService` (class)
+
 ### client/src/service/acharPrestadoresService.ts
 
-- Linha 19: `normalizarNumero` (function) - `function normalizarNumero(valor: unknown): number | undefined {`
-- Linha 25: `obterCoordenadaSalva` (function) - `function obterCoordenadaSalva(chave: 'latitude' | 'longitude') {`
-- Linha 38: `formatarTipo` (function) - `function formatarTipo(tipo?: string | null) {`
-- Linha 43: `montarLocalidade` (function) - `function montarLocalidade(prestador: any): string {`
-- Linha 69: `mapearPrestador` (function) - `function mapearPrestador(prestador: any): PrestadorCardData {`
-- Linha 108: `buscarPrestadores` (const function) - `export const buscarPrestadores = async (`
+- Linha 20: `normalizarNumero` (function)
+- Linha 26: `obterCoordenadaSalva` (function)
+- Linha 39: `normalizarCategoria` (function)
+- Linha 56: `montarLocalidade` (function)
+- Linha 82: `mapearPrestador` (function)
+
 ### client/src/service/api.ts
 
-- Linha 18: `extrairErroApi` (function) - `export function extrairErroApi(error: unknown) {`
+- Linha 18: `extrairErroApi` (function)
+
 ### client/src/service/avaliacaoService.ts
 
-- Linha 34: `logarErro` (function) - `function logarErro(endpoint: string, error: unknown) {`
+- Linha 34: `logarErro` (function)
+
 ### client/src/service/cadastroService.ts
 
-- Linha 89: `cadastrarUsuario` (const function) - `export const cadastrarUsuario = async (`
+- Linha 90: `CadastroApiError` (class)
+
 ### client/src/service/contratacaoService.ts
 
-- Linha 55: `criarErroRotaInexistente` (function) - `function criarErroRotaInexistente(mensagem: string) {`
-- Linha 59: `logarEndpoint` (function) - `function logarEndpoint(endpoint: string, dados?: unknown) {`
-- Linha 66: `logarResposta` (function) - `function logarResposta(endpoint: string, status: number) {`
-- Linha 73: `logarErro` (function) - `function logarErro(endpoint: string, error: unknown) {`
+- Linha 55: `criarErroRotaInexistente` (function)
+- Linha 59: `logarEndpoint` (function)
+- Linha 66: `logarResposta` (function)
+- Linha 73: `logarErro` (function)
+
 ### client/src/service/perfilService.ts
 
-- Linha 20: `logarErro` (function) - `function logarErro(endpoint: string, error: unknown) {`
+- Linha 20: `logarErro` (function)
+
 ### client/src/service/servicoService.ts
 
-- Linha 15: `logarErro` (function) - `function logarErro(endpoint: string, error: unknown) {`
+- Linha 15: `logarErro` (function)
+
 ### client/src/store/useCadastroPrestadorStore.ts
 
-- Linha 109: `limparErrosCampos` (function) - `function limparErrosCampos(`
+- Linha 111: `limparErrosCampos` (function)
+
 ### client/src/store/useFinalizarCadastro.ts
 
-- Linha 10: `useFinalizarCadastro` (const function) - `export const useFinalizarCadastro = () => {`
+- Linha 10: `useFinalizarCadastro` (const function)
+- Linha 133: `handleFinalizar` (const function)
+
 ### client/src/utils/auth.ts
 
-- Linha 24: `getToken` (const function) - `export const getToken = (): string | undefined => {`
-- Linha 30: `logout` (const function) - `export const logout = (silent: boolean = false) => {`
-- Linha 59: `getUsuarioDoCookie` (const function) - `export const getUsuarioDoCookie = (): UsuarioDecodificado | null => {`
+- Linha 30: `logout` (const function)
+
 ### client/src/utils/logger.ts
 
-- Linha 19: `nivelHabilitado` (function) - `function nivelHabilitado(nivel: Nivel) {`
-- Linha 23: `mascararTexto` (function) - `function mascararTexto(valor: string) {`
-- Linha 30: `sanitizar` (function) - `function sanitizar(dados: LogData): LogData {`
-- Linha 54: `formatarMensagem` (function) - `function formatarMensagem(`
-- Linha 63: `info` (method) - `info(contexto: string, mensagem: string, dados?: LogData) {`
-- Linha 71: `warn` (method) - `warn(contexto: string, mensagem: string, dados?: LogData) {`
-- Linha 79: `error` (method) - `error(contexto: string, mensagem: string, erro?: LogData) {`
-- Linha 87: `debug` (method) - `debug(contexto: string, mensagem: string, dados?: LogData) {`
+- Linha 19: `nivelHabilitado` (function)
+- Linha 23: `mascararTexto` (function)
+- Linha 30: `sanitizar` (function)
+- Linha 54: `formatarMensagem` (function)
+- Linha 63: `info` (method)
+- Linha 71: `warn` (method)
+- Linha 79: `error` (method)
+- Linha 87: `debug` (method)
+
 ### client/src/utils/masks.ts
 
-- Linha 10: `clean` (const function) - `const clean = (v: string) => v.replace(/\D/g, '');`
-- Linha 12: `mascaraCpf` (const function) - `export const mascaraCpf = (v: string) => {`
-- Linha 20: `mascaraCnpj` (const function) - `export const mascaraCnpj = (v: string) => {`
-- Linha 29: `mascaraTelefone` (const function) - `export const mascaraTelefone = (v: string) => {`
-- Linha 41: `mascaraCep` (const function) - `export const mascaraCep = (v: string) => {`
-- Linha 46: `mascaraNumero` (const function) - `export const mascaraNumero = (v: string) => {`
-- Linha 50: `mascaraUf` (const function) - `export const mascaraUf = (v: string) => {`
+- Linha 10: `clean` (const function)
+- Linha 12: `mascaraCpf` (const function)
+- Linha 20: `mascaraCnpj` (const function)
+- Linha 29: `mascaraTelefone` (const function)
+- Linha 41: `mascaraCep` (const function)
+- Linha 46: `mascaraNumero` (const function)
+- Linha 50: `mascaraUf` (const function)
+
 ### client/src/utils/tratarErroApi.ts
 
-- Linha 3: `extrairMensagemErro` (function) - `export function extrairMensagemErro(error: unknown): string {`
+- Linha 3: `extrairMensagemErro` (function)
+
 ### client/src/utils/validators.ts
 
-- Linha 10: `cpfValido` (const function) - `export const cpfValido = (v: string): boolean => {`
-- Linha 33: `cnpjValido` (const function) - `export const cnpjValido = (v: string): boolean => {`
-- Linha 135: `telefoneValido` (const function) - `export const telefoneValido = (v: string): boolean => {`
-- Linha 161: `cepValido` (const function) - `export const cepValido = (v: string): boolean => {`
-- Linha 169: `emailValido` (const function) - `export const emailValido = (v: string): boolean => {`
-- Linha 179: `senhaValida` (const function) - `export const senhaValida = (v: string): boolean => {`
+- Linha 16: `rest` (const function)
+
 ### client/src/utils/withAuth.ts
 
-- Linha 18: `withAuth` (function) - `export function withAuth<P extends object>(`
+- Linha 36: `verificarSessao` (function)
+
 ### client/src/validation/cadastroValidation.ts
 
-- Linha 56: `somenteDigitos` (function) - `function somenteDigitos(valor: string) {`
-- Linha 60: `textoObrigatorio` (function) - `function textoObrigatorio(`
-- Linha 71: `validarNomeCampo` (function) - `function validarNomeCampo(`
-- Linha 93: `validarDataNascimento` (function) - `function validarDataNascimento(`
-- Linha 128: `validarSenhaForte` (function) - `export function validarSenhaForte(senha: string) {`
-- Linha 139: `mensagemSenhaForte` (function) - `export function mensagemSenhaForte() {`
-- Linha 161: `validarCadastroUsuario` (function) - `export function validarCadastroUsuario(`
-- Linha 219: `validarDadosPessoaisPrestador` (function) - `export function validarDadosPessoaisPrestador(`
-- Linha 266: `validarEnderecoCadastro` (function) - `export function validarEnderecoCadastro(`
-- Linha 333: `validarDadosProfissionaisPrestador` (function) - `export function validarDadosProfissionaisPrestador(`
-- Linha 407: `validarArquivo` (function) - `function validarArquivo(`
-- Linha 431: `validarDocumentosPrestador` (function) - `export function validarDocumentosPrestador(`
-
-## controlador
+- Linha 54: `somenteDigitos` (function)
+- Linha 58: `textoObrigatorio` (function)
+- Linha 69: `validarNomeCampo` (function)
+- Linha 91: `validarDataNascimento` (function)
+- Linha 126: `validarSenhaForte` (function)
+- Linha 137: `mensagemSenhaForte` (function)
+- Linha 159: `validarCadastroUsuario` (function)
+- Linha 217: `validarDadosPessoaisPrestador` (function)
+- Linha 264: `validarEnderecoCadastro` (function)
+- Linha 332: `validarDadosProfissionaisPrestador` (function)
+- Linha 413: `validarArquivo` (function)
+- Linha 437: `validarDocumentosPrestador` (function)
 
 ### controlador/src/app/(admin)/assinaturas/[id]/page.tsx
 
-- Linha 11: `data` (function) - `function data(valor?: Date | string | null) {`
-- Linha 16: `texto` (function) - `function texto(valor?: string | number | null) {`
-- Linha 20: `moeda` (function) - `function moeda(valor?: number | string | { toString(): string } | null) {`
+- Linha 11: `data` (function)
+- Linha 16: `texto` (function)
+- Linha 20: `moeda` (function)
+
 ### controlador/src/app/(admin)/logs/page.tsx
 
-- Linha 15: `formatarData` (function) - `function formatarData(data?: Date | null) {`
-- Linha 19: `resumoPayload` (function) - `function resumoPayload(payload: Prisma.JsonValue) {`
+- Linha 15: `formatarData` (function)
+- Linha 19: `resumoPayload` (function)
+
 ### controlador/src/app/(admin)/planos/page.tsx
 
-- Linha 15: `moeda` (function) - `function moeda(valor: Prisma.Decimal | number | string) {`
+- Linha 15: `moeda` (function)
+
 ### controlador/src/app/(admin)/relatorios/inadimplencia/page.tsx
 
-- Linha 9: `data` (function) - `function data(valor?: Date | null) {`
-- Linha 14: `moeda` (function) - `function moeda(valor?: number | string | { toString(): string } | null) {`
+- Linha 9: `data` (function)
+- Linha 14: `moeda` (function)
+
 ### controlador/src/app/api/assinaturas/[id]/alterar-status/route.ts
 
-- Linha 15: `hashPayload` (function) - `function hashPayload(valor: unknown) {`
-- Linha 21: `alterarStatus` (function) - `async function alterarStatus(request: Request, { params }: Params) {`
-- Linha 79: `POST` (function) - `export async function POST(request: Request, context: Params) {`
-- Linha 83: `PATCH` (function) - `export async function PATCH(request: Request, context: Params) {`
+- Linha 15: `hashPayload` (function)
+- Linha 21: `alterarStatus` (function)
+- Linha 79: `POST` (function)
+- Linha 83: `PATCH` (function)
+
 ### controlador/src/app/api/assinaturas/[id]/reprocessar/route.ts
 
-- Linha 12: `jsonEstavel` (function) - `function jsonEstavel(valor: unknown): string {`
-- Linha 18: `hashPayload` (function) - `function hashPayload(valor: unknown) {`
-- Linha 22: `statusLocalPorStatusAsaas` (function) - `function statusLocalPorStatusAsaas(status?: string | null) {`
-- Linha 31: `dataAsaas` (function) - `function dataAsaas(valor?: string | null) {`
-- Linha 37: `adicionarDias` (function) - `function adicionarDias(data: Date, dias: number) {`
-- Linha 43: `statusPagamentoRecebido` (function) - `function statusPagamentoRecebido(status?: string | null) {`
-- Linha 48: `consultarAssinaturaAsaas` (function) - `async function consultarAssinaturaAsaas(gatewaySubscriptionId?: string | null) {`
-- Linha 80: `consultarPagamentoRecebidoAsaas` (function) - `async function consultarPagamentoRecebidoAsaas(gatewaySubscriptionId?: string | null) {`
-- Linha 138: `POST` (function) - `export async function POST(_request: Request, { params }: Params) {`
+- Linha 12: `jsonEstavel` (function)
+- Linha 18: `hashPayload` (function)
+- Linha 22: `statusLocalPorStatusAsaas` (function)
+- Linha 31: `dataAsaas` (function)
+- Linha 37: `adicionarDias` (function)
+- Linha 43: `statusPagamentoRecebido` (function)
+- Linha 48: `consultarAssinaturaAsaas` (function)
+- Linha 80: `consultarPagamentoRecebidoAsaas` (function)
+- Linha 138: `POST` (function)
+
 ### controlador/src/app/api/assinaturas/[id]/route.ts
 
-- Linha 10: `GET` (function) - `export async function GET(_request: Request, { params }: Params) {`
+- Linha 10: `GET` (function)
+
 ### controlador/src/app/api/assinaturas/route.ts
 
-- Linha 9: `GET` (function) - `export async function GET(request: NextRequest) {`
+- Linha 9: `GET` (function)
+
 ### controlador/src/app/api/assinaturas/sincronizar/route.ts
 
-- Linha 7: `cronAutorizado` (function) - `function cronAutorizado(request: Request) {`
-- Linha 13: `POST` (function) - `export async function POST() {`
-- Linha 30: `GET` (function) - `export async function GET(request: Request) {`
+- Linha 7: `cronAutorizado` (function)
+- Linha 13: `POST` (function)
+- Linha 30: `GET` (function)
+
 ### controlador/src/app/api/auth/login/route.ts
 
-- Linha 19: `chaveRateLimit` (function) - `function chaveRateLimit(request: Request, login?: string) {`
-- Linha 29: `bloquearPorRateLimit` (function) - `function bloquearPorRateLimit(request: Request, login?: string) {`
-- Linha 53: `registrarFalhaLogin` (function) - `function registrarFalhaLogin(request: Request, login?: string) {`
-- Linha 70: `limparFalhasLogin` (function) - `function limparFalhasLogin(request: Request, login?: string) {`
-- Linha 78: `POST` (function) - `export async function POST(request: Request) {`
+- Linha 19: `chaveRateLimit` (function)
+- Linha 29: `bloquearPorRateLimit` (function)
+- Linha 53: `registrarFalhaLogin` (function)
+- Linha 70: `limparFalhasLogin` (function)
+- Linha 78: `POST` (function)
+
 ### controlador/src/app/api/auth/logout/route.ts
 
-- Linha 4: `POST` (function) - `export async function POST() {`
+- Linha 4: `POST` (function)
+
 ### controlador/src/app/api/auth/me/route.ts
 
-- Linha 4: `GET` (function) - `export async function GET() {`
+- Linha 4: `GET` (function)
+
 ### controlador/src/app/api/dashboard/resumo/route.ts
 
-- Linha 6: `GET` (function) - `export async function GET() {`
+- Linha 6: `GET` (function)
+
 ### controlador/src/app/api/email/confirmar-manual/route.ts
 
-- Linha 10: `POST` (function) - `export async function POST(request: Request) {`
+- Linha 10: `POST` (function)
+
 ### controlador/src/app/api/email/pendentes/route.ts
 
-- Linha 6: `GET` (function) - `export async function GET() {`
+- Linha 6: `GET` (function)
+
 ### controlador/src/app/api/email/reenviar/route.ts
 
-- Linha 11: `POST` (function) - `export async function POST(request: Request) {`
+- Linha 11: `POST` (function)
+
 ### controlador/src/app/api/logs/route.ts
 
-- Linha 6: `GET` (function) - `export async function GET() {`
+- Linha 6: `GET` (function)
+
 ### controlador/src/app/api/pendencias/route.ts
 
-- Linha 8: `mascararUsuario` (function) - `function mascararUsuario<T extends { email: string; cpf: string; telefone: string | null }>(usuario: T) {`
-- Linha 17: `GET` (function) - `export async function GET() {`
+- Linha 17: `GET` (function)
+
 ### controlador/src/app/api/planos/[id]/ativar/route.ts
 
-- Linha 9: `PATCH` (function) - `export async function PATCH(_request: Request, { params }: Params) {`
+- Linha 9: `PATCH` (function)
+
 ### controlador/src/app/api/planos/[id]/desativar/route.ts
 
-- Linha 9: `PATCH` (function) - `export async function PATCH(_request: Request, { params }: Params) {`
+- Linha 9: `PATCH` (function)
+
 ### controlador/src/app/api/planos/[id]/route.ts
 
-- Linha 10: `GET` (function) - `export async function GET(_request: Request, { params }: Params) {`
-- Linha 28: `PUT` (function) - `export async function PUT(request: Request, { params }: Params) {`
+- Linha 10: `GET` (function)
+- Linha 28: `PUT` (function)
+
 ### controlador/src/app/api/planos/planos-api.test.ts
 
-- Linha 20: `requestJson` (function) - `function requestJson(body: unknown) {`
+- Linha 20: `requestJson` (function)
+
 ### controlador/src/app/api/planos/route.ts
 
-- Linha 10: `GET` (function) - `export async function GET(request: NextRequest) {`
-- Linha 36: `POST` (function) - `export async function POST(request: Request) {`
+- Linha 10: `GET` (function)
+- Linha 36: `POST` (function)
+
 ### controlador/src/app/api/prestadores/[id]/assinatura/status/route.ts
 
-- Linha 15: `POST` (function) - `export async function POST(request: Request, { params }: Params) {`
+- Linha 15: `POST` (function)
+
 ### controlador/src/app/api/prestadores/[id]/bloquear/route.ts
 
-- Linha 10: `POST` (function) - `export async function POST(_request: Request, { params }: Params) {`
+- Linha 10: `POST` (function)
+
 ### controlador/src/app/api/prestadores/[id]/liberar/route.ts
 
-- Linha 11: `POST` (function) - `export async function POST(_request: Request, { params }: Params) {`
+- Linha 11: `POST` (function)
+
 ### controlador/src/app/api/prestadores/[id]/route.ts
 
-- Linha 9: `GET` (function) - `export async function GET(_request: NextRequest, { params }: Params) {`
+- Linha 9: `GET` (function)
+
 ### controlador/src/app/api/prestadores/route.ts
 
-- Linha 7: `GET` (function) - `export async function GET(request: NextRequest) {`
+- Linha 7: `GET` (function)
+
 ### controlador/src/app/api/usuarios/[id]/bloquear/route.ts
 
-- Linha 11: `POST` (function) - `export async function POST(request: Request, { params }: Params) {`
+- Linha 11: `POST` (function)
+
 ### controlador/src/app/api/usuarios/[id]/confirmar-email/route.ts
 
-- Linha 9: `POST` (function) - `export async function POST(_request: Request, { params }: Params) {`
+- Linha 9: `POST` (function)
+
 ### controlador/src/app/api/usuarios/[id]/liberar/route.ts
 
-- Linha 12: `POST` (function) - `export async function POST(request: Request, { params }: Params) {`
+- Linha 12: `POST` (function)
+
 ### controlador/src/app/api/usuarios/[id]/route.ts
 
-- Linha 8: `GET` (function) - `export async function GET(_request: NextRequest, { params }: Params) {`
+- Linha 8: `GET` (function)
+
 ### controlador/src/app/api/usuarios/[id]/status-cadastro/route.ts
 
-- Linha 21: `POST` (function) - `export async function POST(request: Request, { params }: Params) {`
+- Linha 21: `POST` (function)
+
 ### controlador/src/app/api/usuarios/route.ts
 
-- Linha 21: `gerarIdAdmin` (function) - `function gerarIdAdmin() {`
-- Linha 25: `GET` (function) - `export async function GET(request: NextRequest) {`
-- Linha 45: `POST` (function) - `export async function POST(request: NextRequest) {`
+- Linha 21: `gerarIdAdmin` (function)
+- Linha 25: `GET` (function)
+- Linha 45: `POST` (function)
+
 ### controlador/src/app/api/webhooks/asaas/route.ts
 
-- Linha 4: `statusErro` (function) - `function statusErro(error: unknown) {`
-- Linha 12: `POST` (function) - `export async function POST(request: NextRequest) {`
+- Linha 4: `statusErro` (function)
+- Linha 12: `POST` (function)
+
+### controlador/src/app/login/page.tsx
+
+- Linha 13: `enviar` (function)
+
 ### controlador/src/components/AdminActionButton.tsx
 
-- Linha 15: `AdminActionButton` (function) - `export function AdminActionButton({`
+- Linha 15: `AdminActionButton` (function)
+- Linha 28: `executar` (function)
+
 ### controlador/src/components/AdminCreateForm.tsx
 
-- Linha 9: `AdminCreateForm` (function) - `export function AdminCreateForm() {`
+- Linha 9: `AdminCreateForm` (function)
+- Linha 14: `onSubmit` (function)
+
 ### controlador/src/components/AdminLayout.tsx
 
-- Linha 12: `AdminLayout` (function) - `export function AdminLayout({ admin, children }: AdminLayoutProps) {`
+- Linha 12: `AdminLayout` (function)
+
 ### controlador/src/components/AssinaturaAdminActions.tsx
 
-- Linha 23: `AssinaturaAdminActions` (function) - `export function AssinaturaAdminActions({ id, statusAtual }: AssinaturaAdminActionsProps) {`
+- Linha 23: `AssinaturaAdminActions` (function)
+- Linha 30: `enviar` (function)
+- Linha 48: `alterarStatus` (function)
+
 ### controlador/src/components/BadgeStatus.tsx
 
-- Linha 7: `classeStatus` (function) - `function classeStatus(status?: string | null | boolean) {`
-- Linha 23: `BadgeStatus` (function) - `export function BadgeStatus({ status }: BadgeStatusProps) {`
+- Linha 7: `classeStatus` (function)
+- Linha 23: `BadgeStatus` (function)
+
 ### controlador/src/components/ConfirmDialog.tsx
 
-- Linha 10: `ConfirmDialog` (function) - `export function ConfirmDialog({ message, children }: ConfirmDialogProps) {`
+- Linha 10: `ConfirmDialog` (function)
+
 ### controlador/src/components/DataTable.tsx
 
-- Linha 9: `DataTable` (function) - `export function DataTable({ headers, children }: DataTableProps) {`
+- Linha 9: `DataTable` (function)
+
 ### controlador/src/components/EmptyState.tsx
 
-- Linha 3: `EmptyState` (function) - `export function EmptyState({ message = "Nenhum registro encontrado." }: { message?: string }) {`
+- Linha 3: `EmptyState` (function)
+
 ### controlador/src/components/ErrorState.tsx
 
-- Linha 3: `ErrorState` (function) - `export function ErrorState({ message = "Nao foi possivel carregar os dados." }: { message?: string }) {`
+- Linha 3: `ErrorState` (function)
+
 ### controlador/src/components/FilterSelect.tsx
 
-- Linha 10: `FilterSelect` (function) - `export function FilterSelect({ name, defaultValue, label, options }: FilterSelectProps) {`
+- Linha 10: `FilterSelect` (function)
+
 ### controlador/src/components/Header.tsx
 
-- Linha 13: `Header` (function) - `export function Header({ nome, email }: HeaderProps) {`
+- Linha 13: `Header` (function)
+- Linha 17: `sair` (function)
+
 ### controlador/src/components/LoadingState.tsx
 
-- Linha 3: `LoadingState` (function) - `export function LoadingState() {`
+- Linha 3: `LoadingState` (function)
+
 ### controlador/src/components/Pagination.tsx
 
-- Linha 12: `Pagination` (function) - `export function Pagination({ page, total, limit, basePath, query = {} }: PaginationProps) {`
+- Linha 12: `Pagination` (function)
+- Linha 14: `buildHref` (const function)
+
 ### controlador/src/components/PlanoForm.tsx
 
-- Linha 20: `PlanoForm` (function) - `export function PlanoForm({ modo, plano }: PlanoFormProps) {`
+- Linha 20: `PlanoForm` (function)
+- Linha 25: `salvar` (function)
+
 ### controlador/src/components/PlanoStatusButton.tsx
 
-- Linha 12: `PlanoStatusButton` (function) - `export function PlanoStatusButton({ id, ativo }: PlanoStatusButtonProps) {`
+- Linha 12: `PlanoStatusButton` (function)
+- Linha 17: `alterar` (function)
+
 ### controlador/src/components/SearchInput.tsx
 
-- Linha 9: `SearchInput` (function) - `export function SearchInput({ name = "busca", defaultValue, placeholder = "Buscar" }: SearchInputProps) {`
+- Linha 9: `SearchInput` (function)
+
 ### controlador/src/components/Sidebar.tsx
 
-- Linha 33: `Sidebar` (function) - `export function Sidebar() {`
+- Linha 33: `Sidebar` (function)
+
 ### controlador/src/components/StatCard.tsx
 
-- Linha 8: `StatCard` (function) - `export function StatCard({ label, value }: StatCardProps) {`
+- Linha 8: `StatCard` (function)
+
 ### controlador/src/lib/adminLog.ts
 
-- Linha 10: `registrarLogAdministrativo` (function) - `export async function registrarLogAdministrativo({`
+- Linha 10: `registrarLogAdministrativo` (function)
+
 ### controlador/src/lib/asaasConfig.ts
 
-- Linha 8: `ambienteAsaas` (function) - `function ambienteAsaas(): AmbienteAsaas {`
-- Linha 27: `validarCompatibilidadeBaseUrl` (function) - `function validarCompatibilidadeBaseUrl(ambiente: AmbienteAsaas, baseUrl: string) {`
-- Linha 45: `obterBaseUrlAsaas` (function) - `export function obterBaseUrlAsaas() {`
+- Linha 8: `ambienteAsaas` (function)
+- Linha 27: `validarCompatibilidadeBaseUrl` (function)
+- Linha 45: `obterBaseUrlAsaas` (function)
+
 ### controlador/src/lib/asaasWebhook.ts
 
-- Linha 41: `erroWebhook` (function) - `function erroWebhook(message: string, status = 400) {`
-- Linha 47: `tokenWebhookAsaasForte` (function) - `function tokenWebhookAsaasForte(token?: string | null) {`
-- Linha 62: `validarToken` (function) - `function validarToken(token?: string | null) {`
-- Linha 74: `payloadAsaas` (function) - `function payloadAsaas(payload: unknown): AsaasWebhookPayload {`
-- Linha 82: `adicionarDias` (function) - `function adicionarDias(data: Date, dias: number) {`
-- Linha 88: `dataAsaas` (function) - `function dataAsaas(valor?: string | null) {`
-- Linha 95: `numeroAsaas` (function) - `function numeroAsaas(valor?: number | string | null) {`
-- Linha 102: `limitar` (function) - `function limitar(valor: string, tamanho: number) {`
-- Linha 106: `jsonEstavel` (function) - `function jsonEstavel(valor: unknown): string {`
-- Linha 112: `hashPayload` (function) - `function hashPayload(valor: unknown) {`
-- Linha 116: `idEventoAsaas` (function) - `function idEventoAsaas(payload: AsaasWebhookPayload, subscriptionId?: string) {`
-- Linha 131: `statusAssinaturaPorEventoAsaas` (function) - `function statusAssinaturaPorEventoAsaas(`
-- Linha 190: `localizarAssinatura` (function) - `async function localizarAssinatura(subscriptionId?: string) {`
-- Linha 202: `processarWebhookAsaasControlador` (function) - `export async function processarWebhookAsaasControlador(input: AsaasWebhookInput) {`
+- Linha 41: `erroWebhook` (function)
+- Linha 47: `tokenWebhookAsaasForte` (function)
+- Linha 62: `validarToken` (function)
+- Linha 74: `payloadAsaas` (function)
+- Linha 82: `adicionarDias` (function)
+- Linha 88: `dataAsaas` (function)
+- Linha 95: `numeroAsaas` (function)
+- Linha 102: `limitar` (function)
+- Linha 106: `jsonEstavel` (function)
+- Linha 112: `hashPayload` (function)
+- Linha 116: `idEventoAsaas` (function)
+- Linha 131: `statusAssinaturaPorEventoAsaas` (function)
+- Linha 190: `localizarAssinatura` (function)
+- Linha 202: `processarWebhookAsaasControlador` (function)
+
 ### controlador/src/lib/assinaturaMonitor.ts
 
-- Linha 8: `statusInativo` (function) - `function statusInativo(status: StatusCadastro) {`
-- Linha 22: `sincronizarAssinaturasEPrestadores` (function) - `export async function sincronizarAssinaturasEPrestadores(): Promise<ResultadoSincronizacaoAssinaturas> {`
+- Linha 8: `statusInativo` (function)
+- Linha 22: `sincronizarAssinaturasEPrestadores` (function)
+
 ### controlador/src/lib/auth.ts
 
-- Linha 15: `adminEhMestre` (function) - `export function adminEhMestre(admin: AdminSession | null | undefined) {`
-- Linha 27: `autenticarAdmin` (function) - `export async function autenticarAdmin(login: string, senha: string) {`
-- Linha 57: `obterSessaoAdmin` (function) - `export async function obterSessaoAdmin(): Promise<AdminSession | null> {`
-- Linha 80: `exigirAdminPagina` (function) - `export async function exigirAdminPagina() {`
-- Linha 89: `exigirAdminApi` (function) - `export async function exigirAdminApi() {`
-- Linha 103: `aplicarCookieSessao` (function) - `export function aplicarCookieSessao(response: NextResponse, token: string) {`
-- Linha 116: `limparCookieSessao` (function) - `export function limparCookieSessao(response: NextResponse) {`
+- Linha 15: `adminEhMestre` (function)
+- Linha 27: `autenticarAdmin` (function)
+- Linha 57: `obterSessaoAdmin` (function)
+- Linha 80: `exigirAdminPagina` (function)
+- Linha 89: `exigirAdminApi` (function)
+- Linha 103: `aplicarCookieSessao` (function)
+- Linha 116: `limparCookieSessao` (function)
+
 ### controlador/src/lib/financeiro.ts
 
-- Linha 3: `statusCadastroPorAssinatura` (function) - `export function statusCadastroPorAssinatura(status: assinaturas_status): usuarios_status_cadastro {`
+- Linha 3: `statusCadastroPorAssinatura` (function)
+
 ### controlador/src/lib/http.ts
 
-- Linha 4: `respostaErro` (function) - `export function respostaErro(error: unknown, fallback = "Erro inesperado.", status = 500) {`
+- Linha 4: `respostaErro` (function)
+
 ### controlador/src/lib/liberacaoUsuario.ts
 
-- Linha 4: `liberarUsuarioOperacional` (function) - `export async function liberarUsuarioOperacional(tx: Prisma.TransactionClient, usuarioId: string) {`
+- Linha 4: `liberarUsuarioOperacional` (function)
+
 ### controlador/src/lib/planoSchemas.ts
 
-- Linha 22: `dadosPlano` (function) - `export function dadosPlano(input: PlanoPayload) {`
+- Linha 22: `dadosPlano` (function)
+
 ### controlador/src/lib/queries.ts
 
-- Linha 21: `obterResumoDashboard` (function) - `export async function obterResumoDashboard() {`
-- Linha 75: `filtrosUsuarios` (function) - `export function filtrosUsuarios(searchParams: URLSearchParams) {`
-- Linha 97: `listarUsuarios` (function) - `export async function listarUsuarios(searchParams: URLSearchParams) {`
-- Linha 127: `listarPrestadores` (function) - `export async function listarPrestadores(searchParams: URLSearchParams) {`
+- Linha 28: `obterResumoDashboard` (function)
+- Linha 82: `filtrosUsuarios` (function)
+- Linha 104: `listarUsuarios` (function)
+- Linha 134: `listarPrestadores` (function)
+
 ### controlador/src/lib/sanitize.ts
 
-- Linha 1: `mascararEmail` (function) - `export function mascararEmail(email?: string | null) {`
-- Linha 9: `mascararDocumento` (function) - `export function mascararDocumento(documento?: string | null) {`
-- Linha 16: `mascararTelefone` (function) - `export function mascararTelefone(telefone?: string | null) {`
-- Linha 23: `normalizarBusca` (function) - `export function normalizarBusca(valor: string | null) {`
-- Linha 28: `paginaAtual` (function) - `export function paginaAtual(valor: string | null) {`
-- Linha 33: `limitePagina` (function) - `export function limitePagina(valor: string | null) {`
+- Linha 1: `mascararEmail` (function)
+- Linha 9: `mascararDocumento` (function)
+- Linha 16: `mascararTelefone` (function)
+- Linha 23: `normalizarBusca` (function)
+- Linha 28: `paginaAtual` (function)
+- Linha 33: `limitePagina` (function)
+
 ### controlador/src/lib/security.test.ts
 
-- Linha 9: `request` (function) - `function request(url: string, init?: RequestInit) {`
+- Linha 9: `request` (function)
+
 ### controlador/src/lib/security.ts
 
-- Linha 12: `normalizarOrigem` (function) - `function normalizarOrigem(valor?: string | null) {`
-- Linha 27: `origensConfiguradas` (function) - `function origensConfiguradas(request: NextRequest) {`
-- Linha 48: `isAsset` (function) - `export function isAsset(pathname: string) {`
-- Linha 60: `isRotaPublica` (function) - `export function isRotaPublica(pathname: string) {`
-- Linha 68: `exigeProtecaoCsrf` (function) - `export function exigeProtecaoCsrf(pathname: string, method: string) {`
-- Linha 77: `origemPermitida` (function) - `export function origemPermitida(request: NextRequest) {`
-- Linha 92: `aplicarHeadersSeguranca` (function) - `export function aplicarHeadersSeguranca(response: NextResponse) {`
-- Linha 106: `bloquearOrigemInvalida` (function) - `export function bloquearOrigemInvalida() {`
+- Linha 12: `normalizarOrigem` (function)
+- Linha 27: `origensConfiguradas` (function)
+- Linha 48: `isAsset` (function)
+- Linha 60: `isRotaPublica` (function)
+- Linha 68: `exigeProtecaoCsrf` (function)
+- Linha 77: `origemPermitida` (function)
+- Linha 92: `aplicarHeadersSeguranca` (function)
+- Linha 106: `bloquearOrigemInvalida` (function)
+
 ### controlador/src/lib/sessionToken.ts
 
-- Linha 14: `getJwtSecret` (function) - `function getJwtSecret() {`
-- Linha 22: `gerarTokenAdmin` (function) - `export async function gerarTokenAdmin(payload: AdminTokenPayload) {`
-- Linha 31: `validarTokenAdmin` (function) - `export async function validarTokenAdmin(token?: string): Promise<AdminTokenPayload | null> {`
+- Linha 14: `getJwtSecret` (function)
+- Linha 22: `gerarTokenAdmin` (function)
+- Linha 31: `validarTokenAdmin` (function)
+
 ### controlador/src/proxy.ts
 
-- Linha 12: `proxy` (function) - `export async function proxy(request: NextRequest) {`
-
-## server
+- Linha 12: `proxy` (function)
 
 ### server/src/main.ts
 
-- Linha 19: `validarAmbiente` (function) - `function validarAmbiente() {`
-- Linha 99: `allowedOrigins` (const function) - `const allowedOrigins = (`
-- Linha 111: `origin` (method) - `origin(origin, callback) {`
+- Linha 19: `validarAmbiente` (function)
+- Linha 111: `origin` (method)
+
 ### server/src/server.ts
 
-- Linha 33: `shouldRunAivenKeepAlive` (function) - `function shouldRunAivenKeepAlive() {`
-- Linha 51: `triggerDatabasePing` (function) - `async function triggerDatabasePing() {`
-- Linha 69: `testDatabaseConnection` (function) - `async function testDatabaseConnection() {`
-- Linha 85: `startKeepAlive` (function) - `function startKeepAlive(runDatabasePing: boolean) {`
-- Linha 106: `bootstrap` (function) - `async function bootstrap() {`
+- Linha 33: `shouldRunAivenKeepAlive` (function)
+- Linha 51: `triggerDatabasePing` (function)
+- Linha 69: `testDatabaseConnection` (function)
+- Linha 85: `startKeepAlive` (function)
+- Linha 106: `bootstrap` (function)
+
 ### server/src/src/__tests__/avaliacao-cancelamento.test.ts
 
-- Linha 35: `dataServico` (function) - `function dataServico(data: string, horaFim = '12:00') {`
+- Linha 35: `dataServico` (function)
+
 ### server/src/src/__tests__/produto-critico.test.ts
 
-- Linha 136: `appComRotasPublicas` (function) - `function appComRotasPublicas() {`
-- Linha 145: `appComRotasProtegidas` (function) - `function appComRotasProtegidas() {`
-- Linha 158: `tokenTeste` (function) - `function tokenTeste(payload: Record<string, unknown>) {`
+- Linha 136: `appComRotasPublicas` (function)
+- Linha 145: `appComRotasProtegidas` (function)
+- Linha 158: `tokenTeste` (function)
+
 ### server/src/src/__tests__/rate-limit.test.ts
 
-- Linha 6: `appComRateLimit` (function) - `function appComRateLimit(nome: string) {`
+- Linha 6: `appComRateLimit` (function)
+
 ### server/src/src/__tests__/upload-seguro.test.ts
 
-- Linha 32: `appUpload` (function) - `function appUpload() {`
-- Linha 38: `pdfTeste` (function) - `function pdfTeste(): Express.Multer.File {`
+- Linha 32: `appUpload` (function)
+- Linha 38: `pdfTeste` (function)
+
 ### server/src/src/__tests__/validacao-entrada.test.ts
 
-- Linha 11: `appComValidacao` (function) - `function appComValidacao(schema: Parameters<typeof validarEntrada>[0]) {`
+- Linha 11: `appComValidacao` (function)
+
 ### server/src/src/controller/Controller_Agendamentos.ts
 
-- Linha 5: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 9: `mensagemErro` (function) - `function mensagemErro(error: any) {`
-- Linha 14: `criar` (method) - `static async criar(req: AuthRequest, res: Response) {`
-- Linha 36: `aceitar` (method) - `static async aceitar(req: AuthRequest, res: Response) {`
-- Linha 58: `cancelar` (method) - `static async cancelar(req: AuthRequest, res: Response) {`
-- Linha 81: `naoRealizado` (method) - `static async naoRealizado(req: AuthRequest, res: Response) {`
-- Linha 104: `finalizar` (method) - `static async finalizar(req: AuthRequest, res: Response) {`
-- Linha 126: `registroManual` (method) - `static async registroManual(req: AuthRequest, res: Response) {`
-- Linha 147: `listarPorTempo` (method) - `static async listarPorTempo(req: AuthRequest, res: Response) {`
-- Linha 173: `listarPorCliente` (method) - `static async listarPorCliente(req: AuthRequest, res: Response) {`
+- Linha 5: `statusErro` (function)
+- Linha 9: `mensagemErro` (function)
+- Linha 13: `AgendamentoController` (class)
+- Linha 14: `criar` (static method)
+- Linha 36: `aceitar` (static method)
+- Linha 58: `cancelar` (static method)
+- Linha 81: `naoRealizado` (static method)
+- Linha 104: `finalizar` (static method)
+- Linha 126: `registroManual` (static method)
+- Linha 147: `listarPorTempo` (static method)
+- Linha 173: `listarPorCliente` (static method)
+
 ### server/src/src/controller/Controller_Assinatura.ts
 
-- Linha 5: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 9: `planoIdDoBody` (function) - `function planoIdDoBody(body: any) {`
-- Linha 22: `dadosPagamentoDoBody` (function) - `function dadosPagamentoDoBody(body: any, req: Request) {`
-- Linha 48: `webhookAsaas` (method) - `async webhookAsaas(req: Request, res: Response) {`
-- Linha 66: `minha` (method) - `async minha(req: AuthRequest, res: Response) {`
-- Linha 82: `planos` (method) - `async planos(_req: Request, res: Response) {`
-- Linha 93: `status` (method) - `async status(req: AuthRequest, res: Response) {`
-- Linha 117: `iniciar` (method) - `async iniciar(req: AuthRequest, res: Response) {`
-- Linha 140: `regularizar` (method) - `async regularizar(req: AuthRequest, res: Response) {`
-- Linha 163: `cancelar` (method) - `async cancelar(req: AuthRequest, res: Response) {`
-- Linha 188: `expirarPendentes` (method) - `async expirarPendentes(req: AuthRequest, res: Response) {`
+- Linha 5: `statusErro` (function)
+- Linha 9: `planoIdDoBody` (function)
+- Linha 22: `dadosPagamentoDoBody` (function)
+- Linha 47: `ControllerAssinatura` (class)
+- Linha 48: `webhookAsaas` (method)
+- Linha 66: `minha` (method)
+- Linha 82: `planos` (method)
+- Linha 93: `status` (method)
+- Linha 117: `iniciar` (method)
+- Linha 140: `regularizar` (method)
+- Linha 163: `cancelar` (method)
+- Linha 188: `expirarPendentes` (method)
+
 ### server/src/src/controller/Controller_Avaliacao.ts
 
-- Linha 5: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 9: `mensagemErro` (function) - `function mensagemErro(error: any) {`
-- Linha 14: `registrar` (method) - `static async registrar(req: AuthRequest, res: Response) {`
-- Linha 35: `disponibilidade` (method) - `static async disponibilidade(req: AuthRequest, res: Response) {`
-- Linha 57: `minhasPendentes` (method) - `static async minhasPendentes(req: AuthRequest, res: Response) {`
-- Linha 74: `listarPorPrestador` (method) - `static async listarPorPrestador(req: Request, res: Response) {`
-- Linha 85: `listarPorCliente` (method) - `static async listarPorCliente(req: Request, res: Response) {`
+- Linha 5: `statusErro` (function)
+- Linha 9: `mensagemErro` (function)
+- Linha 13: `ControllerAvaliacao` (class)
+- Linha 14: `registrar` (static method)
+- Linha 35: `disponibilidade` (static method)
+- Linha 57: `minhasPendentes` (static method)
+- Linha 74: `listarPorPrestador` (static method)
+- Linha 85: `listarPorCliente` (static method)
+
 ### server/src/src/controller/Controller_ConfirmacaoEmail.ts
 
-- Linha 6: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 11: `confirmar` (method) - `async confirmar(req: Request, res: Response) {`
-- Linha 32: `reenviar` (method) - `async reenviar(req: AuthRequest, res: Response) {`
-- Linha 54: `status` (method) - `async status(req: AuthRequest, res: Response) {`
+- Linha 6: `statusErro` (function)
+- Linha 10: `ControllerConfirmacaoEmail` (class)
+- Linha 11: `confirmar` (method)
+- Linha 32: `reenviar` (method)
+- Linha 54: `status` (method)
+
 ### server/src/src/controller/Controller_Crud.ts
 
-- Linha 18: `getErrorMessage` (function) - `function getErrorMessage(error: unknown): string {`
-- Linha 24: `statusErroCrud` (function) - `function statusErroCrud(msg: string) {`
-- Linha 28: `validarEntidade` (function) - `function validarEntidade(req: Request) {`
-- Linha 53: `listarTodos` (method) - `static async listarTodos(req: Request, res: Response) {`
-- Linha 65: `buscarPorId` (method) - `static async buscarPorId(req: Request, res: Response) {`
-- Linha 86: `buscarPorCampo` (method) - `static async buscarPorCampo(req: Request, res: Response) {`
-- Linha 102: `criarRegistro` (method) - `static async criarRegistro(req: Request, res: Response) {`
-- Linha 118: `criarMultiplos` (method) - `static async criarMultiplos(req: Request, res: Response) {`
+- Linha 18: `getErrorMessage` (function)
+- Linha 24: `statusErroCrud` (function)
+- Linha 28: `validarEntidade` (function)
+- Linha 32: `CrudController` (class)
+- Linha 53: `listarTodos` (static method)
+- Linha 65: `buscarPorId` (static method)
+- Linha 86: `buscarPorCampo` (static method)
+- Linha 102: `criarRegistro` (static method)
+- Linha 118: `criarMultiplos` (static method)
+
 ### server/src/src/controller/Controller_Localizacao.ts
 
-- Linha 14: `normalizarParaJson` (function) - `function normalizarParaJson(valor: unknown): unknown {`
+- Linha 14: `normalizarParaJson` (function)
+- Linha 44: `GeolocalizacaoController` (class)
+
 ### server/src/src/controller/Controller_Login.ts
 
-- Linha 16: `erroAutenticacao` (function) - `function erroAutenticacao(mensagem: string) {`
-- Linha 25: `iniciarSocial` (method) - `static iniciarSocial(provider: 'google' | 'facebook') {`
-- Linha 48: `callbackSocial` (method) - `static callbackSocial(provider: 'google' | 'facebook') {`
-- Linha 92: `completarCadastroSocial` (method) - `static async completarCadastroSocial(req: Request, res: Response) {`
-- Linha 116: `login` (method) - `static async login(req: Request, res: Response) {`
-- Linha 155: `me` (method) - `static async me(req: AuthRequest, res: Response) {`
-- Linha 172: `logout` (method) - `static logout(_req: Request, res: Response) {`
-- Linha 178: `cadastroSocialPendente` (method) - `static async cadastroSocialPendente(req: Request, res: Response) {`
+- Linha 16: `erroAutenticacao` (function)
+- Linha 24: `AuthController` (class)
+- Linha 25: `iniciarSocial` (static method)
+- Linha 48: `callbackSocial` (static method)
+- Linha 92: `completarCadastroSocial` (static method)
+- Linha 116: `login` (static method)
+- Linha 155: `me` (static method)
+- Linha 172: `logout` (static method)
+- Linha 178: `cadastroSocialPendente` (static method)
+
 ### server/src/src/controller/Controller_Onboarding.ts
 
-- Linha 5: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 10: `status` (method) - `async status(req: AuthRequest, res: Response) {`
+- Linha 5: `statusErro` (function)
+- Linha 9: `ControllerOnboarding` (class)
+- Linha 10: `status` (method)
+
 ### server/src/src/controller/Controller_Perfil.ts
 
-- Linha 22: `removerCamposProtegidos` (function) - `function removerCamposProtegidos(dados: any) {`
-- Linha 32: `statusErroPerfil` (function) - `function statusErroPerfil(error: any) {`
-- Linha 72: `alterarSenha` (method) - `async alterarSenha(req: AuthRequest, res: Response) {`
-- Linha 99: `obterMeuPerfil` (method) - `async obterMeuPerfil(req: AuthRequest, res: Response) {    try {`
-- Linha 130: `obterResumoPerfil` (method) - `async obterResumoPerfil(req: AuthRequest, res: Response) {    try {`
-- Linha 206: `vitrinePrestador` (method) - `async vitrinePrestador(req: Request, res: Response) {`
+- Linha 23: `removerCamposProtegidos` (function)
+- Linha 33: `statusErroPerfil` (function)
+- Linha 72: `ControllerPerfil` (class)
+- Linha 73: `alterarSenha` (method)
+- Linha 100: `obterMeuPerfil` (method)
+- Linha 131: `obterResumoPerfil` (method)
+- Linha 207: `vitrinePrestador` (method)
+
 ### server/src/src/controller/Controller_RecuperacaoSenha.ts
 
-- Linha 4: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 9: `enviarEmail` (method) - `static async enviarEmail(req: Request, res: Response) {`
-- Linha 22: `validarToken` (method) - `static async validarToken(req: Request, res: Response) {`
-- Linha 37: `redefinirSenha` (method) - `static async redefinirSenha(req: Request, res: Response) {`
+- Linha 4: `statusErro` (function)
+- Linha 8: `RecuperacaoSenhaController` (class)
+- Linha 9: `enviarEmail` (static method)
+- Linha 22: `validarToken` (static method)
+- Linha 37: `redefinirSenha` (static method)
+
 ### server/src/src/controller/Controller_Servico.ts
 
-- Linha 5: `statusErro` (function) - `function statusErro(error: any) {`
-- Linha 9: `mensagemErro` (function) - `function mensagemErro(error: any) {`
-- Linha 14: `listarMeus` (method) - `static async listarMeus(req: AuthRequest, res: Response) {`
-- Linha 29: `criar` (method) - `static async criar(req: AuthRequest, res: Response) {`
-- Linha 44: `atualizar` (method) - `static async atualizar(req: AuthRequest, res: Response) {`
-- Linha 63: `remover` (method) - `static async remover(req: AuthRequest, res: Response) {`
+- Linha 5: `statusErro` (function)
+- Linha 9: `mensagemErro` (function)
+- Linha 13: `ControllerServico` (class)
+- Linha 14: `listarMeus` (static method)
+- Linha 29: `criar` (static method)
+- Linha 44: `atualizar` (static method)
+- Linha 63: `remover` (static method)
+
+### server/src/src/controller/Controller_Upload.ts
+
+- Linha 12: `UploadController` (class)
+
+### server/src/src/controller/Controller_User.ts
+
+- Linha 14: `UserController` (class)
+
 ### server/src/src/gateways/pagamento/AsaasPagamentoGateway.ts
 
-- Linha 48: `apiKeyObrigatoria` (function) - `function apiKeyObrigatoria() {`
-- Linha 56: `ambienteAsaas` (function) - `function ambienteAsaas(): AmbienteAsaas {`
-- Linha 82: `validarCompatibilidadeBaseUrl` (function) - `function validarCompatibilidadeBaseUrl(`
-- Linha 103: `baseUrlAsaas` (function) - `function baseUrlAsaas() {`
-- Linha 115: `dataIsoSomenteData` (function) - `function dataIsoSomenteData(data: Date) {`
-- Linha 119: `adicionarDias` (function) - `function adicionarDias(data: Date, dias: number) {`
-- Linha 125: `billingTypeAssinatura` (function) - `function billingTypeAssinatura(input: CriarAssinaturaMensalInput) {`
-- Linha 141: `mensagemPorBillingType` (function) - `function mensagemPorBillingType(billingType: string) {`
-- Linha 157: `complementoSemCobrancaAcessivel` (function) - `function complementoSemCobrancaAcessivel(`
-- Linha 169: `normalizarStatusAsaas` (function) - `function normalizarStatusAsaas(status?: string): GatewayStatusAssinatura {`
-- Linha 178: `mensagemErroAsaas` (function) - `function mensagemErroAsaas(error: unknown) {`
-- Linha 194: `statusErroGateway` (function) - `function statusErroGateway(`
-- Linha 209: `isPix` (function) - `function isPix(input: CriarAssinaturaMensalInput) {`
-- Linha 213: `dadosCartaoAsaas` (function) - `function dadosCartaoAsaas(input: CriarAssinaturaMensalInput) {`
-- Linha 235: `constructor` (method) - `constructor() {`
+- Linha 48: `apiKeyObrigatoria` (function)
+- Linha 56: `ambienteAsaas` (function)
+- Linha 82: `validarCompatibilidadeBaseUrl` (function)
+- Linha 103: `baseUrlAsaas` (function)
+- Linha 115: `dataIsoSomenteData` (function)
+- Linha 119: `adicionarDias` (function)
+- Linha 125: `billingTypeAssinatura` (function)
+- Linha 141: `mensagemPorBillingType` (function)
+- Linha 157: `complementoSemCobrancaAcessivel` (function)
+- Linha 169: `normalizarStatusAsaas` (function)
+- Linha 178: `mensagemErroAsaas` (function)
+- Linha 194: `statusErroGateway` (function)
+- Linha 209: `isPix` (function)
+- Linha 213: `dadosCartaoAsaas` (function)
+- Linha 232: `AsaasPagamentoGateway` (class)
+- Linha 235: `constructor` (method)
+
 ### server/src/src/gateways/pagamento/index.ts
 
-- Linha 5: `obterPagamentoGateway` (function) - `export function obterPagamentoGateway(): PagamentoGateway {`
+- Linha 5: `obterPagamentoGateway` (function)
+
 ### server/src/src/lib/logger.ts
 
-- Linha 31: `mascararEmail` (function) - `function mascararEmail(valor: string) {`
-- Linha 38: `sanitizar` (function) - `function sanitizar(valor: unknown): unknown {`
+- Linha 31: `mascararEmail` (function)
+- Linha 38: `sanitizar` (function)
+
 ### server/src/src/lib/sessionCookie.ts
 
-- Linha 8: `cookieSecure` (function) - `function cookieSecure() {`
-- Linha 12: `obterHost` (function) - `function obterHost(url?: string) {`
-- Linha 22: `frontendBackendEmSitesDiferentes` (function) - `function frontendBackendEmSitesDiferentes() {`
-- Linha 39: `sameSite` (function) - `function sameSite(): 'strict' | 'lax' | 'none' {`
-- Linha 47: `definirCookieSessao` (function) - `export function definirCookieSessao(res: Response, token: string) {`
-- Linha 57: `limparCookieSessao` (function) - `export function limparCookieSessao(res: Response) {`
-- Linha 66: `definirCookieCadastroSocial` (function) - `export function definirCookieCadastroSocial(res: Response, token: string) {`
-- Linha 76: `limparCookieCadastroSocial` (function) - `export function limparCookieCadastroSocial(res: Response) {`
+- Linha 8: `cookieSecure` (function)
+- Linha 12: `obterHost` (function)
+- Linha 22: `frontendBackendEmSitesDiferentes` (function)
+- Linha 39: `sameSite` (function)
+- Linha 47: `definirCookieSessao` (function)
+- Linha 57: `limparCookieSessao` (function)
+- Linha 66: `definirCookieCadastroSocial` (function)
+- Linha 76: `limparCookieCadastroSocial` (function)
+
 ### server/src/src/lib/uploadScanner.ts
 
-- Linha 7: `scanMode` (function) - `function scanMode() {`
-- Linha 11: `clamavHost` (function) - `function clamavHost() {`
-- Linha 15: `clamavPort` (function) - `function clamavPort() {`
-- Linha 19: `clamavTimeoutMs` (function) - `function clamavTimeoutMs() {`
-- Linha 23: `dividirBuffer` (function) - `function dividirBuffer(buffer: Buffer, tamanho = 64 * 1024) {`
-- Linha 31: `tamanhoChunk` (function) - `function tamanhoChunk(tamanho: number) {`
-- Linha 37: `scanComClamav` (function) - `async function scanComClamav(buffer: Buffer): Promise<ScanResultado> {`
-- Linha 87: `verificarArquivoSeguro` (function) - `export async function verificarArquivoSeguro(`
-- Linha 103: `uploadScannerObrigatorioEmProducao` (function) - `export function uploadScannerObrigatorioEmProducao() {`
+- Linha 7: `scanMode` (function)
+- Linha 11: `clamavHost` (function)
+- Linha 15: `clamavPort` (function)
+- Linha 19: `clamavTimeoutMs` (function)
+- Linha 23: `dividirBuffer` (function)
+- Linha 31: `tamanhoChunk` (function)
+- Linha 37: `scanComClamav` (function)
+- Linha 46: `encerrar` (const function)
+- Linha 87: `verificarArquivoSeguro` (function)
+- Linha 103: `uploadScannerObrigatorioEmProducao` (function)
+
 ### server/src/src/middleware/autenticacao.ts
 
-- Linha 7: `obterJwtSecret` (function) - `function obterJwtSecret() {`
-- Linha 19: `extrairBearerToken` (function) - `function extrairBearerToken(authHeader?: string) {`
-- Linha 28: `extrairToken` (function) - `function extrairToken(req: Request) {`
-- Linha 37: `payloadValido` (function) - `function payloadValido(`
-- Linha 47: `authMiddleware` (function) - `export function authMiddleware(`
+- Linha 7: `obterJwtSecret` (function)
+- Linha 19: `extrairBearerToken` (function)
+- Linha 28: `extrairToken` (function)
+- Linha 37: `payloadValido` (function)
+- Linha 47: `authMiddleware` (function)
+
 ### server/src/src/middleware/autorizacao.ts
 
-- Linha 10: `permitirTipos` (function) - `export function permitirTipos(tiposPermitidos: string[]): RequestHandler {`
-- Linha 35: `permitirDonoOuAdmin` (function) - `export function permitirDonoOuAdmin(paramName = 'id'): RequestHandler {`
-- Linha 55: `garantirPrestadorOperacional` (function) - `export function garantirPrestadorOperacional(`
+- Linha 9: `permitirTipos` (function)
+- Linha 34: `permitirDonoOuAdmin` (function)
+- Linha 54: `garantirPrestadorOperacional` (function)
+
 ### server/src/src/middleware/autorizarUsuarioAlvo.ts
 
-- Linha 5: `autorizarUsuarioAlvo` (function) - `export function autorizarUsuarioAlvo(`
+- Linha 5: `autorizarUsuarioAlvo` (function)
+
 ### server/src/src/middleware/rateLimit.ts
 
-- Linha 16: `usarUpstash` (function) - `function usarUpstash() {`
-- Linha 20: `upstashConfigurado` (function) - `function upstashConfigurado() {`
-- Linha 26: `chaveRequisicao` (function) - `function chaveRequisicao(req: Request, nome: string) {`
-- Linha 36: `rateLimit` (function) - `export function rateLimit(options: RateLimitOptions) {`
-- Linha 83: `comandoUpstash` (function) - `async function comandoUpstash<T>(comando: unknown[]): Promise<T> {`
-- Linha 107: `rateLimitUpstash` (function) - `async function rateLimitUpstash(`
+- Linha 16: `usarUpstash` (function)
+- Linha 20: `upstashConfigurado` (function)
+- Linha 26: `chaveRequisicao` (function)
+- Linha 36: `rateLimit` (function)
+- Linha 107: `rateLimitUpstash` (function)
+
 ### server/src/src/middleware/uploadCadastro.ts
 
-- Linha 19: `exigirUploadsHabilitados` (function) - `export function exigirUploadsHabilitados(`
-- Linha 34: `validarTokenUploadCadastro` (function) - `export function validarTokenUploadCadastro(`
-- Linha 118: `nomeSuspeito` (function) - `function nomeSuspeito(nome: string) {`
-- Linha 122: `validarArquivosUploadCadastro` (function) - `export async function validarArquivosUploadCadastro(`
+- Linha 19: `exigirUploadsHabilitados` (function)
+- Linha 34: `validarTokenUploadCadastro` (function)
+- Linha 118: `nomeSuspeito` (function)
+- Linha 122: `validarArquivosUploadCadastro` (function)
+
 ### server/src/src/middleware/user.ts
 
-- Linha 21: `validarUsuario` (function) - `export function validarUsuario(`
+- Linha 21: `validarUsuario` (function)
+
 ### server/src/src/middleware/validacaoEntrada.ts
 
-- Linha 7: `detalhesErro` (function) - `function detalhesErro(error: ZodError) {`
-- Linha 14: `validarEntrada` (function) - `export function validarEntrada(`
+- Linha 7: `detalhesErro` (function)
+- Linha 14: `validarEntrada` (function)
+
 ### server/src/src/route/Route_Login.ts
 
-- Linha 35: `isProvedorSocial` (function) - `function isProvedorSocial(provider: string): provider is ProvedorSocial {`
+- Linha 35: `isProvedorSocial` (function)
+
 ### server/src/src/scripts/backup-db.ts
 
-- Linha 8: `timestampArquivo` (function) - `function timestampArquivo() {`
-- Linha 16: `executarBackup` (function) - `async function executarBackup() {`
+- Linha 8: `timestampArquivo` (function)
+- Linha 16: `executarBackup` (function)
+
 ### server/src/src/scripts/db-url.ts
 
-- Linha 9: `parseDatabaseUrl` (function) - `export function parseDatabaseUrl(): DatabaseConnectionInfo {`
+- Linha 9: `parseDatabaseUrl` (function)
+
 ### server/src/src/scripts/ensure-profile-fields.ts
 
-- Linha 179: `colunaExiste` (function) - `async function colunaExiste(tabela: string, coluna: string) {`
-- Linha 191: `tabelaExiste` (function) - `async function tabelaExiste(tabela: string) {`
-- Linha 202: `garantirTabelaConfirmacoesEmail` (function) - `async function garantirTabelaConfirmacoesEmail() {`
-- Linha 233: `garantirColuna` (function) - `async function garantirColuna({`
-- Linha 257: `garantirIndiceAssinaturaPrestadorStatus` (function) - `async function garantirIndiceAssinaturaPrestadorStatus() {`
-- Linha 284: `sincronizarStatusCadastroPrestadores` (function) - `async function sincronizarStatusCadastroPrestadores() {`
-- Linha 312: `ensureProfileFields` (function) - `export async function ensureProfileFields() {`
+- Linha 179: `colunaExiste` (function)
+- Linha 191: `tabelaExiste` (function)
+- Linha 202: `garantirTabelaConfirmacoesEmail` (function)
+- Linha 239: `definicaoPostgres` (function)
+- Linha 253: `garantirColuna` (function)
+- Linha 282: `garantirIndiceAssinaturaPrestadorStatus` (function)
+- Linha 309: `sincronizarStatusCadastroPrestadores` (function)
+- Linha 337: `ensureProfileFields` (function)
+
 ### server/src/src/scripts/expirar-assinaturas-pendentes.ts
 
-- Linha 5: `main` (function) - `async function main() {`
+- Linha 5: `main` (function)
+
 ### server/src/src/scripts/keep-alive.ts
 
-- Linha 3: `aivenKeepAlive` (function) - `async function aivenKeepAlive() {  try {`
+- Linha 3: `aivenKeepAlive` (function)
+
 ### server/src/src/scripts/limpar-tokens.ts
 
-- Linha 4: `main` (function) - `async function main() {`
+- Linha 4: `main` (function)
+
 ### server/src/src/scripts/ping-db.ts
 
-- Linha 3: `keepAlive` (function) - `async function keepAlive() {  try {`
+- Linha 3: `keepAlive` (function)
+
 ### server/src/src/scripts/restore-db.ts
 
-- Linha 8: `obterArquivoBackup` (function) - `function obterArquivoBackup() {`
-- Linha 30: `executarRestore` (function) - `async function executarRestore() {`
+- Linha 8: `obterArquivoBackup` (function)
+- Linha 30: `executarRestore` (function)
+
 ### server/src/src/scripts/verificar-assinaturas.ts
 
-- Linha 5: `main` (function) - `async function main() {`
+- Linha 5: `main` (function)
+
 ### server/src/src/service/Service_Agendamento.ts
 
-- Linha 57: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 65: `dataSomenteData` (function) - `function dataSomenteData(valor?: string) {`
-- Linha 80: `horaSomenteHora` (function) - `function horaSomenteHora(`
-- Linha 108: `horaFimPadrao` (function) - `function horaFimPadrao(`
-- Linha 124: `formatarMoeda` (function) - `function formatarMoeda(`
-- Linha 133: `formatarData` (function) - `function formatarData(valor: Date) {`
-- Linha 141: `formatarHora` (function) - `function formatarHora(valor: Date) {`
-- Linha 149: `dataHoraInicioServico` (function) - `function dataHoraInicioServico(`
-- Linha 164: `calcularCancelamentoMvp` (function) - `export function calcularCancelamentoMvp(`
-- Linha 196: `respostaCancelamento` (function) - `function respostaCancelamento(`
-- Linha 231: `htmlBase` (function) - `function htmlBase(titulo: string, corpo: string) {`
-- Linha 243: `enviarEmailSeguro` (function) - `async function enviarEmailSeguro(`
-- Linha 261: `notificarCriacao` (function) - `async function notificarCriacao(`
-- Linha 303: `notificarMudancaStatus` (function) - `async function notificarMudancaStatus(`
-- Linha 356: `buscarContratacaoCompleta` (function) - `async function buscarContratacaoCompleta(id: number) {`
+- Linha 57: `erroNegocio` (function)
+- Linha 65: `dataSomenteData` (function)
+- Linha 80: `horaSomenteHora` (function)
+- Linha 108: `horaFimPadrao` (function)
+- Linha 124: `formatarMoeda` (function)
+- Linha 133: `formatarData` (function)
+- Linha 141: `formatarHora` (function)
+- Linha 149: `dataHoraInicioServico` (function)
+- Linha 164: `calcularCancelamentoMvp` (function)
+- Linha 196: `respostaCancelamento` (function)
+- Linha 231: `htmlBase` (function)
+- Linha 243: `enviarEmailSeguro` (function)
+- Linha 261: `notificarCriacao` (function)
+- Linha 303: `notificarMudancaStatus` (function)
+- Linha 356: `buscarContratacaoCompleta` (function)
+- Linha 378: `ServiceAgendamento` (class)
+
 ### server/src/src/service/Service_Assinatura.ts
 
-- Linha 92: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 98: `tokenWebhookAsaasForte` (function) - `function tokenWebhookAsaasForte(token?: string | null) {`
-- Linha 113: `adicionarDias` (function) - `function adicionarDias(data: Date, dias: number) {`
-- Linha 119: `valorAssinaturaMensal` (function) - `function valorAssinaturaMensal(valorPlano: Prisma.Decimal | number | string) {`
-- Linha 137: `obterOuCriarPlanoAssinatura` (function) - `async function obterOuCriarPlanoAssinatura(planoId: number) {`
-- Linha 149: `statusCadastroPorAssinatura` (function) - `function statusCadastroPorAssinatura(`
-- Linha 179: `motivoPerfilInativo` (function) - `function motivoPerfilInativo(status?: assinaturas_status | null) {`
-- Linha 191: `dataIsoOuNull` (function) - `function dataIsoOuNull(data?: Date | string | null) {`
-- Linha 197: `statusGatewayResposta` (function) - `function statusGatewayResposta(`
-- Linha 214: `proximaAcaoAssinatura` (function) - `function proximaAcaoAssinatura(`
-- Linha 239: `mensagemUsuarioAssinatura` (function) - `function mensagemUsuarioAssinatura(`
-- Linha 291: `payloadAsaas` (function) - `function payloadAsaas(payload: unknown): AsaasWebhookPayload {`
-- Linha 299: `dataAsaas` (function) - `function dataAsaas(valor?: string | null) {`
-- Linha 307: `limitarGatewayStatus` (function) - `function limitarGatewayStatus(valor: string) {`
-- Linha 311: `tipoEventoFinanceiro` (function) - `function tipoEventoFinanceiro(status: assinaturas_status | null, event?: string) {`
-- Linha 320: `idEventoAsaas` (function) - `function idEventoAsaas(payload: AsaasWebhookPayload, gatewaySubscriptionId?: string) {`
-- Linha 335: `resumoPayloadAsaas` (function) - `function resumoPayloadAsaas(payload: AsaasWebhookPayload) {`
-- Linha 352: `jsonEstavel` (function) - `function jsonEstavel(valor: unknown): string {`
-- Linha 367: `hashPayload` (function) - `function hashPayload(valor: unknown) {`
-- Linha 371: `registrarEventoAssinatura` (function) - `async function registrarEventoAssinatura(`
-- Linha 403: `validarDadosPagamentoAssinatura` (function) - `function validarDadosPagamentoAssinatura(`
-- Linha 454: `calcularConfirmacaoExpiraEm` (method) - `static calcularConfirmacaoExpiraEm() {`
-- Linha 460: `registrarEventoFinanceiro` (method) - `static async registrarEventoFinanceiro(input: RegistrarEventoInput) {`
-- Linha 464: `listarPlanosDisponiveis` (method) - `static async listarPlanosDisponiveis() {`
-- Linha 483: `obterAssinaturaAtual` (method) - `static async obterAssinaturaAtual(prestadorId: string) {`
-- Linha 490: `obterStatusAssinaturaPrestador` (method) - `static async obterStatusAssinaturaPrestador(prestadorId: string) {`
-- Linha 630: `prestadorPodeAparecerNaBusca` (method) - `static async prestadorPodeAparecerNaBusca(prestadorId: string) {`
-- Linha 636: `prestadorPodeReceberPedidos` (method) - `static async prestadorPodeReceberPedidos(prestadorId: string) {`
-- Linha 642: `prestadorPodeUsarPerfilProfissional` (method) - `static async prestadorPodeUsarPerfilProfissional(prestadorId: string) {`
-- Linha 992: `cancelarAssinaturaPrestador` (method) - `static async cancelarAssinaturaPrestador(prestadorId: string) {`
-- Linha 1046: `expirarAssinaturasSemConfirmacao` (method) - `static async expirarAssinaturasSemConfirmacao() {`
-- Linha 1100: `verificarAssinaturasVencidas` (method) - `static async verificarAssinaturasVencidas() {`
-- Linha 1215: `validarTokenWebhookAsaas` (method) - `static validarTokenWebhookAsaas(token?: string) {`
-- Linha 1289: `processarWebhookAsaas` (method) - `static async processarWebhookAsaas(input: WebhookAsaasInput) {`
-- Linha 1604: `statusCadastroPorAssinatura` (method) - `static statusCadastroPorAssinatura(status: assinaturas_status) {`
+- Linha 92: `erroNegocio` (function)
+- Linha 98: `tokenWebhookAsaasForte` (function)
+- Linha 113: `adicionarDias` (function)
+- Linha 119: `valorAssinaturaMensal` (function)
+- Linha 137: `obterOuCriarPlanoAssinatura` (function)
+- Linha 149: `statusCadastroPorAssinatura` (function)
+- Linha 179: `motivoPerfilInativo` (function)
+- Linha 191: `dataIsoOuNull` (function)
+- Linha 197: `statusGatewayResposta` (function)
+- Linha 214: `proximaAcaoAssinatura` (function)
+- Linha 239: `mensagemUsuarioAssinatura` (function)
+- Linha 291: `payloadAsaas` (function)
+- Linha 299: `dataAsaas` (function)
+- Linha 307: `limitarGatewayStatus` (function)
+- Linha 311: `tipoEventoFinanceiro` (function)
+- Linha 320: `idEventoAsaas` (function)
+- Linha 335: `resumoPayloadAsaas` (function)
+- Linha 352: `jsonEstavel` (function)
+- Linha 367: `hashPayload` (function)
+- Linha 371: `registrarEventoAssinatura` (function)
+- Linha 403: `validarDadosPagamentoAssinatura` (function)
+- Linha 453: `ServiceAssinatura` (class)
+- Linha 454: `calcularConfirmacaoExpiraEm` (static method)
+- Linha 460: `registrarEventoFinanceiro` (static method)
+- Linha 464: `listarPlanosDisponiveis` (static method)
+- Linha 483: `obterAssinaturaAtual` (static method)
+- Linha 490: `obterStatusAssinaturaPrestador` (static method)
+- Linha 630: `prestadorPodeAparecerNaBusca` (static method)
+- Linha 636: `prestadorPodeReceberPedidos` (static method)
+- Linha 642: `prestadorPodeUsarPerfilProfissional` (static method)
+- Linha 992: `cancelarAssinaturaPrestador` (static method)
+- Linha 1046: `expirarAssinaturasSemConfirmacao` (static method)
+- Linha 1100: `verificarAssinaturasVencidas` (static method)
+- Linha 1215: `validarTokenWebhookAsaas` (static method)
+- Linha 1289: `processarWebhookAsaas` (static method)
+- Linha 1604: `statusCadastroPorAssinatura` (static method)
+
 ### server/src/src/service/Service_Autenticacao.ts
 
-- Linha 25: `obterJwtSecret` (function) - `function obterJwtSecret() {`
-- Linha 37: `obterFrontendUrl` (function) - `function obterFrontendUrl() {`
-- Linha 41: `obterBackendUrl` (function) - `function obterBackendUrl() {`
-- Linha 50: `criarTokenSessao` (function) - `function criarTokenSessao(user: {`
-- Linha 70: `criarUrlCallback` (function) - `function criarUrlCallback(provider: SocialProvider) {`
-- Linha 83: `criarSenhaSocial` (function) - `function criarSenhaSocial() {`
-- Linha 87: `normalizarDigitos` (function) - `function normalizarDigitos(valor: unknown) {`
-- Linha 91: `valorObrigatorio` (function) - `function valorObrigatorio(valor: unknown) {`
-- Linha 95: `normalizarDecimal` (function) - `function normalizarDecimal(valor: unknown) {`
-- Linha 100: `montarPerfilProfissional` (function) - `function montarPerfilProfissional(data: any, tipo: TipoCadastroSocial) {`
-- Linha 123: `validarComplementoCadastroSocial` (function) - `function validarComplementoCadastroSocial(data: any) {`
-- Linha 188: `mascararIdentificador` (function) - `function mascararIdentificador(identificador: string) {`
-- Linha 197: `iniciarLoginSocial` (method) - `static iniciarLoginSocial(provider: SocialProvider, state: string) {`
-- Linha 275: `completarCadastroSocial` (method) - `static async completarCadastroSocial(data: any) {`
-- Linha 379: `obterCadastroSocialPendente` (method) - `static async obterCadastroSocialPendente(token: string) {`
-- Linha 403: `obterUsuarioAutenticado` (method) - `static async obterUsuarioAutenticado(usuarioId: string) {`
+- Linha 22: `obterJwtSecret` (function)
+- Linha 34: `obterFrontendUrl` (function)
+- Linha 38: `obterBackendUrl` (function)
+- Linha 47: `criarTokenSessao` (function)
+- Linha 67: `criarUrlCallback` (function)
+- Linha 80: `criarSenhaSocial` (function)
+- Linha 84: `normalizarDigitos` (function)
+- Linha 88: `valorObrigatorio` (function)
+- Linha 92: `normalizarDecimal` (function)
+- Linha 97: `montarPerfilProfissional` (function)
+- Linha 121: `validarComplementoCadastroSocial` (function)
+- Linha 194: `mascararIdentificador` (function)
+- Linha 202: `ServiceAuth` (class)
+- Linha 203: `iniciarLoginSocial` (static method)
+- Linha 281: `completarCadastroSocial` (static method)
+- Linha 390: `obterCadastroSocialPendente` (static method)
+- Linha 414: `obterUsuarioAutenticado` (static method)
+
 ### server/src/src/service/Service_Avaliacao.ts
 
-- Linha 32: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 38: `dataHoraFimServico` (function) - `function dataHoraFimServico(contratacao: Pick<contratacoes, 'data' | 'hora_fim'>) {`
-- Linha 53: `tipoAvaliacaoDaParte` (function) - `function tipoAvaliacaoDaParte(`
-- Linha 78: `respostaDisponibilidade` (function) - `function respostaDisponibilidade(`
-- Linha 99: `atualizarMediaUsuario` (function) - `async function atualizarMediaUsuario(usuarioId: string) {`
-- Linha 225: `registrarAvaliacao` (method) - `static async registrarAvaliacao(data: any, usuario: UsuarioAvaliacao) {`
-- Linha 309: `listarPendentes` (method) - `static async listarPendentes(usuario: UsuarioAvaliacao) {`
-- Linha 362: `obterAvaliacoesPorPrestador` (method) - `static async obterAvaliacoesPorPrestador(prestadorId: string) {`
-- Linha 380: `obterAvaliacoesPorCliente` (method) - `static async obterAvaliacoesPorCliente(clienteId: string) {`
+- Linha 32: `erroNegocio` (function)
+- Linha 38: `dataHoraFimServico` (function)
+- Linha 53: `tipoAvaliacaoDaParte` (function)
+- Linha 78: `respostaDisponibilidade` (function)
+- Linha 99: `atualizarMediaUsuario` (function)
+- Linha 115: `ServiceAvaliacao` (class)
+- Linha 225: `registrarAvaliacao` (static method)
+- Linha 309: `listarPendentes` (static method)
+- Linha 362: `obterAvaliacoesPorPrestador` (static method)
+- Linha 380: `obterAvaliacoesPorCliente` (static method)
+
 ### server/src/src/service/Service_ConfirmacaoEmail.ts
 
-- Linha 10: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 16: `erroServicoEmail` (function) - `function erroServicoEmail(error: unknown) {`
-- Linha 42: `frontendUrl` (function) - `function frontendUrl() {`
-- Linha 46: `linkConfirmacaoEmail` (function) - `function linkConfirmacaoEmail(token: string, tipo?: string) {`
-- Linha 54: `adicionarHoras` (function) - `function adicionarHoras(data: Date, horas: number) {`
-- Linha 60: `htmlConfirmacao` (function) - `function htmlConfirmacao(nome: string, link: string, tipo?: string) {`
-- Linha 83: `gerarTokenConfirmacao` (method) - `static gerarTokenConfirmacao(_usuarioId: string) {`
-- Linha 87: `criarConfirmacaoEmail` (method) - `static async criarConfirmacaoEmail(usuarioId: string) {`
-- Linha 102: `enviarEmailConfirmacao` (method) - `static async enviarEmailConfirmacao(usuarioId: string) {`
-- Linha 159: `confirmarEmail` (method) - `static async confirmarEmail(token: string) {`
-- Linha 218: `reenviarConfirmacao` (method) - `static async reenviarConfirmacao(usuarioId: string) {`
-- Linha 253: `obterStatusEmail` (method) - `static async obterStatusEmail(usuarioId: string) {`
-- Linha 267: `validarEmailConfirmado` (method) - `static async validarEmailConfirmado(usuarioId: string) {`
+- Linha 10: `erroNegocio` (function)
+- Linha 16: `erroServicoEmail` (function)
+- Linha 42: `frontendUrl` (function)
+- Linha 46: `linkConfirmacaoEmail` (function)
+- Linha 54: `adicionarHoras` (function)
+- Linha 60: `htmlConfirmacao` (function)
+- Linha 82: `ServiceConfirmacaoEmail` (class)
+- Linha 83: `gerarTokenConfirmacao` (static method)
+- Linha 87: `criarConfirmacaoEmail` (static method)
+- Linha 102: `enviarEmailConfirmacao` (static method)
+- Linha 159: `confirmarEmail` (static method)
+- Linha 218: `reenviarConfirmacao` (static method)
+- Linha 253: `obterStatusEmail` (static method)
+- Linha 267: `validarEmailConfirmado` (static method)
+
 ### server/src/src/service/Service_Crud.ts
 
-- Linha 63: `normalizarEntidade` (method) - `static normalizarEntidade(entity: string) {`
-- Linha 67: `validarEntidadeCrud` (method) - `static validarEntidadeCrud(entity: string) {`
-- Linha 84: `validarCampoCrud` (method) - `static validarCampoCrud(field: string) {`
-- Linha 94: `validarEntidadeExistenteCrud` (method) - `static async validarEntidadeExistenteCrud(entity: string) {`
-- Linha 107: `normalizarId` (method) - `static normalizarId(entity: string, id: string) {`
-- Linha 128: `bloqueia_user` (method) - `static async bloqueia_user(entidade: any) {    if (entidade == 'usuario') {      return 'Operação não pode ser realizada por motivos de segurança.';`
+- Linha 62: `ServiceCrud` (class)
+- Linha 63: `normalizarEntidade` (static method)
+- Linha 67: `validarEntidadeCrud` (static method)
+- Linha 84: `validarCampoCrud` (static method)
+- Linha 94: `validarEntidadeExistenteCrud` (static method)
+- Linha 107: `normalizarId` (static method)
+- Linha 128: `bloqueia_user` (static method)
+
 ### server/src/src/service/Service_Email.ts
 
-- Linha 14: `obterConfigEmail` (function) - `function obterConfigEmail() {`
-- Linha 40: `mensagemErroOriginal` (function) - `function mensagemErroOriginal(error: unknown) {`
-- Linha 44: `isFalhaConexao` (function) - `function isFalhaConexao(error: unknown) {`
-- Linha 54: `normalizarErroEmail` (function) - `function normalizarErroEmail(`
-- Linha 72: `criarTransporter` (function) - `function criarTransporter(config: ReturnType<typeof obterConfigEmail>) {`
-- Linha 92: `constructor` (method) - `constructor() {`
+- Linha 14: `obterConfigEmail` (function)
+- Linha 40: `mensagemErroOriginal` (function)
+- Linha 44: `isFalhaConexao` (function)
+- Linha 54: `normalizarErroEmail` (function)
+- Linha 72: `criarTransporter` (function)
+- Linha 88: `EmailService` (class)
+- Linha 92: `constructor` (method)
+
 ### server/src/src/service/Service_Localizacao.ts
 
-- Linha 51: `fetchTimeoutSignal` (function) - `function fetchTimeoutSignal() {`
-- Linha 59: `normalizarTextoBusca` (function) - `function normalizarTextoBusca(valor: string) {`
-- Linha 67: `obterUfPorTexto` (function) - `function obterUfPorTexto(localizacao: string) {`
+- Linha 19: `tiposPrestadorSql` (function)
+- Linha 56: `fetchTimeoutSignal` (function)
+- Linha 64: `normalizarTextoBusca` (function)
+- Linha 72: `obterUfPorTexto` (function)
+- Linha 83: `GeolocalizacaoService` (class)
+
 ### server/src/src/service/Service_Onboarding.ts
 
-- Linha 16: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 22: `textoPreenchido` (function) - `function textoPreenchido(valor?: string | null) {`
-- Linha 26: `dadosCuidadorCompletos` (function) - `function dadosCuidadorCompletos(dados?: {`
-- Linha 39: `dadosAcompanhanteCompletos` (function) - `function dadosAcompanhanteCompletos(dados?: {`
-- Linha 47: `dadosEnfermeiroCompletos` (function) - `function dadosEnfermeiroCompletos(dados?: {`
-- Linha 56: `proximaAcaoPorEtapa` (function) - `function proximaAcaoPorEtapa(etapa: EtapaOnboardingPrestador) {`
-- Linha 73: `ehPrestador` (method) - `static ehPrestador(tipo?: string | null) {`
-- Linha 77: `obterStatus` (method) - `static async obterStatus(usuarioId: string) {`
-- Linha 160: `validarPodeIniciarAssinatura` (method) - `static async validarPodeIniciarAssinatura(usuarioId: string) {`
+- Linha 16: `erroNegocio` (function)
+- Linha 22: `textoPreenchido` (function)
+- Linha 26: `dadosCuidadorCompletos` (function)
+- Linha 39: `dadosAcompanhanteCompletos` (function)
+- Linha 47: `dadosMotoristaAssistencialCompletos` (function)
+- Linha 58: `dadosEnfermeiroCompletos` (function)
+- Linha 67: `proximaAcaoPorEtapa` (function)
+- Linha 83: `ServiceOnboarding` (class)
+- Linha 84: `ehPrestador` (static method)
+- Linha 88: `obterStatus` (static method)
+- Linha 180: `validarPodeIniciarAssinatura` (static method)
+
 ### server/src/src/service/Service_Perfil.ts
 
-- Linha 20: `anexarAvaliacoesEmContratacoes` (function) - `async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {`
-- Linha 55: `inicioHoje` (function) - `function inicioHoje() {`
-- Linha 61: `montarAgendaFutura` (function) - `function montarAgendaFutura(contratacoes: any[]) {`
-- Linha 141: `obterMeuPerfilCompleto` (method) - `static async obterMeuPerfilCompleto(usuarioId: string) {    try {`
-- Linha 314: `obterResumoPerfil` (method) - `static async obterResumoPerfil(usuarioId: string) {    try {`
-- Linha 409: `obterVitrinePrestador` (method) - `static async obterVitrinePrestador(prestadorId: string) {`
-- Linha 589: `atualizarMediaAvaliacao` (method) - `static async atualizarMediaAvaliacao(usuarioId: string) {    try {`
+- Linha 39: `obterDadosProfissionais` (function)
+- Linha 43: `perfilPrestadorDelegate` (function)
+- Linha 48: `anexarAvaliacoesEmContratacoes` (function)
+- Linha 83: `inicioHoje` (function)
+- Linha 89: `montarAgendaFutura` (function)
+- Linha 116: `ServicePerfil` (class)
+- Linha 169: `obterMeuPerfilCompleto` (static method)
+- Linha 340: `obterResumoPerfil` (static method)
+- Linha 415: `obterVitrinePrestador` (static method)
+- Linha 599: `atualizarMediaAvaliacao` (static method)
+
 ### server/src/src/service/Service_RecuperacaoSenha.ts
 
-- Linha 11: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 17: `mascararEmail` (function) - `function mascararEmail(email: string) {`
-- Linha 25: `validarSenhaForte` (function) - `function validarSenhaForte(novaSenha: string) {`
-- Linha 36: `dataExpiracao` (function) - `function dataExpiracao() {`
-- Linha 42: `frontendUrl` (function) - `function frontendUrl() {`
-- Linha 46: `htmlRecuperacaoSenha` (function) - `function htmlRecuperacaoSenha(nome: string, link: string) {`
-- Linha 66: `gerarToken` (method) - `static gerarToken() {`
-- Linha 70: `enviarEmailRecuperacao` (method) - `static async enviarEmailRecuperacao(email: string) {`
-- Linha 128: `validarTokenRecuperacao` (method) - `static async validarTokenRecuperacao(token: string) {`
-- Linha 162: `redefinirSenha` (method) - `static async redefinirSenha(token: string, novaSenha: string) {`
+- Linha 11: `erroNegocio` (function)
+- Linha 17: `mascararEmail` (function)
+- Linha 25: `validarSenhaForte` (function)
+- Linha 36: `dataExpiracao` (function)
+- Linha 42: `frontendUrl` (function)
+- Linha 46: `htmlRecuperacaoSenha` (function)
+- Linha 65: `ServiceRecuperacaoSenha` (class)
+- Linha 66: `gerarToken` (static method)
+- Linha 70: `enviarEmailRecuperacao` (static method)
+- Linha 128: `validarTokenRecuperacao` (static method)
+- Linha 162: `redefinirSenha` (static method)
+
 ### server/src/src/service/Service_Servico.ts
 
-- Linha 23: `erroNegocio` (function) - `function erroNegocio(mensagem: string, status = 400) {`
-- Linha 29: `validarPrestador` (function) - `function validarPrestador(usuario: UsuarioAutenticado) {`
-- Linha 42: `montarDadosServico` (function) - `function montarDadosServico(`
-- Linha 95: `listarMeus` (method) - `static async listarMeus(usuario: UsuarioAutenticado) {`
+- Linha 23: `erroNegocio` (function)
+- Linha 29: `validarPrestador` (function)
+- Linha 42: `montarDadosServico` (function)
+- Linha 94: `ServiceServico` (class)
+- Linha 95: `listarMeus` (static method)
+
 ### server/src/src/service/Service_Storage.ts
 
-- Linha 10: `obterConfigAws` (function) - `function obterConfigAws(isPrivado: boolean) {`
-- Linha 36: `obterS3Client` (function) - `function obterS3Client(config: ReturnType<typeof obterConfigAws>) {`
+- Linha 10: `obterConfigAws` (function)
+- Linha 36: `obterS3Client` (function)
+- Linha 50: `StorageService` (class)
+
 ### server/src/src/service/Service_User.ts
 
-- Linha 26: `criarErroCadastro` (function) - `function criarErroCadastro(`
-- Linha 35: `removerSenha` (function) - `function removerSenha(usuario: Record<string, any>) {`
-- Linha 40: `numeroDecimalOpcional` (function) - `function numeroDecimalOpcional(valor: unknown) {`
-- Linha 48: `anosExperiencia` (function) - `function anosExperiencia(valor: unknown) {`
-- Linha 55: `montarDadosProfissionais` (function) - `function montarDadosProfissionais(dados: any = {}) {`
-- Linha 67: `ehTipoPrestador` (function) - `function ehTipoPrestador(tipo?: string) {`
-- Linha 71: `sanitizarAtualizacaoUsuario` (function) - `function sanitizarAtualizacaoUsuario(`
-- Linha 88: `statusCadastroInicial` (function) - `function statusCadastroInicial(tipo?: string) {`
-- Linha 100: `validouAceiteLegal` (function) - `function validouAceiteLegal(data: any) {`
-- Linha 109: `criarRegistroInterno` (function) - `async function criarRegistroInterno(entity: string, data: object) {`
-- Linha 121: `criarUsuarioComTipo` (method) - `static async criarUsuarioComTipo(data: any) {    const {`
-- Linha 327: `validarEmail` (method) - `static async validarEmail() {  }`
-- Linha 335: `buscarUsuarioCompleto` (method) - `static async buscarUsuarioCompleto(id: string) {    try {      const usuarioBase = await ServiceCrud.findById(`
-- Linha 471: `deletarUsuario` (method) - `static async deletarUsuario(id: string) {    try {      const result = await ServiceCrud.delete(`
+- Linha 26: `criarErroCadastro` (function)
+- Linha 35: `removerSenha` (function)
+- Linha 40: `numeroDecimalOpcional` (function)
+- Linha 48: `anosExperiencia` (function)
+- Linha 55: `montarDadosProfissionais` (function)
+- Linha 76: `ehTipoPrestador` (function)
+- Linha 80: `normalizarPlaca` (function)
+- Linha 84: `placaValida` (function)
+- Linha 88: `sanitizarAtualizacaoUsuario` (function)
+- Linha 105: `statusCadastroInicial` (function)
+- Linha 117: `validouAceiteLegal` (function)
+- Linha 126: `criarRegistroInterno` (function)
+- Linha 130: `perfilPrestadorDelegate` (function)
+- Linha 135: `ServiceUser` (class)
+- Linha 143: `criarUsuarioComTipo` (static method)
+- Linha 373: `validarEmail` (static method)
+- Linha 381: `buscarUsuarioCompleto` (static method)
+- Linha 511: `deletarUsuario` (static method)
+
 ### server/src/src/validator/create/Validator_User.ts
 
-- Linha 90: `normalizarDigitos` (function) - `function normalizarDigitos(valor: unknown): string {`
-- Linha 94: `adicionarErro` (function) - `function adicionarErro(`
-- Linha 102: `cpfValido` (function) - `function cpfValido(cpfOriginal: string): boolean {`
-- Linha 130: `cepValido` (function) - `function cepValido(cepOriginal: string): boolean {`
-- Linha 135: `telefoneBrasileiroValido` (function) - `function telefoneBrasileiroValido(telefoneOriginal: unknown): boolean {`
-- Linha 159: `senhaForte` (function) - `export function senhaForte(senha: unknown): boolean {`
-- Linha 172: `numeroOpcionalValido` (function) - `function numeroOpcionalValido(valor: unknown, minimo = 0, maximo = 100000) {`
-- Linha 178: `stringOpcionalValida` (function) - `function stringOpcionalValida(`
-- Linha 189: `validarCamposProfissionais` (function) - `function validarCamposProfissionais(`
-- Linha 238: `validarCreateUsuarioDto` (function) - `export function validarCreateUsuarioDto(input: any): {`
+- Linha 96: `normalizarDigitos` (function)
+- Linha 100: `adicionarErro` (function)
+- Linha 108: `cpfValido` (function)
+- Linha 115: `calcularDigito` (const function)
+- Linha 136: `cepValido` (function)
+- Linha 141: `telefoneBrasileiroValido` (function)
+- Linha 165: `senhaForte` (function)
+- Linha 178: `numeroOpcionalValido` (function)
+- Linha 184: `stringOpcionalValida` (function)
+- Linha 195: `validarCamposProfissionais` (function)
+- Linha 244: `validarCreateUsuarioDto` (function)
 

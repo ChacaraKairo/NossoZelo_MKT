@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { ServicoPerfil } from '@/types/perfil';
+import { formatarTipoPrestador } from '@/constants/prestadores';
 import logger from '@/utils/logger';
 import styles from '@/styles/components/prestador/CardPrestador.module.css';
 
@@ -86,7 +87,7 @@ export default function CardPrestador({ prestador }: CardPrestadorProps) {
             {texto(prestador.nome)}
           </h3>
           <p className={styles.type}>
-            {texto(prestador.tipo)}
+            {formatarTipoPrestador(prestador.tipo)}
           </p>
           <p className={styles.location}>
             {prestador.localidade ||

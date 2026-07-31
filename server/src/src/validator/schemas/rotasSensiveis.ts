@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TIPOS_PRESTADOR } from '../../constants/dominio';
 
 const textoCurto = z.string().trim().min(1).max(255);
 const senha = z.string().min(8).max(72);
@@ -119,7 +120,7 @@ export const agendamentoManualSchema = z
   .object({
     cliente_id: idTexto,
     servico_id: z.coerce.number().int().positive().optional(),
-    tipo_prestador: z.enum(['cuidador', 'enfermeiro', 'acompanhante']).optional(),
+    tipo_prestador: z.enum(TIPOS_PRESTADOR).optional(),
     data: dataIso,
     hora_inicio: hora,
     hora_fim: hora.optional(),
@@ -141,6 +142,9 @@ export const cadastroTopLevelSchema = z
     cuidador: z.record(z.string(), z.unknown()).optional(),
     enfermeiro: z.record(z.string(), z.unknown()).optional(),
     acompanhante: z.record(z.string(), z.unknown()).optional(),
+    baba: z.record(z.string(), z.unknown()).optional(),
+    diarista: z.record(z.string(), z.unknown()).optional(),
+    motorista_assistencial: z.record(z.string(), z.unknown()).optional(),
     admin: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

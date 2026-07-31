@@ -5,6 +5,9 @@ enum TipoUsuario {
   CUIDADOR = 'cuidador',
   ENFERMEIRO = 'enfermeiro',
   ACOMPANHANTE = 'acompanhante',
+  BABA = 'baba',
+  DIARISTA = 'diarista',
+  MOTORISTA_ASSISTENCIAL = 'motorista_assistencial',
   ADMIN = 'admin',
 }
 
@@ -13,6 +16,9 @@ const TIPOS_CADASTRO_PUBLICO = new Set<TipoUsuario>([
   TipoUsuario.CUIDADOR,
   TipoUsuario.ENFERMEIRO,
   TipoUsuario.ACOMPANHANTE,
+  TipoUsuario.BABA,
+  TipoUsuario.DIARISTA,
+  TipoUsuario.MOTORISTA_ASSISTENCIAL,
 ]);
 
 const DDD_VALIDOS_BR = new Set([
@@ -360,6 +366,31 @@ export function validarCreateUsuarioDto(input: any): {
 
   if (tipo === TipoUsuario.ACOMPANHANTE) {
     validarCamposProfissionais(erros, input.acompanhante || {});
+  }
+
+  if (tipo === TipoUsuario.BABA) {
+    validarCamposProfissionais(erros, input.baba || {});
+  }
+
+  if (tipo === TipoUsuario.DIARISTA) {
+    validarCamposProfissionais(erros, input.diarista || {});
+  }
+
+  if (tipo === TipoUsuario.MOTORISTA_ASSISTENCIAL) {
+    const motorista = input.motorista_assistencial || {};
+    validarCamposProfissionais(erros, motorista);
+    const placa = String(motorista.placa || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+
+    if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa)) {
+      adicionarErro(
+        erros,
+        'placa',
+        'Placa obrigatoria para motorista assistencial. Use ABC1234 ou ABC1D23.',
+      );
+    }
   }
 
   if (tipo === TipoUsuario.ENFERMEIRO) {

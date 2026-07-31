@@ -1,11 +1,19 @@
 // src/components/cadastro/StepProfissional.tsx
 import React from 'react';
+import {
+  CATEGORIAS_PRESTADOR,
+  FORMULARIO_PRESTADOR,
+  ehTipoPrestador,
+} from '@/constants/prestadores';
 import { useCadastroPrestadorStore } from '@/store/useCadastroPrestadorStore';
 import Style from '@/styles/Wizard.module.css';
 
 const StepProfissional = () => {
   const { profissional, updateProfissional, erros } =
     useCadastroPrestadorStore();
+  const formulario = ehTipoPrestador(profissional.categoria)
+    ? FORMULARIO_PRESTADOR[profissional.categoria]
+    : null;
 
   return (
     <div className={Style.stepForm}>
@@ -22,13 +30,17 @@ const StepProfissional = () => {
           onChange={(e) =>
             updateProfissional({
               categoria: e.target.value,
+              registro: '',
+              placa: '',
             })
           }
         >
           <option value="">Selecione...</option>
-          <option value="cuidador">Cuidador</option>
-          <option value="enfermeiro">Enfermeiro</option>
-          <option value="acompanhante">Acompanhante</option>
+          {CATEGORIAS_PRESTADOR.map((categoria) => (
+            <option key={categoria.value} value={categoria.value}>
+              {categoria.label}
+            </option>
+          ))}
         </select>
         {erros.categoria && (
           <span className={Style.errorText}>
@@ -37,9 +49,14 @@ const StepProfissional = () => {
         )}
       </div>
 
-      {/* REGISTRO (COREN) - Condicional */}
-      {(profissional.categoria === 'enfermeiro' ||
-        profissional.categoria === 'tec_enfermagem') && (
+      {formulario && (
+        <>
+          <h4>{formulario.titulo}</h4>
+          <p>{formulario.descricao}</p>
+        </>
+      )}
+
+      {profissional.categoria === 'enfermeiro' && (
         <div className={Style.inputGroup}>
           <label>Registro Profissional (COREN)</label>
           <input
@@ -60,16 +77,40 @@ const StepProfissional = () => {
         </div>
       )}
 
+      {profissional.categoria === 'motorista_assistencial' && (
+        <div className={Style.inputGroup}>
+          <label>Placa do veículo</label>
+          <input
+            type="text"
+            placeholder="Ex: ABC1234 ou ABC1D23"
+            value={profissional.placa}
+            onChange={(e) =>
+              updateProfissional({
+                placa: e.target.value.toUpperCase(),
+              })
+            }
+          />
+          {erros.placa && (
+            <span className={Style.errorText}>
+              {erros.placa}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* EXPERIÊNCIA E VALOR HORA - Ajustado para empilhar no mobile */}
       <div className={Style.inputRow}>
         <div
           className={Style.inputGroup}
         >
-          <label>Anos de Experiência</label>
+          <label>
+            {formulario?.experienciaLabel || 'Anos de Experiência'}
+          </label>
           <input
             type="number"
             min="0"
             max="80"
+            placeholder={formulario?.experienciaPlaceholder}
             value={profissional.experiencia}
             onChange={(e) =>
               updateProfissional({
@@ -87,12 +128,13 @@ const StepProfissional = () => {
         <div
           className={Style.inputGroup}
         >
-          <label>Valor Hora (R$)</label>
+          <label>{formulario?.valorHoraLabel || 'Valor Hora (R$)'}</label>
           <input
             type="number"
             min="10"
             max="1000"
             step="5"
+            placeholder={formulario?.valorHoraPlaceholder}
             value={profissional.valorHora}
             onChange={(e) =>
               updateProfissional({
@@ -110,12 +152,15 @@ const StepProfissional = () => {
         <div
           className={Style.inputGroup}
         >
-          <label>Valor Diaria (R$)</label>
+          <label>
+            {formulario?.valorDiariaLabel || 'Valor Diaria (R$)'}
+          </label>
           <input
             type="number"
             min="30"
             max="10000"
             step="10"
+            placeholder={formulario?.valorDiariaPlaceholder}
             value={profissional.valorDiaria}
             onChange={(e) =>
               updateProfissional({
@@ -132,10 +177,15 @@ const StepProfissional = () => {
       </div>
 
       <div className={Style.inputGroup}>
-        <label>Disponibilidade</label>
+        <label>
+          {formulario?.disponibilidadeLabel || 'Disponibilidade'}
+        </label>
         <input
           type="text"
-          placeholder="Ex: segunda a sexta, manha e tarde"
+          placeholder={
+            formulario?.disponibilidadePlaceholder ||
+            'Ex: segunda a sexta, manha e tarde'
+          }
           value={profissional.disponibilidade}
           onChange={(e) =>
             updateProfissional({
@@ -151,10 +201,15 @@ const StepProfissional = () => {
       </div>
 
       <div className={Style.inputGroup}>
-        <label>Especialidades</label>
+        <label>
+          {formulario?.especialidadesLabel || 'Especialidades'}
+        </label>
         <textarea
           maxLength={500}
-          placeholder="Ex: idosos, mobilidade reduzida, pos-operatorio"
+          placeholder={
+            formulario?.especialidadesPlaceholder ||
+            'Ex: idosos, mobilidade reduzida, pos-operatorio'
+          }
           value={profissional.especialidades}
           onChange={(e) =>
             updateProfissional({
@@ -170,12 +225,14 @@ const StepProfissional = () => {
         )}
       </div>
 
-      {/* BIOGRAFIA */}
       <div className={Style.inputGroup}>
-        <label>Biografia (Apresentação)</label>
+        <label>{formulario?.bioLabel || 'Biografia (Apresentação)'}</label>
         <textarea
           maxLength={500}
-          placeholder="Fale um pouco sobre você e seu método de cuidado..."
+          placeholder={
+            formulario?.bioPlaceholder ||
+            'Fale um pouco sobre você e seu método de cuidado...'
+          }
           value={profissional.bio}
           onChange={(e) =>
             updateProfissional({ bio: e.target.value })

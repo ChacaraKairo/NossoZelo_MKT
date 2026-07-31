@@ -1,10 +1,10 @@
 # NossoZelo_MKT
 
-Marketplace web para conectar clientes a cuidadores, enfermeiros e acompanhantes. O estado atual foi preparado como MVP funcional: autenticação por cookie HttpOnly, rotas sensíveis protegidas, CRUD administrativo restrito, testes mínimos, seed, Docker e documentação básica.
+Marketplace web para conectar clientes a cuidadores, enfermeiros, acompanhantes, babás, diaristas/faxineiras e motoristas assistenciais. O estado atual foi preparado como MVP funcional: autenticação por cookie HttpOnly, rotas sensíveis protegidas, CRUD administrativo restrito, testes mínimos, seed, Docker e documentação básica.
 
 ## Stack
 
-- Backend: Node.js, Express, TypeScript, Prisma, MySQL, JWT, Vitest, Supertest.
+- Backend: Node.js, Express, TypeScript, Prisma, PostgreSQL, JWT, Vitest, Supertest.
 - Frontend: Next.js Pages Router, React, TypeScript, Axios.
 - Integrações previstas: Asaas, AWS S3, OAuth Google/Facebook, SMTP.
 
@@ -14,7 +14,7 @@ Marketplace web para conectar clientes a cuidadores, enfermeiros e acompanhantes
 - `client/`: aplicação web pública e áreas autenticadas.
 - `controlador/`: painel administrativo Next.js separado.
 - `docs/`: notas de produção, segurança e API.
-- `docker-compose.yml`: ambiente local com MySQL, backend e frontend.
+- `docker-compose.yml`: ambiente local com PostgreSQL, backend e frontend.
 
 ## Rodando Localmente
 

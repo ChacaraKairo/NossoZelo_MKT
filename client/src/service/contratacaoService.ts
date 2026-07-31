@@ -42,7 +42,6 @@ export interface RespostaCancelamentoContratacao {
 export interface SolicitarContratacaoPayload {
   cliente_id?: string;
   prestador_id: string;
-  tipo_prestador?: string;
   servico_id?: number;
   data: string;
   hora_inicio?: string;

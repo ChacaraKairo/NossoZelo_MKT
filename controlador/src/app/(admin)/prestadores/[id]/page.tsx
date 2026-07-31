@@ -17,13 +17,22 @@ export default async function PrestadorDetalhePage({ params }: PrestadorDetalheP
       cuidadores: true,
       enfermeiros: true,
       acompanhantes: true,
+      babas: true,
+      diaristas: true,
+      motoristas_assistenciais: true,
       avaliacoes_avaliacoes_prestador_idTousuarios: true
     }
   });
 
   if (!prestador) notFound();
   const assinatura = prestador.assinaturas[0];
-  const dadosProfissionais = prestador.cuidadores ?? prestador.enfermeiros ?? prestador.acompanhantes;
+  const dadosProfissionais =
+    prestador.cuidadores ??
+    prestador.enfermeiros ??
+    prestador.acompanhantes ??
+    prestador.babas ??
+    prestador.diaristas ??
+    prestador.motoristas_assistenciais;
   const ativo = prestador.email_confirmado && prestador.status_cadastro === "ativo" && assinatura?.status === "ativa";
   const dadosProfissionaisCompletos = Boolean(
     dadosProfissionais &&
@@ -31,7 +40,8 @@ export default async function PrestadorDetalhePage({ params }: PrestadorDetalheP
       dadosProfissionais.bio &&
       dadosProfissionais.disponibilidade &&
       dadosProfissionais.especialidades &&
-      (prestador.tipo !== "enfermeiro" || ("coren" in dadosProfissionais && dadosProfissionais.coren))
+      (prestador.tipo !== "enfermeiro" || ("coren" in dadosProfissionais && dadosProfissionais.coren)) &&
+      (prestador.tipo !== "motorista_assistencial" || ("placa" in dadosProfissionais && dadosProfissionais.placa))
   );
   const etapaOnboarding = !prestador.email_confirmado
     ? "confirmar_email"

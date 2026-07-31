@@ -6,6 +6,7 @@ import HeaderMain from '@/components/header/HeaderMain';
 import ModalContratarPrestador from '@/components/prestador/ModalContratarPrestador';
 import { extrairErroApi } from '@/service/api';
 import { perfilService } from '@/service/perfilService';
+import { formatarTipoPrestador } from '@/constants/prestadores';
 import {
   AvaliacaoPerfil,
   PerfilPrestadorPublico,
@@ -306,7 +307,7 @@ const PrestadorVitrinePage: React.FC = () => {
 
         <div className={styles.heroContent}>
           <p className={styles.kicker}>
-            {formatarTexto(prestador.tipo)}
+            {formatarTipoPrestador(prestador.tipo)}
           </p>
           <h1 className={styles.title}>{formatarTexto(prestador.nome)}</h1>
           <p className={styles.muted}>{localizacao}</p>
@@ -353,7 +354,6 @@ const PrestadorVitrinePage: React.FC = () => {
         <ModalContratarPrestador
           aberto
           prestadorId={prestador.id}
-          tipoPrestador={prestador.tipo}
           servicos={servicos}
           onClose={fecharContratacao}
           presentation="inline"

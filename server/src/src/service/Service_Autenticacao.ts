@@ -5,21 +5,18 @@ import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 import ServiceUser from './Service_User';
 import ServiceOnboarding from './Service_Onboarding';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
 
 const TEMPO_SESSAO_LOGIN = '7d';
 const TEMPO_CADASTRO_SOCIAL = '30m';
 type SocialProvider = 'google' | 'facebook';
 type TipoCadastroSocial =
   | 'cliente'
-  | 'cuidador'
-  | 'enfermeiro'
-  | 'acompanhante';
+  | (typeof TIPOS_PRESTADOR)[number];
 
 const TIPOS_CADASTRO_SOCIAL = new Set<TipoCadastroSocial>([
   'cliente',
-  'cuidador',
-  'enfermeiro',
-  'acompanhante',
+  ...TIPOS_PRESTADOR,
 ]);
 
 function obterJwtSecret() {
@@ -117,6 +114,7 @@ function montarPerfilProfissional(data: any, tipo: TipoCadastroSocial) {
     documento_profissional:
       dados.documento_profissional ?? data.documento_profissional ?? null,
     coren: dados.coren ?? data.coren,
+    placa: dados.placa ?? data.placa,
   };
 }
 
@@ -179,6 +177,14 @@ function validarComplementoCadastroSocial(data: any) {
     const perfil = montarPerfilProfissional(data, tipo);
     if (!valorObrigatorio(perfil.coren)) {
       throw new Error('COREN e obrigatorio para enfermeiros.');
+    }
+  }
+
+  if (tipo === 'motorista_assistencial') {
+    const perfil = montarPerfilProfissional(data, tipo);
+    const placa = String(perfil.placa || '').replace(/[^A-Za-z0-9]/g, '');
+    if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/i.test(placa)) {
+      throw new Error('Placa obrigatoria para motorista assistencial.');
     }
   }
 
@@ -353,6 +359,11 @@ export class ServiceAuth {
       ...(tipo === 'enfermeiro' ? { enfermeiro: perfilProfissional } : {}),
       ...(tipo === 'acompanhante'
         ? { acompanhante: perfilProfissional }
+        : {}),
+      ...(tipo === 'baba' ? { baba: perfilProfissional } : {}),
+      ...(tipo === 'diarista' ? { diarista: perfilProfissional } : {}),
+      ...(tipo === 'motorista_assistencial'
+        ? { motorista_assistencial: perfilProfissional }
         : {}),
     });
 

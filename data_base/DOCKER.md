@@ -1,15 +1,15 @@
-Instruções para o docker, banco mysql e prisma
+Instruções para o docker, banco PostgreSQL e Prisma
 
-docker pull mysql:latest (versão do mysql para docker)
+docker pull postgres:16-alpine
 
-docker run --name nossozelo_db2 -e MYSQL_ROOT_PASSWORD=nossozelo123 -d -p 3306:3306 mysql:latest
+docker run --name nossozelo_db2 -e POSTGRES_DB=nossozelo -e POSTGRES_USER=nossozelo -e POSTGRES_PASSWORD=nossozelo123 -d -p 5433:5432 postgres:16-alpine
 
---name nossozelo_db2: Define o nome do contêiner como meu-mysql.
+--name nossozelo_db2: Define o nome do contêiner como nossozelo_db2.
 
--e MYSQL_ROOT_PASSWORD= nossozelo123: Define a senha do usuário root do MySQL. Substitua minha-senha-segura por uma senha segura.
+-e POSTGRES_PASSWORD=nossozelo123: Define a senha do usuário PostgreSQL. Substitua por uma senha segura.
 
 -d: Executa o contêiner em segundo plano (modo "detached").
 
--p 3306:3306: Mapeia a porta 3306 do contêiner para a porta 3306 do host. Isso permite que você se conecte ao MySQL a partir do seu sistema host.
+-p 5433:5432: Mapeia a porta 5432 do contêiner para a porta 5433 do host. Isso permite que você se conecte ao PostgreSQL a partir do seu sistema host sem conflitar com um PostgreSQL local.
 
-mysql:latest: Especifica a imagem do MySQL a ser usada.
+postgres:16-alpine: Especifica a imagem do PostgreSQL a ser usada.

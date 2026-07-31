@@ -22,7 +22,7 @@ export function parseDatabaseUrl(): DatabaseConnectionInfo {
 
   return {
     host: url.hostname,
-    port: url.port || '3306',
+    port: url.port || '5432',
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database,

@@ -33,6 +33,7 @@ interface CadastroState {
   profissional: {
     categoria: string;
     registro: string;
+    placa: string;
     experiencia: number;
     valorHora: number;
     valorDiaria: number;
@@ -91,6 +92,7 @@ const estadoInicial = {
   profissional: {
     categoria: '',
     registro: '',
+    placa: '',
     experiencia: 0,
     valorHora: 30,
     valorDiaria: 180,

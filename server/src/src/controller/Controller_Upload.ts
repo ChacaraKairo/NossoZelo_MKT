@@ -12,7 +12,7 @@ import { CadastroUploadRequest } from '../middleware/uploadCadastro';
 export class UploadController {
   /**
    * Endpoint: POST /nossozelo/upload/completar-cadastro
-   * Processa paralelamente cada arquivo enviado, garantindo a conversão e o vínculo no MySQL.
+   * Processa paralelamente cada arquivo enviado, garantindo a conversão e o vínculo no PostgreSQL.
    */
   static async fazerUpload(
     req: CadastroUploadRequest,

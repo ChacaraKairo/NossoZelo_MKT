@@ -3,7 +3,7 @@
 ## Requisitos
 
 - Node.js 20+
-- MySQL 8+
+- PostgreSQL 16+
 - Docker Desktop opcional
 
 ## Rodando com Docker
@@ -17,7 +17,7 @@ Servicos:
 - Client: `http://localhost:3000`
 - Server: `http://localhost:4000`
 - Controlador: `http://localhost:3001`
-- MySQL: `localhost:3306`
+- PostgreSQL via Docker: `localhost:5433`
 
 ## Rodando manualmente
 

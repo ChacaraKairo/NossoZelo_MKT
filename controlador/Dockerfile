@@ -6,7 +6,7 @@ RUN npm ci
 FROM deps AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=mysql://nossozelo:nossozelo@localhost:3306/nossozelo
+ENV DATABASE_URL=postgresql://nossozelo:nossozelo@localhost:5432/nossozelo?schema=public
 COPY prisma ./prisma
 RUN npx prisma generate
 COPY . .

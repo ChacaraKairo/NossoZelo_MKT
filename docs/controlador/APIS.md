@@ -81,7 +81,7 @@ Atualiza status cadastral do usuario.
 
 ### `GET /api/prestadores`
 
-Lista cuidadores, enfermeiros e acompanhantes.
+Lista prestadores das categorias cuidador, enfermeiro, acompanhante, baba, diarista/faxineira e motorista assistencial.
 
 ### `GET /api/prestadores/[id]`
 

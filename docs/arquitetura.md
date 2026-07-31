@@ -1,13 +1,13 @@
 # Arquitetura NossoZelo
 
-O NossoZelo e um marketplace para conectar clientes a cuidadores, enfermeiros e acompanhantes.
+O NossoZelo e um marketplace para conectar clientes a cuidadores, enfermeiros, acompanhantes, babas, diaristas/faxineiras e motoristas assistenciais.
 
 ## Componentes
 
 - `client`: Next.js publico para cadastro, login, busca, perfil e onboarding do prestador.
-- `server`: Express/TypeScript com Prisma/MySQL, autenticacao, assinaturas Asaas, upload e regras de dominio.
+- `server`: Express/TypeScript com Prisma/PostgreSQL, autenticacao, assinaturas Asaas, upload e regras de dominio.
 - `controlador`: painel Next.js administrativo separado.
-- `MySQL`: banco relacional principal.
+- `PostgreSQL`: banco relacional principal.
 - `Asaas`: gateway de cobranca da assinatura do prestador. Assinatura local so fica ativa apos webhook de pagamento confirmado.
 - `AWS S3`: armazenamento de fotos publicas e documentos privados.
 

@@ -48,7 +48,7 @@ LocalizacaoRouter.get(
   GeolocalizacaoController.buscar20UsuariosMaisProximos,
 );/**
  * @route GET /mais-proximos/:idUsuario/:tipo
- * @desc Lista os 20 prestadores mais próximos filtrando por categoria (cuidador, enfermeiro, acompanhante).
+ * @desc Lista os 20 prestadores mais próximos filtrando por categoria profissional.
  */
 LocalizacaoRouter.get(
   '/mais-proximos/:idUsuario/:tipo',

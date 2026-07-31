@@ -37,7 +37,7 @@ Use HTTPS para frontend e backend. Se estiverem em dominios diferentes, confirme
 
 - Backend: Render, Fly.io, Railway ou container em cloud.
 - Frontend: Vercel ou container estatico/Next server.
-- Banco: MySQL gerenciado.
+- Banco: PostgreSQL gerenciado.
 - Rate limit: Upstash Redis REST ou Redis compativel via adaptador equivalente.
 - Arquivos: S3 com bucket publico apenas para fotos e bucket privado para documentos.
 - Scanner: ClamAV/clamd acessivel pelo backend.

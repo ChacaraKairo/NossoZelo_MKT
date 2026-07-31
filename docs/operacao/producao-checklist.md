@@ -104,10 +104,21 @@ Nunca publique logs contendo senha, token, CPF completo, cartao, CVV ou headers 
 ## Validacoes antes do deploy
 
 ```bash
-cd server && npm test && npm run build
-cd client && npm run lint && npm run build
-cd controlador && npm run lint && npm run build
+cd server && npm run lint && npm test && npm run build
+cd client && npm run build
+cd controlador && npm run build
 ```
+
+## Validacao das novas categorias
+
+Depois de aplicar migrations e seeds no ambiente de homologacao:
+
+1. Validar busca por `baba`, `diarista` e `motorista_assistencial`.
+2. Abrir vitrines publicas das tres categorias.
+3. Confirmar que motorista assistencial mostra dados profissionais com placa quando permitido.
+4. Testar cadastro tradicional e social para as tres categorias.
+5. Testar onboarding e assinatura, inclusive retorno de pagamento pendente.
+6. Criar uma contratacao como cliente e confirmar recebimento no perfil do prestador.
 
 ## Asaas
 

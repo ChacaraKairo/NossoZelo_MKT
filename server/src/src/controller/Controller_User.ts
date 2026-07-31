@@ -28,6 +28,9 @@ class UserController {
         enfermeiro,
         cuidador,
         acompanhante,
+        baba,
+        diarista,
+        motorista_assistencial,
         admin,
       } = req.body;      if (!usuario || !usuario.email || !usuario.senha) {        res.status(400).json({
           message:
@@ -38,7 +41,7 @@ class UserController {
 
       if (!usuario.tipo) {        res.status(400).json({
           message:
-            'O tipo de usuário é obrigatório (ex: cuidador, enfermeiro, cliente).',
+            'O tipo de usuário é obrigatório (ex: cuidador, enfermeiro, baba, diarista, motorista_assistencial, cliente).',
         });
         return;
       }  const novoUsuario =
@@ -47,6 +50,9 @@ class UserController {
           enfermeiro,
           cuidador,
           acompanhante,
+          baba,
+          diarista,
+          motorista_assistencial,
           admin,
         });      res.status(201).json({
         message: 'Usuário criado com sucesso!',

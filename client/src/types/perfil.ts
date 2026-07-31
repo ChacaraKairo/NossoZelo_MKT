@@ -3,6 +3,9 @@ export type TipoUsuario =
   | 'cuidador'
   | 'enfermeiro'
   | 'acompanhante'
+  | 'baba'
+  | 'diarista'
+  | 'motorista_assistencial'
   | string;
 
 export interface PerfilBase {
@@ -133,6 +136,7 @@ export interface PerfilUsuario extends PerfilBase {
   bio?: string | null;
   anos_experiencia?: number | null;
   coren?: string | null;
+  placa?: string | null;
   valor_hora?: number | string | null;
   valor_diaria?: number | string | null;
   disponibilidade?: string | null;

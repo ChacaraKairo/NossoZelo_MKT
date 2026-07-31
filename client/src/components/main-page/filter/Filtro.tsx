@@ -1,15 +1,12 @@
 import React from 'react';
 import styles from '@/styles/components/main-page/filter/Filtro.module.css';
 import { useBuscaStore } from '@/store/useBuscaStore';
+import { CATEGORIAS_PRESTADOR_LABELS } from '@/constants/prestadores';
 import logger from '@/utils/logger';
 
 const CONTEXTO = 'Filtro';
 
-const categoriasDisponiveis = [
-  'Cuidador',
-  'Enfermeiro',
-  'Acompanhante',
-];
+const categoriasDisponiveis = CATEGORIAS_PRESTADOR_LABELS;
 
 const Filtro = () => {
   const {

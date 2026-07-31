@@ -179,10 +179,10 @@ const COLUNAS_SCHEMA: ColunaSchema[] = [
 async function colunaExiste(tabela: string, coluna: string) {
   const resultado = await prisma.$queryRaw<Array<{ total: bigint }>>`
     SELECT COUNT(*) AS total
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = ${tabela}
-      AND COLUMN_NAME = ${coluna}
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = ${tabela}
+      AND column_name = ${coluna}
   `;
 
   return Number(resultado[0]?.total || 0) > 0;
@@ -191,9 +191,9 @@ async function colunaExiste(tabela: string, coluna: string) {
 async function tabelaExiste(tabela: string) {
   const resultado = await prisma.$queryRaw<Array<{ total: bigint }>>`
     SELECT COUNT(*) AS total
-    FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = ${tabela}
+    FROM information_schema.tables
+    WHERE table_schema = current_schema()
+      AND table_name = ${tabela}
   `;
 
   return Number(resultado[0]?.total || 0) > 0;
@@ -212,22 +212,42 @@ async function garantirTabelaConfirmacoesEmail() {
   });
 
   await prisma.$executeRawUnsafe(`
-    CREATE TABLE \`confirmacoes_email\` (
-      \`id\` INTEGER NOT NULL AUTO_INCREMENT,
-      \`usuario_id\` VARCHAR(20) NOT NULL,
-      \`token\` VARCHAR(255) NOT NULL,
-      \`expiracao\` TIMESTAMP(0) NOT NULL,
-      \`usado\` BOOLEAN NOT NULL DEFAULT false,
-      \`criado_em\` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-      UNIQUE INDEX \`confirmacoes_email_token_key\`(\`token\`),
-      INDEX \`confirmacoes_email_usuario_id_idx\`(\`usuario_id\`),
-      INDEX \`confirmacoes_email_token_idx\`(\`token\`),
-      PRIMARY KEY (\`id\`),
-      CONSTRAINT \`confirmacoes_email_usuario_id_fkey\`
-        FOREIGN KEY (\`usuario_id\`) REFERENCES \`usuarios\`(\`id\`)
+    CREATE TABLE "confirmacoes_email" (
+      "id" SERIAL NOT NULL,
+      "usuario_id" VARCHAR(20) NOT NULL,
+      "token" VARCHAR(255) NOT NULL,
+      "expiracao" TIMESTAMP(0) NOT NULL,
+      "usado" BOOLEAN NOT NULL DEFAULT false,
+      "criado_em" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "confirmacoes_email_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "confirmacoes_email_usuario_id_fkey"
+        FOREIGN KEY ("usuario_id") REFERENCES "usuarios"("id")
         ON DELETE CASCADE ON UPDATE CASCADE
-    ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    )
   `);
+  await prisma.$executeRawUnsafe(
+    'CREATE UNIQUE INDEX "confirmacoes_email_token_key" ON "confirmacoes_email"("token")',
+  );
+  await prisma.$executeRawUnsafe(
+    'CREATE INDEX "confirmacoes_email_usuario_id_idx" ON "confirmacoes_email"("usuario_id")',
+  );
+  await prisma.$executeRawUnsafe(
+    'CREATE INDEX "confirmacoes_email_token_idx" ON "confirmacoes_email"("token")',
+  );
+}
+
+function definicaoPostgres(coluna: ColunaSchema) {
+  if (coluna.tabela === 'usuarios' && coluna.coluna === 'status_cadastro') {
+    return '"usuarios_status_cadastro" NOT NULL DEFAULT \'ativo\'';
+  }
+
+  if (coluna.tabela === 'assinaturas' && coluna.coluna === 'status') {
+    return '"assinaturas_status" NOT NULL DEFAULT \'pendente\'';
+  }
+
+  return coluna.definicao
+    .replace('CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0)', 'CURRENT_TIMESTAMP')
+    .replace(/CURRENT_TIMESTAMP\(0\)/g, 'CURRENT_TIMESTAMP');
 }
 
 async function garantirColuna({
@@ -250,17 +270,22 @@ async function garantirColuna({
   });
 
   await prisma.$executeRawUnsafe(
-    `ALTER TABLE \`${tabela}\` ADD COLUMN \`${coluna}\` ${definicao} AFTER \`${depoisDe}\``,
+    `ALTER TABLE "${tabela}" ADD COLUMN "${coluna}" ${definicaoPostgres({
+      tabela,
+      coluna,
+      definicao,
+      depoisDe,
+    })}`,
   );
 }
 
 async function garantirIndiceAssinaturaPrestadorStatus() {
   const resultado = await prisma.$queryRaw<Array<{ total: bigint }>>`
     SELECT COUNT(*) AS total
-    FROM INFORMATION_SCHEMA.STATISTICS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'assinaturas'
-      AND INDEX_NAME = 'assinaturas_prestador_status_idx'
+    FROM pg_indexes
+    WHERE schemaname = current_schema()
+      AND tablename = 'assinaturas'
+      AND indexname = 'assinaturas_prestador_status_idx'
   `;
 
   if (Number(resultado[0]?.total || 0) > 0) {
@@ -277,7 +302,7 @@ async function garantirIndiceAssinaturaPrestadorStatus() {
   });
 
   await prisma.$executeRawUnsafe(
-    'CREATE INDEX `assinaturas_prestador_status_idx` ON `assinaturas`(`prestador_id`, `status`)',
+    'CREATE INDEX "assinaturas_prestador_status_idx" ON "assinaturas"("prestador_id", "status")',
   );
 }
 
@@ -287,22 +312,22 @@ async function sincronizarStatusCadastroPrestadores() {
     (await colunaExiste('assinaturas', 'cuidador_id'))
   ) {
     await prisma.$executeRawUnsafe(`
-      UPDATE \`assinaturas\`
-      SET \`prestador_id\` = \`cuidador_id\`
-      WHERE \`prestador_id\` IS NULL
+      UPDATE "assinaturas"
+      SET "prestador_id" = "cuidador_id"
+      WHERE "prestador_id" IS NULL
     `);
   }
 
   await prisma.$executeRawUnsafe(`
-    UPDATE \`usuarios\` u
-    SET u.\`status_cadastro\` = 'pendente_pagamento'
-    WHERE u.\`tipo\` IN ('cuidador', 'enfermeiro', 'acompanhante')
-      AND u.\`status_cadastro\` = 'ativo'
+    UPDATE "usuarios" u
+    SET "status_cadastro" = 'pendente_pagamento'
+    WHERE u."tipo" IN ('cuidador', 'enfermeiro', 'acompanhante', 'baba', 'diarista', 'motorista_assistencial')
+      AND u."status_cadastro" = 'ativo'
       AND NOT EXISTS (
         SELECT 1
-        FROM \`assinaturas\` a
-        WHERE a.\`prestador_id\` = u.\`id\`
-          AND a.\`status\` = 'ativa'
+        FROM "assinaturas" a
+        WHERE a."prestador_id" = u."id"
+          AND a."status" = 'ativa'
       )
   `);
 

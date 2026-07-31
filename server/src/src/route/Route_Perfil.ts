@@ -10,7 +10,8 @@
 import { Router } from 'express';
 import ControllerPerfil from '../controller/Controller_Perfil';
 import { authMiddleware } from '../middleware/autenticacao';
-import { permitirTipos } from '../middleware/permitirTipos';const router = Router();/**
+import { permitirTipos } from '../middleware/permitirTipos';
+import { TIPOS_PRESTADOR } from '../constants/dominio';const router = Router();/**
  * Ver o próprio perfil (Telas A e B).
  * Requer autenticação via token JWT.
  */
@@ -39,7 +40,7 @@ router.get(
 router.get(
   '/cliente/:id', // 🔥 CORRIGIDO: Removido o prefixo /perfil
   authMiddleware,
-  permitirTipos(['cuidador', 'enfermeiro', 'acompanhante']),
+  permitirTipos(TIPOS_PRESTADOR),
   ControllerPerfil.dadosClienteParaPrestador as any,
 );/**
  * Atualizar o próprio perfil.

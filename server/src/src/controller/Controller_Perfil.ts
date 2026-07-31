@@ -1,6 +1,7 @@
 ﻿import { Request, Response } from 'express';
 import { ServicePerfil } from '../service/Service_Perfil';
 import logger from '../lib/logger';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
 
 import { AuthRequest } from '../types/auth';
 
@@ -233,13 +234,7 @@ class ControllerPerfil {
           .json({ error: 'NÃ£o autorizado' });
       }
 
-      const tiposPrestador = [
-        'cuidador',
-        'enfermeiro',
-        'acompanhante',
-      ];
-
-      if (!tipo || !tiposPrestador.includes(tipo)) {
+      if (!tipo || !TIPOS_PRESTADOR.includes(tipo as any)) {
         return res.status(403).json({
           error:
             'Apenas prestadores podem acessar dados de clientes.',
@@ -266,5 +261,4 @@ class ControllerPerfil {
 
 // Exportamos uma instÃ¢ncia da classe para manter o padrÃ£o singleton
 export default new ControllerPerfil();
-
 

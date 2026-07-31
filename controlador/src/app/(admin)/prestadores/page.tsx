@@ -23,7 +23,7 @@ export default async function PrestadoresPage({ searchParams }: PrestadoresPageP
       <div className={styles.pageHeader}>
         <div>
           <h1>Prestadores</h1>
-          <p>Controle de cuidadores, enfermeiros e acompanhantes.</p>
+          <p>Controle de prestadores profissionais.</p>
         </div>
       </div>
 
@@ -39,7 +39,10 @@ export default async function PrestadoresPage({ searchParams }: PrestadoresPageP
               options={[
                 { label: "Cuidador", value: "cuidador" },
                 { label: "Enfermeiro", value: "enfermeiro" },
-                { label: "Acompanhante", value: "acompanhante" }
+                { label: "Acompanhante", value: "acompanhante" },
+                { label: "Babá", value: "baba" },
+                { label: "Diarista/Faxineira", value: "diarista" },
+                { label: "Motorista assistencial", value: "motorista_assistencial" }
               ]}
             />
             <FilterSelect

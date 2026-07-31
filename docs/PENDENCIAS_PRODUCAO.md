@@ -6,7 +6,7 @@ Este documento consolida o que ainda falta para o NossoZelo sair de MVP controla
 
 O projeto ja possui uma boa base para MVP:
 
-- Backend Express/TypeScript com Prisma e MySQL.
+- Backend Express/TypeScript com Prisma e PostgreSQL.
 - Frontend Next.js.
 - Painel administrativo separado em `controlador/`.
 - Autenticacao com cookie HttpOnly.

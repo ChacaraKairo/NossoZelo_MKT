@@ -22,4 +22,25 @@ export const services: Service[] = [
     description:
       'Companhia qualificada e suporte para atividades sociais e compromissos.',
   },
+  {
+    id: 4,
+    title: 'Babás',
+    image: '/home/baba.png',
+    description:
+      'Apoio seguro e acolhedor para crianças, com rotina e acompanhamento.',
+  },
+  {
+    id: 5,
+    title: 'Diaristas/Faxineiras',
+    image: '/home/diarista.png',
+    description:
+      'Organização e limpeza residencial com profissionais de confiança.',
+  },
+  {
+    id: 6,
+    title: 'Motoristas assistenciais',
+    image: '/home/motorista-assistencial.png',
+    description:
+      'Transporte acompanhado para idosos em consultas, exames e compromissos.',
+  },
 ];

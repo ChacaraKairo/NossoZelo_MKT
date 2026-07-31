@@ -44,9 +44,21 @@ Use quando a validacao automatica nao conseguir provar o comportamento real do a
 ## UX do prestador
 
 - [ ] Validar fluxo: cadastro -> confirmacao de e-mail -> completar perfil -> escolher plano -> pagar -> aguardar confirmacao -> perfil ativo.
+- [ ] Repetir o fluxo para `cuidador`, `enfermeiro`, `acompanhante`, `baba`, `diarista` e `motorista_assistencial`.
+- [ ] Confirmar que `motorista_assistencial` exige placa valida no formato Mercosul/antigo, como `ABC1234` ou `ABC1D23`.
 - [ ] Confirmar mensagens para `email_nao_confirmado`, `pagamento_pendente`, `pagamento_aguardando_confirmacao`, `assinatura_atrasada`, `assinatura_bloqueada`, `assinatura_cancelada` e `perfil_ativo`.
 - [ ] Confirmar que prestador pendente, atrasado, bloqueado, cancelado, expirado ou com falha nao aparece na busca publica.
 - [ ] Testar cadastro prestador tradicional, cadastro prestador social, saida antes de pagar e login posterior redirecionando para `/onboarding/prestador`.
+- [ ] Com seed local, confirmar que `baba.demo@nossozelo.local`, `diarista.demo@nossozelo.local` e `motorista.demo@nossozelo.local` aparecem na busca por categoria.
+
+## Contratacao
+
+- [ ] Acessar a vitrine dos prestadores demo.
+- [ ] Abrir modal de contratacao em cada categoria nova.
+- [ ] Criar pedido como cliente autenticado. No seed local, use `cliente.demo@nossozelo.local` / `Demo@12345`.
+- [ ] Confirmar que a resposta salva `tipo_prestador` conforme o prestador escolhido; o frontend nao deve enviar esse campo no payload.
+- [ ] Confirmar que o prestador ve a solicitacao em `/meu-perfil` ou `/perfil`.
+- [ ] Aceitar, negar e cancelar solicitacoes em ambiente de homologacao.
 
 ## Operacao e venda
 

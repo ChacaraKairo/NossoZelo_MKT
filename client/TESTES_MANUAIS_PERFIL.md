@@ -5,10 +5,11 @@
    - Deve mostrar dados pessoais.
    - Não deve mostrar campos profissionais.
 
-2. Acessar `/perfil` logado como cuidador, enfermeiro ou acompanhante.
+2. Acessar `/perfil` logado como cuidador, enfermeiro, acompanhante, babá, diarista/faxineira ou motorista assistencial.
    - Deve renderizar `PerfilPrestador`.
    - Deve mostrar dados profissionais.
    - Deve mostrar agenda, serviços e avaliações quando vierem da API.
+   - Para motorista assistencial, deve exigir e exibir a placa do veículo quando aplicável.
 
 3. Editar perfil cliente.
    - Deve chamar `PATCH /perfil/update`.

@@ -12,9 +12,15 @@ import {
   mascaraTelefone,
   mascaraUf,
 } from '@/utils/masks';
+import {
+  CATEGORIAS_PRESTADOR,
+  FORMULARIO_PRESTADOR,
+  TipoPrestador,
+  ehTipoPrestador,
+} from '@/constants/prestadores';
 import styles from '@/styles/CadastroSocialPage.module.css';
 
-type TipoConta = 'cliente' | 'cuidador' | 'enfermeiro' | 'acompanhante';
+type TipoConta = 'cliente' | TipoPrestador;
 
 interface SocialPayload {
   purpose?: string;
@@ -27,9 +33,7 @@ interface SocialPayload {
 
 const tiposConta: Array<{ value: TipoConta; label: string }> = [
   { value: 'cliente', label: 'Cliente' },
-  { value: 'cuidador', label: 'Cuidador' },
-  { value: 'enfermeiro', label: 'Enfermeiro' },
-  { value: 'acompanhante', label: 'Acompanhante' },
+  ...CATEGORIAS_PRESTADOR,
 ];
 
 function decodificarToken(token?: string): SocialPayload | null {
@@ -84,6 +88,7 @@ export default function CadastroSocialPage() {
   const [disponibilidade, setDisponibilidade] = useState('');
   const [especialidades, setEspecialidades] = useState('');
   const [coren, setCoren] = useState('');
+  const [placa, setPlaca] = useState('');
   const [loadingCep, setLoadingCep] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +104,9 @@ export default function CadastroSocialPage() {
       !dadosSociais.email);
 
   const isPrestador = tipo !== 'cliente';
+  const formularioPrestador = ehTipoPrestador(tipo)
+    ? FORMULARIO_PRESTADOR[tipo]
+    : null;
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -188,6 +196,15 @@ export default function CadastroSocialPage() {
       return 'Informe o COREN.';
     }
 
+    if (
+      tipo === 'motorista_assistencial' &&
+      !/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/i.test(
+        placa.replace(/[^A-Za-z0-9]/g, ''),
+      )
+    ) {
+      return 'Informe uma placa valida.';
+    }
+
     if (!aceitouTermos) {
       return 'Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para criar sua conta.';
     }
@@ -214,6 +231,7 @@ export default function CadastroSocialPage() {
       disponibilidade,
       especialidades,
       coren,
+      placa: placa.replace(/[^A-Za-z0-9]/g, '').toUpperCase(),
     };
 
     try {
@@ -317,7 +335,11 @@ export default function CadastroSocialPage() {
                     name="tipo"
                     value={opcao.value}
                     checked={tipo === opcao.value}
-                    onChange={() => setTipo(opcao.value)}
+                    onChange={() => {
+                      setTipo(opcao.value);
+                      setCoren('');
+                      setPlaca('');
+                    }}
                     disabled={loading}
                   />
                   {opcao.label}
@@ -393,36 +415,81 @@ export default function CadastroSocialPage() {
 
           {isPrestador && (
             <fieldset className={styles.section}>
-              <legend>Dados profissionais</legend>
+              <legend>
+                {formularioPrestador?.titulo || 'Dados profissionais'}
+              </legend>
+              {formularioPrestador?.descricao && (
+                <p>{formularioPrestador.descricao}</p>
+              )}
               <div className={styles.grid}>
                 <label className={`${styles.field} ${styles.fieldWide}`}>
-                  Bio profissional
-                  <textarea value={bio} onChange={(e) => setBio(e.target.value)} disabled={loading} rows={4} />
+                  {formularioPrestador?.bioLabel || 'Bio profissional'}
+                  <textarea
+                    value={bio}
+                    placeholder={formularioPrestador?.bioPlaceholder}
+                    onChange={(e) => setBio(e.target.value)}
+                    disabled={loading}
+                    rows={4}
+                  />
                 </label>
                 <label className={styles.field}>
-                  Anos de experiencia
-                  <input inputMode="numeric" value={anosExperiencia} onChange={(e) => setAnosExperiencia(mascaraNumero(e.target.value))} disabled={loading} />
+                  {formularioPrestador?.experienciaLabel || 'Anos de experiencia'}
+                  <input
+                    inputMode="numeric"
+                    value={anosExperiencia}
+                    placeholder={formularioPrestador?.experienciaPlaceholder}
+                    onChange={(e) => setAnosExperiencia(mascaraNumero(e.target.value))}
+                    disabled={loading}
+                  />
                 </label>
                 <label className={styles.field}>
-                  Valor hora
-                  <input inputMode="decimal" value={valorHora} onChange={(e) => setValorHora(e.target.value.replace(/[^\d.,]/g, ''))} disabled={loading} />
+                  {formularioPrestador?.valorHoraLabel || 'Valor hora'}
+                  <input
+                    inputMode="decimal"
+                    value={valorHora}
+                    placeholder={formularioPrestador?.valorHoraPlaceholder}
+                    onChange={(e) => setValorHora(e.target.value.replace(/[^\d.,]/g, ''))}
+                    disabled={loading}
+                  />
                 </label>
                 <label className={styles.field}>
-                  Valor diaria
-                  <input inputMode="decimal" value={valorDiaria} onChange={(e) => setValorDiaria(e.target.value.replace(/[^\d.,]/g, ''))} disabled={loading} />
+                  {formularioPrestador?.valorDiariaLabel || 'Valor diaria'}
+                  <input
+                    inputMode="decimal"
+                    value={valorDiaria}
+                    placeholder={formularioPrestador?.valorDiariaPlaceholder}
+                    onChange={(e) => setValorDiaria(e.target.value.replace(/[^\d.,]/g, ''))}
+                    disabled={loading}
+                  />
                 </label>
                 <label className={styles.field}>
-                  Disponibilidade
-                  <input value={disponibilidade} onChange={(e) => setDisponibilidade(e.target.value)} disabled={loading} />
+                  {formularioPrestador?.disponibilidadeLabel || 'Disponibilidade'}
+                  <input
+                    value={disponibilidade}
+                    placeholder={formularioPrestador?.disponibilidadePlaceholder}
+                    onChange={(e) => setDisponibilidade(e.target.value)}
+                    disabled={loading}
+                  />
                 </label>
                 <label className={`${styles.field} ${styles.fieldWide}`}>
-                  Especialidades
-                  <input value={especialidades} onChange={(e) => setEspecialidades(e.target.value)} disabled={loading} />
+                  {formularioPrestador?.especialidadesLabel || 'Especialidades'}
+                  <input
+                    value={especialidades}
+                    placeholder={formularioPrestador?.especialidadesPlaceholder}
+                    onChange={(e) => setEspecialidades(e.target.value)}
+                    disabled={loading}
+                  />
                 </label>
                 {tipo === 'enfermeiro' && (
                   <label className={styles.field}>
                     COREN
                     <input value={coren} onChange={(e) => setCoren(e.target.value)} disabled={loading} />
+                  </label>
+                )}
+                {tipo === 'motorista_assistencial' && (
+                  <label className={styles.field}>
+                    Placa do veículo
+                    <input value={placa} onChange={(e) => setPlaca(e.target.value.toUpperCase())} disabled={loading} />
                   </label>
                 )}
               </div>

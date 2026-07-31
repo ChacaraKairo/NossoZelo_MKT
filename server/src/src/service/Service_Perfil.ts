@@ -14,8 +14,36 @@ import prisma from '../lib/prisma';
 import {
   STATUS_CONTRATACAO,
   STATUS_PRIVACY_GATE_CLIENTE,
+  TIPOS_PRESTADOR,
 } from '../constants/dominio';
 import ServiceAssinatura from './Service_Assinatura';
+
+const CAMPOS_PROFISSIONAIS_BASE = [
+  'bio',
+  'anos_experiencia',
+  'valor_hora',
+  'valor_diaria',
+  'disponibilidade',
+  'especialidades',
+];
+
+const PERFIS_PRESTADOR: Record<string, string> = {
+  cuidador: 'cuidadores',
+  enfermeiro: 'enfermeiros',
+  acompanhante: 'acompanhantes',
+  baba: 'babas',
+  diarista: 'diaristas',
+  motorista_assistencial: 'motoristas_assistenciais',
+};
+
+function obterDadosProfissionais(perfil: any) {
+  return perfil[PERFIS_PRESTADOR[perfil.tipo]] ?? null;
+}
+
+function perfilPrestadorDelegate(tipo: string) {
+  const tabela = PERFIS_PRESTADOR[tipo];
+  return tabela ? (prisma as any)[tabela] : null;
+}
 
 async function anexarAvaliacoesEmContratacoes(contratacoes: any[]) {
   if (!contratacoes.length) return contratacoes;
@@ -146,6 +174,9 @@ export class ServicePerfil {
             cuidadores: true,
             enfermeiros: true,
             acompanhantes: true,
+            babas: true,
+            diaristas: true,
+            motoristas_assistenciais: true,
             servicos: true,
             agenda: {
               orderBy: { data: 'asc' },
@@ -233,6 +264,9 @@ export class ServicePerfil {
         cuidadores,
         enfermeiros,
         acompanhantes,
+        babas,
+        diaristas,
+        motoristas_assistenciais,
         servicos,
         agenda,
         avaliacoes_avaliacoes_cliente_idTousuarios,
@@ -243,11 +277,7 @@ export class ServicePerfil {
       } = perfilEnriquecido;
 
       const perfilTipo = perfilEnriquecido.tipo;
-      const ehPrestador = [
-        'cuidador',
-        'enfermeiro',
-        'acompanhante',
-      ].includes(perfilTipo);
+      const ehPrestador = TIPOS_PRESTADOR.includes(perfilTipo as any);
       const contratacoesClienteComAvaliacoes =
         await anexarAvaliacoesEmContratacoes(
           contratacoes_contratacoes_cliente_idTousuarios,
@@ -277,12 +307,8 @@ export class ServicePerfil {
         };
       }
 
-      const dadosProfissionais =
-        perfilTipo === 'cuidador'
-          ? cuidadores
-          : perfilTipo === 'enfermeiro'
-            ? enfermeiros
-            : acompanhantes;      const statusAssinatura =
+      const dadosProfissionais = obterDadosProfissionais(perfilEnriquecido);
+      const statusAssinatura =
         await ServiceAssinatura.obterStatusAssinaturaPrestador(usuarioId);
 
       return {
@@ -331,14 +357,7 @@ export class ServicePerfil {
         throw new Error('Usuário não encontrado.');
       }
 
-      const tiposPrestador = [
-        'cuidador',
-        'enfermeiro',
-        'acompanhante',
-      ];
-      const ehPrestador = tiposPrestador.includes(
-        usuario.tipo,
-      );
+      const ehPrestador = TIPOS_PRESTADOR.includes(usuario.tipo as any);
 
       const [totalContratacoes, totalAvaliacoes] =
         await Promise.all([
@@ -356,23 +375,10 @@ export class ServicePerfil {
 
       let perfilProfissionalExiste = true;
 
-      if (usuario.tipo === 'cuidador') {
+      const perfilDelegate = perfilPrestadorDelegate(usuario.tipo);
+      if (perfilDelegate) {
         perfilProfissionalExiste = Boolean(
-          await prisma.cuidadores.findUnique({
-            where: { usuario_id: usuarioId },
-            select: { usuario_id: true },
-          }),
-        );
-      } else if (usuario.tipo === 'enfermeiro') {
-        perfilProfissionalExiste = Boolean(
-          await prisma.enfermeiros.findUnique({
-            where: { usuario_id: usuarioId },
-            select: { usuario_id: true },
-          }),
-        );
-      } else if (usuario.tipo === 'acompanhante') {
-        perfilProfissionalExiste = Boolean(
-          await prisma.acompanhantes.findUnique({
+          await perfilDelegate.findUnique({
             where: { usuario_id: usuarioId },
             select: { usuario_id: true },
           }),
@@ -414,6 +420,9 @@ export class ServicePerfil {
           cuidadores: true,
           enfermeiros: true,
           acompanhantes: true,
+          babas: true,
+          diaristas: true,
+          motoristas_assistenciais: true,
           servicos: true,
           avaliacoes_avaliacoes_prestador_idTousuarios: {
             take: 3,
@@ -442,15 +451,8 @@ export class ServicePerfil {
         throw new Error('Prestador indisponivel');
       }
 
-      const { cuidadores, enfermeiros, acompanhantes } = perfil;
-      const dadosProfissionais =
-        perfil.tipo === 'cuidador'
-          ? cuidadores
-          : perfil.tipo === 'enfermeiro'
-            ? enfermeiros
-            : perfil.tipo === 'acompanhante'
-              ? acompanhantes
-              : null;
+      const { enfermeiros } = perfil;
+      const dadosProfissionais = obterDadosProfissionais(perfil);
 
       return {
         id: perfil.id,
@@ -478,6 +480,10 @@ export class ServicePerfil {
                 perfil.tipo === 'enfermeiro'
                   ? enfermeiros?.coren
                   : undefined,
+              placa:
+                perfil.tipo === 'motorista_assistencial'
+                  ? dadosProfissionais.placa
+                  : undefined,
             }
           : null,
         bio: dadosProfissionais?.bio ?? null,
@@ -486,6 +492,10 @@ export class ServicePerfil {
         coren:
           perfil.tipo === 'enfermeiro'
             ? enfermeiros?.coren
+            : undefined,
+        placa:
+          perfil.tipo === 'motorista_assistencial'
+            ? dadosProfissionais?.placa
             : undefined,
         valor_hora: dadosProfissionais?.valor_hora ?? null,
         valor_diaria: dadosProfissionais?.valor_diaria ?? null,
@@ -654,67 +664,17 @@ export class ServicePerfil {
       'url_foto_perfil',
     ]);
 
-    const camposPermitidosPorTipo: Record<
-      string,
-      Set<string>
-    > = {
-      cuidador: new Set([
-        'bio',
-        'anos_experiencia',
-        'valor_hora',
-        'valor_diaria',
-        'disponibilidade',
-        'especialidades',
-      ]),
-      enfermeiro: new Set([
-        'bio',
-        'coren',
-        'anos_experiencia',
-        'valor_hora',
-        'valor_diaria',
-        'disponibilidade',
-        'especialidades',
-      ]),
-      acompanhante: new Set([
-        'bio',
-        'anos_experiencia',
-        'valor_hora',
-        'valor_diaria',
-        'disponibilidade',
-        'especialidades',
-      ]),
+    const camposComuns = new Set(CAMPOS_PROFISSIONAIS_BASE);
+    const camposPermitidosPorTipo: Record<string, Set<string>> = {
+      cuidador: new Set(camposComuns),
+      enfermeiro: new Set([...camposComuns, 'coren']),
+      acompanhante: new Set(camposComuns),
+      baba: new Set(camposComuns),
+      diarista: new Set(camposComuns),
+      motorista_assistencial: new Set([...camposComuns, 'placa']),
     };
 
-    const camposProfissionaisNoSchemaPorTipo: Record<
-      string,
-      Set<string>
-    > = {
-      cuidador: new Set([
-        'bio',
-        'anos_experiencia',
-        'valor_hora',
-        'valor_diaria',
-        'disponibilidade',
-        'especialidades',
-      ]),
-      enfermeiro: new Set([
-        'bio',
-        'coren',
-        'anos_experiencia',
-        'valor_hora',
-        'valor_diaria',
-        'disponibilidade',
-        'especialidades',
-      ]),
-      acompanhante: new Set([
-        'bio',
-        'anos_experiencia',
-        'valor_hora',
-        'valor_diaria',
-        'disponibilidade',
-        'especialidades',
-      ]),
-    };
+    const camposProfissionaisNoSchemaPorTipo = camposPermitidosPorTipo;
 
     const dadosUsuario: any = {};
     const dadosEspecificos: any = {};
@@ -764,18 +724,7 @@ export class ServicePerfil {
       Object.keys(dadosEspecificos).length > 0 &&
       tipo !== 'cliente'
     ) {
-      if (tipo === 'cuidador') {
-        operacoesBanco.push(
-          prisma.cuidadores.upsert({
-            where: { usuario_id: usuarioId },
-            update: dadosEspecificos,
-            create: {
-              usuario_id: usuarioId,
-              ...dadosEspecificos,
-            },
-          }),
-        );
-      } else if (tipo === 'enfermeiro') {
+      if (tipo === 'enfermeiro') {
         const enfermeiroExistente =
           await prisma.enfermeiros.findUnique({
             where: { usuario_id: usuarioId },
@@ -794,9 +743,11 @@ export class ServicePerfil {
             }),
           );
         }
-      } else if (tipo === 'acompanhante') {
-        operacoesBanco.push(
-          prisma.acompanhantes.upsert({
+      } else {
+        const perfilDelegate = perfilPrestadorDelegate(tipo);
+        if (perfilDelegate) {
+          operacoesBanco.push(
+            perfilDelegate.upsert({
             where: { usuario_id: usuarioId },
             update: dadosEspecificos,
             create: {
@@ -804,7 +755,8 @@ export class ServicePerfil {
               ...dadosEspecificos,
             },
           }),
-        );
+          );
+        }
       }
     }
 

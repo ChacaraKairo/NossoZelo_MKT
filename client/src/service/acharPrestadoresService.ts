@@ -1,4 +1,5 @@
 import api from '@/service/api';
+import { formatarTipoPrestador } from '@/constants/prestadores';
 import { PrestadorCardData } from '@/types/prestador';
 import logger from '@/utils/logger';
 import { extrairMensagemErro } from '@/utils/tratarErroApi';
@@ -35,9 +36,21 @@ function obterCoordenadaSalva(chave: 'latitude' | 'longitude') {
   return cookie?.split('=')[1];
 }
 
-function formatarTipo(tipo?: string | null) {
-  if (!tipo) return 'Serviço';
-  return tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
+function normalizarCategoria(categoria: string) {
+  const categorias: Record<string, string> = {
+    cuidador: 'cuidador',
+    enfermeiro: 'enfermeiro',
+    acompanhante: 'acompanhante',
+    baba: 'baba',
+    'babá': 'baba',
+    'diarista/faxineira': 'diarista',
+    diarista: 'diarista',
+    faxineira: 'diarista',
+    'motorista assistencial': 'motorista_assistencial',
+    motorista_assistencial: 'motorista_assistencial',
+  };
+  const chave = categoria.trim().toLowerCase();
+  return categorias[chave] || chave;
 }
 
 function montarLocalidade(prestador: any): string {
@@ -77,7 +90,7 @@ function mapearPrestador(prestador: any): PrestadorCardData {
       prestador.nome ||
       prestador.name ||
       'Prestador sem nome',
-    tipo: formatarTipo(prestador.tipo),
+    tipo: formatarTipoPrestador(prestador.tipo),
     cidade,
     estado,
     bairro: prestador.bairro || prestador.providerProfile?.bairro,
@@ -116,7 +129,7 @@ export const buscarPrestadores = async (
     if (filtros.idUsuario) params.idUsuario = filtros.idUsuario;
     if (filtros.nome) params.nome = filtros.nome;
     if (filtros.localizacao) params.localizacao = filtros.localizacao;
-    if (filtros.categoria) params.tipo = filtros.categoria.toLowerCase();
+    if (filtros.categoria) params.tipo = normalizarCategoria(filtros.categoria);
     if (filtros.distancia) params.raioKm = String(filtros.distancia);
     if (filtros.precoMax) params.precoMax = filtros.precoMax;
 

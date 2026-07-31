@@ -1,17 +1,16 @@
 services:
-  mysql:
-    image: mysql:8.4
+  postgres:
+    image: postgres:16-alpine
     environment:
-      MYSQL_DATABASE: nossozelo
-      MYSQL_USER: nossozelo
-      MYSQL_PASSWORD: nossozelo
-      MYSQL_ROOT_PASSWORD: root
+      POSTGRES_DB: nossozelo
+      POSTGRES_USER: nossozelo
+      POSTGRES_PASSWORD: nossozelo
     ports:
-      - "3306:3306"
+      - "5433:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test: ["CMD-SHELL", "pg_isready -U nossozelo -d nossozelo"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -20,13 +19,13 @@ services:
     build:
       context: ./server
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     environment:
       NODE_ENV: development
       PORT: 4000
       HOST: 0.0.0.0
-      DATABASE_URL: mysql://nossozelo:nossozelo@mysql:3306/nossozelo
+      DATABASE_URL: postgresql://nossozelo:nossozelo@postgres:5432/nossozelo?schema=public
       JWT_SECRET: troque-por-uma-chave-com-pelo-menos-32-caracteres
       FRONTEND_URL: http://localhost:3000
       BACKEND_PUBLIC_URL: http://localhost:4000
@@ -50,4 +49,4 @@ services:
       - "3000:3000"
 
 volumes:
-  mysql_data:
+  postgres_data:

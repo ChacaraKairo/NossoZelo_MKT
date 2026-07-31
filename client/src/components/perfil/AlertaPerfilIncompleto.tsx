@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { ehTipoPrestador } from '@/constants/prestadores';
 import { PerfilUsuario, TipoUsuario } from '@/types/perfil';
 import logger from '@/utils/logger';
 
@@ -9,7 +10,6 @@ interface AlertaPerfilIncompletoProps {
 }
 
 const CONTEXTO = 'AlertaPerfilIncompleto';
-const TIPOS_PRESTADOR = ['cuidador', 'enfermeiro', 'acompanhante'];
 
 function vazio(valor: unknown) {
   if (Array.isArray(valor)) return valor.length === 0;
@@ -30,13 +30,16 @@ function calcularCamposAusentes(
   if (vazio(usuario.cidade)) campos.push('cidade');
   if (vazio(usuario.estado)) campos.push('estado');
 
-  if (TIPOS_PRESTADOR.includes(tipo)) {
+  if (ehTipoPrestador(tipo)) {
     if (vazio(profissional.bio)) campos.push('bio');
     if (vazio(profissional.valor_hora) && vazio(profissional.valor_diaria)) {
       campos.push('valor por hora ou diária');
     }
     if (vazio(profissional.disponibilidade)) campos.push('disponibilidade');
     if (vazio(profissional.especialidades)) campos.push('especialidades');
+    if (tipo === 'motorista_assistencial' && vazio(profissional.placa)) {
+      campos.push('placa do veículo');
+    }
   }
 
   return campos;

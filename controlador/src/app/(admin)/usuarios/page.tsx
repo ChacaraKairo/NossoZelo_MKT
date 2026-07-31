@@ -48,6 +48,9 @@ export default async function UsuariosPage({ searchParams }: UsuariosPageProps) 
                 { label: "Cuidador", value: "cuidador" },
                 { label: "Enfermeiro", value: "enfermeiro" },
                 { label: "Acompanhante", value: "acompanhante" },
+                { label: "Babá", value: "baba" },
+                { label: "Diarista/Faxineira", value: "diarista" },
+                { label: "Motorista assistencial", value: "motorista_assistencial" },
                 { label: "Admin", value: "admin" }
               ]}
             />

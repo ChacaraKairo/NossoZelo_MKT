@@ -7,9 +7,9 @@ import {
   assinaturaSchema,
   webhookAsaasSchema,
 } from '../validator/schemas/rotasSensiveis';
+import { TIPOS_PRESTADOR } from '../constants/dominio';
 
 const AssinaturaRouter = Router();
-const tiposPrestador = ['cuidador', 'enfermeiro', 'acompanhante'];
 
 AssinaturaRouter.post(
   '/webhook/asaas',
@@ -38,7 +38,7 @@ AssinaturaRouter.get(
 AssinaturaRouter.post(
   '/iniciar',
   authMiddleware,
-  permitirTipos(tiposPrestador),
+  permitirTipos(TIPOS_PRESTADOR),
   validarEntrada(assinaturaSchema),
   ControllerAssinatura.iniciar as any,
 );
@@ -46,7 +46,7 @@ AssinaturaRouter.post(
 AssinaturaRouter.post(
   '/regularizar',
   authMiddleware,
-  permitirTipos(tiposPrestador),
+  permitirTipos(TIPOS_PRESTADOR),
   validarEntrada(assinaturaSchema),
   ControllerAssinatura.regularizar as any,
 );
@@ -54,7 +54,7 @@ AssinaturaRouter.post(
 AssinaturaRouter.post(
   '/cancelar',
   authMiddleware,
-  permitirTipos(tiposPrestador),
+  permitirTipos(TIPOS_PRESTADOR),
   ControllerAssinatura.cancelar as any,
 );
 

@@ -16,19 +16,16 @@ import AbaAvaliacoesPro from '@/components/perfil/Abas/AbaAvaliacoesPro';
 import AbaSolicitacoesPro from '@/components/perfil/AbaSolicitacoesPro';
 import AbaHistoricoPerfil from '@/components/perfil/AbaHistoricoPerfil';
 import AbaSeguranca from '@/components/perfil/AbaSeguranca';
+import { ehTipoPrestador, TipoPrestador } from '@/constants/prestadores';
 
 function normalizarTipoUsuario(
   valor: unknown,
-): 'cliente' | 'cuidador' | 'enfermeiro' | 'acompanhante' {
+): 'cliente' | TipoPrestador {
   const tipo = String(valor || '')
     .trim()
     .toLowerCase();
 
-  if (
-    tipo === 'cuidador' ||
-    tipo === 'enfermeiro' ||
-    tipo === 'acompanhante'
-  ) {
+  if (ehTipoPrestador(tipo)) {
     return tipo;
   }
 
@@ -88,6 +85,7 @@ function normalizarPerfilDashboard(dados: any): PerfilCompleto {
     anos_experiencia:
       profissional.anos_experiencia || dados?.anos_experiencia,
     coren: profissional.coren || dados?.coren,
+    placa: profissional.placa || dados?.placa,
   } as PerfilCompleto;
 }
 

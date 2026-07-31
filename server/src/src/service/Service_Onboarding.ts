@@ -44,6 +44,17 @@ function dadosAcompanhanteCompletos(dados?: {
   return dadosCuidadorCompletos(dados);
 }
 
+function dadosMotoristaAssistencialCompletos(dados?: {
+  bio?: string | null;
+  disponibilidade?: string | null;
+  especialidades?: string | null;
+  placa?: string | null;
+} | null) {
+  return Boolean(
+    dadosCuidadorCompletos(dados) && textoPreenchido(dados?.placa),
+  );
+}
+
 function dadosEnfermeiroCompletos(dados?: {
   bio?: string | null;
   disponibilidade?: string | null;
@@ -81,6 +92,9 @@ export class ServiceOnboarding {
         cuidadores: true,
         enfermeiros: true,
         acompanhantes: true,
+        babas: true,
+        diaristas: true,
+        motoristas_assistenciais: true,
         assinaturas: {
           orderBy: [{ criado_em: 'desc' }, { id: 'desc' }],
           take: 1,
@@ -103,7 +117,13 @@ export class ServiceOnboarding {
           ? dadosEnfermeiroCompletos(usuario.enfermeiros)
           : usuario.tipo === 'acompanhante'
             ? dadosAcompanhanteCompletos(usuario.acompanhantes)
-            : true;
+            : usuario.tipo === 'baba'
+              ? dadosAcompanhanteCompletos(usuario.babas)
+              : usuario.tipo === 'diarista'
+                ? dadosAcompanhanteCompletos(usuario.diaristas)
+                : usuario.tipo === 'motorista_assistencial'
+                  ? dadosMotoristaAssistencialCompletos(usuario.motoristas_assistenciais)
+                  : true;
 
     let etapaAtual: EtapaOnboardingPrestador = 'ativo';
 

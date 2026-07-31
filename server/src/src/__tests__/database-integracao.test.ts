@@ -12,15 +12,15 @@ describeDb('integracao com banco de teste', () => {
     });
 
     try {
-      const tabelas = await prisma.$queryRawUnsafe<Array<{ TABLE_NAME: string }>>(
-        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eventos_assinatura'",
+      const tabelas = await prisma.$queryRawUnsafe<Array<{ table_name: string }>>(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'eventos_assinatura'",
       );
-      const colunas = await prisma.$queryRawUnsafe<Array<{ COLUMN_NAME: string }>>(
-        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eventos_assinatura'",
+      const colunas = await prisma.$queryRawUnsafe<Array<{ column_name: string }>>(
+        "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'eventos_assinatura'",
       );
 
       expect(tabelas.length).toBe(1);
-      expect(colunas.map((item) => item.COLUMN_NAME)).toEqual(
+      expect(colunas.map((item) => item.column_name)).toEqual(
         expect.arrayContaining([
           'gateway_event_id',
           'payload_hash',
@@ -33,4 +33,3 @@ describeDb('integracao com banco de teste', () => {
     }
   });
 });
-
