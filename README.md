@@ -84,7 +84,6 @@ Rotas principais:
 - Busca de prestador: deve mostrar apenas prestadores aptos conforme assinatura, status cadastral, e-mail confirmado e documentação aprovada.
 - Agendamento: exige autenticação e valida disponibilidade/conflito no serviço.
 - Upload: valida MIME/extensão/assinatura binária e grava documentos privados por chave, não URL pública.
-- Validação documental: prestadores enviam documentos em `/prestador/documentos`; a API usa o catálogo interno `tipos_documentos`, salva arquivo privado, registra análise com sinal/score em `documentos_analises`, cria status documental e o controlador revisa manualmente em `/documentos`. Não há OCR/provider externo de KYC nesta fase.
 
 ## Limitações Conhecidas
 

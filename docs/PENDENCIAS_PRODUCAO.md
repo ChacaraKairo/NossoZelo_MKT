@@ -37,8 +37,6 @@ Observacao: o build do client exige `NEXT_PUBLIC_API_URL` em ambiente de produca
 - [ ] Validar tabela `eventos_assinatura` com `payload_hash` e `processado_em`.
 - [ ] Validar coluna `assinaturas.gateway_payment_id`.
 - [ ] Validar indice `assinaturas_prestador_status_idx`.
-- [ ] Aplicar migration `add_validacao_documentos` em homologacao/producao.
-- [ ] Conferir campos `usuarios.documentos_status`, `identidade_status`, `profissional_status` e tabelas `tipos_documentos`, `tipos_documentos_regras`, `documentos_verificacao`, `documentos_analises`, `documentos_campos_extraidos` e `revisoes_documentos` no banco real.
 - [ ] Executar ensaio de backup e restore antes de qualquer migracao sensivel.
 
 ### 3. Corrigir encoding legado dos enums
@@ -104,12 +102,7 @@ Controlador:
 - [ ] Validar ClamAV com arquivo limpo e EICAR em staging.
 - [ ] Registrar auditoria de upload, scan e liberacao.
 - [ ] Garantir que documentos privados retornem chave interna, nao URL publica.
-- [x] Implementar fluxo MVP de validacao documental com upload privado, status, revisao manual e bloqueio da busca.
-- [x] Implementar catalogo interno `tipos_documentos` com obrigatoriedade por categoria de prestador.
-- [x] Implementar estrutura de esteira documental com sinal, score, validacoes e pendencias em `documentos_analises`.
-- [x] Criar tela administrativa basica para aprovar/recusar documentos.
 - [ ] Configurar storage privado definitivo para documentos em staging/producao.
-- [ ] Integrar provider externo de KYC/OCR/documentoscopia, se aprovado operacionalmente.
 
 ### 7. CRUD administrativo
 

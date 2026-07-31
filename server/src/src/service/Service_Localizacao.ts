@@ -10,7 +10,6 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { TIPOS_PRESTADOR } from '../constants/dominio';
-import { filtroDocumentacaoAprovadaSql } from './Service_Documentos';
 
 export interface Coordenadas {
   latitude: number;
@@ -302,7 +301,6 @@ export class GeolocalizacaoService {
       const conditions = [];
       conditions.push(Prisma.sql`u.email_confirmado = true`);
       conditions.push(Prisma.sql`u.status_cadastro = 'ativo'::usuarios_status_cadastro`);
-      conditions.push(filtroDocumentacaoAprovadaSql());
       conditions.push(Prisma.sql`EXISTS (
         SELECT 1
         FROM assinaturas ass
@@ -486,7 +484,6 @@ export class GeolocalizacaoService {
         WHERE u.tipo IN (${tiposPrestadorSql()})
         AND u.email_confirmado = true
         AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
-        AND ${filtroDocumentacaoAprovadaSql()}
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
@@ -523,7 +520,6 @@ export class GeolocalizacaoService {
         WHERE u.id != ${usuarioId} AND u.tipo IN (${tiposPrestadorSql()})
         AND u.email_confirmado = true
         AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
-        AND ${filtroDocumentacaoAprovadaSql()}
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
@@ -569,7 +565,6 @@ export class GeolocalizacaoService {
         WHERE u.id != ${usuarioId} AND ${filtroPerfilPrestadorSql(tipo)}
         AND u.email_confirmado = true
         AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
-        AND ${filtroDocumentacaoAprovadaSql()}
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass
@@ -609,7 +604,6 @@ export class GeolocalizacaoService {
         WHERE u.nome LIKE ${nomeBusca} AND u.tipo IN (${tiposPrestadorSql()})
         AND u.email_confirmado = true
         AND u.status_cadastro = 'ativo'::usuarios_status_cadastro
-        AND ${filtroDocumentacaoAprovadaSql()}
         AND EXISTS (
           SELECT 1
           FROM assinaturas ass

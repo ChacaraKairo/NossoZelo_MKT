@@ -422,10 +422,6 @@ model usuarios {
   tipo                  usuarios_tipo
   status_cadastro       usuarios_status_cadastro @default(ativo)
   email_confirmado      Boolean                  @default(false)
-  documentos_status     documentos_verificacao_status @default(nao_enviado)
-  identidade_status     String?                  @default("nao_iniciada") @db.VarChar(40)
-  profissional_status   String?                  @default("nao_aplicavel") @db.VarChar(40)
-  documentos_revisado_em DateTime?               @db.Timestamp(0)
   termos_aceitos_em     DateTime?                @db.Timestamp(0)
   termos_versao         String?                  @db.VarChar(30)
   privacidade_aceita_em DateTime?                @db.Timestamp(0)
@@ -436,9 +432,6 @@ model usuarios {
   avaliacao_media       Decimal?                 @default(0.00) @db.Decimal(3, 2)
 
   documentos_prestadores documentos_cuidadores[]
-  documentos_verificacao documentos_verificacao[]
-  revisoes_documentos    revisoes_documentos[]
-  documentos_analises    documentos_analises[]
   confirmacoes_email     confirmacoes_email[]
 
   admins                                           admins?
@@ -468,159 +461,6 @@ model usuarios {
   recuperacao_senhas                               recuperacao_senhas[]
   relatorios                                       relatorios[]
   servicos                                         servicos[]
-}
-
-model documentos_verificacao {
-  id                Int                            @id @default(autoincrement())
-  usuario_id        String                         @db.VarChar(20)
-  tipo_documento_id Int?
-  tipo_documento    String                         @db.VarChar(50)
-  arquivo_chave     String                         @db.VarChar(255)
-  mime_type         String?                        @db.VarChar(100)
-  tamanho_bytes     Int?
-  status            documentos_verificacao_status  @default(enviado)
-  provedor          String?                        @db.VarChar(60)
-  score             Decimal?                       @db.Decimal(5, 2)
-  motivo_recusa     String?                        @db.Text
-  dados_extraidos   Json?
-  resultado_resumo  Json?
-  criado_em         DateTime                       @default(now()) @db.Timestamp(0)
-  atualizado_em     DateTime                       @updatedAt @db.Timestamp(0)
-
-  usuarios          usuarios                       @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tipoDocumento     tipos_documentos?              @relation(fields: [tipo_documento_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  revisoes          revisoes_documentos[]
-  campos_extraidos  documentos_campos_extraidos[]
-  analises          documentos_analises[]
-
-  @@index([usuario_id])
-  @@index([tipo_documento_id])
-  @@index([status])
-  @@index([tipo_documento])
-}
-
-model tipos_documentos {
-  id                              Int                         @id @default(autoincrement())
-  codigo                          String                      @unique @db.VarChar(80)
-  nome                            String                      @db.VarChar(120)
-  descricao                       String?                     @db.Text
-  categoria                       String                      @db.VarChar(60)
-  obrigatorio_cuidador            Boolean                     @default(false)
-  obrigatorio_enfermeiro          Boolean                     @default(false)
-  obrigatorio_acompanhante        Boolean                     @default(false)
-  obrigatorio_baba                Boolean                     @default(false)
-  obrigatorio_diarista            Boolean                     @default(false)
-  obrigatorio_motorista_assistencial Boolean                  @default(false)
-  obrigatorio_busca               Boolean                     @default(false)
-  requer_upload                   Boolean                     @default(true)
-  exige_frente                    Boolean                     @default(false)
-  exige_verso                     Boolean                     @default(false)
-  exige_selfie                    Boolean                     @default(false)
-  exige_validade                  Boolean                     @default(false)
-  exige_numero_documento          Boolean                     @default(false)
-  exige_orgao_emissor             Boolean                     @default(false)
-  exige_uf_emissor                Boolean                     @default(false)
-  exige_data_emissao              Boolean                     @default(false)
-  exige_revisao_manual            Boolean                     @default(true)
-  permite_pdf                     Boolean                     @default(true)
-  permite_imagem                  Boolean                     @default(true)
-  tamanho_maximo_mb               Int                         @default(10)
-  validade_dias                   Int?
-  revalidar_apos_vencimento       Boolean                     @default(true)
-  nivel_risco                     String                      @default("MEDIO") @db.VarChar(20)
-  provider_sugerido               String?                     @db.VarChar(80)
-  campos_esperados                Json?
-  regras_validacao                Json?
-  ativo                           Boolean                     @default(true)
-  criado_em                       DateTime                    @default(now()) @db.Timestamp(0)
-  atualizado_em                   DateTime                    @updatedAt @db.Timestamp(0)
-
-  documentos                      documentos_verificacao[]
-  regras                          tipos_documentos_regras[]
-
-  @@index([categoria])
-  @@index([ativo])
-  @@index([obrigatorio_busca])
-}
-
-model documentos_campos_extraidos {
-  id           Int                    @id @default(autoincrement())
-  documento_id Int
-  campo        String                 @db.VarChar(80)
-  valor        String?                @db.Text
-  valor_mascarado String?             @db.Text
-  confianca    Decimal?               @db.Decimal(5, 2)
-  origem       String?                @db.VarChar(40)
-  criado_em    DateTime               @default(now()) @db.Timestamp(0)
-
-  documento    documentos_verificacao @relation(fields: [documento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([documento_id])
-  @@index([campo])
-}
-
-model documentos_analises {
-  id                  Int                    @id @default(autoincrement())
-  documento_id         Int
-  usuario_id           String                 @db.VarChar(20)
-  tipo_detectado       String?                @db.VarChar(80)
-  sinal                String                 @db.VarChar(20)
-  score                Decimal?               @db.Decimal(5, 2)
-  status               String                 @db.VarChar(40)
-  arquivo_legivel      Boolean                @default(false)
-  tipo_confere         Boolean                @default(false)
-  nome_confere         Boolean                @default(false)
-  cpf_confere          Boolean                @default(false)
-  validade_confere     Boolean?
-  precisa_revisao      Boolean                @default(true)
-  dados_extraidos      Json?
-  validacoes           Json?
-  pendencias           Json?
-  motivo               String?                @db.Text
-  provider             String?                @db.VarChar(80)
-  provider_request_id  String?                @db.VarChar(120)
-  criado_em            DateTime               @default(now()) @db.Timestamp(0)
-  atualizado_em        DateTime               @updatedAt @db.Timestamp(0)
-
-  documento            documentos_verificacao @relation(fields: [documento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuario              usuarios               @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([documento_id])
-  @@index([usuario_id])
-  @@index([sinal])
-  @@index([status])
-}
-
-model tipos_documentos_regras {
-  id                 Int              @id @default(autoincrement())
-  tipo_documento_id  Int
-  codigo             String           @db.VarChar(80)
-  descricao          String           @db.Text
-  severidade         String           @default("ERRO") @db.VarChar(20)
-  ativo              Boolean          @default(true)
-
-  tipo_documento     tipos_documentos @relation(fields: [tipo_documento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([tipo_documento_id, codigo])
-  @@index([tipo_documento_id])
-  @@index([codigo])
-}
-
-model revisoes_documentos {
-  id             Int                         @id @default(autoincrement())
-  documento_id   Int
-  usuario_id     String                      @db.VarChar(20)
-  admin_id       String?                     @db.VarChar(20)
-  decisao        revisoes_documentos_decisao
-  motivo         String?                     @db.Text
-  criado_em      DateTime                    @default(now()) @db.Timestamp(0)
-
-  documento      documentos_verificacao      @relation(fields: [documento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuario        usuarios                    @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([documento_id])
-  @@index([usuario_id])
-  @@index([admin_id])
 }
 
 model cartoes {
@@ -750,22 +590,6 @@ enum usuarios_tipo {
   diarista
   motorista_assistencial
   admin
-}
-
-enum documentos_verificacao_status {
-  nao_enviado
-  enviado
-  em_validacao
-  aprovado
-  pendente_revisao
-  recusado
-  expirado
-}
-
-enum revisoes_documentos_decisao {
-  aprovado
-  recusado
-  pendente_revisao
 }
 
 model confirmacoes_email {
