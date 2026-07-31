@@ -19,6 +19,7 @@ import ServicoRouter from './Route_Servico';
 import AssinaturaRouter from './Route_Assinatura';
 import ConfirmacaoEmailRouter from './Route_ConfirmacaoEmail';
 import OnboardingRouter from './Route_Onboarding';
+import DocumentosRouter from './Route_Documentos';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use('/servicos', ServicoRouter);
 router.use('/assinaturas', AssinaturaRouter);
 router.use('/email', ConfirmacaoEmailRouter);
 router.use('/onboarding', OnboardingRouter);
+router.use('/documentos', DocumentosRouter);
 
 export default router;

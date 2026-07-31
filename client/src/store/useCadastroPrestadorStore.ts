@@ -32,7 +32,9 @@ interface CadastroState {
   };
   profissional: {
     categoria: string;
+    categorias: string[];
     registro: string;
+    placa: string;
     experiencia: number;
     valorHora: number;
     valorDiaria: number;
@@ -43,6 +45,7 @@ interface CadastroState {
   documentos: {
     foto: File | null;
     identidade: File | null;
+    cnh: File | null;
     certificado: File | null;
     antecedentes: File | null;
   };
@@ -90,7 +93,9 @@ const estadoInicial = {
   },
   profissional: {
     categoria: '',
+    categorias: [],
     registro: '',
+    placa: '',
     experiencia: 0,
     valorHora: 30,
     valorDiaria: 180,
@@ -101,6 +106,7 @@ const estadoInicial = {
   documentos: {
     foto: null,
     identidade: null,
+    cnh: null,
     certificado: null,
     antecedentes: null,
   },
@@ -147,7 +153,9 @@ export const useCadastroPrestadorStore =
           } else if (etapaAtual === 4) {
             novosErros = validarDocumentosPrestador(
               state.documentos,
-              state.profissional.categoria,
+              state.profissional.categorias.length > 0
+                ? state.profissional.categorias
+                : state.profissional.categoria,
             );
           } else if (etapaAtual === 5) {
             novosErros = {};

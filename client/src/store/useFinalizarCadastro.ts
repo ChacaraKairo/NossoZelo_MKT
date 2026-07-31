@@ -20,6 +20,11 @@ export const useFinalizarCadastro = () => {
   } = useCadastroPrestadorStore();
 
   const prepararPayload = (): CadastroPayload => {
+    const categorias =
+      profissional.categorias.length > 0
+        ? profissional.categorias
+        : [profissional.categoria.toLowerCase()].filter(Boolean);
+    const categoriaPrincipal = categorias[0] || profissional.categoria.toLowerCase();
     const payload: CadastroPayload = {
       aceitouTermos: true,
       usuario: {
@@ -36,7 +41,8 @@ export const useFinalizarCadastro = () => {
         cidade: endereco.cidade,
         estado: endereco.uf,
         pais: 'Brasil',
-        tipo: profissional.categoria.toLowerCase(),
+        tipo: categoriaPrincipal,
+        categorias,
       },
     };
 
@@ -49,16 +55,29 @@ export const useFinalizarCadastro = () => {
       especialidades: profissional.especialidades,
     };
 
-    const categoria = profissional.categoria.toLowerCase();
-    if (categoria === 'enfermeiro') {
+    if (categorias.includes('enfermeiro')) {
       payload.enfermeiro = {
         ...dadosProfissionais,
         coren: profissional.registro,
       };
-    } else if (categoria === 'cuidador') {
+    }
+    if (categorias.includes('cuidador')) {
       payload.cuidador = dadosProfissionais;
-    } else if (categoria === 'acompanhante') {
+    }
+    if (categorias.includes('acompanhante')) {
       payload.acompanhante = dadosProfissionais;
+    }
+    if (categorias.includes('baba')) {
+      payload.baba = dadosProfissionais;
+    }
+    if (categorias.includes('diarista')) {
+      payload.diarista = dadosProfissionais;
+    }
+    if (categorias.includes('motorista_assistencial')) {
+      payload.motorista_assistencial = {
+        ...dadosProfissionais,
+        placa: profissional.placa,
+      };
     }
 
     return payload;
@@ -85,6 +104,8 @@ export const useFinalizarCadastro = () => {
       formData.append('foto', documentos.foto);
     if (documentos.identidade)
       formData.append('identidade', documentos.identidade);
+    if (documentos.cnh)
+      formData.append('cnh', documentos.cnh);
     if (documentos.certificado)
       formData.append(
         'certificado',

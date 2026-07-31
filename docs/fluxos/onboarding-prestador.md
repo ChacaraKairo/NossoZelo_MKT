@@ -14,6 +14,40 @@ O pagamento da assinatura faz parte da ativacao inicial do prestador. A area fin
 
 Se o prestador sair antes de pagar, ao fazer login novamente o frontend consulta `GET /onboarding/status` e redireciona para `/onboarding/prestador`.
 
+## Categorias de prestadores
+
+O fluxo vale para todos os tipos profissionais:
+
+- cuidador;
+- enfermeiro;
+- acompanhante;
+- baba;
+- diarista;
+- motorista assistencial.
+
+No cadastro tradicional, o prestador pode escolher ate 2 categorias profissionais. A primeira categoria selecionada continua sendo a categoria principal do usuario para compatibilidade com os fluxos legados.
+
+Para `motorista_assistencial`, a placa do veiculo e obrigatoria no cadastro e na conclusao de perfil.
+
+Documentos exigidos no cadastro:
+
+- foto de perfil para todos os prestadores;
+- documento de identidade para categorias que nao sejam motorista assistencial;
+- CNH para motorista assistencial;
+- antecedentes criminais para todos os prestadores;
+- certificado apenas para cuidador e enfermeiro.
+
+## Dados locais de demonstracao
+
+O seed local cria prestadores ativos para validar busca, vitrine e cards sem depender do gateway:
+
+- `cliente.demo@nossozelo.local` / `Demo@12345`
+- `baba.demo@nossozelo.local` / `Demo@12345`
+- `diarista.demo@nossozelo.local` / `Demo@12345`
+- `motorista.demo@nossozelo.local` / `Demo@12345`
+
+O cliente demo fica ativo e com localizacao em Sao Paulo para testar contratacao. Os prestadores ficam com e-mail confirmado, assinatura local ativa, localizacao em Sao Paulo, servico cadastrado e perfil profissional preenchido. O motorista demo usa placa `ABC1D23`.
+
 ## APIs
 
 - `GET /nossozelo/onboarding/status`: rota autenticada que calcula a etapa atual e a proxima acao.

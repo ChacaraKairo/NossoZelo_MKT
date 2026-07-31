@@ -6,7 +6,7 @@ Este documento consolida o que ainda falta para o NossoZelo sair de MVP controla
 
 O projeto ja possui uma boa base para MVP:
 
-- Backend Express/TypeScript com Prisma e MySQL.
+- Backend Express/TypeScript com Prisma e PostgreSQL.
 - Frontend Next.js.
 - Painel administrativo separado em `controlador/`.
 - Autenticacao com cookie HttpOnly.
@@ -37,6 +37,8 @@ Observacao: o build do client exige `NEXT_PUBLIC_API_URL` em ambiente de produca
 - [ ] Validar tabela `eventos_assinatura` com `payload_hash` e `processado_em`.
 - [ ] Validar coluna `assinaturas.gateway_payment_id`.
 - [ ] Validar indice `assinaturas_prestador_status_idx`.
+- [ ] Aplicar migration `add_validacao_documentos` em homologacao/producao.
+- [ ] Conferir campos `usuarios.documentos_status`, `identidade_status`, `profissional_status` e tabelas `documentos_verificacao`/`revisoes_documentos` no banco real.
 - [ ] Executar ensaio de backup e restore antes de qualquer migracao sensivel.
 
 ### 3. Corrigir encoding legado dos enums
@@ -102,6 +104,10 @@ Controlador:
 - [ ] Validar ClamAV com arquivo limpo e EICAR em staging.
 - [ ] Registrar auditoria de upload, scan e liberacao.
 - [ ] Garantir que documentos privados retornem chave interna, nao URL publica.
+- [x] Implementar fluxo MVP de validacao documental com upload privado, status, revisao manual e bloqueio da busca.
+- [x] Criar tela administrativa basica para aprovar/recusar documentos.
+- [ ] Configurar storage privado definitivo para documentos em staging/producao.
+- [ ] Integrar provider externo de KYC/OCR/documentoscopia, se aprovado operacionalmente.
 
 ### 7. CRUD administrativo
 
@@ -162,6 +168,7 @@ Controlador:
 - [x] Onboarding do prestador.
 - [x] Assinatura ativa, pendente, atrasada, bloqueada e cancelada.
 - [x] Busca exibindo somente prestadores aptos.
+- [x] Regra central de elegibilidade documental para busca de prestadores.
 - [x] Agendamento com conflito de horario.
 - [x] Cancelamento e marcacao de nao realizado.
 - [x] Upload de documento privado.
@@ -179,8 +186,8 @@ Controlador:
 
 ### 13. Logs, metricas e alertas
 
-- [ ] Usar logs JSON em producao.
-- [ ] Adicionar request id por requisicao.
+- [x] Usar logs JSON em producao.
+- [x] Adicionar request id por requisicao.
 - [ ] Evitar CPF completo, senha, token, cartao, CVV e payload completo de webhook em logs.
 - [ ] Criar alertas para erro 5xx.
 - [ ] Criar alertas para falha em webhook.

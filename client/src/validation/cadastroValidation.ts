@@ -4,6 +4,7 @@ import {
   emailValido,
   telefoneValido,
 } from '@/utils/validators';
+import { TIPOS_PRESTADOR } from '@/constants/prestadores';
 
 export type ErrosCadastro = Record<string, string>;
 
@@ -43,15 +44,12 @@ const SEXOS_PERMITIDOS = new Set([
   'outro',
 ]);
 
-const CATEGORIAS_PRESTADOR = new Set([
-  'cuidador',
-  'enfermeiro',
-  'acompanhante',
-]);
+const CATEGORIAS_PRESTADOR_VALIDAS = new Set<string>(TIPOS_PRESTADOR);
 
 const NOME_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/;
 const TEXTO_ENDERECO_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9'.,ºª -]+$/;
 const COREN_REGEX = /^COREN[-\s]?[A-Z]{2}\s?\d{4,10}$/i;
+const PLACA_REGEX = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/i;
 
 function somenteDigitos(valor: string) {
   return valor.replace(/\D/g, '');
@@ -321,7 +319,9 @@ export function validarEnderecoCadastro(
 
 export interface DadosProfissionaisPrestador {
   categoria: string;
+  categorias?: string[];
   registro: string;
+  placa: string;
   experiencia: number;
   valorHora: number;
   valorDiaria: number;
@@ -334,16 +334,36 @@ export function validarDadosProfissionaisPrestador(
   dados: DadosProfissionaisPrestador,
 ): ErrosCadastro {
   const erros: ErrosCadastro = {};
+  const categorias =
+    dados.categorias && dados.categorias.length > 0
+      ? dados.categorias
+      : dados.categoria
+        ? [dados.categoria]
+        : [];
 
-  if (!CATEGORIAS_PRESTADOR.has(dados.categoria)) {
+  if (
+    categorias.length === 0 ||
+    categorias.some((categoria) => !CATEGORIAS_PRESTADOR_VALIDAS.has(categoria))
+  ) {
     erros.categoria = 'Selecione uma categoria profissional válida.';
+  } else if (new Set(categorias).size !== categorias.length) {
+    erros.categoria = 'Selecione categorias diferentes.';
+  } else if (categorias.length > 2) {
+    erros.categoria = 'Selecione no máximo 2 categorias profissionais.';
   }
 
   if (
-    dados.categoria === 'enfermeiro' &&
+    categorias.includes('enfermeiro') &&
     !COREN_REGEX.test(dados.registro.trim())
   ) {
     erros.registro = 'Informe um COREN válido, por exemplo COREN-SP 123456.';
+  }
+
+  if (
+    categorias.includes('motorista_assistencial') &&
+    !PLACA_REGEX.test(dados.placa.trim().replace(/[^A-Za-z0-9]/g, ''))
+  ) {
+    erros.placa = 'Informe uma placa válida, por exemplo ABC1234 ou ABC1D23.';
   }
 
   if (
@@ -400,6 +420,7 @@ export function validarDadosProfissionaisPrestador(
 export interface DocumentosPrestador {
   foto: File | null;
   identidade: File | null;
+  cnh: File | null;
   certificado: File | null;
   antecedentes: File | null;
 }
@@ -430,9 +451,18 @@ function validarArquivo(
 
 export function validarDocumentosPrestador(
   documentos: DocumentosPrestador,
-  categoria: string,
+  categoria: string | string[],
 ): ErrosCadastro {
   const erros: ErrosCadastro = {};
+  const categorias = Array.isArray(categoria)
+    ? categoria
+    : categoria
+      ? [categoria]
+      : [];
+  const incluiMotorista = categorias.includes('motorista_assistencial');
+  const incluiDocumentoIdentidade = categorias.some(
+    (item) => item !== 'motorista_assistencial',
+  );
 
   validarArquivo(
     erros,
@@ -441,13 +471,25 @@ export function validarDocumentosPrestador(
     ['image/jpeg', 'image/png'],
     5,
   );
-  validarArquivo(
-    erros,
-    'identidade',
-    documentos.identidade,
-    ['image/jpeg', 'image/png', 'application/pdf'],
-    10,
-  );
+  if (incluiMotorista) {
+    validarArquivo(
+      erros,
+      'cnh',
+      documentos.cnh,
+      ['image/jpeg', 'image/png', 'application/pdf'],
+      10,
+    );
+  }
+
+  if (incluiDocumentoIdentidade) {
+    validarArquivo(
+      erros,
+      'identidade',
+      documentos.identidade,
+      ['image/jpeg', 'image/png', 'application/pdf'],
+      10,
+    );
+  }
   validarArquivo(
     erros,
     'antecedentes',
@@ -461,7 +503,7 @@ export function validarDocumentosPrestador(
     documentos.certificado,
     ['application/pdf'],
     10,
-    categoria === 'cuidador' || categoria === 'enfermeiro',
+    categorias.includes('cuidador') || categorias.includes('enfermeiro'),
   );
 
   return erros;

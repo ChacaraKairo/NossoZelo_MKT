@@ -97,7 +97,7 @@ export const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
     sanitizarFormato(),
-    process.env.LOG_FORMAT === 'json'
+    process.env.NODE_ENV === 'production' || process.env.LOG_FORMAT === 'json'
       ? winston.format.json()
       : formatoConsole,
   ),

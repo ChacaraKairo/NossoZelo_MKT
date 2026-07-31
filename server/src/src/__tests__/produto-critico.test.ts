@@ -132,6 +132,7 @@ import UserRouter from '../route/Route_User';
 import LoginRouter from '../route/Route_Login';
 import AgendamentoRouter from '../route/Route_Agendamento';
 import AssinaturaRouter from '../route/Route_Assinatura';
+import requestIdMiddleware from '../middleware/requestId';
 
 function appComRotasPublicas() {
   const app = express();
@@ -144,6 +145,7 @@ function appComRotasPublicas() {
 
 function appComRotasProtegidas() {
   const app = express();
+  app.use(requestIdMiddleware);
   app.use(cookieParser());
   app.use(express.json());
   app.use('/crud', CrudRouter);
@@ -458,6 +460,16 @@ describe('fluxos criticos do produto', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('healthy');
+    expect(response.headers['x-request-id']).toBeTruthy();
+  });
+
+  it('preserva X-Request-Id informado pelo cliente', async () => {
+    const response = await request(appComRotasProtegidas())
+      .get('/api/health')
+      .set('X-Request-Id', 'req-teste-123');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-request-id']).toBe('req-teste-123');
   });
 
   it('/login/me sem sessao retorna 401', async () => {

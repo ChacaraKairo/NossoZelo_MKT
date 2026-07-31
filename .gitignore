@@ -39,6 +39,8 @@ pnpm-debug.log*
 # Runtime/generated files
 uploads/
 server/uploads/
+private_uploads/
+server/private_uploads/
 tmp/
 temp/
 

@@ -226,6 +226,41 @@
   outline: none;
 }
 
+.checkboxGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.checkboxOption {
+  min-height: 46px;
+  border: 1.5px solid #dee2e6;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.checkboxOption:has(input:checked) {
+  border-color: #0cc0df;
+  background: #ecfeff;
+  color: #0f766e;
+}
+
+.checkboxOption:has(input:disabled:not(:checked)) {
+  opacity: 0.55;
+}
+
+.inputGroup small {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
 /* Agrupamento em Linha para inputs curtos (ex: CEP e Número, Nome e Sobrenome) */
 .inputRow {
   display: flex;

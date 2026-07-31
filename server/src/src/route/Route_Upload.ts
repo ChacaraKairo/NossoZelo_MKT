@@ -41,6 +41,7 @@ const upload = multer({
 const camposCadastro = [
   { name: 'foto', maxCount: 1 },
   { name: 'identidade', maxCount: 1 },
+  { name: 'cnh', maxCount: 1 },
   { name: 'certificado', maxCount: 1 },
   { name: 'antecedentes', maxCount: 1 },
 ];

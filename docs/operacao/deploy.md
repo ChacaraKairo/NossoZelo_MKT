@@ -31,8 +31,8 @@ ASAAS_API_KEY=
 ASAAS_WEBHOOK_TOKEN=
 ASAAS_BASE_URL=https://api.asaas.com/v3
 ASAAS_TIMEOUT_MS=60000
-ENABLE_UPLOADS=true
-UPLOAD_SCAN_MODE=clamav
+ENABLE_UPLOADS=false
+UPLOAD_SCAN_MODE=disabled
 CLAMAV_HOST=
 CLAMAV_PORT=3310
 AWS_REGION=
@@ -41,6 +41,8 @@ AWS_SECRET_ACCESS_KEY=
 AWS_PUBLIC_BUCKET_NAME=
 AWS_PRIVATE_BUCKET_NAME=
 ```
+
+Para lancamento controlado, mantenha `ENABLE_UPLOADS=false`. Ative uploads somente depois de validar S3 publico/privado, ClamAV, EICAR e auditoria de upload em staging.
 
 4. Confirmar webhook no Asaas:
 
@@ -81,4 +83,5 @@ Ambos precisam responder sem depender de sessao.
 - Verificar que prestador inadimplente nao aparece na busca.
 - Verificar cron dos jobs.
 - Verificar que `ENABLE_ADMIN_CRUD=false`.
+- Verificar que `ENABLE_UPLOADS=false`, salvo se S3 e ClamAV ja tiverem evidencia aprovada.
 - Verificar termos e politica de privacidade publicados.

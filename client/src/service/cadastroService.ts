@@ -26,6 +26,7 @@ export interface CadastroPayload {
     pais: string;
     url_foto_perfil?: string;
     tipo: string;
+    categorias?: string[];
   };
   cuidador?: {
     bio: string;
@@ -47,6 +48,34 @@ export interface CadastroPayload {
     documentos?: string;
   };
   acompanhante?: {
+    bio: string;
+    experiencia: number;
+    valorHora?: number;
+    valorDiaria?: number;
+    disponibilidade?: string;
+    especialidades?: string;
+    documentos?: string;
+  };
+  baba?: {
+    bio: string;
+    experiencia: number;
+    valorHora?: number;
+    valorDiaria?: number;
+    disponibilidade?: string;
+    especialidades?: string;
+    documentos?: string;
+  };
+  diarista?: {
+    bio: string;
+    experiencia: number;
+    valorHora?: number;
+    valorDiaria?: number;
+    disponibilidade?: string;
+    especialidades?: string;
+    documentos?: string;
+  };
+  motorista_assistencial?: {
+    placa: string;
     bio: string;
     experiencia: number;
     valorHora?: number;

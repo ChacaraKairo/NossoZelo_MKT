@@ -17,6 +17,29 @@ Base administrativa no controlador:
 Todos os endpoints de usuário devem exigir autenticação.
 Todos os endpoints administrativos devem exigir admin autenticado.
 
+Implementado nesta fase como MVP manual:
+
+```http
+POST /nossozelo/documentos/upload
+GET /nossozelo/documentos/status
+POST /nossozelo/documentos/:id/reprocessar
+GET /nossozelo/documentos/admin/pendentes
+GET /nossozelo/documentos/admin/:id
+POST /nossozelo/documentos/admin/:id/aprovar
+POST /nossozelo/documentos/admin/:id/recusar
+```
+
+No controlador administrativo tambem existem rotas internas:
+
+```http
+GET /api/documentos/pendentes
+GET /api/documentos/:id
+POST /api/documentos/:id/aprovar
+POST /api/documentos/:id/recusar
+```
+
+O front publico de prestador usa `/prestador/documentos`, e o painel administrativo usa `/documentos`.
+
 ## Endpoints do prestador
 
 ### Upload de documento

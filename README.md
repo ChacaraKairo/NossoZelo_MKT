@@ -1,10 +1,10 @@
 # NossoZelo_MKT
 
-Marketplace web para conectar clientes a cuidadores, enfermeiros e acompanhantes. O estado atual foi preparado como MVP funcional: autenticação por cookie HttpOnly, rotas sensíveis protegidas, CRUD administrativo restrito, testes mínimos, seed, Docker e documentação básica.
+Marketplace web para conectar clientes a cuidadores, enfermeiros, acompanhantes, babas, diaristas e motoristas assistenciais. O estado atual foi preparado como MVP funcional: autenticação por cookie HttpOnly, rotas sensíveis protegidas, CRUD administrativo restrito, testes mínimos, seed, Docker e documentação básica.
 
 ## Stack
 
-- Backend: Node.js, Express, TypeScript, Prisma, MySQL, JWT, Vitest, Supertest.
+- Backend: Node.js, Express, TypeScript, Prisma, PostgreSQL, JWT, Vitest, Supertest.
 - Frontend: Next.js Pages Router, React, TypeScript, Axios.
 - Integrações previstas: Asaas, AWS S3, OAuth Google/Facebook, SMTP.
 
@@ -14,7 +14,7 @@ Marketplace web para conectar clientes a cuidadores, enfermeiros e acompanhantes
 - `client/`: aplicação web pública e áreas autenticadas.
 - `controlador/`: painel administrativo Next.js separado.
 - `docs/`: notas de produção, segurança e API.
-- `docker-compose.yml`: ambiente local com MySQL, backend e frontend.
+- `docker-compose.yml`: ambiente local com banco, backend e frontend.
 
 ## Rodando Localmente
 
@@ -81,14 +81,15 @@ Rotas principais:
 - Login: valida credenciais e inicia sessão por cookie HttpOnly.
 - Onboarding prestador: exige e-mail confirmado, perfil profissional e assinatura ativa.
 - Assinatura: lista planos, inicia/regulariza/cancela assinatura e processa webhook Asaas.
-- Busca de prestador: deve mostrar apenas prestadores aptos conforme assinatura/status.
+- Busca de prestador: deve mostrar apenas prestadores aptos conforme assinatura, status cadastral, e-mail confirmado e documentação aprovada.
 - Agendamento: exige autenticação e valida disponibilidade/conflito no serviço.
 - Upload: valida MIME/extensão/assinatura binária e grava documentos privados por chave, não URL pública.
+- Validação documental: prestadores enviam documentos em `/prestador/documentos`; a API salva arquivo privado, cria status documental e o controlador revisa manualmente em `/documentos`. Não há provider externo de KYC nesta fase.
 
 ## Limitações Conhecidas
 
 - Rate limit ainda é em memória, adequado só para desenvolvimento/instância única.
-- Antivírus/quarentena de uploads está documentado como TODO.
+- Antivírus/quarentena de uploads está documentado como TODO para infraestrutura final; a validação atual usa revisão manual e scanner configurável.
 - Enums de dia da semana têm encoding legado (`terÃƒÂ§a`, `sÃƒÂ¡bado`) e exigem migração controlada.
 - A pasta `server/src/src` foi mantida para reduzir risco de quebra; novos imports devem seguir o padrão atual até refatoração planejada.
 - O painel `controlador/` não foi tratado como alvo principal deste ciclo.
